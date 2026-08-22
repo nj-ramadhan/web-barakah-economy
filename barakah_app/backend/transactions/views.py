@@ -1,4 +1,5 @@
 # transactions/views.py
+import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +8,8 @@ from decimal import Decimal
 from datetime import datetime
 from .models import UserWallet, WalletTransaction
 from .serializers import UserWalletSerializer, WalletTransactionSerializer
+
+logger = logging.getLogger(__name__)
 
 class UserWalletView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -45,8 +48,9 @@ class AdminIncomingFundsView(APIView):
         is_admin = (
             user.is_superuser or 
             user.is_staff or 
-            getattr(user, 'role', '') == 'admin' or 
-            getattr(getattr(user, 'profile', None), 'role', '') == 'admin'
+            getattr(user, 'role', '') in ['admin', 'staff'] or 
+            getattr(getattr(user, 'profile', None), 'role', '') in ['admin', 'staff'] or
+            (hasattr(user, 'custom_roles') and user.custom_roles.filter(Q(name__icontains='admin') | Q(code__icontains='admin')).exists())
         )
 
         if not is_admin:
@@ -73,86 +77,96 @@ class AdminIncomingFundsView(APIView):
                 ).prefetch_related('items', 'items__product', 'items__product__seller', 'items__product__seller__profile')
 
                 for o in store_orders:
-                    raw_status = (o.status or '').lower()
-                    has_proof = bool(getattr(o, 'payment_proof', None) and hasattr(o.payment_proof, 'url') and o.payment_proof)
-                    is_paid_status = raw_status in ['paid', 'lunas', 'proses', 'dikirim', 'shipped', 'selesai', 'delivered']
-                    is_batal = raw_status in ['batal', 'cancelled']
-                    
-                    # Check if cancelled order had money transferred / refunded
-                    has_refund_tx = WalletTransaction.objects.filter(order=o, transaction_type='REFUND').exists()
-                    was_paid_before_cancel = is_batal and (has_proof or has_refund_tx or (o.used_balance and o.used_balance > 0))
+                    try:
+                        raw_status = (o.status or '').lower()
+                        has_proof = bool(getattr(o, 'payment_proof', None) and hasattr(o.payment_proof, 'url') and o.payment_proof)
+                        is_paid_status = raw_status in ['paid', 'lunas', 'proses', 'dikirim', 'shipped', 'selesai', 'delivered']
+                        is_batal = raw_status in ['batal', 'cancelled']
+                        
+                        # Check if cancelled order had money transferred / refunded
+                        has_refund_tx = WalletTransaction.objects.filter(order=o, transaction_type='REFUND').exists()
+                        used_bal = float(getattr(o, 'used_balance', 0) or 0)
+                        was_paid_before_cancel = is_batal and (has_proof or has_refund_tx or used_bal > 0)
 
-                    # If cancelled WITHOUT any payment / transfer, skip so data doesn't get cluttered by unpaid expired checkouts
-                    if is_batal and not was_paid_before_cancel:
-                        continue
+                        # If cancelled WITHOUT any payment / transfer, skip so data doesn't get cluttered by unpaid expired checkouts
+                        if is_batal and not was_paid_before_cancel:
+                            continue
 
-                    if is_paid_status:
-                        norm_status = 'verified'
-                    elif is_batal and was_paid_before_cancel:
-                        norm_status = 'refunded'
-                    else:
-                        norm_status = 'pending'
+                        if is_paid_status:
+                            norm_status = 'verified'
+                        elif is_batal and was_paid_before_cancel:
+                            norm_status = 'refunded'
+                        else:
+                            norm_status = 'pending'
 
-                    prod_names = []
-                    seller_candidates = []
-                    if o.seller:
-                        seller_candidates.append(o.seller)
+                        prod_names = []
+                        seller_candidates = []
+                        if o.seller:
+                            seller_candidates.append(o.seller)
 
-                    for it in o.items.all():
-                        prod_names.append(it.product_name or (it.product.title if it.product else 'Produk'))
-                        if it.product and it.product.seller:
-                            seller_candidates.append(it.product.seller)
+                        for it in o.items.all():
+                            prod_names.append(it.product_name or (it.product.title if it.product else 'Produk'))
+                            if it.product and it.product.seller:
+                                seller_candidates.append(it.product.seller)
 
-                    title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
-                    proof_url = o.payment_proof.url if has_proof else ''
+                        title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
+                        proof_url = o.payment_proof.url if has_proof else ''
 
-                    resolved_seller = seller_candidates[0] if seller_candidates else None
-                    seller_name = ''
-                    seller_username = ''
-                    seller_id = None
-                    if resolved_seller:
-                        seller_name = getattr(getattr(resolved_seller, 'profile', None), 'name_full', None) or resolved_seller.username
-                        seller_username = resolved_seller.username
-                        seller_id = resolved_seller.id
-                    else:
-                        seller_name = 'BAE Store / Vendor Utama'
-                        seller_username = 'admin'
+                        resolved_seller = seller_candidates[0] if seller_candidates else None
+                        seller_name = ''
+                        seller_username = ''
+                        seller_id = None
+                        if resolved_seller:
+                            seller_name = getattr(getattr(resolved_seller, 'profile', None), 'name_full', None) or resolved_seller.username
+                            seller_username = resolved_seller.username
+                            seller_id = resolved_seller.id
+                        else:
+                            seller_name = 'BAE Store / Vendor Utama'
+                            seller_username = 'admin'
 
-                    extra_notes = []
-                    if resolved_seller:
-                        extra_notes.append(f"Penjual: {seller_name} (@{seller_username})")
-                    if is_batal and was_paid_before_cancel:
-                        extra_notes.append(f"⚠️ Uang Sempat Masuk & Telah Direfund ({o.cancel_request_reason or 'Dibatalkan'})")
-                    elif o.status:
-                        extra_notes.append(f"Status Pesanan: {o.status}")
+                        extra_notes = []
+                        if resolved_seller:
+                            extra_notes.append(f"Penjual: {seller_name} (@{seller_username})")
+                        if is_batal and was_paid_before_cancel:
+                            extra_notes.append(f"⚠️ Uang Sempat Masuk & Telah Direfund ({o.cancel_request_reason or 'Dibatalkan'})")
+                        elif o.status:
+                            extra_notes.append(f"Status Pesanan: {o.status}")
 
-                    transactions.append({
-                        'id': f"store_{o.id}",
-                        'raw_id': o.id,
-                        'category': 'store',
-                        'category_label': 'Toko / Sinergy',
-                        'order_number': o.order_number or f"ORD-{o.id:06d}",
-                        'title': title_str,
-                        'customer_name': o.recipient_name or (getattr(getattr(o.user, 'profile', None), 'name_full', None) or (o.user.username if o.user else 'Tamu')),
-                        'customer_email': o.user.email if o.user else '',
-                        'customer_phone': o.customer_phone or getattr(o, 'phone', '') or o.recipient_phone or '',
-                        'seller_name': seller_name,
-                        'seller_username': seller_username,
-                        'seller_id': seller_id,
-                        'base_amount': float(o.total_price or 0),
-                        'admin_fee': float(o.admin_fee or 0),
-                        'shipping_cost': float(o.shipping_cost or 0),
-                        'grand_total': float(o.grand_total or o.total_price or 0),
-                        'payment_method': o.payment_method or 'transfer',
-                        'payment_status': norm_status,
-                        'raw_status': o.status,
-                        'payment_proof_url': proof_url,
-                        'created_at': o.created_at.isoformat() if o.created_at else None,
-                        'action_link': '/dashboard/sinergy/seller/orders',
-                        'extra_info': " • ".join(extra_notes)
-                    })
+                        cust_phone = (
+                            getattr(o, 'recipient_phone', '') or 
+                            (getattr(getattr(o.user, 'profile', None), 'phone_number', '') if o.user else '') or 
+                            ''
+                        )
+
+                        transactions.append({
+                            'id': f"store_{o.id}",
+                            'raw_id': o.id,
+                            'category': 'store',
+                            'category_label': 'Toko / Sinergy',
+                            'order_number': o.order_number or f"ORD-{o.id:06d}",
+                            'title': title_str,
+                            'customer_name': o.recipient_name or (getattr(getattr(o.user, 'profile', None), 'name_full', None) or (o.user.username if o.user else 'Tamu')),
+                            'customer_email': o.user.email if o.user else '',
+                            'customer_phone': cust_phone,
+                            'seller_name': seller_name,
+                            'seller_username': seller_username,
+                            'seller_id': seller_id,
+                            'base_amount': float(o.total_price or 0),
+                            'admin_fee': float(o.admin_fee or 0),
+                            'shipping_cost': float(o.shipping_cost or 0),
+                            'grand_total': float(o.grand_total or o.total_price or 0),
+                            'payment_method': o.payment_method or 'transfer',
+                            'payment_status': norm_status,
+                            'raw_status': o.status,
+                            'payment_proof_url': proof_url,
+                            'created_at': o.created_at.isoformat() if o.created_at else None,
+                            'action_link': '/dashboard/sinergy/seller/orders',
+                            'extra_info': " • ".join(extra_notes)
+                        })
+                    except Exception as item_err:
+                        logger.error(f"Error serializing store order {getattr(o, 'id', '?')}: {item_err}")
             except Exception as e:
-                pass
+                logger.error(f"Error loading store orders in incoming funds: {e}")
 
         # 2. DIGITAL PRODUCTS
         if category_filter in ['all', 'digital']:
@@ -542,8 +556,9 @@ class AdminIncomingFundsView(APIView):
         is_admin = (
             user.is_superuser or 
             user.is_staff or 
-            getattr(user, 'role', '') == 'admin' or 
-            getattr(getattr(user, 'profile', None), 'role', '') == 'admin'
+            getattr(user, 'role', '') in ['admin', 'staff'] or 
+            getattr(getattr(user, 'profile', None), 'role', '') in ['admin', 'staff'] or
+            (hasattr(user, 'custom_roles') and user.custom_roles.filter(Q(name__icontains='admin') | Q(code__icontains='admin')).exists())
         )
 
         if not is_admin:
