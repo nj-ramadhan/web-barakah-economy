@@ -323,44 +323,171 @@ Barakah Economy Team
     except Exception as e:
         logger.error(f"Error sending order email notifications for {order.order_number}: {e}")
 
-def send_status_update_notification(order):
-    """Notify buyer about order status changes."""
-    phone = clean_phone(order.recipient_phone or order.user.phone)
-    if not phone:
-        return
+def send_shipping_email_notification(order):
+    """Send dedicated delivery email notification to buyer with courier/driver details."""
+    try:
+        buyer_email = order.user.email if hasattr(order.user, 'email') and order.user.email else None
+        if not buyer_email:
+            logger.warning(f"No buyer email for order {order.order_number}.")
+            return False
 
-    status_msg = ""
-    if order.status.lower() == 'proses':
-        status_msg = "Pesanan Anda sedang diproses oleh penjual."
-    elif order.status.lower() == 'dikirim':
-        confirmation_link = f"https://barakah.cloud/riwayat-belanja"
-        if getattr(order, 'shipping_type', '') == 'kurir_toko' or getattr(order, 'driver_name', None):
-            status_msg = (
-                f"Pesanan Anda sedang *DIKIRIM LANGSUNG OLEH TOKO / KURIR PRIBADI*!\n"
-                f"Nama Pengirim: *{order.driver_name or 'Kurir Toko'}*\n"
-                f"No. Telp / WA Pengirim: *{order.driver_phone or '-'}*\n\n"
-                f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
-                f"{confirmation_link}"
+        shipping_info = get_order_shipping_details(order)
+        items_str = "\n".join([
+            f"- {item.product.title}{f' ({item.variation.name})' if item.variation else ''} x{item.quantity} = {format_idr(item.price)}"
+            for item in order.items.all()
+        ])
+
+        is_kurir_toko = getattr(order, 'shipping_type', '') == 'kurir_toko' or bool(getattr(order, 'driver_name', None))
+        confirmation_link = "https://barakah.cloud/riwayat-belanja"
+
+        if is_kurir_toko:
+            subject = f"[Barakah Economy] Pesanan #{order.order_number} Sedang Diantar oleh Kurir Toko 🛵"
+            driver_phone_clean = clean_phone(order.driver_phone)
+            wa_link_str = f"https://wa.me/{driver_phone_clean}" if driver_phone_clean else "-"
+            shipping_section = f"""=== INFORMASI PENGIRIM (KURIR PRIBADI TOKO) ===
+Nama Driver / Pengirim : {order.driver_name or 'Kurir Toko'}
+No. Kontak / WA Driver : {order.driver_phone or '-'}
+Tautan Chat WhatsApp  : {wa_link_str}
+Estimasi Waktu Tiba   : {order.estimated_delivery_days or 1} Hari
+Metode Pengantaran    : Diantar Langsung oleh Toko (Kurir Pribadi)"""
+        else:
+            subject = f"[Barakah Economy] Pesanan #{order.order_number} Telah Dikirim ({order.shipping_courier or 'Ekspedisi'}) 🚚"
+            shipping_section = f"""=== INFORMASI PENGIRIMAN (EKSPEDISI) ===
+Ekspedisi / Kurir    : {order.shipping_courier or 'Ekspedisi'}
+Nomor Resi Pelacakan : {order.resi_number or 'Sedang diperbarui oleh penjual'}
+Estimasi Pengiriman  : {order.estimated_delivery_days or 5} Hari"""
+
+        email_body = f"""Halo {shipping_info['recipient_name'] or order.user.username},
+
+Kabar baik! Pesanan Anda di Barakah Economy telah disiapkan dan sedang dalam proses pengiriman.
+
+No. Pesanan : {order.order_number}
+Tanggal Pesanan : {order.created_at.strftime('%d/%m/%Y %H:%M')}
+Waktu Pengiriman: {timezone.now().strftime('%d/%m/%Y %H:%M')}
+
+{shipping_section}
+
+=== ALAMAT TUJUAN PENGIRIMAN ===
+Nama Penerima : {shipping_info['recipient_name']}
+No. HP Penerima : {shipping_info['recipient_phone']}
+Alamat Tujuan  : {shipping_info['formatted_address']}
+{f"Catatan Patokan : {shipping_info['address_detail']}" if shipping_info['address_detail'] else ""}
+
+=== RINCIAN PESANAN ===
+{items_str}
+
+Total Pembayaran : {format_idr(order.grand_total)}
+Metode Pembayaran: {order.payment_method}
+
+=== KONFIRMASI PENERIMAAN ===
+Jika paket sudah Anda terima dengan baik, silakan lakukan konfirmasi penerimaan pesanan melalui link berikut:
+{confirmation_link}
+
+Terima kasih telah berbelanja di Barakah Economy!
+
+Salam hangat,
+Tim Barakah Economy
+https://barakah.cloud
+"""
+
+        send_email(
+            subject=subject,
+            message=email_body,
+            recipient_list=[buyer_email],
+            fail_silently=True
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Error sending shipping email for order {order.order_number}: {e}")
+        return False
+
+def send_status_update_notification(order):
+    """Notify buyer about order status changes via WhatsApp and Email."""
+    raw_phone = order.recipient_phone or (order.user.phone if hasattr(order.user, 'phone') else None)
+    phone = clean_phone(raw_phone)
+
+    shipping_info = get_order_shipping_details(order)
+    confirmation_link = "https://barakah.cloud/riwayat-belanja"
+    is_kurir_toko = getattr(order, 'shipping_type', '') == 'kurir_toko' or bool(getattr(order, 'driver_name', None))
+
+    items_str = ""
+    for item in order.items.all():
+        var_str = f" ({item.variation.name})" if item.variation else ""
+        items_str += f"- {item.product.title}{var_str} x{item.quantity}\n"
+
+    status_lower = (order.status or '').lower()
+
+    if status_lower == 'proses':
+        message = (
+            f"*PESANAN SEDANG DIPROSES* 📦\n"
+            f"No. Pesanan: {order.order_number}\n\n"
+            f"Halo {shipping_info['recipient_name'] or order.user.username}, pesanan Anda sedang dikemas dan disiapkan oleh penjual.\n\n"
+            f"*Daftar Produk:*\n{items_str}\n"
+            f"Total: *{format_idr(order.grand_total)}*\n\n"
+            f"Kami akan mengirimkan notifikasi kembali saat pesanan siap diberangkatkan.\n"
+            f"Cek riwayat belanja: {confirmation_link}"
+        )
+    elif status_lower == 'dikirim':
+        # Also trigger email notification automatically
+        send_shipping_email_notification(order)
+
+        if is_kurir_toko:
+            driver_phone_clean = clean_phone(order.driver_phone)
+            wa_link_str = f"wa.me/{driver_phone_clean}" if driver_phone_clean else "-"
+            message = (
+                f"*PESANAN SEDANG DIKIRIM (KURIR TOKO)* 🛵\n"
+                f"No. Pesanan: {order.order_number}\n\n"
+                f"Halo *{shipping_info['recipient_name'] or order.user.username}*, paket pesanan Anda sedang *DIANTAR LANGSUNG* oleh kurir/driver toko!\n\n"
+                f"🛵 *Detail Pengirim (Driver Toko):*\n"
+                f"• Nama Pengirim: *{order.driver_name or 'Driver Toko'}*\n"
+                f"• No. Telp / WA: *{order.driver_phone or '-'}*\n"
+                f"• Chat WA Driver: {wa_link_str}\n"
+                f"• Estimasi Tiba: *{order.estimated_delivery_days or 1} Hari*\n\n"
+                f"📍 *Alamat Pengantaran:*\n"
+                f"{shipping_info['formatted_address']}\n\n"
+                f"📋 *Daftar Produk:*\n{items_str}\n"
+                f"Total Tagihan: *{format_idr(order.grand_total)}*\n\n"
+                f"Harap pastikan penerima berada di tempat. Jika pesanan sudah diterima, mohon konfirmasi melalui tautan:\n"
+                f"{confirmation_link}\n\n"
+                f"Terima kasih telah berbelanja di Barakah Economy!"
             )
         else:
-            status_msg = (
-                f"Pesanan Anda telah *DIKIRIM* via ekspedisi ({order.shipping_courier or 'Kurir'})!\n"
-                f"Nomor Resi: *{order.resi_number or 'Sedang diupdate'}*\n\n"
-                f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
-                f"{confirmation_link}"
+            message = (
+                f"*PESANAN TELAH DIKIRIM (EKSPEDISI)* 🚚\n"
+                f"No. Pesanan: {order.order_number}\n\n"
+                f"Halo *{shipping_info['recipient_name'] or order.user.username}*, pesanan Anda telah *DISERAHKAN KE EKSPEDISI* untuk dikirimkan!\n\n"
+                f"🚚 *Detail Ekspedisi:*\n"
+                f"• Kurir: *{order.shipping_courier or 'Ekspedisi'}*\n"
+                f"• Nomor Resi: *{order.resi_number or 'Sedang diperbarui penjual'}*\n"
+                f"• Estimasi Pengiriman: *{order.estimated_delivery_days or 5} Hari*\n\n"
+                f"📍 *Alamat Tujuan:*\n"
+                f"{shipping_info['formatted_address']}\n\n"
+                f"📋 *Daftar Produk:*\n{items_str}\n"
+                f"Total Tagihan: *{format_idr(order.grand_total)}*\n\n"
+                f"Lacak pesanan dan konfirmasi penerimaan melalui tautan:\n"
+                f"{confirmation_link}\n\n"
+                f"Terima kasih telah berbelanja di Barakah Economy!"
             )
-    elif order.status.lower() == 'selesai':
-        status_msg = "Pesanan Anda telah dinyatakan selesai. Terima kasih!"
-    elif order.status.lower() == 'batal':
-        status_msg = "Mohon maaf, pesanan Anda telah dibatalkan."
+    elif status_lower == 'selesai':
+        message = (
+            f"*PESANAN SELESAI* ✅\n"
+            f"No. Pesanan: {order.order_number}\n\n"
+            f"Halo {shipping_info['recipient_name'] or order.user.username}, pesanan Anda telah selesai diterima. Terima kasih banyak telah berbelanja di Barakah Economy! Semoga membawa berkah dan manfaat."
+        )
+    elif status_lower == 'batal':
+        message = (
+            f"*PESANAN DIBATALKAN* ❌\n"
+            f"No. Pesanan: {order.order_number}\n\n"
+            f"Halo {shipping_info['recipient_name'] or order.user.username}, mohon maaf pesanan #{order.order_number} telah dibatalkan."
+        )
     else:
-        status_msg = f"Status pesanan Anda telah diperbarui menjadi: *{order.status}*"
+        message = (
+            f"*UPDATE PESANAN BARAKAH ECONOMY*\n"
+            f"No. Pesanan: {order.order_number}\n\n"
+            f"Status pesanan Anda telah diperbarui menjadi: *{order.status}*\n\n"
+            f"Silakan cek dashboard belanja Anda: {confirmation_link}"
+        )
 
-    message = (
-        f"*UPDATE PESANAN BARAKAH ECONOMY*\n"
-        f"No. Pesanan: {order.order_number}\n\n"
-        f"{status_msg}\n\n"
-        f"Silakan cek dashboard untuk detail selengkapnya."
-    )
-
-    return send_message(phone, message)
+    if phone:
+        return send_message(phone, message)
+    return {'success': False, 'message': 'Nomor HP pembeli tidak tersedia'}

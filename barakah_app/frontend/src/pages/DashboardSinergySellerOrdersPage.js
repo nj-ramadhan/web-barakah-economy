@@ -639,17 +639,19 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                             disabled={updatingId === order.id}
                                                                             className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                                                         />
-                                                                        <div className="relative">
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-3 py-2 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
                                                                             <input 
                                                                                 type="number"
-                                                                                placeholder="Est"
+                                                                                min="1"
+                                                                                max="60"
+                                                                                placeholder="5"
                                                                                 title="Estimasi pengiriman (hari)"
                                                                                 value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
                                                                                 onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition text-center"
+                                                                                className="w-8 text-xs font-bold text-gray-800 outline-none text-center bg-transparent"
                                                                             />
-                                                                            <span className="absolute -top-1.5 right-2 bg-indigo-100 text-indigo-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                            <span className="text-[10px] text-indigo-600 font-bold select-none">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -677,17 +679,19 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 disabled={updatingId === order.id}
                                                                                 className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
                                                                             />
-                                                                            <div className="relative">
+                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-3 py-2 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500">
                                                                                 <input 
                                                                                     type="number"
-                                                                                    placeholder="Est"
+                                                                                    min="1"
+                                                                                    max="60"
+                                                                                    placeholder="1"
                                                                                     title="Estimasi pengiriman (hari)"
                                                                                     value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
                                                                                     onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                     disabled={updatingId === order.id}
-                                                                                    className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                                    className="w-8 text-xs font-bold text-gray-800 outline-none text-center bg-transparent"
                                                                                 />
-                                                                                <span className="absolute -top-1.5 right-2 bg-emerald-100 text-emerald-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                                <span className="text-[10px] text-emerald-600 font-bold select-none">Hari</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -802,17 +806,19 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                             disabled={updatingId === order.id}
                                                                             className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
                                                                         />
-                                                                        <div className="relative">
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-3 py-2 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
                                                                             <input 
                                                                                 type="number"
-                                                                                placeholder="Est"
+                                                                                min="1"
+                                                                                max="60"
+                                                                                placeholder="5"
                                                                                 title="Estimasi pengiriman (hari)"
                                                                                 value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
                                                                                 onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition text-center"
+                                                                                className="w-8 text-xs font-bold text-gray-800 outline-none text-center bg-transparent"
                                                                             />
-                                                                            <span className="absolute -top-1.5 right-2 bg-indigo-100 text-indigo-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                            <span className="text-[10px] text-indigo-600 font-bold select-none">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -840,17 +846,19 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 disabled={updatingId === order.id}
                                                                                 className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
                                                                             />
-                                                                            <div className="relative">
+                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-3 py-2 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500">
                                                                                 <input 
                                                                                     type="number"
-                                                                                    placeholder="Est"
+                                                                                    min="1"
+                                                                                    max="60"
+                                                                                    placeholder="1"
                                                                                     title="Estimasi pengiriman (hari)"
                                                                                     value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
                                                                                     onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                     disabled={updatingId === order.id}
-                                                                                    className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                                    className="w-8 text-xs font-bold text-gray-800 outline-none text-center bg-transparent"
                                                                                 />
-                                                                                <span className="absolute -top-1.5 right-2 bg-emerald-100 text-emerald-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                                <span className="text-[10px] text-emerald-600 font-bold select-none">Hari</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -987,15 +995,20 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                             disabled={updatingId === order.id}
                                                                             className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                                         />
-                                                                        <input 
-                                                                            type="number"
-                                                                            placeholder="Hari"
-                                                                            title="Estimasi pengiriman (hari)"
-                                                                            value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
-                                                                            onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-16 px-2 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 text-center"
-                                                                        />
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
+                                                                            <input 
+                                                                                type="number"
+                                                                                min="1"
+                                                                                max="60"
+                                                                                placeholder="5"
+                                                                                title="Estimasi pengiriman (hari)"
+                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
+                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                disabled={updatingId === order.id}
+                                                                                className="w-8 text-xs font-medium text-gray-800 outline-none text-center bg-transparent"
+                                                                            />
+                                                                            <span className="text-[10px] text-gray-500 font-medium select-none">Hari</span>
+                                                                        </div>
                                                                     </div>
                                                                 ) : (
                                                                     <div className="space-y-1.5">
@@ -1016,15 +1029,20 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 disabled={updatingId === order.id}
                                                                                 className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                                                                             />
-                                                                            <input 
-                                                                                type="number"
-                                                                                placeholder="Hari"
-                                                                                title="Estimasi pengiriman (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-16 px-2 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 text-center"
-                                                                            />
+                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500">
+                                                                                <input 
+                                                                                    type="number"
+                                                                                    min="1"
+                                                                                    max="60"
+                                                                                    placeholder="1"
+                                                                                    title="Estimasi pengiriman (hari)"
+                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
+                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                    disabled={updatingId === order.id}
+                                                                                    className="w-8 text-xs font-medium text-gray-800 outline-none text-center bg-transparent"
+                                                                                />
+                                                                                <span className="text-[10px] text-gray-500 font-medium select-none">Hari</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -1065,9 +1083,9 @@ const DashboardSinergySellerOrdersPage = () => {
                                                         {sendingWaId === order.id ? (
                                                             <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
                                                         ) : (
-                                                            <span className="material-icons text-sm">whatsapp</span>
+                                                            <span className="material-icons text-sm">mark_email_read</span>
                                                         )}
-                                                        KIRIM NOTIFIKASI WA KE PEMBELI
+                                                        KIRIM NOTIFIKASI WA &amp; EMAIL KE PEMBELI
                                                     </button>
                                                 </div>
                                             )}

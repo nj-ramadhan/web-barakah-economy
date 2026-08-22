@@ -642,7 +642,22 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
             elif normalized_new_status == 'Selesai':
                 instance.completed_at = timezone.now()
 
-        return super().partial_update(request, *args, **kwargs)
+        old_status = (instance.status or '').capitalize()
+        response = super().partial_update(request, *args, **kwargs)
+        
+        if response.status_code in [200, 201]:
+            try:
+                instance.refresh_from_db()
+                new_st = (instance.status or '').capitalize()
+                # Auto send notification when shipped or when delivery details are updated for a shipped order
+                if new_st == 'Dikirim' and (old_status != 'Dikirim' or 'resi_number' in request.data or 'driver_name' in request.data or 'driver_phone' in request.data):
+                    from .utils import send_status_update_notification
+                    send_status_update_notification(instance)
+            except Exception as e:
+                import logging
+                logging.getLogger('accounts').error(f"Error triggering delivery notification: {e}")
+
+        return response
 
     def get(self, request, *args, **kwargs):
         from .utils import check_all_deliveries
@@ -659,14 +674,14 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='send-wa-update')
     def send_wa_update(self, request, pk=None):
-        """Manual trigger to send WA status update to buyer."""
+        """Manual trigger to send WA and Email status update to buyer."""
         instance = self.get_object()
         from .utils import send_status_update_notification
         try:
             result = send_status_update_notification(instance)
             if result and result.get('success'):
-                return Response({'message': 'Notifikasi WA berhasil dikirim'})
-            return Response({'error': result.get('message') if result else 'Gagal mengirim'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Notifikasi WhatsApp & Email berhasil dikirim ke pembeli'})
+            return Response({'error': result.get('message') if result else 'Gagal mengirim notifikasi'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
