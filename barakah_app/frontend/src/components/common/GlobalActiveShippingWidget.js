@@ -182,10 +182,18 @@ const GlobalActiveShippingWidget = () => {
                         </p>
                         <p className="text-[10px] text-gray-500 font-medium">
                             {totalItemsCount > 1 ? `+${totalItemsCount - 1} produk lainnya • ` : ''}
-                            <span className="font-bold text-purple-700">
-                                {currentOrder.shipping_courier ? currentOrder.shipping_courier.toUpperCase() : 'Kurir'}
-                            </span>
-                            {currentOrder.resi_number ? ` (${currentOrder.resi_number})` : ''}
+                            {currentOrder.shipping_type === 'kurir_toko' || currentOrder.driver_name ? (
+                                <span className="font-bold text-emerald-700">
+                                    🛵 Kurir Toko {currentOrder.driver_name ? `(${currentOrder.driver_name})` : ''}
+                                </span>
+                            ) : (
+                                <>
+                                    <span className="font-bold text-purple-700">
+                                        {currentOrder.shipping_courier ? currentOrder.shipping_courier.toUpperCase() : 'Kurir'}
+                                    </span>
+                                    {currentOrder.resi_number ? ` (${currentOrder.resi_number})` : ''}
+                                </>
+                            )}
                         </p>
                     </div>
                 </div>

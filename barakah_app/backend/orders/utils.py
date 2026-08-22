@@ -333,13 +333,22 @@ def send_status_update_notification(order):
     if order.status.lower() == 'proses':
         status_msg = "Pesanan Anda sedang diproses oleh penjual."
     elif order.status.lower() == 'dikirim':
-        confirmation_link = f"https://barakah.cloud/dashboard/history"
-        status_msg = (
-            f"Pesanan Anda telah dikirim!\n"
-            f"Nomor Resi: *{order.resi_number or 'Sedang diupdate'}*\n\n"
-            f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
-            f"{confirmation_link}"
-        )
+        confirmation_link = f"https://barakah.cloud/riwayat-belanja"
+        if getattr(order, 'shipping_type', '') == 'kurir_toko' or getattr(order, 'driver_name', None):
+            status_msg = (
+                f"Pesanan Anda sedang *DIKIRIM LANGSUNG OLEH TOKO / KURIR PRIBADI*!\n"
+                f"Nama Pengirim: *{order.driver_name or 'Kurir Toko'}*\n"
+                f"No. Telp / WA Pengirim: *{order.driver_phone or '-'}*\n\n"
+                f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
+                f"{confirmation_link}"
+            )
+        else:
+            status_msg = (
+                f"Pesanan Anda telah *DIKIRIM* via ekspedisi ({order.shipping_courier or 'Kurir'})!\n"
+                f"Nomor Resi: *{order.resi_number or 'Sedang diupdate'}*\n\n"
+                f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
+                f"{confirmation_link}"
+            )
     elif order.status.lower() == 'selesai':
         status_msg = "Pesanan Anda telah dinyatakan selesai. Terima kasih!"
     elif order.status.lower() == 'batal':

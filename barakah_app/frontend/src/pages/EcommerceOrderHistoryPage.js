@@ -395,7 +395,32 @@ const EcommerceOrderHistoryPage = () => {
                                                 ))}
                                             </div>
 
-                                            {order.resi_number && (
+                                            {order.shipping_type === 'kurir_toko' || order.driver_name ? (
+                                                <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-xs flex flex-wrap items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                                            <span className="material-icons text-base">delivery_dining</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-emerald-900 font-bold text-xs block">🛵 Dikirim Langsung oleh Toko:</span>
+                                                            <span className="text-gray-700 font-medium text-[11px]">
+                                                                Pengirim: <strong className="text-gray-900">{order.driver_name || 'Driver Toko'}</strong>
+                                                                {order.driver_phone && <> • Telp/WA: <strong className="font-mono text-gray-900">{order.driver_phone}</strong></>}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {order.driver_phone && (
+                                                        <a 
+                                                            href={`https://wa.me/${order.driver_phone.replace(/[^0-9]/g, '')}`}
+                                                            target="_blank" 
+                                                            rel="noreferrer"
+                                                            className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"
+                                                        >
+                                                            <span className="material-icons text-xs">chat</span> Hubungi Driver
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            ) : order.resi_number ? (
                                                 <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-2">
                                                         <span className="material-icons text-purple-600 text-sm">local_shipping</span>
@@ -409,7 +434,7 @@ const EcommerceOrderHistoryPage = () => {
                                                         Salin
                                                     </button>
                                                 </div>
-                                            )}
+                                            ) : null}
 
                                             {order.cancel_request_reason && (
                                                 <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-900">
@@ -511,6 +536,67 @@ const EcommerceOrderHistoryPage = () => {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Shipping Info in Modal */}
+                        {(selectedDetailOrder.shipping_type === 'kurir_toko' || selectedDetailOrder.driver_name || selectedDetailOrder.resi_number || selectedDetailOrder.shipping_courier) && (
+                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
+                                <h4 className="text-xs font-black text-gray-800 flex items-center gap-1.5 pb-1 border-b border-gray-200">
+                                    <span className="material-icons text-indigo-600 text-sm">
+                                        {selectedDetailOrder.shipping_type === 'kurir_toko' || selectedDetailOrder.driver_name ? 'delivery_dining' : 'local_shipping'}
+                                    </span>
+                                    Informasi Pengiriman
+                                </h4>
+                                {selectedDetailOrder.shipping_type === 'kurir_toko' || selectedDetailOrder.driver_name ? (
+                                    <div className="text-xs space-y-1.5 text-gray-700">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Metode Pengiriman:</span>
+                                            <span className="font-bold text-emerald-700">🛵 Kirim Sendiri (Kurir Toko)</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Nama Pengirim/Driver:</span>
+                                            <span className="font-bold text-gray-900">{selectedDetailOrder.driver_name || 'Driver Toko'}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500">Kontak Driver:</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono font-bold text-gray-900">{selectedDetailOrder.driver_phone || '-'}</span>
+                                                {selectedDetailOrder.driver_phone && (
+                                                    <a
+                                                        href={`https://wa.me/${selectedDetailOrder.driver_phone.replace(/[^0-9]/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded hover:bg-emerald-700 transition"
+                                                    >
+                                                        WA
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs space-y-1.5 text-gray-700">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Ekspedisi Kurir:</span>
+                                            <span className="font-bold text-gray-900">{selectedDetailOrder.shipping_courier || 'Ekspedisi'} {selectedDetailOrder.shipping_service ? `(${selectedDetailOrder.shipping_service})` : ''}</span>
+                                        </div>
+                                        {selectedDetailOrder.resi_number && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500">Nomor Resi:</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-mono font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">{selectedDetailOrder.resi_number}</span>
+                                                    <button
+                                                        onClick={() => { navigator.clipboard.writeText(selectedDetailOrder.resi_number); alert('Nomor resi disalin!'); }}
+                                                        className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded hover:bg-purple-200"
+                                                    >
+                                                        Salin
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/60 space-y-2">
                             <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5 pb-1 border-b border-emerald-100"><span className="material-icons text-emerald-600 text-sm">receipt_long</span> Rincian Pembayaran</h4>

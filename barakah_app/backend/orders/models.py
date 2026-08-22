@@ -22,7 +22,19 @@ class Order(models.Model):
 
     status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Paid, Proses, Dikirim, Selesai, Batal
     order_number = models.CharField(max_length=20, unique=True, blank=True)
+    shipping_type = models.CharField(
+        max_length=50, 
+        choices=[
+            ('ekspedisi', 'Ekspedisi / Kurir Logistik'),
+            ('kurir_toko', 'Kirim Sendiri / Kurir Toko')
+        ], 
+        default='ekspedisi', 
+        blank=True, 
+        null=True
+    )
     resi_number = models.CharField(max_length=100, blank=True, null=True)
+    driver_name = models.CharField(max_length=150, blank=True, null=True, help_text="Nama kurir / pengirim jika kirim sendiri")
+    driver_phone = models.CharField(max_length=50, blank=True, null=True, help_text="No telp / WA pengirim jika kirim sendiri")
     shipped_at = models.DateTimeField(null=True, blank=True)
     estimated_delivery_days = models.IntegerField(default=5)
     auto_complete_at = models.DateTimeField(null=True, blank=True)
