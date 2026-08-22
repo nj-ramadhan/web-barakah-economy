@@ -1,6 +1,6 @@
 // pages/EcommerceMainPage.js
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome';
@@ -64,8 +64,17 @@ const EcommerceMainPage = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('search') || params.get('seller') || params.get('q');
+    if (q) {
+      setSearchQuery(q);
+    }
+  }, [location.search]);
 
   const CATEGORY_LIMIT = 8; // Number of category chips shown initially
 
@@ -643,8 +652,8 @@ const EcommerceMainPage = () => {
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { key: 'populer', label: 'Paling Populer', icon: 'trending_up', title: 'Urutan default: Stok ada & paling banyak diklik' },
-                { key: 'price_asc', label: 'Harga Terendah', icon: 'north_east', title: 'Harga termurah ke termahal' },
-                { key: 'price_desc', label: 'Harga Tertinggi', icon: 'south_east', title: 'Harga termahal ke termurah' },
+                { key: 'price_asc', label: 'Harga Terendah', icon: 'south_east', title: 'Harga termurah ke termahal' },
+                { key: 'price_desc', label: 'Harga Tertinggi', icon: 'north_east', title: 'Harga termahal ke termurah' },
                 { key: 'newest', label: 'Terbaru', icon: 'schedule', title: 'Produk yang baru ditambahkan' },
                 { key: 'stock', label: 'Stok Terbanyak', icon: 'inventory_2', title: 'Jumlah stok paling banyak' },
               ].map(opt => (

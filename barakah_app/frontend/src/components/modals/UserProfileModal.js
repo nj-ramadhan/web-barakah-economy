@@ -95,17 +95,26 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
             </div>
 
             <div className="user-profile-modal-info">
-              <div className="info-item">
-                <span className="material-icons">location_on</span>
-                <div>
-                  <label>Provinsi</label>
-                  <p>{profile.province_name || 'Tidak diketahui'}</p>
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="material-icons">location_city</span>
+                  <div>
+                    <label>Kota / Kabupaten</label>
+                    <p>{profile.city_name || profile.address_city_name || 'Belum diisi'}</p>
+                  </div>
+                </div>
+                <div className="info-item">
+                  <span className="material-icons">map</span>
+                  <div>
+                    <label>Provinsi</label>
+                    <p>{profile.province_name || profile.address_province || 'Belum diisi'}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="user-profile-modal-shops">
-              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Toko & Layanan</h3>
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Toko &amp; Layanan</h3>
               <div className="shop-links">
                 {profile.has_digital_products && (
                   <Link to={`/digital-produk/${profile.username}`} className="shop-link digital" onClick={onClose}>
@@ -120,9 +129,9 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                   </Link>
                 )}
                 {profile.has_physical_products && (
-                  <Link to={`/produk-fisik/${profile.username}`} className="shop-link sinergy" onClick={onClose}>
-                    <span className="material-icons">shopping_bag</span>
-                    <span>Sinergy Shop</span>
+                  <Link to={`/store?seller=${encodeURIComponent(profile.username)}`} className="shop-link store" onClick={onClose}>
+                    <span className="material-icons">storefront</span>
+                    <span>Barakah Store</span>
                   </Link>
                 )}
                 {!profile.has_digital_products && !profile.has_courses && !profile.has_physical_products && (
