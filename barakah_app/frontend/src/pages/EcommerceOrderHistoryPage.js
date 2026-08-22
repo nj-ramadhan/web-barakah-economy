@@ -442,7 +442,7 @@ const EcommerceOrderHistoryPage = () => {
 
                                                 {['pending', 'menunggu', 'waiting_payment', 'unpaid'].includes(statusLower) && (
                                                     <button
-                                                        onClick={() => navigate('/konfirmasi-pembayaran-belanja', { state: { orderId: order.id, orderNumber: order.order_number, amount: totalCalculatedAmount, bank: 'qris' } })}
+                                                        onClick={() => navigate(`/pembayaran/${order.order_number}`, { state: { orderId: order.id, orderNumber: order.order_number, amount: totalCalculatedAmount, isRepayment: true, addUniqueCode: false, bank: 'qris' } })}
                                                         className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
                                                     >
                                                         <span className="material-icons text-sm">payment</span>

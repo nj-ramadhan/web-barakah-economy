@@ -264,6 +264,14 @@ const DynaQRISModal = ({
                         {statusText}
                     </p>
                 </div>
+
+                {/* Informative Helper note */}
+                <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200/80 rounded-xl text-left flex items-start gap-2 text-[10px] text-gray-600">
+                    <span className="material-icons text-sm text-emerald-600 shrink-0 mt-0.5">info</span>
+                    <p>
+                        Jika belum sempat menyelesaikan pembayaran, transaksi Anda tetap tersimpan di menu <span className="font-bold text-gray-800">Profil / Riwayat</span> untuk dibayar nanti dengan nominal yang sama atau dibatalkan.
+                    </p>
+                </div>
             </div>
         </div>
     );

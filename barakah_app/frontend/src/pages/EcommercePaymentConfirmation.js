@@ -81,8 +81,10 @@ const EcommercePaymentConfirmation = () => {
             orderId: matched.id,
             orderNumber: matched.order_number,
             amount: calculatedTotal,
-            baseAmount: Number(matched.total_price) + Number(matched.shipping_cost || 0) - Number(matched.voucher_nominal || 0),
+            baseAmount: calculatedTotal,
             uniqueFee: Number(matched.admin_fee || 0),
+            isRepayment: true,
+            addUniqueCode: false,
             bank: matched.payment_method === 'dynaqris' ? 'qris' : (matched.payment_method || 'qris'),
             customerName: matched.recipient_name,
             customerPhone: matched.recipient_phone,
@@ -141,7 +143,7 @@ const EcommercePaymentConfirmation = () => {
     }
   }, [paymentConfig, qrisData, isSuccess, isExpired]);
 
-  // Auto-polling payment status for instant seamless verification
+  // Auto poll status for DynaQRIS
   useEffect(() => {
     if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess) {
       const poller = setInterval(async () => {
@@ -209,7 +211,8 @@ const EcommercePaymentConfirmation = () => {
       setShowDynaModal(true);
       return;
     }
-    const targetAmount = orderData?.baseAmount || orderData?.amount;
+    const isRepay = orderData?.isRepayment || orderData?.addUniqueCode === false;
+    const targetAmount = isRepay ? orderData?.amount : (orderData?.baseAmount || orderData?.amount);
     if (!targetAmount) return;
 
     setGeneratingQris(true);
@@ -219,7 +222,7 @@ const EcommercePaymentConfirmation = () => {
         amount: targetAmount, 
         reference_id: currentOrderNumber, 
         type: 'ecommerce',
-        add_unique_code: orderData?.addUniqueCode !== false
+        add_unique_code: !isRepay
       });
       if (res.error) {
         alert(res.error);
@@ -239,7 +242,7 @@ const EcommercePaymentConfirmation = () => {
 
   const handleDynaCancel = () => {
     setShowDynaModal(false);
-    alert('Sesi pembayaran ditutup. Anda dapat membayar kembali kapan saja melalui menu Profil / Riwayat Belanja.');
+    alert(`ℹ️ Informasi Pesanan:\nPesanan Anda #${currentOrderNumber || ''} telah tersimpan di sistem dan belum terselesaikan.\n\nSilakan buka menu Profil > Riwayat Belanja kapan saja untuk melanjutkan pembayaran dengan nominal yang sama (Rp ${formattedAmount}) atau membatalkan pesanan.`);
     navigate('/riwayat-belanja');
   };
 
@@ -265,6 +268,7 @@ const EcommercePaymentConfirmation = () => {
 
   // Final amount syncs with DynaQRIS total (including unique fee / admin fee)
   const isDynaActive = paymentConfig?.active_mode === 'dynaqris';
+  const isRepay = orderData?.isRepayment || orderData?.addUniqueCode === false;
   const orderId = orderData?.orderId || null;
   const orderNumberParam = orderData?.orderNumber || currentOrderNumber || null;
   const amount = orderData?.amount || 0;
@@ -278,9 +282,9 @@ const EcommercePaymentConfirmation = () => {
   const voucherDiscount = orderData?.voucherDiscount || 0;
   const cartItems = orderData?.cartItems || [];
 
-  const finalDisplayAmount = qrisData?.amount || amount || 0;
-  const dynaAdminFee = Number(orderData?.uniqueFee) || (qrisData?.amount && qrisData.amount > amount ? (qrisData.amount - amount) : (qrisData?.uniqueCode || 0));
-  const baseTagihanAmount = Number(orderData?.baseAmount) || (amount - dynaAdminFee);
+  const finalDisplayAmount = isRepay ? (orderData?.amount || qrisData?.amount || 0) : (qrisData?.amount || amount || 0);
+  const dynaAdminFee = isRepay ? Number(orderData?.uniqueFee || 0) : (Number(orderData?.uniqueFee) || (qrisData?.amount && qrisData.amount > amount ? (qrisData.amount - amount) : (qrisData?.uniqueCode || 0)));
+  const baseTagihanAmount = isRepay ? (finalDisplayAmount - dynaAdminFee) : (Number(orderData?.baseAmount) || (amount - dynaAdminFee));
   const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(finalDisplayAmount || 0);
   const formattedBaseAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(baseTagihanAmount || 0);
 
@@ -733,8 +737,19 @@ const EcommercePaymentConfirmation = () => {
                   className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5"
                 >
                   <span className="material-icons text-sm text-red-500">cancel</span>
-                  <span>Batalkan Pembayaran</span>
+                  <span>Kembali / Batalkan Sesi Ini</span>
                 </button>
+              </div>
+
+              {/* Informative Help Card for Unfinished Payments */}
+              <div className="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-left flex items-start gap-2.5 text-xs text-emerald-900 mt-2">
+                <span className="material-icons text-base text-emerald-600 shrink-0 mt-0.5">info</span>
+                <div className="space-y-0.5">
+                  <p className="font-bold text-[11px] text-emerald-950">Pesanan Tersimpan Aman</p>
+                  <p className="text-[10px] text-emerald-800 leading-relaxed">
+                    Jika belum sempat membayar atau sesi tertutup, pesanan Anda tetap tersimpan. Anda dapat melanjutkan pembayaran dengan nominal yang sama atau membatalkan pesanan kapan saja melalui menu <span className="font-bold">Profil &gt; Riwayat Belanja</span>.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

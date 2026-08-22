@@ -642,6 +642,8 @@ const PurchasesTab = () => {
                                                             orderId: order.id, 
                                                             orderNumber: order.order_number, 
                                                             amount: orderTotal, 
+                                                            isRepayment: true,
+                                                            addUniqueCode: false,
                                                             bank: 'qris',
                                                             cartItems: (order.items || []).map(it => ({
                                                                 product: {
