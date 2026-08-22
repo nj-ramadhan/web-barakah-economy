@@ -265,7 +265,10 @@ const EcommercePaymentConfirmation = () => {
 
   // Final amount syncs with DynaQRIS total (including unique fee / admin fee)
   const isDynaActive = paymentConfig?.active_mode === 'dynaqris';
+  const orderId = orderData?.orderId || null;
+  const orderNumberParam = orderData?.orderNumber || currentOrderNumber || null;
   const amount = orderData?.amount || 0;
+  const uniqueFee = orderData?.uniqueFee || 0;
   const bank = orderData?.bank || 'qris';
   const customerName = orderData?.customerName || '';
   const customerPhone = orderData?.customerPhone || '';

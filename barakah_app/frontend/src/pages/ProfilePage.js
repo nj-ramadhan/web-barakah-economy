@@ -325,7 +325,7 @@ const PurchasesTab = () => {
                 setPhysicalOrders(sortedSinergy);
 
                 // Fetch unreviewed count
-                const resUnreviewed = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/unreviewed-items/`, {
+                const resUnreviewed = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/unreviewed-products/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 }).catch(() => ({ data: [] }));
                 setUnreviewedCount((resUnreviewed.data || []).length);
