@@ -1067,23 +1067,21 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                     </button>
                                                                 </div>
                                                             </details>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Batalkan pengiriman pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
                                                         </div>
                                                     )}
-
-                                                        <button
-                                                            onClick={() => {
-                                                                if (window.confirm('Batalkan pengiriman pesanan ini?')) {
-                                                                    handleUpdateStatus(order.id, 'Batal');
-                                                                }
-                                                            }}
-                                                            disabled={updatingId === order.id}
-                                                            className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
-                                                        >
-                                                            <span className="material-icons text-sm">cancel</span>
-                                                            Batalkan Pesanan
-                                                        </button>
-                                                    </div>
-                                                )}
 
                                                     {/* Notification to Buyer */}
                                                     <button 

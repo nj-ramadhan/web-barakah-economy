@@ -448,7 +448,7 @@ const EcommerceOrderHistoryPage = () => {
                                                 <div className="p-2.5 bg-amber-50/90 rounded-xl border border-amber-200 text-xs flex items-center gap-2 text-amber-900">
                                                     <span className="material-icons text-amber-600 text-base shrink-0">payments</span>
                                                     <span>
-                                                        <strong>Tagihan Tunai COD:</strong> Siapkan uang pas sebesar <strong className="text-amber-800 font-black">{formatCurrency(order.cod_amount_to_pay || order.grand_total)}</strong> saat paket diserahkan oleh kurir.
+                                                        <strong>Tagihan Tunai COD:</strong> Siapkan uang pas sebesar <strong className="text-amber-800 font-black">Rp {formatIDR(order.cod_amount_to_pay || order.grand_total)}</strong> saat paket diserahkan oleh kurir.
                                                     </span>
                                                 </div>
                                             )}
@@ -598,7 +598,7 @@ const EcommerceOrderHistoryPage = () => {
                                         {((selectedDetailOrder.payment_method || '').toLowerCase() === 'cod' || Number(selectedDetailOrder.cod_amount_to_pay) > 0) && (
                                             <div className="flex justify-between pt-1 border-t border-gray-200 text-amber-900">
                                                 <span className="font-bold">Tagihan Tunai COD:</span>
-                                                <span className="font-black text-amber-800">{formatCurrency(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
+                                                <span className="font-black text-amber-800">Rp {formatIDR(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
                                             </div>
                                         )}
                                     </div>
@@ -625,7 +625,7 @@ const EcommerceOrderHistoryPage = () => {
                                         {((selectedDetailOrder.payment_method || '').toLowerCase() === 'cod' || Number(selectedDetailOrder.cod_amount_to_pay) > 0) && (
                                             <div className="flex justify-between pt-1 border-t border-gray-200 text-amber-900">
                                                 <span className="font-bold">Tagihan Tunai COD:</span>
-                                                <span className="font-black text-amber-800">{formatCurrency(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
+                                                <span className="font-black text-amber-800">Rp {formatIDR(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
                                             </div>
                                         )}
                                     </div>
