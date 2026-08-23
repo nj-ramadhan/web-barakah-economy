@@ -39,6 +39,8 @@ const SvgBarcode = ({ value }) => {
 // Printable Standard Shipping Label Component (A6 / Thermal Ready)
 const ShippingLabelCard = ({ order, user }) => {
     const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+    const statusUpper = (order.status || '').toUpperCase();
+    const isUnpaidNonCod = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes(statusUpper);
     const recipientName = order.recipient_name || order.buyer_details?.name_full || order.buyer_details?.username || 'Pembeli';
     const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
     const streetAddress = order.shipping_address || order.buyer_details?.address || '-';
@@ -88,7 +90,7 @@ const ShippingLabelCard = ({ order, user }) => {
             </div>
 
             {/* Payment COD / Non-COD Badge Box */}
-            <div className={`my-2 p-2 border-2 border-black text-center rounded font-black ${isCod ? 'bg-black text-white' : 'bg-white text-black'}`}>
+            <div className={`my-2 p-2 border-2 border-black text-center rounded font-black ${isCod ? 'bg-black text-white' : (isUnpaidNonCod ? 'bg-amber-100 text-amber-950 border-dashed' : 'bg-white text-black')}`}>
                 {isCod ? (
                     <div>
                         <div className="text-xs uppercase tracking-wider flex items-center justify-center gap-1">
@@ -98,9 +100,18 @@ const ShippingLabelCard = ({ order, user }) => {
                             TAGIHAN: Rp {formatIDR(order.cod_amount_to_pay || order.grand_total || 0)}
                         </div>
                     </div>
+                ) : isUnpaidNonCod ? (
+                    <div>
+                        <div className="text-[11px] uppercase tracking-wider text-amber-900 font-bold">
+                            ⚠️ BELUM LUNAS (MENUNGGU PEMBAYARAN)
+                        </div>
+                        <div className="text-xs font-black mt-0.5">
+                            Nominal: Rp {formatIDR(order.grand_total || 0)}
+                        </div>
+                    </div>
                 ) : (
                     <div className="text-xs uppercase tracking-widest py-0.5">
-                        ✓ NON-COD (LUNAS)
+                        ✓ NON-COD (LUNAS - SUDAH DIBAYAR)
                     </div>
                 )}
             </div>
@@ -287,10 +298,29 @@ const DashboardSinergySellerOrdersPage = () => {
             alert('Pilih minimal 1 pesanan untuk dicetak labelnya.');
             return;
         }
-        setPrintModalOrders(selected);
+        const printable = selected.filter(o => {
+            const isCod = (o.payment_method || '').toUpperCase() === 'COD';
+            const st = (o.status || '').toUpperCase();
+            return isCod || !['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes(st);
+        });
+        if (printable.length === 0) {
+            alert('Pesanan yang Anda pilih belum dibayar (Lunas). Cetak resi hanya berlaku untuk pesanan yang sudah dibayar atau pesanan COD.');
+            return;
+        }
+        if (printable.length < selected.length) {
+            alert(`${selected.length - printable.length} pesanan yang belum dibayar dilewati. Menyiapkan cetak untuk ${printable.length} pesanan yang sudah lunas/COD.`);
+        }
+        setPrintModalOrders(printable);
     };
 
     const handlePrintSingle = (order) => {
+        const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+        const st = (order.status || '').toUpperCase();
+        const isUnpaid = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes(st);
+        if (isUnpaid) {
+            alert('Pesanan ini belum dibayar oleh pembeli. Resi pengiriman hanya dapat dicetak setelah pesanan lunas atau berstatus siap diproses / COD.');
+            return;
+        }
         setPrintModalOrders([order]);
     };
 
@@ -303,6 +333,8 @@ const DashboardSinergySellerOrdersPage = () => {
 
         const labelsHtml = ordersToPrint.map(order => {
             const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+            const statusUpper = (order.status || '').toUpperCase();
+            const isUnpaidNonCod = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes(statusUpper);
             const recipientName = order.recipient_name || order.buyer_details?.name_full || order.buyer_details?.username || 'Pembeli';
             const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
             const streetAddress = order.shipping_address || order.buyer_details?.address || '-';
@@ -381,12 +413,15 @@ const DashboardSinergySellerOrdersPage = () => {
                     ${isKurirToko && order.delivery_time_slot ? `<span class="slot-badge">Slot: ${order.delivery_time_slot}</span>` : ''}
                 </div>
 
-                <div class="payment-box ${isCod ? 'cod' : 'non-cod'}">
+                <div class="payment-box ${isCod ? 'cod' : (isUnpaidNonCod ? 'unpaid' : 'non-cod')}">
                     ${isCod ? `
                         <div style="font-size: 11px; text-transform: uppercase;">💵 COD (BAYAR DI TEMPAT)</div>
                         <div style="font-size: 14px; font-weight: bold; margin-top: 2px;">TAGIHAN: Rp ${formatIDR(order.cod_amount_to_pay || order.grand_total || 0)}</div>
+                    ` : isUnpaidNonCod ? `
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: #92400e;">⚠️ BELUM LUNAS (MENUNGGU PEMBAYARAN)</div>
+                        <div style="font-size: 13px; font-weight: bold; margin-top: 2px; color: #78350f;">Nominal: Rp ${formatIDR(order.grand_total || 0)}</div>
                     ` : `
-                        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold;">✓ NON-COD (LUNAS)</div>
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold;">✓ NON-COD (LUNAS - SUDAH DIBAYAR)</div>
                     `}
                 </div>
 
@@ -1229,14 +1264,24 @@ const DashboardSinergySellerOrdersPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2.5">
-                                            <button
-                                                onClick={() => handlePrintSingle(order)}
-                                                className="flex items-center gap-1 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-                                                title="Cetak Label Resi Pengiriman"
-                                            >
-                                                <span className="material-icons text-sm text-emerald-600">print</span>
-                                                Cetak Resi
-                                            </button>
+                                            {(() => {
+                                                const isOrderUnpaid = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes((order.status || '').toUpperCase());
+                                                return (
+                                                    <button
+                                                        onClick={() => handlePrintSingle(order)}
+                                                        disabled={isOrderUnpaid}
+                                                        className={`flex items-center gap-1 border px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                                                            isOrderUnpaid 
+                                                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-70' 
+                                                                : 'bg-white hover:bg-emerald-50 border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-800 cursor-pointer'
+                                                        }`}
+                                                        title={isOrderUnpaid ? "Pesanan belum dibayar oleh pembeli. Resi hanya dapat dicetak setelah lunas / siap diproses." : "Cetak Label Resi Pengiriman"}
+                                                    >
+                                                        <span className={`material-icons text-sm ${isOrderUnpaid ? 'text-gray-400' : 'text-emerald-600'}`}>print</span>
+                                                        {isOrderUnpaid ? 'Belum Bayar' : 'Cetak Resi'}
+                                                    </button>
+                                                );
+                                            })()}
                                             <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
