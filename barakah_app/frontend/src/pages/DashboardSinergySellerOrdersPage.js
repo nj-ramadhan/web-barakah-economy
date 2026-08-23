@@ -83,6 +83,7 @@ const DashboardSinergySellerOrdersPage = () => {
         const shippingTypeToSave = localShippingType[orderId] !== undefined ? localShippingType[orderId] : (order?.shipping_type || 'ekspedisi');
         const resiToSave = localResi[orderId] !== undefined ? localResi[orderId] : (order?.resi_number || '');
         const driverNameToSave = localDriverName[orderId] !== undefined ? localDriverName[orderId] : (order?.driver_name || '');
+        const driverPhoneToSave = localDriverPhone[orderId] !== undefined ? localDriverPhone[orderId] : (order?.driver_phone || '');
         const estToSave = localEst[orderId] !== undefined ? localEst[orderId] : (order?.estimated_delivery_days !== undefined && order?.estimated_delivery_days !== null ? order.estimated_delivery_days : (shippingTypeToSave === 'kurir_toko' ? 0 : 3));
         
         setUpdatingId(orderId);
@@ -624,21 +625,28 @@ const DashboardSinergySellerOrdersPage = () => {
 
                                                             {/* Dynamic Form based on shipping type */}
                                                             {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                <div className="space-y-1.5 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="text-[9px] font-bold text-indigo-900 uppercase tracking-wider">Nomor Resi &amp; Estimasi</label>
-                                                                        <span className="text-[9px] text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
+                                                                <div className="space-y-2 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-indigo-600">local_shipping</span>
+                                                                            No. Resi Kurir
+                                                                        </label>
+                                                                        <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
                                                                     </div>
-                                                                    <div className="flex gap-1.5 items-center">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="No. Resi Kurir (cth: JP123456789)..."
-                                                                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                                                                        />
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="Masukkan No. Resi Kurir..."
+                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                                                    />
+                                                                    <div className="flex items-center justify-between pt-0.5">
+                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-indigo-500">schedule</span>
+                                                                            Estimasi Tiba:
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
                                                                             <input 
                                                                                 type="number"
                                                                                 min="1"
@@ -648,50 +656,55 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
                                                                                 onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="w-6 text-xs font-bold text-gray-800 outline-none text-center bg-transparent p-0"
+                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
                                                                             />
                                                                             <span className="text-[10px] text-indigo-600 font-bold select-none whitespace-nowrap">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <div className="space-y-1.5 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="text-[9px] font-bold text-emerald-900 uppercase tracking-wider">Data Pengirim / Kurir Toko</label>
-                                                                        <span className="text-[9px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
+                                                                <div className="space-y-2 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <label className="font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-emerald-600">delivery_dining</span>
+                                                                            Data Pengirim / Kurir Toko
+                                                                        </label>
+                                                                        <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
                                                                     </div>
-                                                                    <div className="space-y-1.5">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
-                                                                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                                                                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                        />
-                                                                        <div className="flex gap-1.5 items-center">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
+                                                                        value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
+                                                                        onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
+                                                                        value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                                                                        onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <div className="flex items-center justify-between pt-0.5">
+                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-emerald-500">schedule</span>
+                                                                            Estimasi Tiba <span className="text-gray-400 text-[10px]">(Opsional):</span>
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika sampai hari ini)">
                                                                             <input 
-                                                                                type="text"
-                                                                                placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
-                                                                                value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                                onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                                type="number"
+                                                                                min="1"
+                                                                                max="60"
+                                                                                placeholder="—"
+                                                                                title="Opsional: Estimasi tiba (hari)"
+                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
+                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
                                                                             />
-                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika langsung sampai hari ini)">
-                                                                                <input 
-                                                                                    type="number"
-                                                                                    min="1"
-                                                                                    max="60"
-                                                                                    placeholder="—"
-                                                                                    title="Opsional: Estimasi tiba (hari)"
-                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
-                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                    disabled={updatingId === order.id}
-                                                                                    className="w-6 text-xs font-bold text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                                />
-                                                                                <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                            </div>
+                                                                            <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -791,21 +804,28 @@ const DashboardSinergySellerOrdersPage = () => {
 
                                                             {/* Dynamic Form based on shipping type */}
                                                             {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                <div className="space-y-1.5 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="text-[9px] font-bold text-indigo-900 uppercase tracking-wider">Nomor Resi &amp; Estimasi</label>
-                                                                        <span className="text-[9px] text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
+                                                                <div className="space-y-2 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-indigo-600">local_shipping</span>
+                                                                            No. Resi Kurir
+                                                                        </label>
+                                                                        <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
                                                                     </div>
-                                                                    <div className="flex gap-1.5 items-center">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="No. Resi Kurir (cth: JP123456789)..."
-                                                                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                                                                        />
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="Masukkan No. Resi Kurir..."
+                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                                                    />
+                                                                    <div className="flex items-center justify-between pt-0.5">
+                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-indigo-500">schedule</span>
+                                                                            Estimasi Tiba:
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
                                                                             <input 
                                                                                 type="number"
                                                                                 min="1"
@@ -815,50 +835,55 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
                                                                                 onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="w-6 text-xs font-bold text-gray-800 outline-none text-center bg-transparent p-0"
+                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
                                                                             />
                                                                             <span className="text-[10px] text-indigo-600 font-bold select-none whitespace-nowrap">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <div className="space-y-1.5 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="text-[9px] font-bold text-emerald-900 uppercase tracking-wider">Data Pengirim / Kurir Toko</label>
-                                                                        <span className="text-[9px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
+                                                                <div className="space-y-2 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <label className="font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-emerald-600">delivery_dining</span>
+                                                                            Data Pengirim / Kurir Toko
+                                                                        </label>
+                                                                        <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
                                                                     </div>
-                                                                    <div className="space-y-1.5">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
-                                                                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                                                                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                        />
-                                                                        <div className="flex gap-1.5 items-center">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
+                                                                        value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
+                                                                        onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
+                                                                        value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                                                                        onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <div className="flex items-center justify-between pt-0.5">
+                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                                                            <span className="material-icons text-xs text-emerald-500">schedule</span>
+                                                                            Estimasi Tiba <span className="text-gray-400 text-[10px]">(Opsional):</span>
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika sampai hari ini)">
                                                                             <input 
-                                                                                type="text"
-                                                                                placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
-                                                                                value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                                onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                                type="number"
+                                                                                min="1"
+                                                                                max="60"
+                                                                                placeholder="—"
+                                                                                title="Opsional: Estimasi tiba (hari)"
+                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
+                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                 disabled={updatingId === order.id}
-                                                                                className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
                                                                             />
-                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika langsung sampai hari ini)">
-                                                                                <input 
-                                                                                    type="number"
-                                                                                    min="1"
-                                                                                    max="60"
-                                                                                    placeholder="—"
-                                                                                    title="Opsional: Estimasi tiba (hari)"
-                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
-                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                    disabled={updatingId === order.id}
-                                                                                    className="w-6 text-xs font-bold text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                                />
-                                                                                <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                            </div>
+                                                                            <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -985,50 +1010,54 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                 </div>
 
                                                                 {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                    <div className="flex gap-1.5 items-center">
+                                                                    <div className="space-y-2">
                                                                         <input 
                                                                             type="text"
                                                                             placeholder="No. Resi Pengiriman..."
                                                                             value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
                                                                             onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
                                                                             disabled={updatingId === order.id}
-                                                                            className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                                         />
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
-                                                                            <input 
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="60"
-                                                                                placeholder="3"
-                                                                                title="Estimasi pengiriman (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-6 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                            />
-                                                                            <span className="text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">Hari</span>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-[11px] text-gray-600 font-medium">Estimasi Tiba:</span>
+                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
+                                                                                <input 
+                                                                                    type="number"
+                                                                                    min="1"
+                                                                                    max="60"
+                                                                                    placeholder="3"
+                                                                                    title="Estimasi pengiriman (hari)"
+                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
+                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                    disabled={updatingId === order.id}
+                                                                                    className="w-7 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
+                                                                                />
+                                                                                <span className="text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">Hari</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="space-y-1.5">
+                                                                    <div className="space-y-2">
                                                                         <input 
                                                                             type="text"
                                                                             placeholder="Nama Pengirim / Driver..."
                                                                             value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
                                                                             onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
                                                                             disabled={updatingId === order.id}
-                                                                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                                                                         />
-                                                                        <div className="flex gap-1.5 items-center">
-                                                                            <input 
-                                                                                type="text"
-                                                                                placeholder="No. Telp/WA Pengirim..."
-                                                                                value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                                onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                                                            />
-                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari">
+                                                                        <input 
+                                                                            type="text"
+                                                                            placeholder="No. Telp/WA Pengirim..."
+                                                                            value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                                                                            onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                            disabled={updatingId === order.id}
+                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                                        />
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-[11px] text-gray-600 font-medium">Estimasi Tiba (Opsional):</span>
+                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari">
                                                                                 <input 
                                                                                     type="number"
                                                                                     min="1"
@@ -1038,7 +1067,7 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                     value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
                                                                                     onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
                                                                                     disabled={updatingId === order.id}
-                                                                                    className="w-6 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
+                                                                                    className="w-7 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
                                                                                 />
                                                                                 <span className="text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">Hari</span>
                                                                             </div>
