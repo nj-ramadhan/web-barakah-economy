@@ -97,17 +97,24 @@ def restore_order_stock(order):
 
 
 def refund_order_to_wallet(order, reason_note=''):
-    """Safely refund paid money or used Saldo BAE back to buyer's UserWallet."""
+    """Safely refund paid money or used Saldo BAE back to buyer's UserWallet. COD orders must NEVER be refunded."""
     try:
+        if not order:
+            return
+
+        payment_method = str(order.payment_method or '').strip().lower()
+        if payment_method == 'cod' or 'cod' in payment_method:
+            logger.info(f"Skipping refund for COD order {order.order_number} (no upfront payment was made).")
+            return
+
         if WalletTransaction.objects.filter(order=order, transaction_type='REFUND').exists():
             return
 
-        is_non_cod = (order.payment_method or '').lower() != 'cod'
         refund_amount = Decimal('0')
 
         if order.used_balance and order.used_balance > 0:
             refund_amount = order.used_balance
-        elif is_non_cod and ((order.status or '').lower() == 'paid' or order.payment_proof):
+        elif (order.status or '').lower() == 'paid' or order.payment_proof:
             refund_amount = order.grand_total
 
         if refund_amount > 0:
