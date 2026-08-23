@@ -1265,20 +1265,29 @@ const DashboardSinergySellerOrdersPage = () => {
                                         </div>
                                         <div className="flex items-center gap-2.5">
                                             {(() => {
-                                                const isOrderUnpaid = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes((order.status || '').toUpperCase());
+                                                const isOrderCancelled = ['BATAL', 'CANCELLED'].includes(statusUpper);
+                                                const isOrderUnpaid = !isCod && ['PENDING', 'UNPAID', 'WAITING_PAYMENT', 'MENUNGGU PEMBAYARAN', 'MENUNGGU VERIFIKASI'].includes(statusUpper);
+                                                const isBlocked = isOrderCancelled || isOrderUnpaid;
+                                                
                                                 return (
                                                     <button
                                                         onClick={() => handlePrintSingle(order)}
-                                                        disabled={isOrderUnpaid}
+                                                        disabled={isBlocked}
                                                         className={`flex items-center gap-1 border px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm ${
-                                                            isOrderUnpaid 
+                                                            isBlocked 
                                                                 ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-70' 
                                                                 : 'bg-white hover:bg-emerald-50 border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-800 cursor-pointer'
                                                         }`}
-                                                        title={isOrderUnpaid ? "Pesanan belum dibayar oleh pembeli. Resi hanya dapat dicetak setelah lunas / siap diproses." : "Cetak Label Resi Pengiriman"}
+                                                        title={
+                                                            isOrderCancelled 
+                                                                ? "Pesanan telah dibatalkan." 
+                                                                : isOrderUnpaid 
+                                                                    ? "Pesanan belum dibayar oleh pembeli. Resi hanya dapat dicetak setelah lunas / siap diproses." 
+                                                                    : "Cetak Label Resi Pengiriman"
+                                                        }
                                                     >
-                                                        <span className={`material-icons text-sm ${isOrderUnpaid ? 'text-gray-400' : 'text-emerald-600'}`}>print</span>
-                                                        {isOrderUnpaid ? 'Belum Bayar' : 'Cetak Resi'}
+                                                        <span className={`material-icons text-sm ${isBlocked ? 'text-gray-400' : 'text-emerald-600'}`}>print</span>
+                                                        {isOrderCancelled ? 'Batal' : isOrderUnpaid ? 'Belum Bayar' : 'Cetak Resi'}
                                                     </button>
                                                 );
                                             })()}
@@ -1329,7 +1338,12 @@ const DashboardSinergySellerOrdersPage = () => {
 
                                         {/* Proof Button or Auto indicator */}
                                         <div>
-                                            {hasProof ? (
+                                            {isBatal ? (
+                                                <span className="text-[11px] text-red-600 font-bold flex items-center gap-1">
+                                                    <span className="material-icons text-sm">cancel</span>
+                                                    Pesanan Dibatalkan
+                                                </span>
+                                            ) : hasProof ? (
                                                 <button
                                                     onClick={() => setSelectedProof({
                                                         url: getMediaUrl(order.payment_proof),
@@ -1343,13 +1357,25 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     Lihat Bukti Transfer
                                                 </button>
                                             ) : isDynaQris ? (
-                                                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                                                isPending ? (
+                                                    <span className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
+                                                        <span className="material-icons text-sm">hourglass_top</span>
+                                                        Menunggu Pembayaran DynaQRIS
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                                                        <span className="material-icons text-sm">check_circle</span>
+                                                        Lunas Otomatis (DynaQRIS)
+                                                    </span>
+                                                )
+                                            ) : isSaldoBae ? (
+                                                <span className="text-[11px] text-blue-600 font-semibold flex items-center gap-1">
                                                     <span className="material-icons text-sm">check_circle</span>
-                                                    Lunas Otomatis (Tanpa Upload Struk)
+                                                    Lunas Instan (Saldo BAE)
                                                 </span>
                                             ) : isCod ? (
                                                 <span className="text-[11px] text-amber-700 font-semibold">
-                                                    Tagih Tunai Saat Pengantaran
+                                                    Tagih Tunai Saat Pengantaran (COD)
                                                 </span>
                                             ) : (
                                                 <span className="text-[11px] text-gray-400 font-medium italic">
