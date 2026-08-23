@@ -1551,6 +1551,8 @@ const ProfilePage = () => {
                                             <ProfileInfoItem label="Kota / Kabupaten" value={profile.address_city_name} icon="location_city" />
                                             <ProfileInfoItem label="Kecamatan" value={profile.address_subdistrict_name} icon="home_work" />
                                             <ProfileInfoItem label="Kelurahan / Desa" value={profile.address_village_name} icon="holiday_village" />
+                                            <ProfileInfoItem label="RT / RW" value={profile.address_rt_rw} icon="signpost" />
+                                            <ProfileInfoItem label="Kode Pos" value={profile.address_postal_code} icon="markunread_mailbox" />
                                             <ProfileInfoItem label="Alamat Lengkap" value={profile.address} icon="place" fullWidth />
                                         </div>
                                     </div>

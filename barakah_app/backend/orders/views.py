@@ -250,6 +250,7 @@ class CreateOrderView(APIView):
                 recipient_name = config.get('recipient_name') or request.data.get('recipient_name') or request.data.get('customer_name')
                 recipient_phone = config.get('recipient_phone') or request.data.get('recipient_phone') or request.data.get('customer_phone')
                 shipping_address = config.get('shipping_address') or request.data.get('shipping_address')
+                shipping_rt_rw = config.get('shipping_rt_rw') or config.get('address_rt_rw') or request.data.get('shipping_rt_rw') or request.data.get('address_rt_rw') or ''
                 shipping_village = config.get('shipping_village') or request.data.get('shipping_village')
                 shipping_district = config.get('shipping_district') or request.data.get('shipping_district')
                 shipping_city = config.get('shipping_city') or request.data.get('shipping_city')
@@ -284,13 +285,13 @@ class CreateOrderView(APIView):
                         quantity=cart_item.quantity
                     )
                     item_pricing_map[cart_item.id] = unit_price
-                    total_price += (unit_price * cart_item.quantity)
+                    total_price += unit_price * cart_item.quantity
 
-                # Validate Voucher Toko if provided
+                # Apply voucher discount
                 if voucher_code:
                     try:
-                        from products.models import ShopVoucher
-                        v_qs = ShopVoucher.objects.filter(code__iexact=voucher_code, is_active=True)
+                        from coupons.models import Voucher
+                        v_qs = Voucher.objects.filter(code=voucher_code, is_active=True)
                         if seller_user:
                             v_qs = v_qs.filter(seller=seller_user)
                         voucher_obj = v_qs.first()
@@ -352,6 +353,7 @@ class CreateOrderView(APIView):
                     recipient_name=recipient_name,
                     recipient_phone=recipient_phone,
                     shipping_address=shipping_address,
+                    shipping_rt_rw=shipping_rt_rw,
                     shipping_village=shipping_village,
                     shipping_district=shipping_district,
                     shipping_city=shipping_city,

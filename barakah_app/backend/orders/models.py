@@ -77,6 +77,7 @@ class Order(models.Model):
     recipient_name = models.CharField(max_length=150, blank=True, null=True)
     recipient_phone = models.CharField(max_length=50, blank=True, null=True)
     shipping_address = models.TextField(blank=True, null=True)
+    shipping_rt_rw = models.CharField(max_length=20, blank=True, null=True, help_text="RT/RW")
     shipping_village = models.CharField(max_length=100, blank=True, null=True)
     shipping_district = models.CharField(max_length=100, blank=True, null=True)
     shipping_city = models.CharField(max_length=100, blank=True, null=True)

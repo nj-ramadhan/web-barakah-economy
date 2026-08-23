@@ -190,6 +190,7 @@ class Profile(models.Model):
     address_subdistrict_name = models.CharField(max_length=300, blank=True, null=True)
     address_village_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Village ID")
     address_village_name = models.CharField(max_length=300, blank=True, null=True, help_text="Nama Kelurahan/Desa")
+    address_rt_rw = models.CharField(max_length=20, blank=True, null=True, help_text="RT/RW e.g. 003/005")
     address_postal_code = models.CharField(max_length=10, blank=True, null=True)
     
     # Referral & Info Source

@@ -912,6 +912,36 @@ const ProfileEditPage = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* RT / RW & Kode Pos */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    RT / RW <span className="text-gray-400 text-[10px] font-normal normal-case">(format: RT/RW)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="address_rt_rw"
+                    placeholder="Contoh: 003/005"
+                    value={profile.address_rt_rw || ''}
+                    onChange={handleChange}
+                    className={inputCls('address_rt_rw')}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Kode Pos
+                  </label>
+                  <input
+                    type="text"
+                    name="address_postal_code"
+                    placeholder="Contoh: 40223"
+                    maxLength={10}
+                    value={profile.address_postal_code || ''}
+                    onChange={handleChange}
+                    className={inputCls('address_postal_code')}
+                  />
+                </div>
               </div>
             </div>
 

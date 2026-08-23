@@ -6,6 +6,184 @@ import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
 import { getMediaUrl } from '../utils/mediaUtils';
 
+const formatIDR = (val) => new Intl.NumberFormat('id-ID').format(Math.round(Number(val) || 0));
+
+// SVG Barcode Generator Component (Deterministic Clean Bars)
+const SvgBarcode = ({ value }) => {
+    if (!value) return null;
+    const textVal = String(value).trim().toUpperCase();
+    let binary = "11010010000"; // Start code
+    for (let i = 0; i < textVal.length; i++) {
+        const charCode = textVal.charCodeAt(i);
+        const bitPattern = ((charCode * 19 + 29) % 2048).toString(2).padStart(11, '0');
+        binary += bitPattern;
+    }
+    binary += "1100011101011"; // Stop code
+
+    return (
+        <div className="flex flex-col items-center justify-center my-1 select-none">
+            <svg width="220" height="40" viewBox={`0 0 ${binary.length} 40`} className="max-w-full h-9">
+                {binary.split('').map((bit, idx) => (
+                    bit === '1' ? (
+                        <rect key={idx} x={idx} y="0" width="1" height="40" fill="#111827" />
+                    ) : null
+                ))}
+            </svg>
+            <span className="font-mono font-black text-[11px] tracking-[0.2em] text-gray-900 mt-0.5">
+                {textVal}
+            </span>
+        </div>
+    );
+};
+
+// Printable Standard Shipping Label Component (A6 / Thermal Ready)
+const ShippingLabelCard = ({ order, user }) => {
+    const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+    const recipientName = order.recipient_name || order.buyer_details?.name_full || order.buyer_details?.username || 'Pembeli';
+    const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
+    const streetAddress = order.shipping_address || order.buyer_details?.address || '-';
+    const rtRw = order.shipping_rt_rw || order.buyer_details?.address_rt_rw || '';
+    const village = order.shipping_village || order.buyer_details?.address_village_name || '';
+    const district = order.shipping_district || order.buyer_details?.address_subdistrict_name || '';
+    const city = order.shipping_city || order.buyer_details?.address_city_name || '';
+    const province = order.shipping_province || order.buyer_details?.address_province || '';
+    const postalCode = order.shipping_postal_code || order.buyer_details?.address_postal_code || '';
+    const buyerNote = order.buyer_note || order.shipping_address_detail || '';
+
+    const senderName = order.seller_name || user?.username || 'Toko Mitra BAE';
+    const senderPhone = order.seller_phone || user?.phone || '-';
+    const isKurirToko = order.shipping_type === 'kurir_toko';
+    const courierLabel = isKurirToko 
+        ? '🛵 KURIR TOKO (KIRIM SENDIRI)' 
+        : `${order.shipping_courier ? order.shipping_courier.toUpperCase() : 'EKSPEDISI'} - ${order.shipping_service || 'STANDARD'}`;
+    
+    // Barcode value: if resi_number exists, use it. Otherwise use order_number.
+    const barcodeValue = order.resi_number ? order.resi_number : order.order_number;
+
+    return (
+        <div className="shipping-label-sheet w-full max-w-[420px] mx-auto bg-white text-gray-900 border-2 border-black rounded-lg p-3.5 text-xs font-sans shadow-sm print:shadow-none print:border-black print:p-3 print:m-0 print:max-w-none print:w-full print:break-inside-avoid print:page-break-after-always">
+            {/* Header: Brand & Order No */}
+            <div className="border-b-2 border-black pb-2 flex justify-between items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="bg-black text-white font-black text-[11px] px-1.5 py-0.5 rounded">BAE</span>
+                    <span className="font-black text-sm tracking-tight">BARAKAH EXPRESS</span>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase block">No. Pesanan</span>
+                    <span className="font-mono font-black text-xs">#{order.order_number}</span>
+                </div>
+            </div>
+
+            {/* Courier & Service Banner */}
+            <div className="py-2 border-b-2 border-black flex justify-between items-center bg-gray-50 -mx-3.5 px-3.5 print:bg-gray-100">
+                <div>
+                    <span className="text-[9px] font-bold text-gray-500 uppercase block">Layanan Logistik</span>
+                    <span className="font-black text-xs text-gray-900">{courierLabel}</span>
+                </div>
+                {isKurirToko && order.delivery_time_slot && (
+                    <span className="text-[10px] font-bold bg-white px-2 py-0.5 border border-black rounded">
+                        Slot: {order.delivery_time_slot}
+                    </span>
+                )}
+            </div>
+
+            {/* Payment COD / Non-COD Badge Box */}
+            <div className={`my-2 p-2 border-2 border-black text-center rounded font-black ${isCod ? 'bg-black text-white' : 'bg-white text-black'}`}>
+                {isCod ? (
+                    <div>
+                        <div className="text-xs uppercase tracking-wider flex items-center justify-center gap-1">
+                            <span>💵 COD (BAYAR DI TEMPAT)</span>
+                        </div>
+                        <div className="text-base font-black tracking-tight mt-0.5">
+                            TAGIHAN: Rp {formatIDR(order.cod_amount_to_pay || order.grand_total || 0)}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-xs uppercase tracking-widest py-0.5">
+                        ✓ NON-COD (LUNAS)
+                    </div>
+                )}
+            </div>
+
+            {/* Barcode Section (Resi if available, else Order Number) */}
+            <div className="border-b-2 border-black pb-2 text-center">
+                <span className="text-[9px] font-bold text-gray-500 uppercase block">
+                    {order.resi_number ? 'Nomor Resi Pengiriman' : 'Kode Barcode Pesanan'}
+                </span>
+                <SvgBarcode value={barcodeValue} />
+            </div>
+
+            {/* Sender & Recipient Section */}
+            <div className="grid grid-cols-2 gap-2 py-2 border-b-2 border-black">
+                {/* Penerima */}
+                <div className="border-r border-black pr-2">
+                    <span className="text-[9px] font-black uppercase text-gray-500 block mb-0.5">PENERIMA:</span>
+                    <p className="font-black text-xs leading-tight">{recipientName}</p>
+                    <p className="font-mono text-[11px] font-bold text-gray-700">{recipientPhone}</p>
+                    <div className="mt-1 text-[10px] leading-snug text-gray-800">
+                        <p>{streetAddress}</p>
+                        {rtRw && <p className="font-bold">RT/RW: {rtRw}</p>}
+                        {(village || district) && (
+                            <p>{village ? `Kel. ${village}` : ''}{district ? `, Kec. ${district}` : ''}</p>
+                        )}
+                        {(city || province) && (
+                            <p>{city}{province ? `, ${province}` : ''}</p>
+                        )}
+                        {postalCode && <p className="font-bold">Kode Pos: {postalCode}</p>}
+                    </div>
+                    {buyerNote && (
+                        <div className="mt-1 p-1 bg-gray-100 rounded text-[9px] border border-gray-300">
+                            <span className="font-bold">Ket: </span>{buyerNote}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pengirim */}
+                <div className="pl-1">
+                    <span className="text-[9px] font-black uppercase text-gray-500 block mb-0.5">PENGIRIM:</span>
+                    <p className="font-black text-xs leading-tight">{senderName}</p>
+                    <p className="font-mono text-[11px] font-bold text-gray-700">{senderPhone}</p>
+                    <p className="mt-1 text-[10px] text-gray-600">Mitra Toko Sinergy BAE</p>
+                </div>
+            </div>
+
+            {/* Item Packing List Table */}
+            <div className="pt-2">
+                <span className="text-[9px] font-black uppercase text-gray-500 block mb-1">DAFTAR BARANG ({order.items?.length || 0} Item):</span>
+                <div className="border border-black rounded overflow-hidden">
+                    <table className="w-full text-left text-[10px] border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 border-b border-black">
+                                <th className="p-1 font-bold">Produk</th>
+                                <th className="p-1 font-bold text-center w-10">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(order.items || []).map((it, idx) => (
+                                <tr key={idx} className="border-b border-gray-200 last:border-b-0">
+                                    <td className="p-1 leading-tight">
+                                        <p className="font-bold text-gray-900">{it.product_name || 'Produk'}</p>
+                                        {it.variation_name && (
+                                            <p className="text-[9px] text-gray-500 font-medium">Var: {it.variation_name}</p>
+                                        )}
+                                    </td>
+                                    <td className="p-1 text-center font-bold text-gray-900">{it.quantity}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-2 pt-1.5 border-t border-dashed border-gray-400 flex justify-between items-center text-[8px] text-gray-500">
+                <span>Tgl Order: {new Date(order.created_at).toLocaleDateString('id-ID')}</span>
+                <span>Barakah Economy Platform</span>
+            </div>
+        </div>
+    );
+};
+
 const DashboardSinergySellerOrdersPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +199,9 @@ const DashboardSinergySellerOrdersPage = () => {
     const [localCodAmount, setLocalCodAmount] = useState({});
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedProof, setSelectedProof] = useState(null); // { url: string, orderNumber: string, amount: number, date: string }
+    const [selectedProof, setSelectedProof] = useState(null);
+    const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
+    const [printModalOrders, setPrintModalOrders] = useState(null);
 
     const TIME_SLOTS = [
         { label: '08:00 - 12:00 (Pagi)', value: '08:00 - 12:00' },
@@ -71,6 +251,359 @@ const DashboardSinergySellerOrdersPage = () => {
         } catch (error) {
             alert('Gagal mengekspor CSV');
         }
+    };
+
+    const handleToggleSelectOrder = (orderId) => {
+        setSelectedOrderIds(prev => {
+            const next = new Set(prev);
+            if (next.has(orderId)) {
+                next.delete(orderId);
+            } else {
+                next.add(orderId);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAll = (orderList) => {
+        if (selectedOrderIds.size === orderList.length && orderList.length > 0) {
+            setSelectedOrderIds(new Set());
+        } else {
+            setSelectedOrderIds(new Set(orderList.map(o => o.id)));
+        }
+    };
+
+    const handlePrintSelected = (orderList) => {
+        const selected = orderList.filter(o => selectedOrderIds.has(o.id));
+        if (selected.length === 0) {
+            alert('Pilih minimal 1 pesanan untuk dicetak labelnya.');
+            return;
+        }
+        setPrintModalOrders(selected);
+    };
+
+    const handlePrintSingle = (order) => {
+        setPrintModalOrders([order]);
+    };
+
+    const handleOpenInNewTab = (ordersToPrint) => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Pop-up browser diblokir. Harap izinkan pop-up untuk membuka cetak di tab baru.');
+            return;
+        }
+
+        const labelsHtml = ordersToPrint.map(order => {
+            const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+            const recipientName = order.recipient_name || order.buyer_details?.name_full || order.buyer_details?.username || 'Pembeli';
+            const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
+            const streetAddress = order.shipping_address || order.buyer_details?.address || '-';
+            const rtRw = order.shipping_rt_rw || order.buyer_details?.address_rt_rw || '';
+            const village = order.shipping_village || order.buyer_details?.address_village_name || '';
+            const district = order.shipping_district || order.buyer_details?.address_subdistrict_name || '';
+            const city = order.shipping_city || order.buyer_details?.address_city_name || '';
+            const province = order.shipping_province || order.buyer_details?.address_province || '';
+            const postalCode = order.shipping_postal_code || order.buyer_details?.address_postal_code || '';
+            const buyerNote = order.buyer_note || order.shipping_address_detail || '';
+            const senderName = order.seller_name || user?.username || 'Toko Mitra BAE';
+            const senderPhone = order.seller_phone || user?.phone || '-';
+            const isKurirToko = order.shipping_type === 'kurir_toko';
+            const courierLabel = isKurirToko 
+                ? '🛵 KURIR TOKO (KIRIM SENDIRI)' 
+                : `${order.shipping_courier ? order.shipping_courier.toUpperCase() : 'EKSPEDISI'} - ${order.shipping_service || 'STANDARD'}`;
+            const barcodeVal = order.resi_number ? order.resi_number : order.order_number;
+
+            // Generate barcode svg
+            let binary = "11010010000";
+            for (let i = 0; i < barcodeVal.length; i++) {
+                const charCode = barcodeVal.charCodeAt(i);
+                const bitPattern = ((charCode * 19 + 29) % 2048).toString(2).padStart(11, '0');
+                binary += bitPattern;
+            }
+            binary += "1100011101011";
+
+            const rects = binary.split('').map((bit, idx) => bit === '1' ? `<rect x="${idx}" y="0" width="1" height="40" fill="#000" />` : '').join('');
+
+            const itemsRows = (order.items || []).map(it => `
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 4px;"><strong>${it.product_name || 'Produk'}</strong> ${it.variation_name ? `<br/><span style="font-size: 9px; color: #666;">Var: ${it.variation_name}</span>` : ''}</td>
+                    <td style="padding: 4px; text-align: center; font-weight: bold;">${it.quantity}</td>
+                </tr>
+            `).join('');
+
+            return `
+            <div class="label-card">
+                <div class="label-header">
+                    <div>
+                        <span class="badge">BAE</span>
+                        <strong>BARAKAH EXPRESS</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 9px; color: #666; text-transform: uppercase;">No. Pesanan</span><br/>
+                        <strong>#${order.order_number}</strong>
+                    </div>
+                </div>
+
+                <div class="courier-banner">
+                    <div>
+                        <span style="font-size: 9px; color: #666; text-transform: uppercase;">Layanan Logistik</span><br/>
+                        <strong>${courierLabel}</strong>
+                    </div>
+                    ${isKurirToko && order.delivery_time_slot ? `<span class="slot-badge">Slot: ${order.delivery_time_slot}</span>` : ''}
+                </div>
+
+                <div class="payment-box ${isCod ? 'cod' : 'non-cod'}">
+                    ${isCod ? `
+                        <div style="font-size: 11px; text-transform: uppercase;">💵 COD (BAYAR DI TEMPAT)</div>
+                        <div style="font-size: 14px; font-weight: bold; margin-top: 2px;">TAGIHAN: Rp ${formatIDR(order.cod_amount_to_pay || order.grand_total || 0)}</div>
+                    ` : `
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold;">✓ NON-COD (LUNAS)</div>
+                    `}
+                </div>
+
+                <div class="barcode-box">
+                    <div style="font-size: 9px; color: #666; text-transform: uppercase;">${order.resi_number ? 'Nomor Resi Pengiriman' : 'Kode Barcode Pesanan'}</div>
+                    <svg width="220" height="40" viewBox="0 0 ${binary.length} 40" style="margin: 4px auto 2px; display: block;">
+                        ${rects}
+                    </svg>
+                    <div style="font-family: monospace; font-weight: bold; font-size: 11px; letter-spacing: 2px;">${barcodeVal}</div>
+                </div>
+
+                <div class="address-grid">
+                    <div class="address-col" style="border-right: 1px solid #000; padding-right: 8px;">
+                        <span class="section-title">PENERIMA:</span>
+                        <div class="person-name">${recipientName}</div>
+                        <div class="person-phone">${recipientPhone}</div>
+                        <div class="address-text">
+                            ${streetAddress}<br/>
+                            ${rtRw ? `<strong>RT/RW: ${rtRw}</strong><br/>` : ''}
+                            ${village ? `Kel. ${village}, ` : ''}${district ? `Kec. ${district}<br/>` : ''}
+                            ${city ? `${city}, ` : ''}${province ? `${province}<br/>` : ''}
+                            ${postalCode ? `<strong>Kode Pos: ${postalCode}</strong><br/>` : ''}
+                        </div>
+                        ${buyerNote ? `<div class="note-box"><strong>Ket:</strong> ${buyerNote}</div>` : ''}
+                    </div>
+                    <div class="address-col" style="padding-left: 8px;">
+                        <span class="section-title">PENGIRIM:</span>
+                        <div class="person-name">${senderName}</div>
+                        <div class="person-phone">${senderPhone}</div>
+                        <div style="font-size: 10px; color: #666; margin-top: 4px;">Mitra Toko Sinergy BAE</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <span class="section-title">DAFTAR BARANG (${order.items?.length || 0} Item):</span>
+                    <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 10px; margin-top: 4px;">
+                        <thead>
+                            <tr style="background: #eee; border-bottom: 1px solid #000;">
+                                <th style="padding: 4px; text-align: left;">Produk</th>
+                                <th style="padding: 4px; text-align: center; width: 40px;">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="label-footer">
+                    <span>Tgl Order: ${new Date(order.created_at).toLocaleDateString('id-ID')}</span>
+                    <span>Barakah Economy Platform</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        const fullHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>Cetak Resi Pengiriman - Barakah Economy</title>
+                <style>
+                    * { box-sizing: border-box; }
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                        background: #f4f5f7;
+                        margin: 0;
+                        padding: 20px;
+                        color: #111;
+                    }
+                    .toolbar {
+                        max-width: 440px;
+                        margin: 0 auto 16px auto;
+                        display: flex;
+                        gap: 10px;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .btn {
+                        padding: 10px 18px;
+                        font-size: 13px;
+                        font-weight: bold;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        border: none;
+                        transition: 0.2s;
+                    }
+                    .btn-primary {
+                        background: #059669;
+                        color: #fff;
+                        flex: 1;
+                    }
+                    .btn-primary:hover {
+                        background: #047857;
+                    }
+                    .btn-secondary {
+                        background: #e5e7eb;
+                        color: #374151;
+                    }
+                    .btn-secondary:hover {
+                        background: #d1d5db;
+                    }
+                    .label-card {
+                        max-width: 440px;
+                        margin: 0 auto 24px auto;
+                        background: #fff;
+                        border: 2px solid #000;
+                        border-radius: 8px;
+                        padding: 14px;
+                        font-size: 11px;
+                        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                        page-break-after: always;
+                        break-after: page;
+                    }
+                    .label-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 6px;
+                    }
+                    .badge {
+                        background: #000;
+                        color: #fff;
+                        font-weight: 900;
+                        font-size: 10px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        margin-right: 4px;
+                    }
+                    .courier-banner {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        background: #f9fafb;
+                        margin: 0 -14px;
+                        padding: 8px 14px;
+                        border-bottom: 2px solid #000;
+                    }
+                    .slot-badge {
+                        background: #fff;
+                        border: 1px solid #000;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-weight: bold;
+                        font-size: 10px;
+                    }
+                    .payment-box {
+                        margin: 8px 0;
+                        padding: 8px;
+                        border: 2px solid #000;
+                        text-align: center;
+                        border-radius: 6px;
+                    }
+                    .payment-box.cod {
+                        background: #000;
+                        color: #fff;
+                    }
+                    .payment-box.non-cod {
+                        background: #fff;
+                        color: #000;
+                    }
+                    .barcode-box {
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 6px;
+                        text-align: center;
+                    }
+                    .address-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 8px;
+                        border-bottom: 2px solid #000;
+                        padding: 8px 0;
+                    }
+                    .section-title {
+                        font-size: 9px;
+                        font-weight: 900;
+                        color: #666;
+                        display: block;
+                        margin-bottom: 2px;
+                    }
+                    .person-name {
+                        font-weight: bold;
+                        font-size: 12px;
+                    }
+                    .person-phone {
+                        font-family: monospace;
+                        font-size: 11px;
+                        font-weight: bold;
+                        color: #444;
+                    }
+                    .address-text {
+                        font-size: 10px;
+                        line-height: 1.35;
+                        color: #222;
+                        margin-top: 4px;
+                    }
+                    .note-box {
+                        background: #fef3c7;
+                        border: 1px solid #fde68a;
+                        padding: 4px;
+                        border-radius: 4px;
+                        font-size: 9px;
+                        margin-top: 4px;
+                    }
+                    .label-footer {
+                        margin-top: 8px;
+                        padding-top: 6px;
+                        border-top: 1px dashed #aaa;
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 8px;
+                        color: #666;
+                    }
+                    @media print {
+                        body {
+                            background: #fff;
+                            padding: 0;
+                        }
+                        .toolbar {
+                            display: none !important;
+                        }
+                        .label-card {
+                            box-shadow: none;
+                            margin: 0 0 16px 0;
+                            border: 2px solid #000;
+                            max-width: 100%;
+                            width: 100%;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="toolbar">
+                    <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+                    <button class="btn btn-secondary" onclick="window.close()">Tutup Tab</button>
+                </div>
+                ${labelsHtml}
+            </body>
+            </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(fullHtml);
+        printWindow.document.close();
     };
 
     const handleDeleteOrder = async (orderId) => {
@@ -550,6 +1083,51 @@ const DashboardSinergySellerOrdersPage = () => {
                     </div>
                 </div>
 
+                {/* Bulk Actions & Selection Toolbar */}
+                {filteredOrders.length > 0 && (
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedOrderIds.size > 0 && selectedOrderIds.size === filteredOrders.length}
+                                    onChange={() => handleSelectAll(filteredOrders)}
+                                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer border-gray-300 focus:ring-emerald-500"
+                                />
+                                <span>Pilih Semua ({filteredOrders.length} Pesanan)</span>
+                            </label>
+                            {selectedOrderIds.size > 0 && (
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[11px] font-black">
+                                    {selectedOrderIds.size} dipilih
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {selectedOrderIds.size > 0 && (
+                                <button
+                                    onClick={() => setSelectedOrderIds(new Set())}
+                                    className="px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition"
+                                >
+                                    Batal Pilih
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handlePrintSelected(filteredOrders)}
+                                disabled={selectedOrderIds.size === 0}
+                                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                                    selectedOrderIds.size > 0
+                                        ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white cursor-pointer'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
+                            >
+                                <span className="material-icons text-sm">print</span>
+                                Cetak Resi Massal ({selectedOrderIds.size})
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
@@ -588,6 +1166,12 @@ const DashboardSinergySellerOrdersPage = () => {
                                     {/* Order Header */}
                                     <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap justify-between items-center gap-4 bg-gray-50/40">
                                         <div className="flex items-center gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedOrderIds.has(order.id)}
+                                                onChange={() => handleToggleSelectOrder(order.id)}
+                                                className="w-4 h-4 text-emerald-600 rounded cursor-pointer border-gray-300 focus:ring-emerald-500 shrink-0"
+                                            />
                                             <div className="bg-emerald-600 text-white p-2 rounded-lg">
                                                 <span className="material-icons text-sm">receipt</span>
                                             </div>
@@ -597,6 +1181,14 @@ const DashboardSinergySellerOrdersPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2.5">
+                                            <button
+                                                onClick={() => handlePrintSingle(order)}
+                                                className="flex items-center gap-1 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                                                title="Cetak Label Resi Pengiriman"
+                                            >
+                                                <span className="material-icons text-sm text-emerald-600">print</span>
+                                                Cetak Resi
+                                            </button>
                                             <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
@@ -1152,6 +1744,105 @@ const DashboardSinergySellerOrdersPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal Preview & Cetak Label Pengiriman */}
+            {printModalOrders && printModalOrders.length > 0 && (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[999] flex items-center justify-center p-4 print:hidden">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl flex flex-col max-h-[92vh]">
+                        {/* Modal Header */}
+                        <div className="p-5 bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="font-black text-base flex items-center gap-2">
+                                    <span className="material-icons text-emerald-200">print</span>
+                                    Cetak Label Pengiriman ({printModalOrders.length} Pesanan)
+                                </h3>
+                                <p className="text-[11px] text-emerald-100 mt-0.5">
+                                    Format standar resi ekspedisi &amp; kurir toko (A6 / Thermal Ready)
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setPrintModalOrders(null)}
+                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition"
+                            >
+                                <span className="material-icons text-lg">close</span>
+                            </button>
+                        </div>
+
+                        {/* Modal Body: Scrollable Preview of Labels */}
+                        <div className="p-6 overflow-y-auto bg-gray-100 flex-1 space-y-6">
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center gap-2">
+                                <span className="material-icons text-emerald-600 text-base">info</span>
+                                <span>Preview label di bawah ini adalah tampilan yang akan dicetak pada printer / kertas thermal Anda.</span>
+                            </div>
+
+                            {printModalOrders.map((ord) => (
+                                <ShippingLabelCard key={ord.id} order={ord} user={user} />
+                            ))}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 bg-white border-t border-gray-100 flex flex-wrap justify-between gap-3 items-center">
+                            <button
+                                onClick={() => setPrintModalOrders(null)}
+                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition"
+                            >
+                                Tutup
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleOpenInNewTab(printModalOrders)}
+                                    className="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                                >
+                                    <span className="material-icons text-sm text-gray-500">open_in_new</span>
+                                    Buka di Tab Baru
+                                </button>
+                                <button
+                                    onClick={() => window.print()}
+                                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
+                                >
+                                    <span className="material-icons text-sm">print</span>
+                                    Cetak Sekarang / Simpan PDF ({printModalOrders.length} Label)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hidden Printable Container for Direct Browser window.print() */}
+            {printModalOrders && printModalOrders.length > 0 && (
+                <div id="printable-labels-container" className="hidden print:block">
+                    {printModalOrders.map((ord) => (
+                        <ShippingLabelCard key={ord.id} order={ord} user={user} />
+                    ))}
+                </div>
+            )}
+
+            {/* Print CSS */}
+            <style>{`
+                @media print {
+                    body * {
+                        visibility: hidden !important;
+                    }
+                    #printable-labels-container, #printable-labels-container * {
+                        visibility: visible !important;
+                    }
+                    #printable-labels-container {
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 10px !important;
+                        background: transparent !important;
+                    }
+                    .shipping-label-sheet {
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        margin-bottom: 24px !important;
+                    }
+                }
+            `}</style>
 
             <NavigationButton />
         </div>

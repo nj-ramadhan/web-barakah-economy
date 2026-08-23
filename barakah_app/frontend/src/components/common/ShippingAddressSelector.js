@@ -54,6 +54,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
     nama_penerima: '',
     phone: '',
     alamat: '',
+    rt_rw: '',
     provinsi: '',
     address_province_id: '',
     kota: '',
@@ -210,6 +211,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
         nama_penerima: profile.name_full || user?.name_full || user?.username || 'Pembeli',
         phone: profile.phone_number || profile.phone || user?.phone_number || '',
         alamat: profile.address || '',
+        rt_rw: profile.address_rt_rw || '',
         kelurahan: profile.address_village_name || profile.address_village_id || '',
         kecamatan: profile.address_subdistrict_name || '',
         kota: profile.address_city_name || '',
@@ -721,16 +723,31 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
                     </div>
                   </div>
 
-                  {/* 5. Kode Pos */}
-                  <div>
-                    <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Kode Pos</label>
-                    <input
-                      type="text"
-                      placeholder="Contoh: 40123"
-                      value={formData.kode_pos}
-                      onChange={e => setFormData({ ...formData, kode_pos: e.target.value })}
-                      className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
+                  {/* 5. RT / RW & Kode Pos */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">
+                        RT / RW <span className="text-gray-400 text-[9px] font-normal lowercase">(rt/rw)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: 003/005"
+                        value={formData.rt_rw || ''}
+                        onChange={e => setFormData({ ...formData, rt_rw: e.target.value })}
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Kode Pos</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: 40123"
+                        maxLength={10}
+                        value={formData.kode_pos}
+                        onChange={e => setFormData({ ...formData, kode_pos: e.target.value })}
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
                   </div>
                 </div>
 
