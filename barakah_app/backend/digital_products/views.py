@@ -536,7 +536,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             return Response([])
 
     def create(self, request, *args, **kwargs):
-        # Calculate balance
+        # Calculate balance (Strictly Seller & Creator Revenue: Digital + Course + Completed Sinergy Non-COD)
         try:
             total_sales = DigitalOrder.objects.filter(
                 product_owner=request.user,
@@ -555,15 +555,14 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 seller=request.user,
                 status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
                 paid_to_seller_directly=False
+            ).exclude(
+                payment_method__iexact='cod'
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            from transactions.models import UserWallet
-            user_wallet = UserWallet.get_or_create_wallet(request.user)
-            wallet_balance = user_wallet.balance or Decimal('0')
-
-            total_sales = total_sales + total_course_sales + total_sinergy_completed + wallet_balance
+            # Seller earnings from sales only (UserWallet is separated for personal shopping/refunds)
+            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_completed)
         except Exception as e:
             logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
@@ -611,7 +610,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def balance(self, request):
         try:
-            # --- Available (Withdrawable) Sales ---
+            # --- Available (Withdrawable) Sales via Platform Gateway (Excluding COD) ---
             total_digital_sales_available = DigitalOrder.objects.filter(
                 product_owner=request.user,
                 payment_status='verified',
@@ -628,17 +627,17 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 seller=request.user,
                 status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
                 paid_to_seller_directly=False
+            ).exclude(
+                payment_method__iexact='cod'
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            from transactions.models import UserWallet
-            user_wallet = UserWallet.get_or_create_wallet(request.user)
-            wallet_balance = user_wallet.balance or Decimal('0')
+            # Pure seller revenue (without UserWallet e-wallet balance)
+            total_sales_available = total_digital_sales_available + total_course_sales_available + Decimal(total_sinergy_completed_available)
 
-            total_sales_available = total_digital_sales_available + total_course_sales_available + Decimal(total_sinergy_completed_available) + wallet_balance
-
-            # --- Direct (Non-Withdrawable) Sales ---
+            # --- Direct / COD (Non-Withdrawable via BAE Platform since cash/direct bank) ---
+            from django.db.models import Q
             total_digital_sales_direct = DigitalOrder.objects.filter(
                 product_owner=request.user,
                 payment_status='verified',
@@ -652,28 +651,30 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             total_sinergy_completed_direct = Order.objects.filter(
+                Q(paid_to_seller_directly=True) | Q(payment_method__iexact='cod'),
                 seller=request.user,
-                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
-                paid_to_seller_directly=True
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED']
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
             total_sales_direct = total_digital_sales_direct + total_course_sales_direct + Decimal(total_sinergy_completed_direct)
 
-            # --- Sinergy Pending (separate BAE vs Direct) ---
+            # --- Sinergy Pending (separate BAE vs Direct/COD) ---
             total_sinergy_pending_available = Order.objects.filter(
                 seller=request.user,
                 status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED', 'Komplain', 'komplain', 'KOMPLAIN', 'Banding', 'banding'],
                 paid_to_seller_directly=False
+            ).exclude(
+                payment_method__iexact='cod'
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
             total_sinergy_pending_direct = Order.objects.filter(
+                Q(paid_to_seller_directly=True) | Q(payment_method__iexact='cod'),
                 seller=request.user,
-                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED', 'Komplain', 'komplain', 'KOMPLAIN', 'Banding', 'banding'],
-                paid_to_seller_directly=True
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED', 'Komplain', 'komplain', 'KOMPLAIN', 'Banding', 'banding']
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
