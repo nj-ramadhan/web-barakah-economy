@@ -641,7 +641,13 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
             if normalized_new_status == 'Dikirim':
                 instance.shipped_at = timezone.now()
-                instance.auto_complete_at = instance.shipped_at + timedelta(days=5)
+                est_days = request.data.get('estimated_delivery_days') or instance.estimated_delivery_days or 3
+                try:
+                    est_days_int = int(est_days)
+                    if est_days_int <= 0: est_days_int = 3
+                except (ValueError, TypeError):
+                    est_days_int = 3
+                instance.auto_complete_at = instance.shipped_at + timedelta(days=est_days_int)
             elif normalized_new_status == 'Komplain':
                 instance.complaint_at = timezone.now()
                 if complaint_reason:

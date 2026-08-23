@@ -36,7 +36,7 @@ class Order(models.Model):
     driver_name = models.CharField(max_length=150, blank=True, null=True, help_text="Nama kurir / pengirim jika kirim sendiri")
     driver_phone = models.CharField(max_length=50, blank=True, null=True, help_text="No telp / WA pengirim jika kirim sendiri")
     shipped_at = models.DateTimeField(null=True, blank=True)
-    estimated_delivery_days = models.IntegerField(default=5)
+    estimated_delivery_days = models.IntegerField(default=3)
     auto_complete_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     buyer_note = models.TextField(blank=True, null=True, help_text="Catatan pembeli untuk penjual")
