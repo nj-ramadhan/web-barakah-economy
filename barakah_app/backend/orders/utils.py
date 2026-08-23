@@ -170,6 +170,16 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
     admin_fee_val = Decimal(str(getattr(order, 'admin_fee', 0) or 0))
     admin_fee_str = f"Biaya Layanan & Admin: +{format_idr(admin_fee_val)}\n" if admin_fee_val > 0 else ""
 
+    is_cod = (order.payment_method or '').lower() == 'cod'
+    cod_amount = order.cod_amount_to_pay if (order.cod_amount_to_pay and order.cod_amount_to_pay > 0) else order.grand_total
+
+    cod_note_str = ""
+    if is_cod or (order.cod_amount_to_pay and order.cod_amount_to_pay > 0):
+        cod_note_str = (
+            f"\n💵 *PEMBAYARAN: COD (BAYAR DI TEMPAT)*\n"
+            f"👉 *MOHON SIAPKAN UANG TUNAI:* Sebesar *{format_idr(cod_amount)}* saat paket tiba di alamat Anda.\n"
+        )
+
     message += (
         f"\n*Detail Produk:*\n"
         f"{items_str}\n"
@@ -177,14 +187,15 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         f"Ongkir: {format_idr(order.shipping_cost)} ({order.shipping_courier or 'Standar'})\n"
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
         f"{admin_fee_str}"
-        f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
-        f"Metode: *COD (Bayar di Tempat)*\n" if (order.payment_method or '').upper() == 'COD' else f"Metode: *{order.payment_method}*\n"
+        f"*Total Tagihan: {format_idr(order.grand_total)}*\n"
+        f"Metode Bayar: *{order.payment_method}*\n"
+        f"{cod_note_str}"
     )
 
     if order.buyer_note:
-        message += f"*Catatan Anda:* {order.buyer_note}\n\n"
+        message += f"\n*Catatan Anda:* {order.buyer_note}\n"
 
-    message += "Terima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
+    message += "\nTerima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
 
     return send_message(phone, message)
 
@@ -340,22 +351,46 @@ def send_shipping_email_notification(order):
         is_kurir_toko = getattr(order, 'shipping_type', '') == 'kurir_toko' or bool(getattr(order, 'driver_name', None))
         confirmation_link = "https://barakah.cloud/riwayat-belanja"
 
+        is_cod = (order.payment_method or '').lower() == 'cod'
+        cod_to_pay = order.cod_amount_to_pay if (order.cod_amount_to_pay and order.cod_amount_to_pay > 0) else (order.grand_total if is_cod else Decimal('0'))
+        has_cod_pay = cod_to_pay > Decimal('0')
+
         if is_kurir_toko:
             subject = f"[Barakah Economy] Pesanan #{order.order_number} Sedang Diantar oleh Kurir Toko 🛵"
             driver_phone_clean = clean_phone(order.driver_phone)
             wa_link_str = f"https://wa.me/{driver_phone_clean}" if driver_phone_clean else "-"
+
+            if order.delivery_date and order.delivery_time_slot:
+                date_fmt = order.delivery_date.strftime('%d/%m/%Y') if hasattr(order.delivery_date, 'strftime') else str(order.delivery_date)
+                jadwal_line = f"Jadwal Pengantaran    : {date_fmt} (Pukul {order.delivery_time_slot} WIB)"
+            elif order.delivery_date:
+                date_fmt = order.delivery_date.strftime('%d/%m/%Y') if hasattr(order.delivery_date, 'strftime') else str(order.delivery_date)
+                jadwal_line = f"Tanggal Pengantaran   : {date_fmt}"
+            elif order.estimated_delivery_days and order.estimated_delivery_days > 0:
+                jadwal_line = f"Estimasi Waktu Tiba   : {order.estimated_delivery_days} Hari"
+            else:
+                jadwal_line = f"Estimasi Waktu Tiba   : Pengantaran Langsung Hari Ini"
+
             shipping_section = f"""=== INFORMASI PENGIRIM (KURIR PRIBADI TOKO) ===
 Nama Driver / Pengirim : {order.driver_name or 'Kurir Toko'}
 No. Kontak / WA Driver : {order.driver_phone or '-'}
 Tautan Chat WhatsApp  : {wa_link_str}
-Estimasi Waktu Tiba   : {order.estimated_delivery_days or 1} Hari
+{jadwal_line}
 Metode Pengantaran    : Diantar Langsung oleh Toko (Kurir Pribadi)"""
         else:
             subject = f"[Barakah Economy] Pesanan #{order.order_number} Telah Dikirim ({order.shipping_courier or 'Ekspedisi'}) 🚚"
             shipping_section = f"""=== INFORMASI PENGIRIMAN (EKSPEDISI) ===
 Ekspedisi / Kurir    : {order.shipping_courier or 'Ekspedisi'}
 Nomor Resi Pelacakan : {order.resi_number or 'Sedang diperbarui oleh penjual'}
-Estimasi Pengiriman  : {order.estimated_delivery_days or 5} Hari"""
+Estimasi Pengiriman  : {order.estimated_delivery_days or 3} Hari"""
+
+        cod_email_section = ""
+        if has_cod_pay:
+            cod_email_section = f"""
+=== TAGIHAN BAYAR DI TEMPAT (COD) ===
+Nominal yang Harus Disiapkan : {format_idr(cod_to_pay)}
+* Mohon siapkan uang tunai pas untuk diserahkan kepada kurir saat paket diterima.
+"""
 
         email_body = f"""Halo {shipping_info['recipient_name'] or order.user.username},
 
@@ -366,7 +401,7 @@ Tanggal Pesanan : {order.created_at.strftime('%d/%m/%Y %H:%M')}
 Waktu Pengiriman: {timezone.now().strftime('%d/%m/%Y %H:%M')}
 
 {shipping_section}
-
+{cod_email_section}
 === ALAMAT TUJUAN PENGIRIMAN ===
 Nama Penerima : {shipping_info['recipient_name']}
 No. HP Penerima : {shipping_info['recipient_phone']}
@@ -410,6 +445,17 @@ def send_status_update_notification(order):
     confirmation_link = "https://barakah.cloud/riwayat-belanja"
     is_kurir_toko = getattr(order, 'shipping_type', '') == 'kurir_toko' or bool(getattr(order, 'driver_name', None))
 
+    is_cod = (order.payment_method or '').lower() == 'cod'
+    cod_to_pay = order.cod_amount_to_pay if (order.cod_amount_to_pay and order.cod_amount_to_pay > 0) else (order.grand_total if is_cod else Decimal('0'))
+    has_cod_pay = cod_to_pay > Decimal('0')
+
+    cod_section_wa = ""
+    if has_cod_pay:
+        cod_section_wa = (
+            f"\n💵 *TAGIHAN BAYAR DI TEMPAT (COD):*\n"
+            f"👉 *MOHON SIAPKAN UANG TUNAI:* Sebesar *{format_idr(cod_to_pay)}* untuk diserahkan ke kurir saat paket tiba di alamat Anda.\n"
+        )
+
     items_str = ""
     for item in order.items.all():
         var_str = f" ({item.variation.name})" if item.variation else ""
@@ -423,7 +469,8 @@ def send_status_update_notification(order):
             f"No. Pesanan: {order.order_number}\n\n"
             f"Halo {shipping_info['recipient_name'] or order.user.username}, pesanan Anda sedang dikemas dan disiapkan oleh penjual.\n\n"
             f"*Daftar Produk:*\n{items_str}\n"
-            f"Total: *{format_idr(order.grand_total)}*\n\n"
+            f"Total Tagihan: *{format_idr(order.grand_total)}*\n"
+            f"{cod_section_wa}\n"
             f"Kami akan mengirimkan notifikasi kembali saat pesanan siap diberangkatkan.\n"
             f"Cek riwayat belanja: {confirmation_link}"
         )
@@ -434,6 +481,18 @@ def send_status_update_notification(order):
         if is_kurir_toko:
             driver_phone_clean = clean_phone(order.driver_phone)
             wa_link_str = f"wa.me/{driver_phone_clean}" if driver_phone_clean else "-"
+
+            if order.delivery_date and order.delivery_time_slot:
+                date_fmt = order.delivery_date.strftime('%d/%m/%Y') if hasattr(order.delivery_date, 'strftime') else str(order.delivery_date)
+                jadwal_info_wa = f"• 📅 Jadwal Pengantaran: *{date_fmt} (Pukul {order.delivery_time_slot} WIB)*\n"
+            elif order.delivery_date:
+                date_fmt = order.delivery_date.strftime('%d/%m/%Y') if hasattr(order.delivery_date, 'strftime') else str(order.delivery_date)
+                jadwal_info_wa = f"• 📅 Tanggal Pengantaran: *{date_fmt}*\n"
+            elif order.estimated_delivery_days and order.estimated_delivery_days > 0:
+                jadwal_info_wa = f"• ⏱️ Estimasi Tiba: *{order.estimated_delivery_days} Hari*\n"
+            else:
+                jadwal_info_wa = f"• 🚀 Pengantaran: *Langsung Hari Ini*\n"
+
             message = (
                 f"*PESANAN SEDANG DIKIRIM (KURIR TOKO)* 🛵\n"
                 f"No. Pesanan: {order.order_number}\n\n"
@@ -442,11 +501,12 @@ def send_status_update_notification(order):
                 f"• Nama Pengirim: *{order.driver_name or 'Driver Toko'}*\n"
                 f"• No. Telp / WA: *{order.driver_phone or '-'}*\n"
                 f"• Chat WA Driver: {wa_link_str}\n"
-                f"• Estimasi Tiba: *{order.estimated_delivery_days or 1} Hari*\n\n"
+                f"{jadwal_info_wa}\n"
                 f"📍 *Alamat Pengantaran:*\n"
                 f"{shipping_info['formatted_address']}\n\n"
                 f"📋 *Daftar Produk:*\n{items_str}\n"
-                f"Total Tagihan: *{format_idr(order.grand_total)}*\n\n"
+                f"Total Tagihan: *{format_idr(order.grand_total)}*\n"
+                f"{cod_section_wa}\n"
                 f"Harap pastikan penerima berada di tempat. Jika pesanan sudah diterima, mohon konfirmasi melalui tautan:\n"
                 f"{confirmation_link}\n\n"
                 f"Terima kasih telah berbelanja di Barakah Economy!"
@@ -459,11 +519,12 @@ def send_status_update_notification(order):
                 f"🚚 *Detail Ekspedisi:*\n"
                 f"• Kurir: *{order.shipping_courier or 'Ekspedisi'}*\n"
                 f"• Nomor Resi: *{order.resi_number or 'Sedang diperbarui penjual'}*\n"
-                f"• Estimasi Pengiriman: *{order.estimated_delivery_days or 5} Hari*\n\n"
+                f"• Estimasi Pengiriman: *{order.estimated_delivery_days or 3} Hari*\n\n"
                 f"📍 *Alamat Tujuan:*\n"
                 f"{shipping_info['formatted_address']}\n\n"
                 f"📋 *Daftar Produk:*\n{items_str}\n"
-                f"Total Tagihan: *{format_idr(order.grand_total)}*\n\n"
+                f"Total Tagihan: *{format_idr(order.grand_total)}*\n"
+                f"{cod_section_wa}\n"
                 f"Lacak pesanan dan konfirmasi penerimaan melalui tautan:\n"
                 f"{confirmation_link}\n\n"
                 f"Terima kasih telah berbelanja di Barakah Economy!"

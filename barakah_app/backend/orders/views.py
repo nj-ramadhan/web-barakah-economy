@@ -663,7 +663,7 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 instance.refresh_from_db()
                 new_st = (instance.status or '').capitalize()
                 # Auto send notification when shipped or when delivery details are updated for a shipped order
-                if new_st == 'Dikirim' and (old_status != 'Dikirim' or 'resi_number' in request.data or 'driver_name' in request.data or 'driver_phone' in request.data):
+                if new_st == 'Dikirim' and (old_status != 'Dikirim' or 'resi_number' in request.data or 'driver_name' in request.data or 'driver_phone' in request.data or 'delivery_date' in request.data or 'cod_amount_to_pay' in request.data):
                     from .utils import send_status_update_notification
                     send_status_update_notification(instance)
             except Exception as e:

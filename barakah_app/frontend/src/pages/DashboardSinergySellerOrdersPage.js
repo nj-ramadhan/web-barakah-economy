@@ -15,9 +15,20 @@ const DashboardSinergySellerOrdersPage = () => {
     const [localDriverName, setLocalDriverName] = useState({});
     const [localDriverPhone, setLocalDriverPhone] = useState({});
     const [localEst, setLocalEst] = useState({});
+    const [localDeliveryDate, setLocalDeliveryDate] = useState({});
+    const [localDeliveryTimeSlot, setLocalDeliveryTimeSlot] = useState({});
+    const [localScheduleType, setLocalScheduleType] = useState({});
+    const [localCodAmount, setLocalCodAmount] = useState({});
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProof, setSelectedProof] = useState(null); // { url: string, orderNumber: string, amount: number, date: string }
+
+    const TIME_SLOTS = [
+        { label: '08:00 - 12:00 (Pagi)', value: '08:00 - 12:00' },
+        { label: '12:00 - 15:00 (Siang)', value: '12:00 - 15:00' },
+        { label: '15:00 - 18:00 (Sore)', value: '15:00 - 18:00' },
+        { label: '18:00 - 21:00 (Malam)', value: '18:00 - 21:00' }
+    ];
 
     const statusOptions = ['Pending', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'];
 
@@ -85,6 +96,11 @@ const DashboardSinergySellerOrdersPage = () => {
         const driverNameToSave = localDriverName[orderId] !== undefined ? localDriverName[orderId] : (order?.driver_name || '');
         const driverPhoneToSave = localDriverPhone[orderId] !== undefined ? localDriverPhone[orderId] : (order?.driver_phone || '');
         const estToSave = localEst[orderId] !== undefined ? localEst[orderId] : (order?.estimated_delivery_days !== undefined && order?.estimated_delivery_days !== null ? order.estimated_delivery_days : (shippingTypeToSave === 'kurir_toko' ? 0 : 3));
+        const deliveryDateToSave = localDeliveryDate[orderId] !== undefined ? localDeliveryDate[orderId] : (order?.delivery_date || null);
+        const deliveryTimeSlotToSave = localDeliveryTimeSlot[orderId] !== undefined ? localDeliveryTimeSlot[orderId] : (order?.delivery_time_slot || '');
+        const scheduleTypeToSave = localScheduleType[orderId] !== undefined ? localScheduleType[orderId] : (order?.shipping_schedule_type || 'days');
+        const isOrderCod = (order?.payment_method || '').toLowerCase() === 'cod';
+        const codAmountToSave = localCodAmount[orderId] !== undefined ? localCodAmount[orderId] : (order?.cod_amount_to_pay !== undefined && order?.cod_amount_to_pay !== null ? order.cod_amount_to_pay : (isOrderCod ? order?.grand_total : null));
         
         setUpdatingId(orderId);
         try {
@@ -95,7 +111,11 @@ const DashboardSinergySellerOrdersPage = () => {
                     resi_number: resiToSave,
                     driver_name: driverNameToSave,
                     driver_phone: driverPhoneToSave,
-                    estimated_delivery_days: estToSave
+                    estimated_delivery_days: estToSave,
+                    delivery_date: deliveryDateToSave || null,
+                    delivery_time_slot: deliveryTimeSlotToSave || '',
+                    shipping_schedule_type: scheduleTypeToSave,
+                    cod_amount_to_pay: codAmountToSave || null
                 },
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );
@@ -106,7 +126,11 @@ const DashboardSinergySellerOrdersPage = () => {
                 resi_number: resiToSave, 
                 driver_name: driverNameToSave,
                 driver_phone: driverPhoneToSave,
-                estimated_delivery_days: estToSave 
+                estimated_delivery_days: estToSave,
+                delivery_date: deliveryDateToSave,
+                delivery_time_slot: deliveryTimeSlotToSave,
+                shipping_schedule_type: scheduleTypeToSave,
+                cod_amount_to_pay: codAmountToSave
             } : o));
             alert('Status pesanan berhasil diperbarui!');
         } catch (error) {
@@ -114,6 +138,255 @@ const DashboardSinergySellerOrdersPage = () => {
         } finally {
             setUpdatingId(null);
         }
+    };
+
+    const renderShippingForm = (order) => {
+        const activeType = localShippingType[order.id] !== undefined ? localShippingType[order.id] : (order.shipping_type || 'ekspedisi');
+        const isKurirToko = activeType === 'kurir_toko';
+        const isOrderCod = (order.payment_method || '').toLowerCase() === 'cod';
+        const scheduleMode = localScheduleType[order.id] !== undefined ? localScheduleType[order.id] : (order.shipping_schedule_type || (order.delivery_date ? 'slot' : 'days'));
+
+        return (
+            <div className="space-y-2.5">
+                {/* Toggle Pengiriman: Ekspedisi vs Kurir Toko */}
+                <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100/90 rounded-xl border border-gray-200">
+                    <button
+                        type="button"
+                        onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
+                        disabled={updatingId === order.id}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                            !isKurirToko
+                                ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200' 
+                                : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                        <span className="material-icons text-sm">local_shipping</span>
+                        Ekspedisi
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
+                        disabled={updatingId === order.id}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                            isKurirToko 
+                                ? 'bg-white text-emerald-700 shadow-sm border border-emerald-200' 
+                                : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                        <span className="material-icons text-sm">delivery_dining</span>
+                        Kirim Sendiri
+                    </button>
+                </div>
+
+                {/* Dynamic Form Content */}
+                {!isKurirToko ? (
+                    <div className="space-y-2 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+                        <div className="flex items-center justify-between text-[10px]">
+                            <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
+                                <span className="material-icons text-xs text-indigo-600">local_shipping</span>
+                                No. Resi Kurir
+                            </label>
+                            <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
+                        </div>
+                        <input 
+                            type="text"
+                            placeholder="Masukkan No. Resi Kurir..."
+                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                            disabled={updatingId === order.id}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                        />
+                        <div className="flex items-center justify-between pt-0.5">
+                            <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                <span className="material-icons text-xs text-indigo-500">schedule</span>
+                                Estimasi Tiba:
+                            </span>
+                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
+                                <input 
+                                    type="number"
+                                    min="1"
+                                    max="60"
+                                    placeholder="3"
+                                    title="Estimasi pengiriman (hari)"
+                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days !== undefined && order.estimated_delivery_days !== null ? order.estimated_delivery_days : 3)}
+                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                    disabled={updatingId === order.id}
+                                    className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
+                                />
+                                <span className="text-[10px] text-indigo-600 font-bold select-none whitespace-nowrap">Hari</span>
+                            </div>
+                        </div>
+
+                        {/* Tagihan COD / Ongkir Bayar di Tempat (Ekspedisi) */}
+                        <div className="pt-2 border-t border-indigo-100/90 space-y-1.5">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <label className="font-bold text-indigo-950 flex items-center gap-1">
+                                    <span className="material-icons text-xs text-amber-600">payments</span>
+                                    Tagihan Tunai COD Pelanggan:
+                                </label>
+                                <span className="text-[9px] text-indigo-700 font-semibold">
+                                    {isOrderCod ? 'Barang COD' : 'Ongkir / Non-COD'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-indigo-500">
+                                <span className="text-[11px] text-gray-500 font-bold">Rp</span>
+                                <input 
+                                    type="number"
+                                    placeholder={isOrderCod ? String(order.grand_total) : "0 (Kosongkan jika gratis/lunas)"}
+                                    value={localCodAmount[order.id] !== undefined ? localCodAmount[order.id] : (order.cod_amount_to_pay !== undefined && order.cod_amount_to_pay !== null ? order.cod_amount_to_pay : (isOrderCod ? order.grand_total : ''))}
+                                    onChange={(e) => setLocalCodAmount({ ...localCodAmount, [order.id]: e.target.value })}
+                                    disabled={updatingId === order.id}
+                                    className="w-full text-xs font-black text-gray-800 outline-none bg-transparent"
+                                />
+                            </div>
+                            <p className="text-[9px] text-gray-500 leading-tight">
+                                * Masukkan nominal uang tunai yang harus disiapkan pembeli saat paket ekspedisi diserahkan (COD Produk + Ongkir COD).
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-2.5 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                        <div className="flex items-center justify-between text-[10px]">
+                            <label className="font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
+                                <span className="material-icons text-xs text-emerald-600">delivery_dining</span>
+                                Data Driver / Kurir Toko
+                            </label>
+                            <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Kurir Pribadi</span>
+                        </div>
+                        <input 
+                            type="text"
+                            placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
+                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
+                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
+                            disabled={updatingId === order.id}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                        />
+                        <input 
+                            type="text"
+                            placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
+                            value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                            onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                            disabled={updatingId === order.id}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                        />
+
+                        {/* Mode Jadwal Pengantaran: Slot Jam vs Estimasi Hari */}
+                        <div className="pt-2 border-t border-emerald-100 space-y-2">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <label className="font-bold text-emerald-950 flex items-center gap-1">
+                                    <span className="material-icons text-xs text-emerald-600">event_available</span>
+                                    Waktu Pengantaran:
+                                </label>
+                                <div className="flex items-center gap-1 bg-emerald-100/80 p-0.5 rounded-lg text-[9px] font-bold text-emerald-900">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLocalScheduleType({ ...localScheduleType, [order.id]: 'slot' })}
+                                        className={`px-1.5 py-0.5 rounded ${scheduleMode === 'slot' ? 'bg-white text-emerald-800 shadow-xs' : 'text-emerald-700'}`}
+                                    >
+                                        📅 Jadwal Jam
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLocalScheduleType({ ...localScheduleType, [order.id]: 'days' })}
+                                        className={`px-1.5 py-0.5 rounded ${scheduleMode === 'days' ? 'bg-white text-emerald-800 shadow-xs' : 'text-emerald-700'}`}
+                                    >
+                                        ⏱️ Estimasi Hari
+                                    </button>
+                                </div>
+                            </div>
+
+                            {scheduleMode === 'slot' ? (
+                                <div className="space-y-2 bg-white/90 p-2.5 rounded-xl border border-emerald-200/70">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-700 block mb-1">Tanggal Pengantaran:</label>
+                                        <input 
+                                            type="date"
+                                            value={localDeliveryDate[order.id] !== undefined ? localDeliveryDate[order.id] : (order.delivery_date || '')}
+                                            onChange={(e) => setLocalDeliveryDate({ ...localDeliveryDate, [order.id]: e.target.value })}
+                                            disabled={updatingId === order.id}
+                                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-700 block mb-1">Kisaran Jam (Pilih Slot):</label>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            {TIME_SLOTS.map((slot) => {
+                                                const currentSlot = localDeliveryTimeSlot[order.id] !== undefined ? localDeliveryTimeSlot[order.id] : (order.delivery_time_slot || '');
+                                                const isSelected = currentSlot === slot.value;
+                                                return (
+                                                    <button
+                                                        key={slot.value}
+                                                        type="button"
+                                                        onClick={() => setLocalDeliveryTimeSlot({ ...localDeliveryTimeSlot, [order.id]: isSelected ? '' : slot.value })}
+                                                        disabled={updatingId === order.id}
+                                                        className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition border text-left flex items-center justify-between ${
+                                                            isSelected 
+                                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-emerald-50'
+                                                        }`}
+                                                    >
+                                                        <span>{slot.label}</span>
+                                                        {isSelected && <span className="material-icons text-xs">check</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between pt-0.5">
+                                    <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                        <span className="material-icons text-xs text-emerald-500">schedule</span>
+                                        Estimasi Tiba <span className="text-gray-400 text-[10px]">(Opsional):</span>
+                                    </span>
+                                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Kosongkan jika pengantaran langsung hari ini">
+                                        <input 
+                                            type="number"
+                                            min="1"
+                                            max="60"
+                                            placeholder="—"
+                                            title="Opsional: Estimasi hari (kosongkan jika sampai hari ini)"
+                                            value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
+                                            onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                            disabled={updatingId === order.id}
+                                            className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
+                                        />
+                                        <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tagihan COD Kurir Toko */}
+                        <div className="pt-2 border-t border-emerald-100 space-y-1.5">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <label className="font-bold text-emerald-950 flex items-center gap-1">
+                                    <span className="material-icons text-xs text-amber-600">payments</span>
+                                    Tagihan Tunai COD Pelanggan:
+                                </label>
+                                <span className="text-[9px] text-emerald-800 font-bold">
+                                    {isOrderCod ? 'Wajib COD' : 'Opsional'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500">
+                                <span className="text-[11px] text-gray-500 font-bold">Rp</span>
+                                <input 
+                                    type="number"
+                                    placeholder={String(order.grand_total)}
+                                    value={localCodAmount[order.id] !== undefined ? localCodAmount[order.id] : (order.cod_amount_to_pay !== undefined && order.cod_amount_to_pay !== null ? order.cod_amount_to_pay : (isOrderCod ? order.grand_total : ''))}
+                                    onChange={(e) => setLocalCodAmount({ ...localCodAmount, [order.id]: e.target.value })}
+                                    disabled={updatingId === order.id}
+                                    className="w-full text-xs font-black text-gray-800 outline-none bg-transparent"
+                                />
+                            </div>
+                            <p className="text-[9px] text-gray-500 leading-tight">
+                                * Uang tunai yang akan diterima driver saat barang diantar ke alamat pembeli.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const [sendingWaId, setSendingWaId] = useState(null);
@@ -592,125 +865,13 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     {isPaid && (
                                                         <div className="space-y-3">
                                                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 font-medium">
-                                                                ✅ Pembayaran telah terverifikasi/lunas. Tentukan pengiriman di bawah untuk langsung kirim atau klik <span className="font-bold">Proses Pesanan</span>.
+                                                                ✅ Pembayaran telah terverifikasi/lunas. Tentukan pengiriman di bawah untuk langsung kirim atau klik <span className="font-bold">Mulai Kemas</span>.
                                                             </div>
 
-                                                            {/* Shipping Type Switcher */}
-                                                            <div className="bg-gray-100 p-1 rounded-xl flex gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
-                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                                                                        (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
-                                                                            ? 'bg-white text-indigo-700 shadow-sm'
-                                                                            : 'text-gray-500 hover:text-gray-800'
-                                                                    }`}
-                                                                >
-                                                                    <span className="material-icons text-sm">local_shipping</span>
-                                                                    Ekspedisi Kurir
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
-                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                                                                        (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
-                                                                            ? 'bg-white text-emerald-700 shadow-sm'
-                                                                            : 'text-gray-500 hover:text-gray-800'
-                                                                    }`}
-                                                                >
-                                                                    <span className="material-icons text-sm">delivery_dining</span>
-                                                                    Kirim Sendiri
-                                                                </button>
-                                                            </div>
+                                                            {/* Dynamic Shipping Form */}
+                                                            {renderShippingForm(order)}
 
-                                                            {/* Dynamic Form based on shipping type */}
-                                                            {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                <div className="space-y-2 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-                                                                    <div className="flex items-center justify-between text-[10px]">
-                                                                        <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-indigo-600">local_shipping</span>
-                                                                            No. Resi Kurir
-                                                                        </label>
-                                                                        <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
-                                                                    </div>
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="Masukkan No. Resi Kurir..."
-                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                                                                    />
-                                                                    <div className="flex items-center justify-between pt-0.5">
-                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-indigo-500">schedule</span>
-                                                                            Estimasi Tiba:
-                                                                        </span>
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
-                                                                            <input 
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="60"
-                                                                                placeholder="3"
-                                                                                title="Estimasi pengiriman (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                            />
-                                                                            <span className="text-[10px] text-indigo-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="space-y-2 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
-                                                                    <div className="flex items-center justify-between text-[10px]">
-                                                                        <label className="font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-emerald-600">delivery_dining</span>
-                                                                            Data Pengirim / Kurir Toko
-                                                                        </label>
-                                                                        <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
-                                                                    </div>
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
-                                                                        value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                                                                        onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                    />
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
-                                                                        value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                        onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                    />
-                                                                    <div className="flex items-center justify-between pt-0.5">
-                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-emerald-500">schedule</span>
-                                                                            Estimasi Tiba <span className="text-gray-400 text-[10px]">(Opsional):</span>
-                                                                        </span>
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika sampai hari ini)">
-                                                                            <input 
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="60"
-                                                                                placeholder="—"
-                                                                                title="Opsional: Estimasi tiba (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                            />
-                                                                            <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                            <div className="flex flex-col sm:flex-row gap-2 pt-1">
                                                                 <button
                                                                     onClick={() => {
                                                                         const currentType = (localShippingType[order.id] || order.shipping_type || 'ekspedisi');
@@ -774,120 +935,8 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                 📦 Pesanan sedang dikemas. Pilih metode pengiriman di bawah lalu klik <span className="font-bold">Kirim Pesanan</span>.
                                                             </div>
 
-                                                            {/* Shipping Type Switcher */}
-                                                            <div className="bg-gray-100 p-1 rounded-xl flex gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
-                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                                                                        (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
-                                                                            ? 'bg-white text-indigo-700 shadow-sm'
-                                                                            : 'text-gray-500 hover:text-gray-800'
-                                                                    }`}
-                                                                >
-                                                                    <span className="material-icons text-sm">local_shipping</span>
-                                                                    Ekspedisi Kurir
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
-                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                                                                        (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
-                                                                            ? 'bg-white text-emerald-700 shadow-sm'
-                                                                            : 'text-gray-500 hover:text-gray-800'
-                                                                    }`}
-                                                                >
-                                                                    <span className="material-icons text-sm">delivery_dining</span>
-                                                                    Kirim Sendiri
-                                                                </button>
-                                                            </div>
-
-                                                            {/* Dynamic Form based on shipping type */}
-                                                            {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                <div className="space-y-2 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-                                                                    <div className="flex items-center justify-between text-[10px]">
-                                                                        <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-indigo-600">local_shipping</span>
-                                                                            No. Resi Kurir
-                                                                        </label>
-                                                                        <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
-                                                                    </div>
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="Masukkan No. Resi Kurir..."
-                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                                                                    />
-                                                                    <div className="flex items-center justify-between pt-0.5">
-                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-indigo-500">schedule</span>
-                                                                            Estimasi Tiba:
-                                                                        </span>
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
-                                                                            <input 
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="60"
-                                                                                placeholder="3"
-                                                                                title="Estimasi pengiriman (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                            />
-                                                                            <span className="text-[10px] text-indigo-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="space-y-2 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
-                                                                    <div className="flex items-center justify-between text-[10px]">
-                                                                        <label className="font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-emerald-600">delivery_dining</span>
-                                                                            Data Pengirim / Kurir Toko
-                                                                        </label>
-                                                                        <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Diantar Pribadi</span>
-                                                                    </div>
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
-                                                                        value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                                                                        onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                    />
-                                                                    <input 
-                                                                        type="text"
-                                                                        placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
-                                                                        value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                        onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
-                                                                        disabled={updatingId === order.id}
-                                                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                                                                    />
-                                                                    <div className="flex items-center justify-between pt-0.5">
-                                                                        <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
-                                                                            <span className="material-icons text-xs text-emerald-500">schedule</span>
-                                                                            Estimasi Tiba <span className="text-gray-400 text-[10px]">(Opsional):</span>
-                                                                        </span>
-                                                                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari (kosongkan jika sampai hari ini)">
-                                                                            <input 
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="60"
-                                                                                placeholder="—"
-                                                                                title="Opsional: Estimasi tiba (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-7 text-xs font-black text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                            />
-                                                                            <span className="text-[10px] text-emerald-600 font-bold select-none whitespace-nowrap">Hari</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
+                                                            {/* Dynamic Shipping Form */}
+                                                            {renderShippingForm(order)}
 
                                                             <button
                                                                 onClick={() => {
@@ -957,20 +1006,41 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                                 </a>
                                                                             )}
                                                                         </div>
+                                                                        {order.delivery_date && (
+                                                                            <div className="text-[10px] text-emerald-800 font-medium pt-1 border-t border-emerald-100 flex items-center gap-1">
+                                                                                <span className="material-icons text-xs text-emerald-600">event</span>
+                                                                                Jadwal Pengantaran: <strong>{order.delivery_date} {order.delivery_time_slot ? `(Pukul ${order.delivery_time_slot} WIB)` : ''}</strong>
+                                                                            </div>
+                                                                        )}
+                                                                        {(Number(order.cod_amount_to_pay) > 0 || (order.payment_method || '').toLowerCase() === 'cod') && (
+                                                                            <div className="text-[10px] text-amber-900 font-medium pt-1 border-t border-emerald-100 flex items-center justify-between">
+                                                                                <span className="flex items-center gap-1"><span className="material-icons text-xs text-amber-600">payments</span> Tagihan COD Tunai:</span>
+                                                                                <strong className="text-amber-800">Rp {Number(order.cod_amount_to_pay || order.grand_total).toLocaleString('id-ID')}</strong>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                     <p className="text-[9px] text-emerald-700/90 italic pt-0.5">
-                                                                        * Status "Selesai" dikonfirmasi pembeli saat barang tiba{order.estimated_delivery_days ? `, atau otomatis dalam ${order.estimated_delivery_days} hari` : ' langsung dari kurir toko'}.
+                                                                        * Status "Selesai" dikonfirmasi pembeli saat barang tiba{order.estimated_delivery_days ? `, atau otomatis dalam ${order.estimated_delivery_days} hari` : ''}.
                                                                     </p>
                                                                 </div>
                                                             ) : (
                                                                 <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200 text-[11px] text-indigo-900 space-y-1">
-                                                                    <div className="flex items-center gap-1 font-bold">
-                                                                        <span className="material-icons text-sm text-indigo-600">local_shipping</span>
-                                                                        Dalam Pengiriman Ekspedisi
+                                                                    <div className="flex items-center justify-between font-bold">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <span className="material-icons text-sm text-indigo-600">local_shipping</span>
+                                                                            Dalam Pengiriman Ekspedisi
+                                                                        </span>
+                                                                        <span className="text-[10px] bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full font-bold">{order.shipping_courier || 'Ekspedisi'}</span>
                                                                     </div>
                                                                     <p className="text-[10px] text-indigo-700 leading-relaxed">
-                                                                        No. Resi: <span className="font-mono font-bold">{order.resi_number || 'Belum diisi'}</span> • Kurir: <span className="font-bold">{order.shipping_courier || '-'}</span>
+                                                                        No. Resi: <span className="font-mono font-bold text-indigo-900">{order.resi_number || 'Belum diisi'}</span>
                                                                     </p>
+                                                                    {(Number(order.cod_amount_to_pay) > 0 || (order.payment_method || '').toLowerCase() === 'cod') && (
+                                                                        <div className="text-[10px] text-amber-900 font-medium pt-1 border-t border-indigo-100 flex items-center justify-between">
+                                                                            <span className="flex items-center gap-1"><span className="material-icons text-xs text-amber-600">payments</span> Tagihan COD Tunai:</span>
+                                                                            <strong className="text-amber-800">Rp {Number(order.cod_amount_to_pay || order.grand_total).toLocaleString('id-ID')}</strong>
+                                                                        </div>
+                                                                    )}
                                                                     <p className="text-[9px] text-indigo-600/90 italic pt-1 border-t border-indigo-100">
                                                                         * Status "Selesai" dikonfirmasi pembeli saat barang tiba, atau otomatis dalam {order.estimated_delivery_days || 3} hari pengiriman.
                                                                     </p>
@@ -980,112 +1050,25 @@ const DashboardSinergySellerOrdersPage = () => {
                                                             {/* Edit Delivery Info Form */}
                                                             <details className="bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs">
                                                                 <summary className="font-bold text-gray-600 cursor-pointer select-none text-[11px] flex items-center justify-between">
-                                                                    <span>✏️ Ubah Data Pengiriman / Resi</span>
+                                                                    <span>✏️ Ubah Data Pengiriman / Resi / Tagihan COD</span>
                                                                     <span className="material-icons text-sm text-gray-400">expand_more</span>
                                                                 </summary>
-                                                                <div className="pt-2.5 space-y-2">
-                                                                    <div className="bg-gray-200/70 p-1 rounded-lg flex gap-1">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
-                                                                            className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
-                                                                                (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
-                                                                                    ? 'bg-white text-indigo-700 shadow-xs'
-                                                                                    : 'text-gray-600'
-                                                                            }`}
-                                                                        >
-                                                                            Ekspedisi
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
-                                                                            className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
-                                                                                (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
-                                                                                    ? 'bg-white text-emerald-700 shadow-xs'
-                                                                                    : 'text-gray-600'
-                                                                        }`}
+                                                                <div className="pt-2.5 space-y-2.5">
+                                                                    {renderShippingForm(order)}
+
+                                                                    <button 
+                                                                        onClick={() => handleUpdateStatus(order.id, order.status)}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-1"
+                                                                        title="Simpan perubahan pengiriman"
                                                                     >
-                                                                        Kirim Sendiri
+                                                                        <span className="material-icons text-xs">save</span>
+                                                                        Simpan Perubahan Pengiriman
                                                                     </button>
                                                                 </div>
-
-                                                                {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
-                                                                    <div className="space-y-2">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="No. Resi Pengiriman..."
-                                                                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                                        />
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-[11px] text-gray-600 font-medium">Estimasi Tiba:</span>
-                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-indigo-500">
-                                                                                <input 
-                                                                                    type="number"
-                                                                                    min="1"
-                                                                                    max="60"
-                                                                                    placeholder="3"
-                                                                                    title="Estimasi pengiriman (hari)"
-                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 3)}
-                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                    disabled={updatingId === order.id}
-                                                                                    className="w-7 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                                />
-                                                                                <span className="text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">Hari</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="space-y-2">
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="Nama Pengirim / Driver..."
-                                                                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                                                                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                                                        />
-                                                                        <input 
-                                                                            type="text"
-                                                                            placeholder="No. Telp/WA Pengirim..."
-                                                                            value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                                                                            onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
-                                                                            disabled={updatingId === order.id}
-                                                                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                                                        />
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-[11px] text-gray-600 font-medium">Estimasi Tiba (Opsional):</span>
-                                                                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shrink-0 focus-within:ring-2 focus-within:ring-emerald-500" title="Opsional: Estimasi hari">
-                                                                                <input 
-                                                                                    type="number"
-                                                                                    min="1"
-                                                                                    max="60"
-                                                                                    placeholder="—"
-                                                                                    title="Estimasi pengiriman (hari)"
-                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || '')}
-                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                    disabled={updatingId === order.id}
-                                                                                    className="w-7 text-xs font-medium text-gray-800 outline-none text-center bg-transparent p-0"
-                                                                                />
-                                                                                <span className="text-[10px] text-gray-500 font-medium select-none whitespace-nowrap">Hari</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                <button 
-                                                                    onClick={() => handleUpdateStatus(order.id, order.status)}
-                                                                    disabled={updatingId === order.id}
-                                                                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-1"
-                                                                    title="Simpan perubahan pengiriman"
-                                                                >
-                                                                    <span className="material-icons text-xs">save</span>
-                                                                    Simpan Perubahan
-                                                                </button>
-                                                            </div>
-                                                        </details>
+                                                            </details>
+                                                        </div>
+                                                    )}
 
                                                         <button
                                                             onClick={() => {

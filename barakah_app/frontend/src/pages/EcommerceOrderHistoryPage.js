@@ -396,28 +396,36 @@ const EcommerceOrderHistoryPage = () => {
                                             </div>
 
                                             {order.shipping_type === 'kurir_toko' || order.driver_name ? (
-                                                <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-xs flex flex-wrap items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                                                            <span className="material-icons text-base">delivery_dining</span>
+                                                <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-xs space-y-2">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                                                <span className="material-icons text-base">delivery_dining</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-emerald-900 font-bold text-xs block">🛵 Dikirim Langsung oleh Toko:</span>
+                                                                <span className="text-gray-700 font-medium text-[11px]">
+                                                                    Pengirim: <strong className="text-gray-900">{order.driver_name || 'Driver Toko'}</strong>
+                                                                    {order.driver_phone && <> • Telp/WA: <strong className="font-mono text-gray-900">{order.driver_phone}</strong></>}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <span className="text-emerald-900 font-bold text-xs block">🛵 Dikirim Langsung oleh Toko:</span>
-                                                            <span className="text-gray-700 font-medium text-[11px]">
-                                                                Pengirim: <strong className="text-gray-900">{order.driver_name || 'Driver Toko'}</strong>
-                                                                {order.driver_phone && <> • Telp/WA: <strong className="font-mono text-gray-900">{order.driver_phone}</strong></>}
-                                                            </span>
-                                                        </div>
+                                                        {order.driver_phone && (
+                                                            <a 
+                                                                href={`https://wa.me/${order.driver_phone.replace(/[^0-9]/g, '')}`}
+                                                                target="_blank" 
+                                                                rel="noreferrer"
+                                                                className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"
+                                                            >
+                                                                <span className="material-icons text-xs">chat</span> Hubungi Driver
+                                                            </a>
+                                                        )}
                                                     </div>
-                                                    {order.driver_phone && (
-                                                        <a 
-                                                            href={`https://wa.me/${order.driver_phone.replace(/[^0-9]/g, '')}`}
-                                                            target="_blank" 
-                                                            rel="noreferrer"
-                                                            className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"
-                                                        >
-                                                            <span className="material-icons text-xs">chat</span> Hubungi Driver
-                                                        </a>
+                                                    {order.delivery_date && (
+                                                        <div className="text-[11px] text-emerald-900 bg-white/70 px-2.5 py-1.5 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                                                            <span className="material-icons text-xs text-emerald-600">event</span>
+                                                            <span>Jadwal Pengantaran: <strong>{order.delivery_date} {order.delivery_time_slot ? `(Pukul ${order.delivery_time_slot} WIB)` : ''}</strong></span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             ) : order.resi_number ? (
@@ -435,6 +443,15 @@ const EcommerceOrderHistoryPage = () => {
                                                     </button>
                                                 </div>
                                             ) : null}
+
+                                            {((order.payment_method || '').toLowerCase() === 'cod' || Number(order.cod_amount_to_pay) > 0) && (
+                                                <div className="p-2.5 bg-amber-50/90 rounded-xl border border-amber-200 text-xs flex items-center gap-2 text-amber-900">
+                                                    <span className="material-icons text-amber-600 text-base shrink-0">payments</span>
+                                                    <span>
+                                                        <strong>Tagihan Tunai COD:</strong> Siapkan uang pas sebesar <strong className="text-amber-800 font-black">{formatCurrency(order.cod_amount_to_pay || order.grand_total)}</strong> saat paket diserahkan oleh kurir.
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {order.cancel_request_reason && (
                                                 <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-900">
@@ -572,6 +589,18 @@ const EcommerceOrderHistoryPage = () => {
                                                 )}
                                             </div>
                                         </div>
+                                        {selectedDetailOrder.delivery_date && (
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Jadwal Pengantaran:</span>
+                                                <span className="font-bold text-emerald-800">{selectedDetailOrder.delivery_date} {selectedDetailOrder.delivery_time_slot ? `(Pukul ${selectedDetailOrder.delivery_time_slot} WIB)` : ''}</span>
+                                            </div>
+                                        )}
+                                        {((selectedDetailOrder.payment_method || '').toLowerCase() === 'cod' || Number(selectedDetailOrder.cod_amount_to_pay) > 0) && (
+                                            <div className="flex justify-between pt-1 border-t border-gray-200 text-amber-900">
+                                                <span className="font-bold">Tagihan Tunai COD:</span>
+                                                <span className="font-black text-amber-800">{formatCurrency(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-xs space-y-1.5 text-gray-700">
@@ -591,6 +620,12 @@ const EcommerceOrderHistoryPage = () => {
                                                         Salin
                                                     </button>
                                                 </div>
+                                            </div>
+                                        )}
+                                        {((selectedDetailOrder.payment_method || '').toLowerCase() === 'cod' || Number(selectedDetailOrder.cod_amount_to_pay) > 0) && (
+                                            <div className="flex justify-between pt-1 border-t border-gray-200 text-amber-900">
+                                                <span className="font-bold">Tagihan Tunai COD:</span>
+                                                <span className="font-black text-amber-800">{formatCurrency(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
                                             </div>
                                         )}
                                     </div>
