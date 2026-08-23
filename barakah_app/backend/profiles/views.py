@@ -82,46 +82,26 @@ class ProfileViewSet(viewsets.ModelViewSet):
         from accounts.models import Role
         required_fields = set()
         try:
-            anggota_role = Role.objects.get(code='anggota_bae')
-            required_fields.update(anggota_role.required_profile_fields or [])
-        except Role.DoesNotExist:
-            required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
-
-        # Always require source of info, religion, marital status, and segment
-        required_fields.update({'info_source', 'agama', 'marital_status', 'segment'})
+            # Check for active role (e.g. anggota_bae or first active role with requirements)
+            role_obj = Role.objects.filter(code='anggota_bae', is_active=True).first() or Role.objects.filter(is_active=True).exclude(required_profile_fields=[]).first()
+            if role_obj and role_obj.required_profile_fields:
+                required_fields.update(role_obj.required_profile_fields)
+            else:
+                required_fields.update({'name_full', 'phone'})
+        except Exception:
+            required_fields = {'name_full', 'phone'}
 
         try:
             profile = Profile.objects.get(user=user)
-            if profile.info_source == 'teman':
-                required_fields.add('referred_by')
         except Profile.DoesNotExist:
             return Response({'requires_completion': True, 'is_complete': False, 'missing_fields': list(required_fields)})
 
-        segment = profile.segment
-        study_level = profile.study_level
-
-        if 'segment' in required_fields:
-            if segment in ['karyawan', 'umum', 'pengusaha']:
-                required_fields.update({'job', 'work_field', 'work_institution', 'work_position', 'work_salary'})
-                if study_level:
-                    required_fields.update({'study_campus'})
-                    if study_level not in ['sd', 'smp', 'sma']:
-                        required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
-            elif segment in ['mahasiswa', 'pelajar', 'santri']:
-                required_fields.update({'study_level', 'study_campus'})
-                if study_level and study_level not in ['sd', 'smp', 'sma']:
-                    required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
-
-        if segment in ['mahasiswa', 'pelajar', 'santri']:
-            required_fields = {f for f in required_fields if not f.startswith('work_') and f != 'job'}
-
-        if study_level in ['sd', 'smp', 'sma']:
-            ignored_study_fields = {'study_faculty', 'study_department', 'study_program', 'study_semester'}
-            required_fields = {f for f in required_fields if f not in ignored_study_fields}
-
         missing = []
         for field in required_fields:
-            val = getattr(profile, field, None)
+            if field == 'phone':
+                val = user.phone or profile.phone
+            else:
+                val = getattr(profile, field, None)
             if not val or (isinstance(val, str) and not val.strip()):
                 missing.append(field)
 

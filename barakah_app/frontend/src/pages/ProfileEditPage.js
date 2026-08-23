@@ -348,23 +348,16 @@ const ProfileEditPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Mandatory fields check
-    const isReferredByRequired = profile.info_source === 'teman';
+    // Mandatory fields check: minimal essential fields
     const mandatoryList = [
-      { key: 'nickname', label: 'Nama Panggilan', tab: 'general' },
       { key: 'name_full', label: 'Nama Lengkap', tab: 'general' },
       { key: 'phone', label: 'HP / WhatsApp', tab: 'general' },
-      { key: 'gender', label: 'Jenis Kelamin', tab: 'general' },
-      { key: 'agama', label: 'Agama', tab: 'general', inputName: 'agamaDropdown' },
-      { key: 'birth_place', label: 'Tempat Lahir', tab: 'general' },
-      { key: 'birth_date', label: 'Tanggal Lahir', tab: 'general' },
-      { key: 'marital_status', label: 'Status Pernikahan', tab: 'general' },
-      { key: 'segment', label: 'Segmen', tab: 'general' },
-      { key: 'info_source', label: 'Sumber Informasi', tab: 'general' },
     ];
 
-    if (isReferredByRequired) {
-      mandatoryList.push({ key: 'referred_by', label: 'Nama Pengajak', tab: 'general' });
+    if (requiredFor === 'checkout') {
+      mandatoryList.push({ key: 'address', label: 'Alamat Lengkap', tab: 'address' });
+      mandatoryList.push({ key: 'address_province_id', label: 'Provinsi', tab: 'address' });
+      mandatoryList.push({ key: 'address_city_id', label: 'Kota / Kabupaten', tab: 'address' });
     }
 
     const firstMissing = mandatoryList.find(m => !profile[m.key] || String(profile[m.key]).trim() === '');
@@ -387,8 +380,8 @@ const ProfileEditPage = () => {
       return;
     }
 
-    // Validation for Shipping (Village ID must be 10 digits if address is started)
-    if (profile.address_province_id && !profile.address_village_id) {
+    // Validation for Shipping (Village ID must be filled if address is started)
+    if (profile.address_province_id && !profile.address_village_id && (requiredFor === 'checkout' || profile.address)) {
       setActiveTab('address');
       setTimeout(() => {
         const elem = document.getElementsByName('address_village_id')[0] || document.getElementsByName('address')[0];
@@ -478,63 +471,60 @@ const ProfileEditPage = () => {
     navigate(fromPath);
   };
 
+  const isFieldRequired = (field) => {
+    if (['name_full', 'phone'].includes(field)) return true;
+    if (requiredFor === 'checkout' && ['address', 'address_province', 'address_province_id', 'address_city_name', 'address_city_id', 'address_subdistrict_name', 'address_subdistrict_id', 'address_village_name', 'address_village_id'].includes(field)) return true;
+    return missingFields.includes(field);
+  };
+
   const getTabMissingFields = (tabKey) => {
     const missing = [];
     if (tabKey === 'general') {
-      const generalMandatory = [
-        'nickname', 'name_full', 'phone', 'gender', 'agama',
-        'birth_place', 'birth_date', 'marital_status', 'segment', 'info_source'
-      ];
-      if (profile.info_source === 'teman') {
-        generalMandatory.push('referred_by');
+      const candidateFields = ['name_full', 'phone'];
+      const generalFieldList = ['nickname', 'gender', 'agama', 'birth_place', 'birth_date', 'marital_status', 'segment', 'info_source', 'referred_by', 'nik'];
+      generalFieldList.forEach(f => {
+        if (missingFields.includes(f) && !candidateFields.includes(f)) {
+          candidateFields.push(f);
+        }
+      });
+      if (profile.info_source === 'teman' && (missingFields.includes('info_source') || missingFields.includes('referred_by'))) {
+        if (!candidateFields.includes('referred_by')) candidateFields.push('referred_by');
       }
-      generalMandatory.forEach(f => {
+
+      candidateFields.forEach(f => {
         if (!profile[f] || String(profile[f]).trim() === '') {
           missing.push(f);
         }
       });
-      if (missingFields.includes('nik') && (!profile.nik || !String(profile.nik).trim())) {
-        if (!missing.includes('nik')) missing.push('nik');
-      }
     } else if (tabKey === 'address') {
-      const addressMandatory = ['address', 'address_province_id', 'address_city_id', 'address_subdistrict_id', 'address_village_id'];
-      const isAddressRequired = isCompleteMode || requiredFor === 'checkout' || missingFields.some(f => f.startsWith('address')) || profile.address || profile.address_province_id;
-      if (isAddressRequired) {
-        addressMandatory.forEach(f => {
+      const addressFields = ['address', 'address_province_id', 'address_city_id', 'address_subdistrict_id', 'address_village_id'];
+      const candidateFields = [];
+      if (requiredFor === 'checkout' || missingFields.some(f => f.startsWith('address'))) {
+        candidateFields.push(...addressFields);
+      }
+      candidateFields.forEach(f => {
+        if (!profile[f] || String(profile[f]).trim() === '') {
+          if (!missing.includes(f)) missing.push(f);
+        }
+      });
+    } else if (tabKey === 'study') {
+      const studyFields = ['study_level', 'study_campus', 'study_faculty', 'study_department', 'study_program', 'study_semester', 'study_start_year', 'study_finish_year'];
+      studyFields.forEach(f => {
+        if (missingFields.includes(f)) {
           if (!profile[f] || String(profile[f]).trim() === '') {
             missing.push(f);
           }
-        });
-      }
-    } else if (tabKey === 'study') {
-      const isStudySegment = ['mahasiswa', 'pelajar', 'santri'].includes(profile.segment);
-      const isStudyRequired = isCompleteMode && (isStudySegment || missingFields.some(f => f.startsWith('study')));
-      if (isStudyRequired) {
-        const studyMandatory = ['study_level', 'study_campus'];
-        if (profile.study_level && !['sd', 'smp', 'sma'].includes(profile.study_level)) {
-          studyMandatory.push('study_faculty', 'study_department', 'study_program', 'study_semester', 'study_start_year', 'study_finish_year');
         }
-        studyMandatory.forEach(f => {
-          if (missingFields.includes(f) || isStudySegment) {
-            if (!profile[f] || String(profile[f]).trim() === '') {
-              if (!missing.includes(f)) missing.push(f);
-            }
-          }
-        });
-      }
+      });
     } else if (tabKey === 'work') {
-      const isWorkSegment = ['karyawan', 'umum', 'pengusaha'].includes(profile.segment);
-      const isWorkRequired = isCompleteMode && (isWorkSegment || missingFields.some(f => f.startsWith('work_') || f === 'job'));
-      if (isWorkRequired) {
-        const workMandatory = ['job', 'work_field', 'work_institution', 'work_position', 'work_salary'];
-        workMandatory.forEach(f => {
-          if (missingFields.includes(f) || isWorkSegment) {
-            if (!profile[f] || String(profile[f]).trim() === '') {
-              if (!missing.includes(f)) missing.push(f);
-            }
+      const workFields = ['job', 'work_field', 'work_institution', 'work_position', 'work_salary'];
+      workFields.forEach(f => {
+        if (missingFields.includes(f)) {
+          if (!profile[f] || String(profile[f]).trim() === '') {
+            missing.push(f);
           }
-        });
-      }
+        }
+      });
     }
     return missing;
   };
@@ -604,7 +594,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Nama Panggilan <span className="text-red-500">*wajib</span>
+                Nama Panggilan {isFieldRequired('nickname') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <input type="text" name="nickname" placeholder="Nama Panggilan / Nickname" value={profile.nickname || ''} onChange={handleChange} className={inputCls('nickname')} />
             </div>
@@ -630,7 +620,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Jenis Kelamin <span className="text-red-500">*wajib</span>
+                Jenis Kelamin {isFieldRequired('gender') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <select name="gender" value={profile.gender || ''} onChange={handleChange} className={inputCls('gender')}>
                 <option value="">Pilih Jenis Kelamin</option>
@@ -640,7 +630,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Agama <span className="text-red-500">*wajib</span>
+                Agama {isFieldRequired('agama') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <select 
                 name="agamaDropdown" 
@@ -674,7 +664,7 @@ const ProfileEditPage = () => {
             {agamaDropdown === 'kepercayaan' && (
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  Nama Aliran Kepercayaan / Lainnya <span className="text-red-500">*wajib</span>
+                  Nama Aliran Kepercayaan / Lainnya {isFieldRequired('agama') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
                 </label>
                 <input 
                   type="text" 
@@ -695,19 +685,19 @@ const ProfileEditPage = () => {
             )}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Tempat Lahir <span className="text-red-500">*wajib</span>
+                Tempat Lahir {isFieldRequired('birth_place') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <input type="text" name="birth_place" placeholder="Tempat Lahir" value={profile.birth_place || ''} onChange={handleChange} className={inputCls('birth_place')} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Tanggal Lahir <span className="text-red-500">*wajib</span>
+                Tanggal Lahir {isFieldRequired('birth_date') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <input type="date" name="birth_date" value={profile.birth_date || ''} onChange={handleChange} className={inputCls('birth_date')} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Status Pernikahan <span className="text-red-500">*wajib</span>
+                Status Pernikahan {isFieldRequired('marital_status') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <select name="marital_status" value={profile.marital_status || ''} onChange={handleChange} className={inputCls('marital_status')}>
                 <option value="">Pilih</option>
@@ -717,7 +707,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Segment <span className="text-red-500">*wajib</span>
+                Segment {isFieldRequired('segment') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <select name="segment" value={profile.segment || ''} onChange={handleChange} className={inputCls('segment')}>
                 <option value="">Pilih</option>
@@ -729,7 +719,7 @@ const ProfileEditPage = () => {
 
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Sumber Informasi <span className="text-red-500">*wajib</span>
+                Sumber Informasi {isFieldRequired('info_source') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
               </label>
               <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
                 <option value="">Pilih Sumber Informasi</option>
@@ -746,7 +736,7 @@ const ProfileEditPage = () => {
             {profile.info_source === 'teman' && (
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  Nama Pengajak / Rekomendasi <span className="text-red-500">*wajib</span>
+                  Nama Pengajak / Rekomendasi {isFieldRequired('referred_by') ? <span className="text-red-500">*wajib</span> : <span className="text-gray-400 text-[9px] font-normal">opsional</span>}
                 </label>
                 <input 
                   type="text" 

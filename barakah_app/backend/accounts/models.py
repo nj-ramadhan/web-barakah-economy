@@ -212,15 +212,11 @@ class User(AbstractUser):
 
     @property
     def is_profile_complete(self):
-        """Checks if user has filled mandatory fields."""
+        """Checks if user has filled minimal mandatory fields."""
         profile = getattr(self, 'profile', None)
-        if not (self.phone and profile and profile.name_full and profile.info_source and profile.agama and profile.marital_status and profile.segment):
-            return False
-        
-        if profile.info_source == 'teman':
-            return bool(profile.referred_by)
-            
-        return True
+        phone = self.phone or (profile.phone if profile else None)
+        name_full = profile.name_full if profile else None
+        return bool(phone and name_full and str(phone).strip() and str(name_full).strip())
 
 
 class UserAgreement(models.Model):
