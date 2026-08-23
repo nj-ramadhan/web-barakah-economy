@@ -95,12 +95,8 @@ const LoginPage = () => {
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login!');
-            if (response.is_profile_complete === false) {
-                navigate('/profile/edit?complete=1', { replace: true });
-            } else {
-                sessionStorage.removeItem('lastAccessedPage');
-                navigate(nextPath);
-            }
+            sessionStorage.removeItem('lastAccessedPage');
+            navigate(nextPath);
         } catch (error) {
             alert('Gagal Login, Isi nama dan password yang benar');
             console.log(error.message);
@@ -143,15 +139,15 @@ const LoginPage = () => {
                 return;
             }
 
+            if (response.is_new_user) {
+                sessionStorage.setItem('just_registered', 'true');
+            }
+
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login dengan akun google!');
-            if (response.is_profile_complete === false) {
-                navigate('/profile/edit?complete=1', { replace: true });
-            } else {
-                sessionStorage.removeItem('lastAccessedPage');
-                navigate(nextPath);
-            }
+            sessionStorage.removeItem('lastAccessedPage');
+            navigate(nextPath);
         } catch (error) {
             const errMsg = error?.response?.data?.error || error?.message || 'Gagal Login dengan akun Google';
             alert(`Gagal Login dengan Google: ${errMsg}`);

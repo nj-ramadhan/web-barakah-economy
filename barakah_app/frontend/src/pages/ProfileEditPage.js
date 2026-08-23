@@ -41,7 +41,10 @@ const formatIDR = (amount) => {
 const ProfileEditPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isCompleteMode = new URLSearchParams(location.search).get('complete') === '1';
+  const queryParams = new URLSearchParams(location.search);
+  const isFirstTime = sessionStorage.getItem('just_registered') === 'true' || queryParams.get('first_time') === '1';
+  const requiredFor = queryParams.get('required_for');
+  const isCompleteMode = queryParams.get('complete') === '1' || !!requiredFor;
   const [missingFields, setMissingFields] = useState([]);
   const [profile, setProfile] = useState({
     name_full: '', nickname: '', nik: '', gender: '', agama: '', birth_date: '', birth_place: '',
@@ -446,8 +449,11 @@ const ProfileEditPage = () => {
           }
         }
 
+        sessionStorage.removeItem('just_registered');
         alert('Data Profile berhasil diperbaharui');
-        if (isCompleteMode) {
+        if (requiredFor === 'checkout') {
+          navigate('/checkout');
+        } else if (isCompleteMode) {
           navigate('/');
         } else {
           navigate('/profile');
@@ -461,6 +467,85 @@ const ProfileEditPage = () => {
     }
   };
 
+  const handleSkipLater = () => {
+    sessionStorage.removeItem('just_registered');
+    const fromPath = location.state?.from?.pathname || (requiredFor === 'checkout' ? '/cart' : '/');
+    navigate(fromPath);
+  };
+
+  const handleCancel = () => {
+    const fromPath = location.state?.from?.pathname || (requiredFor === 'checkout' ? '/cart' : '/profile');
+    navigate(fromPath);
+  };
+
+  const getTabMissingFields = (tabKey) => {
+    const missing = [];
+    if (tabKey === 'general') {
+      const generalMandatory = [
+        'nickname', 'name_full', 'phone', 'gender', 'agama',
+        'birth_place', 'birth_date', 'marital_status', 'segment', 'info_source'
+      ];
+      if (profile.info_source === 'teman') {
+        generalMandatory.push('referred_by');
+      }
+      generalMandatory.forEach(f => {
+        if (!profile[f] || String(profile[f]).trim() === '') {
+          missing.push(f);
+        }
+      });
+      if (missingFields.includes('nik') && (!profile.nik || !String(profile.nik).trim())) {
+        if (!missing.includes('nik')) missing.push('nik');
+      }
+    } else if (tabKey === 'address') {
+      const addressMandatory = ['address', 'address_province_id', 'address_city_id', 'address_subdistrict_id', 'address_village_id'];
+      const isAddressRequired = isCompleteMode || requiredFor === 'checkout' || missingFields.some(f => f.startsWith('address')) || profile.address || profile.address_province_id;
+      if (isAddressRequired) {
+        addressMandatory.forEach(f => {
+          if (!profile[f] || String(profile[f]).trim() === '') {
+            missing.push(f);
+          }
+        });
+      }
+    } else if (tabKey === 'study') {
+      const isStudySegment = ['mahasiswa', 'pelajar', 'santri'].includes(profile.segment);
+      const isStudyRequired = isCompleteMode && (isStudySegment || missingFields.some(f => f.startsWith('study')));
+      if (isStudyRequired) {
+        const studyMandatory = ['study_level', 'study_campus'];
+        if (profile.study_level && !['sd', 'smp', 'sma'].includes(profile.study_level)) {
+          studyMandatory.push('study_faculty', 'study_department', 'study_program', 'study_semester', 'study_start_year', 'study_finish_year');
+        }
+        studyMandatory.forEach(f => {
+          if (missingFields.includes(f) || isStudySegment) {
+            if (!profile[f] || String(profile[f]).trim() === '') {
+              if (!missing.includes(f)) missing.push(f);
+            }
+          }
+        });
+      }
+    } else if (tabKey === 'work') {
+      const isWorkSegment = ['karyawan', 'umum', 'pengusaha'].includes(profile.segment);
+      const isWorkRequired = isCompleteMode && (isWorkSegment || missingFields.some(f => f.startsWith('work_') || f === 'job'));
+      if (isWorkRequired) {
+        const workMandatory = ['job', 'work_field', 'work_institution', 'work_position', 'work_salary'];
+        workMandatory.forEach(f => {
+          if (missingFields.includes(f) || isWorkSegment) {
+            if (!profile[f] || String(profile[f]).trim() === '') {
+              if (!missing.includes(f)) missing.push(f);
+            }
+          }
+        });
+      }
+    }
+    return missing;
+  };
+
+  const tabMissingCounts = {
+    general: getTabMissingFields('general').length,
+    address: getTabMissingFields('address').length,
+    study: getTabMissingFields('study').length,
+    work: getTabMissingFields('work').length,
+  };
+
   const FIELD_LABELS = {
     name_full: 'Nama Lengkap', nickname: 'Nama Panggilan', gender: 'Jenis Kelamin', agama: 'Agama', birth_place: 'Tempat Lahir',
     birth_date: 'Tanggal Lahir', address: 'Alamat', address_province: 'Provinsi',
@@ -470,15 +555,19 @@ const ProfileEditPage = () => {
     info_source: 'Sumber Informasi', referred_by: 'Nama Pengajak',
   };
 
-  const isFieldMissing = (field) => missingFields.includes(field) && (!profile[field] || String(profile[field]).trim() === '');
+  const isFieldMissing = (field) => {
+    const allMissing = [
+      ...getTabMissingFields('general'),
+      ...getTabMissingFields('address'),
+      ...getTabMissingFields('study'),
+      ...getTabMissingFields('work'),
+      ...missingFields
+    ];
+    return allMissing.includes(field) && (!profile[field] || String(profile[field]).trim() === '');
+  };
 
   const inputCls = (field) => {
-    const mandatoryFields = [
-      'name_full', 'nickname', 'phone', 'gender', 'agama', 
-      'birth_place', 'birth_date', 'marital_status', 'segment', 'info_source'
-    ];
-    const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || String(profile[field]).trim() === '');
-    const isError = (isFieldMissing(field) || isMandatoryMissing);
+    const isError = isFieldMissing(field);
     return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${isError
       ? 'border-red-500 bg-red-50 focus:ring-red-400'
       : 'border-gray-200 bg-gray-50 focus:ring-green-500'
@@ -982,20 +1071,35 @@ const ProfileEditPage = () => {
 
         {/* ===== COMPLETION BANNER ===== */}
         {isCompleteMode && (
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-5 mb-4 text-white shadow-lg relative overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-5 mb-4 text-white shadow-lg relative overflow-hidden">
             <div className="flex items-start gap-3">
-              <span className="material-icons text-3xl mt-0.5">warning</span>
-              <div>
-                <h3 className="font-bold text-lg">Lengkapi Data Diri Anda</h3>
+              <span className="material-icons text-3xl mt-0.5">
+                {requiredFor === 'checkout' ? 'shopping_bag' : requiredFor === 'shop' ? 'storefront' : 'account_circle'}
+              </span>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg">
+                  {requiredFor === 'checkout'
+                    ? 'Lengkapi Alamat & Data Diri untuk Belanja'
+                    : requiredFor === 'shop'
+                    ? 'Lengkapi Profil untuk Membuka & Mengelola Toko'
+                    : isFirstTime
+                    ? 'Selamat Datang! Lengkapi Profil Anda'
+                    : 'Lengkapi Data Diri Anda'}
+                </h3>
                 <p className="text-sm opacity-90 mt-1">
-                  Untuk menggunakan fitur Barakah Economy, Anda wajib melengkapi data biodata terlebih dahulu.
-                  {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').length > 0 && (
-                    <span className="block mt-1 font-bold text-yellow-200">
-                      Field wajib: {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').map(f => FIELD_LABELS[f] || f).join(', ')}
-                    </span>
-                  )}
-
+                  {requiredFor === 'checkout'
+                    ? 'Alamat pengiriman dan nomor HP yang valid diperlukan agar pesanan Anda dapat diproses dengan benar.'
+                    : requiredFor === 'shop'
+                    ? 'Data profil dan alamat diperlukan untuk verifikasi toko Anda.'
+                    : isFirstTime
+                    ? 'Anda dapat melengkapi profil Anda sekarang untuk mendapatkan akses ke seluruh fitur, atau menyelesaikannya nanti.'
+                    : 'Untuk menikmati seluruh fasilitas keanggotaan Barakah Economy, mohon lengkapi kolom bertanda merah di bawah ini.'}
                 </p>
+                {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').length > 0 && (
+                  <span className="block mt-2 text-xs font-semibold text-emerald-100 bg-emerald-800/40 px-3 py-1.5 rounded-lg border border-emerald-400/20">
+                    Kolom belum lengkap: {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').map(f => FIELD_LABELS[f] || f).join(', ')}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -1040,20 +1144,29 @@ const ProfileEditPage = () => {
                     { key: 'address', icon: 'location_on', label: 'Alamat' },
                     { key: 'study', icon: 'school', label: 'Pendidikan' },
                     { key: 'work', icon: 'work', label: 'Pekerjaan' },
-                  ].map(tab => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-bold transition ${activeTab === tab.key
-                        ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
-                        : 'text-gray-500 hover:text-gray-700'
+                  ].map(tab => {
+                    const count = tabMissingCounts[tab.key] || 0;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-lg text-xs font-bold transition relative ${
+                          activeTab === tab.key
+                            ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
+                            : 'text-gray-500 hover:text-gray-700'
                         }`}
-                    >
-                      <span className="material-icons text-sm">{tab.icon}</span>
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  ))}
+                      >
+                        <span className="material-icons text-sm">{tab.icon}</span>
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        {count > 0 && (
+                          <span className="ml-1 min-w-[18px] h-[18px] px-1 text-[10px] font-black text-white bg-red-500 rounded-full flex items-center justify-center shadow-sm animate-pulse">
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Tab Content */}
@@ -1061,11 +1174,36 @@ const ProfileEditPage = () => {
                   {renderTabContent()}
                 </div>
 
-                {/* Submit Button */}
-                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center mt-6 shadow-lg shadow-green-100 transition disabled:opacity-50">
-                  <span className="material-icons mr-2">save</span>
-                  Simpan Perubahan
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 mt-6">
+                  {isFirstTime ? (
+                    <button
+                      type="button"
+                      onClick={handleSkipLater}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3.5 rounded-xl font-bold flex items-center justify-center transition"
+                    >
+                      <span className="material-icons mr-1.5 text-base text-gray-500">schedule</span>
+                      Nanti Lagi
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3.5 rounded-xl font-bold flex items-center justify-center transition"
+                    >
+                      <span className="material-icons mr-1.5 text-base text-gray-500">close</span>
+                      Batal
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-[2] bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center shadow-lg shadow-green-100 transition disabled:opacity-50"
+                  >
+                    <span className="material-icons mr-2">save</span>
+                    Simpan Perubahan
+                  </button>
+                </div>
               </form>
             </div>
           </div>

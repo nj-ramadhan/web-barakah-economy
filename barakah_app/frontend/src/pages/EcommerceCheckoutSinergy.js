@@ -4,11 +4,13 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShippingAddressSelector from '../components/common/ShippingAddressSelector';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { getPublicPaymentConfig } from '../services/paymentApi';
 
 const EcommerceCheckoutSinergy = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [addresses, setAddresses] = useState(null);
@@ -24,8 +26,6 @@ const EcommerceCheckoutSinergy = () => {
     const [validatingVoucher, setValidatingVoucher] = useState({});
     const [paymentConfig, setPaymentConfig] = useState(null);
     const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
-
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -204,7 +204,7 @@ const EcommerceCheckoutSinergy = () => {
         if (submittingOrder) return;
         if (isProfileIncomplete) {
             alert('Mohon lengkapi data profil (Nama Lengkap, No. HP/WA, dan Alamat) Anda terlebih dahulu sebelum membuat pesanan.');
-            navigate('/profile/edit');
+            navigate('/profile/edit?complete=1&required_for=checkout', { state: { from: location } });
             return;
         }
 
@@ -396,7 +396,7 @@ const EcommerceCheckoutSinergy = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => navigate('/profile/edit')}
+                            onClick={() => navigate('/profile/edit?complete=1&required_for=checkout', { state: { from: location } })}
                             className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shrink-0 transition shadow-sm"
                         >
                             Lengkapi Profil

@@ -303,14 +303,7 @@ const LayoutWrapper = ({ isDesktop }) => {
     setAgreementUser(updated);
   };
 
-  React.useEffect(() => {
-    // Force redirect to profile edit if profile is incomplete
-    // Except for pages that must be accessible
-    const publicPaths = ['/login', '/register', '/lupa-password', '/reset-password', '/profile/edit'];
-    if (user && user.is_profile_complete === false && !publicPaths.includes(location.pathname)) {
-      navigate('/profile/edit', { replace: true, state: { from: location } });
-    }
-  }, [user, location.pathname, navigate]);
+
 
   React.useEffect(() => {
     const authPaths = ['/login', '/register', '/lupa-password', '/reset-password'];

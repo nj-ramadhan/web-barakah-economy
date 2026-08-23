@@ -240,6 +240,11 @@ const EcommerceCheckoutPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.fullName || !formData.phone) {
+      alert('Mohon lengkapi data profil (Nama Lengkap dan Nomor Telepon/WA) Anda terlebih dahulu.');
+      navigate('/profile/edit?complete=1&required_for=checkout', { state: { from: location } });
+      return;
+    }
     if (courier !== 'cod' && !selectedBank) { alert('pilih metode pembayaran'); return; }
     if (courier !== 'none' && courier !== 'cod' && (!courier || selectedShipping === 0)) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
 

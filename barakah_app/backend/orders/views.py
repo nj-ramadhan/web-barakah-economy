@@ -301,24 +301,24 @@ class CreateOrderView(APIView):
 
                 # Saldo BAE / Hybrid deduction logic
                 used_balance_for_this_order = Decimal('0')
-                order_initial_status = 'pending'
+                order_initial_status = 'Pending'
 
                 if payment_proof:
-                    order_initial_status = 'paid'
-                elif payment_method == 'cod':
-                    order_initial_status = 'Pending'
+                    order_initial_status = 'Paid'
+                elif (payment_method or '').lower() == 'cod':
+                    order_initial_status = 'Paid'
                 elif payment_method == 'saldo_bae' or (use_saldo_bae and available_user_balance >= grand_total):
                     if available_user_balance < grand_total:
                         return Response({'message': f'Saldo BAE tidak mencukupi untuk pesanan {product.title}. Saldo Anda: Rp {available_user_balance:,.0f}'}, status=status.HTTP_400_BAD_REQUEST)
                     used_balance_for_this_order = grand_total
                     available_user_balance -= grand_total
                     payment_method = 'saldo_bae'
-                    order_initial_status = 'paid'
+                    order_initial_status = 'Paid'
                 elif payment_method == 'hybrid' or (use_saldo_bae and available_user_balance > 0):
                     used_balance_for_this_order = min(available_user_balance, grand_total)
                     available_user_balance -= used_balance_for_this_order
                     payment_method = 'hybrid'
-                    order_initial_status = 'paid' if used_balance_for_this_order >= grand_total else 'pending'
+                    order_initial_status = 'Paid' if used_balance_for_this_order >= grand_total else 'Pending'
 
                 # Create Order
                 order = Order.objects.create(

@@ -86,14 +86,11 @@ const RegisterPage = () => {
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
 
-            // is_profile_complete check is important for automated redirect
-            if (response.is_profile_complete === false || response.is_new_user) {
+            if (response.is_new_user) {
                 sessionStorage.setItem('just_registered', 'true');
-                navigate('/profile/edit?complete=1');
-            } else {
-                const dest = nextPath || '/';
-                navigate(dest);
             }
+            const dest = nextPath || '/';
+            navigate(dest);
         } catch (error) {
             const errMsg = error?.response?.data?.error || error?.message || 'Gagal mendaftar dengan Google';
             setError(`Gagal mendaftar dengan Google: ${errMsg}`);
