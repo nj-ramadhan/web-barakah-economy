@@ -105,13 +105,21 @@ const ShippingLabelCard = ({ order, user }) => {
                 )}
             </div>
 
-            {/* Barcode Section (Resi if available, else Order Number) */}
-            <div className="border-b-2 border-black pb-2 text-center">
-                <span className="text-[9px] font-bold text-gray-500 uppercase block">
-                    {order.resi_number ? 'Nomor Resi Pengiriman' : 'Kode Barcode Pesanan'}
-                </span>
-                <SvgBarcode value={barcodeValue} />
-            </div>
+            {/* Barcode Section: ONLY if official courier tracking/resi number exists AND not kurir toko */}
+            {order.resi_number && !isKurirToko ? (
+                <div className="border-b-2 border-black pb-2 text-center">
+                    <span className="text-[9px] font-bold text-gray-500 uppercase block">
+                        Nomor Resi Pengiriman Ekspedisi
+                    </span>
+                    <SvgBarcode value={order.resi_number} />
+                </div>
+            ) : (
+                <div className="border-b-2 border-black py-1 px-2 bg-gray-50 text-center">
+                    <span className="text-[9px] font-bold text-gray-500 uppercase">
+                        {isKurirToko ? 'Pengantaran Kurir Toko / Mandiri' : 'Resi Belum Diinput (Proses Kemas)'}
+                    </span>
+                </div>
+            )}
 
             {/* Sender & Recipient Section */}
             <div className="grid grid-cols-2 gap-2 py-2 border-b-2 border-black">
@@ -286,7 +294,7 @@ const DashboardSinergySellerOrdersPage = () => {
         setPrintModalOrders([order]);
     };
 
-    const handleOpenInNewTab = (ordersToPrint) => {
+    const handleOpenInNewTab = (ordersToPrint, autoPrint = false) => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert('Pop-up browser diblokir. Harap izinkan pop-up untuk membuka cetak di tab baru.');
@@ -311,18 +319,39 @@ const DashboardSinergySellerOrdersPage = () => {
             const courierLabel = isKurirToko 
                 ? '🛵 KURIR TOKO (KIRIM SENDIRI)' 
                 : `${order.shipping_courier ? order.shipping_courier.toUpperCase() : 'EKSPEDISI'} - ${order.shipping_service || 'STANDARD'}`;
-            const barcodeVal = order.resi_number ? order.resi_number : order.order_number;
+            const hasCourierResi = Boolean(order.resi_number && !isKurirToko);
 
-            // Generate barcode svg
-            let binary = "11010010000";
-            for (let i = 0; i < barcodeVal.length; i++) {
-                const charCode = barcodeVal.charCodeAt(i);
-                const bitPattern = ((charCode * 19 + 29) % 2048).toString(2).padStart(11, '0');
-                binary += bitPattern;
+            // Generate barcode svg ONLY if official courier tracking/resi number exists
+            let barcodeHtml = '';
+            if (hasCourierResi) {
+                const barcodeVal = String(order.resi_number).trim().toUpperCase();
+                let binary = "11010010000";
+                for (let i = 0; i < barcodeVal.length; i++) {
+                    const charCode = barcodeVal.charCodeAt(i);
+                    const bitPattern = ((charCode * 19 + 29) % 2048).toString(2).padStart(11, '0');
+                    binary += bitPattern;
+                }
+                binary += "1100011101011";
+
+                const rects = binary.split('').map((bit, idx) => bit === '1' ? `<rect x="${idx}" y="0" width="1" height="40" fill="#000" />` : '').join('');
+                barcodeHtml = `
+                    <div class="barcode-box">
+                        <div style="font-size: 9px; color: #666; text-transform: uppercase;">Nomor Resi Pengiriman Ekspedisi</div>
+                        <svg width="220" height="40" viewBox="0 0 ${binary.length} 40" style="margin: 4px auto 2px; display: block;">
+                            ${rects}
+                        </svg>
+                        <div style="font-family: monospace; font-weight: bold; font-size: 11px; letter-spacing: 2px;">${barcodeVal}</div>
+                    </div>
+                `;
+            } else {
+                barcodeHtml = `
+                    <div style="border-bottom: 2px solid #000; padding: 6px; background: #f9fafb; text-align: center;">
+                        <span style="font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold;">
+                            ${isKurirToko ? 'Pengantaran Kurir Toko / Mandiri' : 'Resi Belum Diinput (Proses Kemas)'}
+                        </span>
+                    </div>
+                `;
             }
-            binary += "1100011101011";
-
-            const rects = binary.split('').map((bit, idx) => bit === '1' ? `<rect x="${idx}" y="0" width="1" height="40" fill="#000" />` : '').join('');
 
             const itemsRows = (order.items || []).map(it => `
                 <tr style="border-bottom: 1px solid #ddd;">
@@ -361,13 +390,7 @@ const DashboardSinergySellerOrdersPage = () => {
                     `}
                 </div>
 
-                <div class="barcode-box">
-                    <div style="font-size: 9px; color: #666; text-transform: uppercase;">${order.resi_number ? 'Nomor Resi Pengiriman' : 'Kode Barcode Pesanan'}</div>
-                    <svg width="220" height="40" viewBox="0 0 ${binary.length} 40" style="margin: 4px auto 2px; display: block;">
-                        ${rects}
-                    </svg>
-                    <div style="font-family: monospace; font-weight: bold; font-size: 11px; letter-spacing: 2px;">${barcodeVal}</div>
-                </div>
+                ${barcodeHtml}
 
                 <div class="address-grid">
                     <div class="address-col" style="border-right: 1px solid #000; padding-right: 8px;">
@@ -574,22 +597,47 @@ const DashboardSinergySellerOrdersPage = () => {
                         color: #666;
                     }
                     @media print {
-                        body {
-                            background: #fff;
-                            padding: 0;
+                        @page {
+                            margin: 5mm;
+                            size: auto;
+                        }
+                        html, body {
+                            background: transparent !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            height: auto !important;
                         }
                         .toolbar {
                             display: none !important;
                         }
                         .label-card {
-                            box-shadow: none;
-                            margin: 0 0 16px 0;
-                            border: 2px solid #000;
-                            max-width: 100%;
-                            width: 100%;
+                            box-shadow: none !important;
+                            margin: 0 0 15px 0 !important;
+                            border: 2px solid #000 !important;
+                            max-width: 100% !important;
+                            width: 100% !important;
+                            page-break-inside: avoid !important;
+                            break-inside: avoid !important;
+                        }
+                        .label-card:not(:last-child) {
+                            page-break-after: always !important;
+                            break-after: page !important;
+                        }
+                        .label-card:last-child {
+                            page-break-after: avoid !important;
+                            break-after: avoid !important;
                         }
                     }
                 </style>
+                ${autoPrint ? `
+                <script>
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.print();
+                        }, 250);
+                    };
+                </script>
+                ` : ''}
             </head>
             <body>
                 <div class="toolbar">
@@ -1790,14 +1838,14 @@ const DashboardSinergySellerOrdersPage = () => {
                             </button>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => handleOpenInNewTab(printModalOrders)}
+                                    onClick={() => handleOpenInNewTab(printModalOrders, false)}
                                     className="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                                 >
                                     <span className="material-icons text-sm text-gray-500">open_in_new</span>
                                     Buka di Tab Baru
                                 </button>
                                 <button
-                                    onClick={() => window.print()}
+                                    onClick={() => handleOpenInNewTab(printModalOrders, true)}
                                     className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
                                 >
                                     <span className="material-icons text-sm">print</span>
