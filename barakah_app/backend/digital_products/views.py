@@ -536,46 +536,54 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             return Response([])
 
     def create(self, request, *args, **kwargs):
-        # Calculate balance (Strictly Seller & Creator Revenue: Digital + Course + Completed Sinergy Non-COD)
-        try:
-            total_sales = DigitalOrder.objects.filter(
-                product_owner=request.user,
-                payment_status='verified',
-                paid_to_seller_directly=False
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-            
-            # Add Course sales (using the new persistent instructor field)
-            total_course_sales = CourseEnrollment.objects.filter(
-                instructor=request.user,
-                payment_status__in=['verified', 'paid'],
-                paid_to_seller_directly=False
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-            
-            total_sinergy_completed = Order.objects.filter(
-                seller=request.user,
-                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
-                paid_to_seller_directly=False
-            ).exclude(
-                payment_method__iexact='cod'
-            ).aggregate(
-                total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
-            )['total'] or Decimal('0')
+        withdrawal_source = request.data.get('withdrawal_source', 'seller_revenue')
 
-            # Seller earnings from sales only (UserWallet is separated for personal shopping/refunds)
-            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_completed)
-        except Exception as e:
-            logger.error(f"Error calculating total sales: {e}")
-            total_sales = Decimal('0')
+        if withdrawal_source == 'user_wallet':
+            from transactions.models import UserWallet
+            user_wallet = UserWallet.get_or_create_wallet(request.user)
+            available_balance = user_wallet.balance or Decimal('0')
+        else:
+            # Calculate balance (Strictly Seller & Creator Revenue: Digital + Course + Completed Sinergy Non-COD)
+            try:
+                total_sales = DigitalOrder.objects.filter(
+                    product_owner=request.user,
+                    payment_status='verified',
+                    paid_to_seller_directly=False
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                # Add Course sales (using the new persistent instructor field)
+                total_course_sales = CourseEnrollment.objects.filter(
+                    instructor=request.user,
+                    payment_status__in=['verified', 'paid'],
+                    paid_to_seller_directly=False
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                total_sinergy_completed = Order.objects.filter(
+                    seller=request.user,
+                    status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
+                    paid_to_seller_directly=False
+                ).exclude(
+                    payment_method__iexact='cod'
+                ).aggregate(
+                    total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
+                )['total'] or Decimal('0')
 
-        try:
-            total_withdrawn = WithdrawalRequest.objects.filter(
-                user=request.user,
-                status__in=['pending', 'approved']
-            ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
-        except Exception:
-            total_withdrawn = Decimal('0')
+                # Seller earnings from sales only (UserWallet is separated for personal shopping/refunds)
+                total_sales = total_sales + total_course_sales + Decimal(total_sinergy_completed)
+            except Exception as e:
+                logger.error(f"Error calculating total sales: {e}")
+                total_sales = Decimal('0')
 
-        available_balance = total_sales - total_withdrawn
+            try:
+                total_withdrawn = WithdrawalRequest.objects.filter(
+                    user=request.user,
+                    withdrawal_source='seller_revenue',
+                    status__in=['pending', 'approved']
+                ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+            except Exception:
+                total_withdrawn = Decimal('0')
+
+            available_balance = total_sales - total_withdrawn
 
         try:
             amount = Decimal(request.data.get('amount', '0'))
@@ -597,11 +605,24 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                serializer.save(
+                withdrawal_obj = serializer.save(
                     user=request.user,
                     admin_fee=admin_fee,
-                    total_deduction=total_deduction
+                    total_deduction=total_deduction,
+                    withdrawal_source=withdrawal_source
                 )
+
+                # If from user_wallet, immediately debit the user's wallet
+                if withdrawal_source == 'user_wallet':
+                    from transactions.models import UserWallet
+                    user_wallet = UserWallet.get_or_create_wallet(request.user)
+                    user_wallet.debit(
+                        amount=total_deduction,
+                        transaction_type='WITHDRAWAL',
+                        description=f"Pengajuan penarikan Saldo BAE ke {bank_name} {request.data.get('account_number')} a.n {request.data.get('account_name')}",
+                        reference_withdrawal=withdrawal_obj
+                    )
+
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -727,6 +748,17 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             # Save and get the updated instance
             updated_instance = serializer.save()
             
+            # If rejected and it was a user_wallet withdrawal, refund back to UserWallet
+            if updated_instance.status == 'rejected' and updated_instance.withdrawal_source == 'user_wallet':
+                from transactions.models import UserWallet
+                user_wallet = UserWallet.get_or_create_wallet(updated_instance.user)
+                user_wallet.credit(
+                    amount=updated_instance.total_deduction,
+                    transaction_type='ADJUSTMENT',
+                    description=f"Pengembalian saldo: Penarikan Saldo BAE #{updated_instance.id} ditolak: {updated_instance.rejection_reason or 'Ditolak Admin'}",
+                    reference_withdrawal=updated_instance
+                )
+
             # Use centralized email utility
             from barakah_app.utils import send_status_update_email
             

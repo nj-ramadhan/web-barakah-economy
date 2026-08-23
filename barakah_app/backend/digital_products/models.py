@@ -178,6 +178,14 @@ class WithdrawalRequest(models.Model):
     account_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=50)
     bank_name = models.CharField(max_length=100)
+    withdrawal_source = models.CharField(
+        max_length=30,
+        choices=[
+            ('seller_revenue', 'Hasil Jualan Toko / Digital / Kelas'),
+            ('user_wallet', 'Saldo E-Wallet Pribadi (Profil)')
+        ],
+        default='seller_revenue'
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     transfer_proof = models.ImageField(upload_to='withdrawal_proofs/', blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)

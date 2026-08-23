@@ -1001,6 +1001,85 @@ const ProfilePage = () => {
     const [loadingWallet, setLoadingWallet] = useState(true);
     const [showWalletModal, setShowWalletModal] = useState(false);
 
+    // E-Wallet Withdrawal State
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [donationAmount, setDonationAmount] = useState('');
+    const [bankName, setBankName] = useState('');
+    const [manualBankName, setManualBankName] = useState('');
+    const [accountName, setAccountName] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [withdrawing, setWithdrawing] = useState(false);
+    const [withdrawError, setWithdrawError] = useState('');
+
+    const BANK_OPTIONS = [
+        'BSI', 'BCA', 'Mandiri', 'BRI', 'BNI', 'Permata', 'CIMB Niaga',
+        'Muamalat', 'Danamon', 'Seabank', 'Bank Jago', 'GOPAY', 'OVO',
+        'DANA', 'ShopeePay', 'Lainnya'
+    ];
+
+    const currentBank = (bankName === 'Lainnya' ? manualBankName : bankName).toUpperCase();
+    const adminFeeVal = (currentBank === 'BSI' || currentBank === 'GOPAY' || !bankName) ? 0 : 6500;
+    const totalDeductionVal = (parseFloat(withdrawAmount) || 0) + (parseFloat(donationAmount) || 0) + adminFeeVal;
+
+    const handleTarikSemua = () => {
+        const availableBal = Number(walletData.balance || 0);
+        const maxWithdraw = Math.max(0, availableBal - adminFeeVal);
+        setWithdrawAmount(maxWithdraw.toString());
+    };
+
+    const handleWalletWithdraw = async (e) => {
+        e.preventDefault();
+        setWithdrawError('');
+        const amount = parseFloat(withdrawAmount);
+        const donation = parseFloat(donationAmount || 0);
+
+        if (isNaN(amount) || amount <= 0) {
+            setWithdrawError('Nominal penarikan harus lebih dari 0.');
+            return;
+        }
+
+        if (totalDeductionVal > Number(walletData.balance || 0)) {
+            setWithdrawError('Saldo BAE tidak mencukupi (termasuk biaya admin jika ada).');
+            return;
+        }
+
+        if (!accountName.trim() || !accountNumber.trim()) {
+            setWithdrawError('Nomor rekening dan nama pemilik rekening wajib diisi.');
+            return;
+        }
+
+        setWithdrawing(true);
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/withdrawals/`, {
+                amount,
+                donation_amount: donation,
+                bank_name: bankName === 'Lainnya' ? manualBankName : bankName,
+                account_name: accountName,
+                account_number: accountNumber,
+                withdrawal_source: 'user_wallet'
+            }, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+
+            alert('Permintaan penarikan Saldo BAE berhasil diajukan! Dana akan diproses dan ditransfer maksimal 2x24 jam.');
+            setShowWithdrawModal(false);
+            setWithdrawAmount('');
+            setDonationAmount('');
+            setBankName('');
+            setManualBankName('');
+            setAccountName('');
+            setAccountNumber('');
+            fetchWallet();
+        } catch (err) {
+            console.error(err);
+            setWithdrawError(err.response?.data?.error || 'Gagal mengajukan penarikan Saldo BAE');
+        } finally {
+            setWithdrawing(false);
+        }
+    };
+
     const fetchWallet = async () => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -1388,18 +1467,21 @@ const ProfilePage = () => {
                                     <div className="flex items-center gap-2 pt-2 sm:pt-0">
                                         <button
                                             onClick={() => setShowWalletModal(true)}
-                                            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-2xl text-xs font-black uppercase tracking-wider text-white border border-white/20 transition-all flex items-center gap-1.5 active:scale-95"
+                                            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-2xl text-xs font-black uppercase tracking-wider text-white border border-white/20 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                                         >
                                             <span className="material-icons text-sm">receipt_long</span>
                                             Mutasi
                                         </button>
-                                        <Link
-                                            to="/dashboard"
-                                            className="px-5 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-lg shadow-black/10 active:scale-95"
+                                        <button
+                                            onClick={() => {
+                                                setWithdrawError('');
+                                                setShowWithdrawModal(true);
+                                            }}
+                                            className="px-5 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-lg shadow-black/10 active:scale-95 cursor-pointer"
                                         >
                                             <span className="material-icons text-sm">payments</span>
                                             Tarik Dana
-                                        </Link>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1737,6 +1819,207 @@ const ProfilePage = () => {
                             >
                                 Tutup
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Tarik Saldo BAE (E-Wallet Pribadi) */}
+            {showWithdrawModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl flex flex-col max-h-[92vh]">
+                        {/* Modal Header */}
+                        <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                                    <span className="material-icons text-xl">account_balance_wallet</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-base">Tarik Saldo BAE</h3>
+                                    <p className="text-xs text-emerald-100">Pencairan dana e-wallet pribadi ke rekening</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowWithdrawModal(false)}
+                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition"
+                            >
+                                <span className="material-icons text-base">close</span>
+                            </button>
+                        </div>
+
+                        {/* Modal Body / Form */}
+                        <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                            {/* Saldo Tersedia Banner */}
+                            <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">Saldo BAE Tersedia</span>
+                                    <span className="text-xl font-black text-emerald-900">Rp {formatIDR(walletData.balance || 0)}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleTarikSemua}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                                >
+                                    Tarik Semua
+                                </button>
+                            </div>
+
+                            {withdrawError && (
+                                <div className="p-3 bg-red-50 text-red-700 rounded-xl border border-red-200 text-xs font-medium flex items-center gap-2">
+                                    <span className="material-icons text-sm text-red-500">error</span>
+                                    {withdrawError}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleWalletWithdraw} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Nominal Penarikan (Rp) *</label>
+                                    <input
+                                        type="number"
+                                        min="10000"
+                                        max={walletData.balance || 0}
+                                        value={withdrawAmount}
+                                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                                        placeholder="Contoh: 100000"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                        required
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">Minimal penarikan Rp 10.000</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Infaq / Sedekah Sukarela (Opsional)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={donationAmount}
+                                        onChange={(e) => setDonationAmount(e.target.value)}
+                                        placeholder="Nominal infaq (Rp)..."
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Bank / E-Wallet Tujuan *</label>
+                                    <select
+                                        value={bankName}
+                                        onChange={(e) => setBankName(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                        required
+                                    >
+                                        <option value="">-- Pilih Bank / E-Wallet --</option>
+                                        {BANK_OPTIONS.map(b => (
+                                            <option key={b} value={b}>
+                                                {b} {b === 'BSI' || b === 'GOPAY' ? '(Gratis Admin)' : '(Admin Rp 6.500)'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {bankName === 'Lainnya' && (
+                                        <input
+                                            type="text"
+                                            value={manualBankName}
+                                            onChange={(e) => setManualBankName(e.target.value)}
+                                            placeholder="Tulis nama bank secara manual..."
+                                            className="w-full mt-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                            required
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Nomor Rekening / No. HP *</label>
+                                        <input
+                                            type="text"
+                                            value={accountNumber}
+                                            onChange={(e) => setAccountNumber(e.target.value)}
+                                            placeholder="Contoh: 1234567890"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Nama Pemilik Rekening *</label>
+                                        <input
+                                            type="text"
+                                            value={accountName}
+                                            onChange={(e) => setAccountName(e.target.value)}
+                                            placeholder="Sesuai buku tabungan"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Rincian Biaya */}
+                                <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-100 space-y-1.5 text-xs text-amber-900">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Nominal Penarikan:</span>
+                                        <span className="font-bold">Rp {formatIDR(parseFloat(withdrawAmount) || 0)}</span>
+                                    </div>
+                                    {parseFloat(donationAmount) > 0 && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Infaq Sukarela:</span>
+                                            <span className="font-bold">Rp {formatIDR(parseFloat(donationAmount) || 0)}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Biaya Admin Transfer:</span>
+                                        <span className="font-bold">{adminFeeVal === 0 ? 'GRATIS (Rp 0)' : `Rp ${formatIDR(adminFeeVal)}`}</span>
+                                    </div>
+                                    <div className="flex justify-between pt-1.5 border-t border-amber-200 font-black text-amber-950 text-sm">
+                                        <span>Total Potong Saldo:</span>
+                                        <span className="text-emerald-800">Rp {formatIDR(totalDeductionVal)}</span>
+                                    </div>
+                                    <p className="text-[10px] text-amber-700/90 pt-0.5">* Gratis biaya admin transfer jika menggunakan BSI atau GOPAY.</p>
+                                </div>
+
+                                {/* 2x24 Jam & WA Support */}
+                                <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 text-xs text-gray-700 space-y-2">
+                                    <p className="text-[11px] font-bold text-gray-800 flex items-center gap-1.5">
+                                        <span className="material-icons text-sm text-emerald-600">schedule</span>
+                                        Proses pencairan saldo diproses maksimal <strong>2x24 jam</strong> kerja.
+                                    </p>
+                                    <div className="pt-1.5 border-t border-gray-200/60 flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-500">Ada kendala penarikan?</span>
+                                        <a
+                                            href="https://wa.me/6285643848251?text=Halo%20Admin%20Barakah%20Ekonomi,%20saya%20ingin%20bertanya%20seputar%20penarikan%20saldo%20BAE"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition border border-emerald-200"
+                                        >
+                                            <span className="material-icons text-xs">whatsapp</span> Hubungi Admin BAE
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowWithdrawModal(false)}
+                                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-wider transition"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={withdrawing || totalDeductionVal > (walletData.balance || 0) || !withdrawAmount || totalDeductionVal <= 0}
+                                        className="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        {withdrawing ? (
+                                            <>
+                                                <div className="animate-spin h-3.5 w-3.5 border-b-2 border-white rounded-full"></div>
+                                                Memproses...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-icons text-sm">send</span>
+                                                Ajukan Penarikan
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

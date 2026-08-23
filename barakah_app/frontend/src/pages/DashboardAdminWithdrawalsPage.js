@@ -108,7 +108,12 @@ const DashboardAdminWithdrawalsPage = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-800">@{w.user_username}</h3>
-                                        <p className="text-xs text-gray-500">{new Date(w.created_at).toLocaleString('id-ID')}</p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${w.withdrawal_source === 'user_wallet' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
+                                                {w.withdrawal_source === 'user_wallet' ? '👛 Saldo E-Wallet' : '🏪 Hasil Jualan'}
+                                            </span>
+                                            <p className="text-[10px] text-gray-400">{new Date(w.created_at).toLocaleString('id-ID')}</p>
+                                        </div>
                                     </div>
                                 </div>
 
