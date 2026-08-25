@@ -109,14 +109,14 @@ const NavigationButton = () => {
               </button>
             </div>
 
-            {/* KONSULTASI (Tengah - 6 cols) */}
+            {/* DONASI (Tengah - 6 cols) */}
             <div className="col-span-6 flex justify-center">
               <Link
-                to="/chat"
+                to="/charity"
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 dark:from-green-600 dark:to-green-800 rounded-2xl shadow-lg shadow-green-200 dark:shadow-green-900/50 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
               >
-                <span className="material-icons text-xl">chat</span>
-                <span className="text-sm font-bold">{t('nav.consultation', 'Konsultasi')}</span>
+                <span className="material-icons text-xl">volunteer_activism</span>
+                <span className="text-sm font-bold">{t('nav.donation', 'Donasi')}</span>
               </Link>
             </div>
 

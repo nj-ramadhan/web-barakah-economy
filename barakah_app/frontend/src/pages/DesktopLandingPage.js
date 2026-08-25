@@ -43,6 +43,54 @@ const getEventStatus = (startStr, endStr) => {
     }
 };
 
+const getProductStock = (product) => {
+    if (!product) return 0;
+    if (product.variations && product.variations.length > 0) {
+        const varStock = product.variations.reduce((sum, v) => sum + (v.is_active ? Number(v.stock || 0) : 0), 0);
+        if (varStock > 0 || product.stock === undefined || product.stock === null) {
+            return varStock;
+        }
+    }
+    if (product.total_stock !== undefined && product.total_stock !== null) {
+        return Number(product.total_stock);
+    }
+    return Number(product.stock || 0);
+};
+
+const sortProductsByPopularityAndStock = (items) => {
+    if (!Array.isArray(items)) return [];
+    return [...items].sort((a, b) => {
+        const stockA = getProductStock(a);
+        const stockB = getProductStock(b);
+        const inStockA = stockA > 0 ? 1 : 0;
+        const inStockB = stockB > 0 ? 1 : 0;
+
+        if (inStockA !== inStockB) {
+            return inStockB - inStockA;
+        }
+
+        const popScoreA = (Number(a.views_count || 0) * 1) + (Number(a.likes_count || 0) * 3);
+        const popScoreB = (Number(b.views_count || 0) * 1) + (Number(b.likes_count || 0) * 3);
+        if (popScoreB !== popScoreA) {
+            return popScoreB - popScoreA;
+        }
+
+        const likesA = Number(a.likes_count || 0);
+        const likesB = Number(b.likes_count || 0);
+        if (likesB !== likesA) {
+            return likesB - likesA;
+        }
+
+        const viewsA = Number(a.views_count || 0);
+        const viewsB = Number(b.views_count || 0);
+        if (viewsB !== viewsA) {
+            return viewsB - viewsA;
+        }
+
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+};
+
 
 const SellerAvatar = ({ seller, getMediaUrl }) => {
     const [imgError, setImgError] = useState(false);
@@ -134,7 +182,8 @@ const DesktopLandingPage = () => {
                 const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes, heroRes] = results;
 
                 setCampaigns(campRes.data.results ? campRes.data.results.slice(0, 8) : campRes.data.slice(0, 8));
-                setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
+                const rawProducts = prodRes.data.results || prodRes.data || [];
+                setProducts(sortProductsByPopularityAndStock(rawProducts).slice(0, 8));
                 setCourses(courseRes.data.results ? courseRes.data.results.slice(0, 8) : courseRes.data.slice(0, 8));
                 setArticles(articleRes.data.results ? articleRes.data.results.slice(0, 8) : articleRes.data.slice(0, 8));
                 setDigitalProducts(Array.isArray(digiRes.data) ? digiRes.data.slice(0, 8) : []);
@@ -508,7 +557,7 @@ const DesktopLandingPage = () => {
                                                         {product.views_count || 0}
                                                     </div>
                                                 </div>
-                                                <p className="text-xs text-gray-400 mt-2">Stok: {product.stock > 0 ? product.stock : 'Habis'}</p>
+                                                <p className="text-xs text-gray-400 mt-2">Stok: {getProductStock(product) > 0 ? getProductStock(product) : 'Habis'}</p>
                                             </div>
                                         </div>
                                     </SwiperSlide>

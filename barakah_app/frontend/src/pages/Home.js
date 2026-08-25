@@ -79,6 +79,57 @@ const getButtonLabel = (title = '') => {
   return 'DONASI SEKARANG';
 };
 
+const getProductStock = (product) => {
+  if (!product) return 0;
+  if (product.variations && product.variations.length > 0) {
+    const varStock = product.variations.reduce((sum, v) => sum + (v.is_active ? Number(v.stock || 0) : 0), 0);
+    if (varStock > 0 || product.stock === undefined || product.stock === null) {
+      return varStock;
+    }
+  }
+  if (product.total_stock !== undefined && product.total_stock !== null) {
+    return Number(product.total_stock);
+  }
+  return Number(product.stock || 0);
+};
+
+const sortProductsByPopularityAndStock = (items) => {
+  if (!Array.isArray(items)) return [];
+  return [...items].sort((a, b) => {
+    const stockA = getProductStock(a);
+    const stockB = getProductStock(b);
+    const inStockA = stockA > 0 ? 1 : 0;
+    const inStockB = stockB > 0 ? 1 : 0;
+
+    // 1. In-stock products always take precedence over out-of-stock products
+    if (inStockA !== inStockB) {
+      return inStockB - inStockA;
+    }
+
+    // 2. Sort by popularity (Views and Likes)
+    const popScoreA = (Number(a.views_count || 0) * 1) + (Number(a.likes_count || 0) * 3);
+    const popScoreB = (Number(b.views_count || 0) * 1) + (Number(b.likes_count || 0) * 3);
+    if (popScoreB !== popScoreA) {
+      return popScoreB - popScoreA;
+    }
+
+    const likesA = Number(a.likes_count || 0);
+    const likesB = Number(b.likes_count || 0);
+    if (likesB !== likesA) {
+      return likesB - likesA;
+    }
+
+    const viewsA = Number(a.views_count || 0);
+    const viewsB = Number(b.views_count || 0);
+    if (viewsB !== viewsA) {
+      return viewsB - viewsA;
+    }
+
+    // 3. Fallback: Newest
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+};
+
 const Home = () => {
   const { t, i18n } = useTranslation();
   const [campaigns, setCampaigns] = useState([]);
@@ -143,8 +194,9 @@ const Home = () => {
     const fetchFeaturedProducts = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products`);
-        const featuredProducts = response.data.filter(product => product.is_featured === true);
-        setfeaturedProducts(featuredProducts.slice(0, 4));
+        const featured = response.data.filter(product => product.is_featured === true);
+        const sortedFeatured = sortProductsByPopularityAndStock(featured);
+        setfeaturedProducts(sortedFeatured.slice(0, 4));
       } catch (err) {
         console.error('Error fetching featured products:', err);
         setError('Failed to load featured products');
@@ -524,7 +576,7 @@ const Home = () => {
   };
 
   const sortedCampaigns = campaigns;
-  const sortedProducts = [...products].sort((a, b) => (b.price || 0) - (a.price || 0));
+  const sortedProducts = sortProductsByPopularityAndStock(products);
   const sortedCourses = [...courses].sort((a, b) => (b.price || 0) - (a.price || 0));
   const onlyPartners = partners.filter(p => !p.type || p.type === 'partner');
   const onlyMitra = partners.filter(p => p.type === 'mitra');
@@ -1105,6 +1157,7 @@ const Home = () => {
             {/* Slides */}
             <div className="h-full">
               {featuredProducts.map((product, index) => {
+                const effectiveStock = getProductStock(product);
                 return (
                   <div
                     key={product.id}
@@ -1121,8 +1174,8 @@ const Home = () => {
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                      <h2 className="text-white text-sm">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</h2>
-                      {product.stock <= 0 ? (
+                      <h2 className="text-white text-sm">stok{' '} {effectiveStock > 0 ? effectiveStock : 'habis'}</h2>
+                      {effectiveStock <= 0 ? (
                         <div className="flex space-x-2">
                           <button
                             onClick={() => addToCart(product.id)}
@@ -1216,6 +1269,7 @@ const Home = () => {
             className="w-full overflow-hidden"
           >
             {sortedProducts.map((product) => {
+              const effectiveStock = getProductStock(product);
               const basePrice = Number(product.price || 0);
               let finalPrice = basePrice;
               let hasPromo = false;
@@ -1277,7 +1331,7 @@ const Home = () => {
                             </span>
                           )}
                           <div className="flex justify-between items-center text-[9px] text-gray-400 mt-0.5">
-                            <span>Stok: <b className={product.stock > 0 ? 'text-gray-700' : 'text-red-500'}>{product.stock > 0 ? product.stock : '0'}</b></span>
+                            <span>Stok: <b className={effectiveStock > 0 ? 'text-gray-700' : 'text-red-500'}>{effectiveStock > 0 ? effectiveStock : '0'}</b></span>
                             <div className="flex items-center gap-0.5">
                               <span className="material-icons text-[10px] text-rose-500">favorite</span>
                               <span>{product.likes_count || 0}</span>
@@ -1288,7 +1342,7 @@ const Home = () => {
                     </div>
 
                     <div className="p-2.5 pt-0 mt-auto">
-                      {product.stock <= 0 ? (
+                      {effectiveStock <= 0 ? (
                         <button
                           className="w-full bg-gray-100 text-gray-400 py-1.5 rounded-xl flex items-center justify-center gap-1 cursor-not-allowed text-[9px] font-bold"
                           disabled
