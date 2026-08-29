@@ -109,6 +109,16 @@ const ChatWindowPage = () => {
 
 
     useEffect(() => {
+        const originalOverflow = document.body.style.overflow;
+        if (window.innerWidth < 1024) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, []);
+
+    useEffect(() => {
         setLoading(true);
         fetchData();
 
@@ -118,6 +128,7 @@ const ChatWindowPage = () => {
 
         return () => clearInterval(interval);
     }, [sessionId]);
+
 
     const handleLoadMore = () => {
         if (!hasMore || loading) return;
@@ -359,9 +370,10 @@ const ChatWindowPage = () => {
         : (session?.consultant_details?.username === currentUser.username ? session?.user_details : (session?.seller_details || session?.consultant_details || session?.user_details));
 
     return (
-        <div className="flex flex-col h-screen max-h-[100dvh] lg:h-[740px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto relative overflow-hidden lg:my-4 border border-gray-100">
+        <div className="fixed inset-0 z-30 lg:relative lg:inset-auto lg:z-auto flex flex-col h-[100dvh] max-h-[100dvh] lg:h-[740px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto overflow-hidden lg:my-4 border-0 lg:border lg:border-gray-100">
             {/* Header Chat */}
             <div className="bg-white px-3.5 py-3 flex items-center gap-3 shadow-sm z-10 border-b border-gray-100 shrink-0">
+
                 <button onClick={() => navigate('/chat')} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100">
                     <span className="material-icons text-xl">arrow_back</span>
                 </button>
@@ -564,8 +576,9 @@ const ChatWindowPage = () => {
             {/* Chat Area */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50"
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-3 custom-scrollbar bg-slate-50"
             >
+
                 {hasMore && (
                     <button
                         onClick={handleLoadMore}
