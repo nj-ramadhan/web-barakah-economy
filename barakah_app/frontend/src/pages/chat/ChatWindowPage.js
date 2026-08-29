@@ -415,35 +415,62 @@ const ChatWindowPage = () => {
 
             {/* Pinned Product Card (If Product Chat) */}
             {session?.product_details && (
-                <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border-b border-blue-100 p-2.5 z-10 shadow-sm">
+                <div className="bg-gradient-to-r from-blue-50/95 via-indigo-50/90 to-emerald-50/80 border-b border-blue-100 p-2.5 z-10 shadow-sm">
                     <div className="flex items-center gap-2.5">
                         {session.product_details.thumbnail && (
                             <img
                                 src={session.product_details.thumbnail}
                                 alt="Product"
-                                className="w-11 h-11 rounded-lg object-cover border border-blue-200 shrink-0"
+                                onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                className="w-12 h-12 rounded-xl object-cover border border-blue-200 shrink-0 cursor-pointer hover:opacity-90 transition"
                             />
                         )}
                         <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-bold text-gray-900 truncate">
+                            <h4
+                                onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                className="text-xs font-bold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition"
+                            >
                                 {session.product_details.title}
                             </h4>
-                            <p className="text-xs font-black text-emerald-700">
-                                Rp {formatCurrency(session.product_details.price)}
-                                <span className="text-[10px] text-gray-400 font-normal ml-1">
+                            
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                <span className="text-xs font-black text-emerald-700">
+                                    Rp {formatCurrency(session.product_details.price)}
+                                </span>
+
+                                {session.product_details.original_price && (
+                                    <span className="text-[10px] text-gray-400 line-through">
+                                        Rp {formatCurrency(session.product_details.original_price)}
+                                    </span>
+                                )}
+
+                                {session.product_details.discount_percentage && (
+                                    <span className="text-[9px] font-black bg-red-100 text-red-600 px-1.5 py-0.2 rounded-md">
+                                        -{session.product_details.discount_percentage}%
+                                    </span>
+                                )}
+
+                                {session.product_details.campaign_name && (
+                                    <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-md truncate max-w-[130px]">
+                                        🏷️ {session.product_details.campaign_name}
+                                    </span>
+                                )}
+
+                                <span className="text-[10px] text-gray-400 font-normal">
                                     (Stok: {session.product_details.stock} {session.product_details.unit})
                                 </span>
-                            </p>
+                            </div>
                         </div>
                         {session.product_details.slug && (
                             <button
-                                onClick={() => navigate(`/store/product/${session.product_details.slug}`)}
-                                className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold shrink-0 transition"
+                                onClick={() => navigate(`/store/${session.product_details.slug}`)}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold shrink-0 transition shadow-sm active:scale-95"
                             >
                                 Lihat
                             </button>
                         )}
                     </div>
+
 
                     {/* Quick Inquiry Prompts Chips */}
                     <div className="flex gap-1.5 mt-2 overflow-x-auto pb-0.5 custom-scrollbar">

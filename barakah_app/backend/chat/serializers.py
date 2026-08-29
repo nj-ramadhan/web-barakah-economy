@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import ConsultantCategory, ConsultantProfile, ChatSession, Message, AISettings, ChatCommand, ConsultationReview, GeneralFeedback
 from accounts.models import User
+
 
 class AISettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,16 +87,52 @@ class ChatSessionSerializer(serializers.ModelSerializer):
         p = obj.product
         request = self.context.get('request')
         thumb_url = request.build_absolute_uri(p.thumbnail.url) if (request and p.thumbnail) else (p.thumbnail.url if p.thumbnail else None)
+
+        now = timezone.now()
+        promo = p.promotions.filter(is_active=True, start_date__lte=now, end_date__gte=now).first()
+        
+        original_price = float(p.price)
+        discounted_price = None
+        discount_percentage = None
+        campaign_name = None
+        
+        if promo:
+            campaign_name = promo.campaign_name or promo.promo_type or 'Diskon Kampanye'
+            if promo.discount_type == 'percentage':
+                discount_percentage = int(promo.discount_value)
+                discount_amount = original_price * (float(promo.discount_value) / 100.0)
+                discounted_price = max(0, original_price - discount_amount)
+            elif promo.discount_type == 'nominal':
+                discounted_price = max(0, original_price - float(promo.discount_value))
+                if original_price > 0:
+                    discount_percentage = int(round((float(promo.discount_value) / original_price) * 100.0))
+            elif promo.discount_type == 'min_qty_discount' and promo.min_quantity <= 1:
+                if promo.is_min_qty_percentage:
+                    discount_percentage = int(promo.discount_value)
+                    discount_amount = original_price * (float(promo.discount_value) / 100.0)
+                    discounted_price = max(0, original_price - discount_amount)
+                else:
+                    discounted_price = max(0, original_price - float(promo.discount_value))
+        elif p.discount and float(p.discount) > 0:
+            discounted_price = float(p.discount)
+            if original_price > 0 and discounted_price < original_price:
+                discount_percentage = int(round(((original_price - discounted_price) / original_price) * 100.0))
+                campaign_name = 'Promo Diskon'
+
         return {
             'id': p.id,
             'title': p.title,
             'slug': p.slug,
-            'price': str(p.price),
+            'price': str(discounted_price if discounted_price is not None else original_price),
+            'original_price': str(original_price) if (discounted_price is not None and discounted_price < original_price) else None,
             'discount': str(p.discount),
+            'discount_percentage': discount_percentage,
+            'campaign_name': campaign_name,
             'stock': p.stock,
             'unit': p.unit,
             'thumbnail': thumb_url,
         }
+
 
     def get_order_details(self, obj):
         if not obj.order:
