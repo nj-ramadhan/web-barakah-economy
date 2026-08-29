@@ -63,10 +63,11 @@ const ChatWindowPage = () => {
                 getSessionDetail(sessionId),
                 getChatCommands()
             ]);
-            setMessages(msgRes.data.results.reverse());
+            const rawMessages = msgRes.data?.results || (Array.isArray(msgRes.data) ? msgRes.data : []);
+            setMessages([...rawMessages].reverse());
             setSession(sessRes.data);
-            setAvailableCommands(cmdRes.data);
-            setHasMore(!!msgRes.data.next);
+            setAvailableCommands(Array.isArray(cmdRes.data) ? cmdRes.data : (cmdRes.data?.results || []));
+            setHasMore(!!msgRes.data?.next);
             setTimeout(scrollToBottom, 50);
             await markRead(sessionId);
         } catch (err) {
@@ -79,10 +80,10 @@ const ChatWindowPage = () => {
     const fetchMessages = async (pageNum = 1, isInitial = false) => {
         try {
             const res = await getMessages(sessionId, pageNum);
-            const newMessages = res.data.results;
+            const newMessages = res.data?.results || (Array.isArray(res.data) ? res.data : []);
 
             if (isInitial) {
-                setMessages(newMessages.reverse());
+                setMessages([...newMessages].reverse());
                 setTimeout(scrollToBottom, 50);
             } else {
                 setMessages(prev => {
@@ -91,20 +92,21 @@ const ChatWindowPage = () => {
                     if (uniqueNew.length === 0) return prev;
 
                     if (pageNum === 1) {
-                        const updated = [...prev, ...uniqueNew.reverse()];
+                        const updated = [...prev, ...[...uniqueNew].reverse()];
                         setTimeout(scrollToBottom, 50);
                         return updated;
                     }
-                    return [...uniqueNew.reverse(), ...prev];
+                    return [...[...uniqueNew].reverse(), ...prev];
                 });
             }
 
-            setHasMore(!!res.data.next);
+            setHasMore(!!res.data?.next);
             await markRead(sessionId);
         } catch (err) {
             console.error('Failed to load messages:', err);
         }
     };
+
 
     useEffect(() => {
         setLoading(true);

@@ -21,8 +21,10 @@ const ChatListPage = () => {
                 getCategories(),
                 getUnreadChatCount()
             ]);
-            setSessions(sessionsRes.data);
-            setCategories(categoriesRes.data.filter(c => c.is_active));
+            const rawSessions = sessionsRes.data?.results || (Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
+            setSessions(rawSessions);
+            const rawCategories = categoriesRes.data?.results || (Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+            setCategories(rawCategories.filter(c => c.is_active));
             setUnreadStats(unreadRes.data || { total_unread: 0, store_unread: 0, consultant_unread: 0, by_session: {} });
         } catch (err) {
             console.error('Failed to fetch chat data:', err);
@@ -34,11 +36,15 @@ const ChatListPage = () => {
     useEffect(() => {
         fetchData();
         const interval = setInterval(() => {
-            getSessions().then(res => setSessions(res.data)).catch(() => {});
+            getSessions().then(res => {
+                const rawSessions = res.data?.results || (Array.isArray(res.data) ? res.data : []);
+                setSessions(rawSessions);
+            }).catch(() => {});
             getUnreadChatCount().then(res => setUnreadStats(res.data)).catch(() => {});
         }, 6000);
         return () => clearInterval(interval);
     }, []);
+
 
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 

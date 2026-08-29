@@ -81,9 +81,21 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return ChatSession.objects.none()
+
+        if user.is_staff or getattr(user, 'role', '') == 'admin':
+            return ChatSession.objects.all().select_related('user', 'consultant', 'seller', 'category', 'product', 'order').order_by('-updated_at')
+
         return ChatSession.objects.filter(
-            Q(user=user) | Q(consultant=user) | Q(seller=user)
-        ).select_related('user', 'consultant', 'seller', 'category', 'product', 'order').order_by('-updated_at')
+            Q(user=user) | 
+            Q(consultant=user) | 
+            Q(seller=user) | 
+            Q(product__seller=user) | 
+            Q(order__seller=user) |
+            Q(order__items__product__seller=user)
+        ).distinct().select_related('user', 'consultant', 'seller', 'category', 'product', 'order').order_by('-updated_at')
+
 
     def create(self, request, *args, **kwargs):
         user = request.user
@@ -289,15 +301,30 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not session_id:
             return Message.objects.none()
         
-        # Ensure user is part of session (user, consultant, or seller)
+        user = self.request.user
+        if not user.is_authenticated:
+            return Message.objects.none()
+
+        if user.is_staff or getattr(user, 'role', '') == 'admin':
+            return Message.objects.filter(session_id=session_id).order_by('-created_at')
+
+        # Ensure user is part of session (user, consultant, seller, or product/order seller)
         session = ChatSession.objects.filter(
-            Q(id=session_id) & (Q(user=self.request.user) | Q(consultant=self.request.user) | Q(seller=self.request.user))
+            Q(id=session_id) & (
+                Q(user=user) | 
+                Q(consultant=user) | 
+                Q(seller=user) | 
+                Q(product__seller=user) | 
+                Q(order__seller=user) |
+                Q(order__items__product__seller=user)
+            )
         ).first()
         
         if not session:
             return Message.objects.none()
             
         return Message.objects.filter(session_id=session_id).order_by('-created_at')
+
 
     def perform_create(self, serializer):
         session_id = self.request.data.get('session')
