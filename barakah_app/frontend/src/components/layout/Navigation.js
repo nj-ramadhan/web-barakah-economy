@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getUnreadChatCount } from '../../services/chatApi';
 import '../../styles/Navigation.css';
 
-const getLayananItems = (t) => [
+const getLayananItems = (t, unreadCount = 0) => [
   { to: '/', icon: 'home', label: t('nav.home', 'Home'), color: 'text-green-600' },
-  { to: '/chat', icon: 'chat', label: t('nav.consultation', 'Konsultasi'), color: 'text-green-600' },
+  { to: '/chat', icon: 'chat', label: t('nav.chat', 'Chat / Pesan'), color: 'text-green-600', badge: unreadCount },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: t('nav.activities', 'Kegiatan'), color: 'text-green-700' },
   { to: '/store', icon: 'storefront', label: t('nav.ecommerce', 'Toko'), color: 'text-blue-600' },
+
   { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
   { to: '/articles', icon: 'article', label: t('nav.articles', 'Artikel'), color: 'text-orange-500' },
   { to: '/digital-products', icon: 'storefront', label: t('nav.digital_products', 'Produk Digital'), color: 'text-emerald-600' },
@@ -23,11 +25,29 @@ const NavigationButton = () => {
   const { t } = useTranslation();
   const [isLayananOpen, setIsLayananOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const layananRef = useRef(null);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('user'));
+    const logged = !!localStorage.getItem('user');
+    setIsLoggedIn(logged);
+    if (logged) {
+      getUnreadChatCount().then(res => {
+        setUnreadChatCount(res.data?.total_unread || 0);
+      }).catch(() => {});
+    }
   }, [location]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const interval = setInterval(() => {
+      getUnreadChatCount().then(res => {
+        setUnreadChatCount(res.data?.total_unread || 0);
+      }).catch(() => {});
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -80,15 +100,20 @@ const NavigationButton = () => {
                     className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
                     style={{ scrollbarWidth: 'thin' }}
                   >
-                    {getLayananItems(t).map((item) => (
+                    {getLayananItems(t, unreadChatCount).map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
-                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
                         onClick={() => setIsLayananOpen(false)}
                       >
-                        <div className={`w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1`}>
+                        <div className={`w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
                           <span className={`material-icons text-xl ${item.color}`}>{item.icon}</span>
+                          {item.badge > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
                         </div>
                         <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
                       </Link>
@@ -101,13 +126,21 @@ const NavigationButton = () => {
 
               <button
                 onClick={() => setIsLayananOpen(!isLayananOpen)}
-                className={`flex flex-col items-center justify-center focus:outline-none transition-colors ${isLayananOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+                className={`flex flex-col items-center justify-center focus:outline-none transition-colors relative ${isLayananOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
                   }`}
               >
-                <span className="material-icons text-2xl">grid_view</span>
+                <div className="relative">
+                  <span className="material-icons text-2xl">grid_view</span>
+                  {unreadChatCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-md shadow-red-300">
+                      {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[11px] font-medium mt-0.5">{t('nav.services', 'Layanan')}</span>
               </button>
             </div>
+
 
             {/* DONASI (Tengah - 6 cols) */}
             <div className="col-span-6 flex justify-center">

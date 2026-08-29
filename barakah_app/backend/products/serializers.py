@@ -32,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
     promo_discount_percentage = serializers.SerializerMethodField()
 
     seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_phone = serializers.SerializerMethodField()
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
     seller_city_name = serializers.SerializerMethodField()
@@ -47,6 +48,13 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_seller_phone(self, obj):
+        if obj.seller:
+            profile = getattr(obj.seller, 'profile', None)
+            return obj.seller.phone or (profile.phone if profile else None)
+        return None
+
 
     def get_active_promotion(self, obj):
         now = timezone.now()

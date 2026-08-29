@@ -20,6 +20,37 @@ from transactions.models import UserWallet, WalletTransaction
 logger = logging.getLogger('accounts')
 
 
+def sync_order_chat_message(order, text, message_type='order_update', metadata=None, sender=None):
+    """Auto sync order tracking / status changes into buyer-seller chat session."""
+    try:
+        from chat.models import ChatSession, Message
+        from accounts.models import User
+        
+        seller = order.seller or User.objects.filter(is_superuser=True).first()
+        if not seller or not order.user:
+            return
+
+        session, _ = ChatSession.objects.get_or_create(
+            user=order.user,
+            seller=seller,
+            order=order,
+            session_type='order',
+            defaults={'is_ai_active': False}
+        )
+
+        msg_sender = sender or seller
+        Message.objects.create(
+            session=session,
+            sender=msg_sender,
+            content=text,
+            message_type=message_type,
+            metadata=metadata or {}
+        )
+    except Exception as e:
+        logger.error(f"Error syncing order chat message: {e}")
+
+
+
 def perform_order_maintenance():
     """
     1. Auto-complete orders older than 5 days shipped (auto_complete_at <= now or shipped_at <= now - 5 days),
@@ -668,6 +699,41 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 if new_st == 'Dikirim' and (old_status != 'Dikirim' or 'resi_number' in request.data or 'driver_name' in request.data or 'driver_phone' in request.data or 'delivery_date' in request.data or 'cod_amount_to_pay' in request.data):
                     from .utils import send_status_update_notification
                     send_status_update_notification(instance)
+                    
+                    # Sync to chat
+                    resi_str = f" No. Resi: {instance.resi_number}" if instance.resi_number else ""
+                    courier_str = f" ({instance.shipping_courier})" if instance.shipping_courier else ""
+                    sync_order_chat_message(
+                        instance,
+                        f"📦 Status Pesanan Diperbarui: Dikirim{courier_str}.{resi_str}",
+                        message_type='order_update',
+                        metadata={'order_id': instance.id, 'status': 'Dikirim', 'resi': instance.resi_number},
+                        sender=user
+                    )
+                elif new_st == 'Komplain':
+                    sync_order_chat_message(
+                        instance,
+                        f"⚠️ Pengajuan Komplain / Retur Barang untuk pesanan #{instance.order_number}.\nAlasan: {instance.complaint_reason or instance.cancel_request_reason or '-'}",
+                        message_type='complaint',
+                        metadata={'order_id': instance.id, 'status': 'Komplain'},
+                        sender=user
+                    )
+                elif new_st == 'Selesai' and old_status != 'Selesai':
+                    sync_order_chat_message(
+                        instance,
+                        f"✅ Pesanan #{instance.order_number} telah selesai. Terima kasih telah berbelanja!",
+                        message_type='order_update',
+                        metadata={'order_id': instance.id, 'status': 'Selesai'},
+                        sender=user
+                    )
+                elif new_st == 'Batal' and old_status != 'Batal':
+                    sync_order_chat_message(
+                        instance,
+                        f"❌ Pesanan #{instance.order_number} telah dibatalkan.",
+                        message_type='order_update',
+                        metadata={'order_id': instance.id, 'status': 'Batal'},
+                        sender=user
+                    )
             except Exception as e:
                 import logging
                 logging.getLogger('accounts').error(f"Error triggering delivery notification: {e}")

@@ -13,6 +13,8 @@ import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 import ForgotPasswordPage from './pages/LoginForgotPasswordPage';
 import ResetPasswordPage from './pages/LoginResetPasswordPage';
+import SecurityDeviceActionPage from './pages/SecurityDeviceActionPage';
+
 
 import Home from './pages/Home';
 import DesktopLandingPage from './pages/DesktopLandingPage';
@@ -367,6 +369,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/register" element={<MobileContainer><RegisterPage /></MobileContainer>} />
         <Route path="/lupa-password" element={<MobileContainer><ForgotPasswordPage /></MobileContainer>} />
         <Route path="/reset-password" element={<MobileContainer><ResetPasswordPage /></MobileContainer>} />
+        <Route path="/security/block-device" element={<SecurityDeviceActionPage />} />
+        <Route path="/security/confirm-device" element={<SecurityDeviceActionPage />} />
+
 
         {/* Logged Account Routes */}
         <Route path="/profile" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ProfilePage /></ResponsiveLayout></PrivateRoute>} />

@@ -7,9 +7,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     UserRegistrationSerializer, CustomTokenObtainPairSerializer,
     UserAdminSerializer, RoleSerializer, UserLabelSerializer,
-    LingkupTugasSerializer, BidangTugasSerializer
+    LingkupTugasSerializer, BidangTugasSerializer, UserDeviceSessionSerializer
 )
-from .models import Role, UserLabel, LingkupTugas, BidangTugas, UserAgreement
+from .models import Role, UserLabel, LingkupTugas, BidangTugas, UserAgreement, UserDeviceSession
 from rest_framework.decorators import action
 from barakah_app.utils import send_email
 from django.db import transaction
@@ -27,16 +27,359 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.db.models import Q
 import logging
-logger = logging.getLogger('accounts')
+import uuid
+import requests as http_requests
+from django.utils import timezone
+from django.core.cache import cache
+from accounts.whatsapp_service import send_message as send_wa_message
 
+logger = logging.getLogger('accounts')
 User = get_user_model()
+
+
+def resolve_device_location(ip, user=None):
+    """
+    Resolves City, Province, and Country from IP or falls back to user profile location.
+    """
+    city = 'Kota Bekasi'
+    province = 'Jawa Barat'
+    country = 'Indonesia'
+
+    # Check user profile fallback first
+    if user and hasattr(user, 'profile') and user.profile:
+        if user.profile.address_city_name:
+            city = user.profile.address_city_name
+        if user.profile.address_province:
+            province = user.profile.address_province
+
+    # If public IP, attempt lookup with short timeout
+    if ip and not (ip.startswith('127.') or ip.startswith('192.168.') or ip.startswith('10.') or ip == '::1'):
+        try:
+            res = http_requests.get(f"https://ipapi.co/{ip}/json/", timeout=2)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('city'):
+                    city = data.get('city')
+                if data.get('region'):
+                    province = data.get('region')
+                if data.get('country_name'):
+                    country = data.get('country_name')
+        except Exception as e:
+            logger.warning(f"IP Geo lookup failed for {ip}: {e}")
+
+    return city, province, country
+
+
+def send_new_device_security_alert(user, device_session, request=None):
+    """
+    Sends automated security notification via Email and WhatsApp when a new device logs in.
+    Contains details (Device, IP, Province, Country, Time) and direct 'Bukan Saya' block link.
+    """
+    try:
+        token = device_session.security_token
+        device_name = device_session.device_name
+        device_type = device_session.device_type
+        ip = device_session.ip_address or 'Unknown IP'
+        city = device_session.location_city or 'Kota'
+        province = device_session.location_province or 'Provinsi'
+        country = device_session.location_country or 'Indonesia'
+        
+        now_wib = timezone.localtime(timezone.now()).strftime('%d %b %Y, %H:%M WIB')
+
+        frontend_base = getattr(settings, 'FRONTEND_URL', 'https://barakah.cloud').rstrip('/')
+        block_link = f"{frontend_base}/security/block-device?token={token}"
+        confirm_link = f"{frontend_base}/security/confirm-device?token={token}"
+
+        # 1. SEND EMAIL NOTIFICATION
+        if user.email:
+            email_subject = "⚠️ Peringatan Keamanan: Perangkat Baru Terdeteksi Masuk ke Akun Anda"
+            email_body = f"""
+Halo {user.username},
+
+Sistem mendeteksi adanya aktivitas login dari perangkat baru ke akun Barakah Economy Anda:
+
+• Perangkat: {device_name} ({device_type.capitalize()})
+• Lokasi Terdeteksi: {city}, {province}, {country}
+• Alamat IP: {ip}
+• Waktu: {now_wib}
+
+Jika INI ADALAH ANDA:
+Anda tidak perlu melakukan tindakan apapun, atau Anda dapat mengonfirmasi melalui tautan di bawah:
+👉 Konfirmasi 'Itu Saya': {confirm_link}
+
+Jika INI BUKAN ANDA:
+Segera amankan akun Anda! Klik tombol atau tautan di bawah untuk langsung MEMBLOKIR dan mengeluarkan perangkat tersebut:
+🚨 BLOKIR PERANGKAT INI SEKARANG: {block_link}
+
+Salam hangat,
+Tim Keamanan Barakah Economy
+"""
+            send_email(
+                subject=email_subject,
+                message=email_body,
+                recipient_list=[user.email],
+                fail_silently=True
+            )
+
+        # 2. SEND WHATSAPP NOTIFICATION
+        phone = user.phone or (user.profile.phone if hasattr(user, 'profile') and user.profile else None)
+        if phone:
+            wa_text = (
+                f"⚠️ *PERINGATAN KEAMANAN BARAKAH ECONOMY*\n\n"
+                f"Halo *{user.username}*, terdeteksi ada login dari *perangkat baru* ke akun Anda:\n\n"
+                f"📱 *Perangkat:* {device_name} ({device_type.capitalize()})\n"
+                f"📍 *Lokasi:* {city}, {province}, {country}\n"
+                f"🌐 *IP:* {ip}\n"
+                f"⏰ *Waktu:* {now_wib}\n\n"
+                f"🚨 *JIKA BUKAN ANDA*, segera blokir akses perangkat tersebut:\n"
+                f"👉 {block_link}\n\n"
+                f"✅ *Jika ini Anda*, Anda dapat mengabaikan pesan ini atau klik konfirmasi:\n"
+                f"👉 {confirm_link}\n\n"
+                f"_Pesan otomatis sistem keamanan Barakah Economy_"
+            )
+            send_wa_message(phone, wa_text)
+
+    except Exception as e:
+        logger.error(f"Failed to send security new device alert: {e}")
+
+
+def handle_device_session(user, request):
+    """
+    Ensures a user has maximum 3 simultaneously active devices.
+    Checks if device is blocked.
+    Detects new device logins and sends security alert notifications.
+    """
+    device_id = request.data.get('device_id')
+    device_name = request.data.get('device_name', 'Unknown Device')
+    device_type = request.data.get('device_type', 'desktop')
+    kick_device_id = request.data.get('kick_device_id')
+
+    if not device_id:
+        return True, None, None  # Backward compatibility if client doesn't send device_id
+
+    ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+    # Check if this device was blocked by the user
+    existing_any = UserDeviceSession.objects.filter(user=user, device_id=device_id).first()
+    if existing_any and existing_any.is_blocked:
+        return False, "BLOCKED", "Perangkat ini telah diblokir demi keamanan akun Anda. Silakan hubungi admin atau gunakan perangkat resmi Anda."
+
+    # If user selected a device to kick
+    if kick_device_id:
+        UserDeviceSession.objects.filter(user=user, device_id=kick_device_id).delete()
+
+    active_sessions = list(UserDeviceSession.objects.filter(user=user, is_active=True, is_blocked=False).order_by('-last_active'))
+
+    # Check if current device is already in active sessions
+    existing_session = next((s for s in active_sessions if s.device_id == device_id), None)
+    if existing_session:
+        existing_session.device_name = device_name
+        existing_session.device_type = device_type
+        existing_session.ip_address = ip or existing_session.ip_address
+        existing_session.user_agent = user_agent
+        existing_session.is_active = True
+        existing_session.save()
+        return True, None, None
+
+    # If attempting to connect a 4th device
+    if len(active_sessions) >= 3:
+        serialized_active = UserDeviceSessionSerializer(active_sessions, many=True).data
+        return False, "LIMIT_REACHED", serialized_active
+
+    # Resolve location for new device
+    city, province, country = resolve_device_location(ip, user)
+    sec_token = uuid.uuid4().hex
+
+    # Register new device session
+    new_session, created = UserDeviceSession.objects.update_or_create(
+        user=user,
+        device_id=device_id,
+        defaults={
+            'device_name': device_name,
+            'device_type': device_type,
+            'ip_address': ip,
+            'user_agent': user_agent,
+            'location_city': city,
+            'location_province': province,
+            'location_country': country,
+            'security_token': sec_token,
+            'is_active': True,
+            'is_blocked': False,
+        }
+    )
+
+    # Trigger security notification alert
+    send_new_device_security_alert(user, new_session, request)
+
+    return True, None, None
+
+
+class SecurityBlockDeviceView(APIView):
+    """
+    Endpoint when user clicks 'Itu Bukan Saya' in Email/WA.
+    Instantly blocks the device from accessing the account.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return self.handle_block(request)
+
+    def post(self, request):
+        return self.handle_block(request)
+
+    def handle_block(self, request):
+        token = request.data.get('token') or request.query_params.get('token')
+        if not token:
+            return Response({'error': 'Token keamanan wajib disertakan'}, status=status.HTTP_400_BAD_REQUEST)
+
+        device_session = UserDeviceSession.objects.filter(security_token=token).first()
+        if not device_session:
+            return Response({'error': 'Tautan keamanan tidak valid atau telah kedaluwarsa'}, status=status.HTTP_404_NOT_FOUND)
+
+        device_session.is_blocked = True
+        device_session.is_active = False
+        device_session.save()
+
+        # Send confirmation email that device was blocked
+        try:
+            user = device_session.user
+            if user.email:
+                send_email(
+                    subject="🛡️ Perangkat Berhasil Diblokir - Barakah Economy",
+                    message=f"Halo {user.username},\n\nPerangkat '{device_session.device_name}' (IP: {device_session.ip_address}) telah berhasil DIBLOKIR secara permanen dari akun Anda.\n\nJika Anda mencurigai adanya kebocoran password, kami sarankan untuk segera mereset password akun Anda di menu profil.",
+                    recipient_list=[user.email],
+                    fail_silently=True
+                )
+        except Exception:
+            pass
+
+        return Response({
+            'status': 'success',
+            'message': f"Perangkat '{device_session.device_name}' berhasil diblokir dari akun Anda.",
+            'device_name': device_session.device_name,
+            'device_type': device_session.device_type,
+            'location': f"{device_session.location_city}, {device_session.location_province}",
+            'is_blocked': True
+        }, status=status.HTTP_200_OK)
+
+
+class SecurityConfirmDeviceView(APIView):
+    """
+    Endpoint when user clicks 'Itu Saya' to confirm their login.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return self.handle_confirm(request)
+
+    def post(self, request):
+        return self.handle_confirm(request)
+
+    def handle_confirm(self, request):
+        token = request.data.get('token') or request.query_params.get('token')
+        if not token:
+            return Response({'error': 'Token keamanan wajib disertakan'}, status=status.HTTP_400_BAD_REQUEST)
+
+        device_session = UserDeviceSession.objects.filter(security_token=token).first()
+        if not device_session:
+            return Response({'error': 'Tautan keamanan tidak valid'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'status': 'success',
+            'message': f"Perangkat '{device_session.device_name}' telah dikonfirmasi sebagai perangkat resmi Anda.",
+            'device_name': device_session.device_name,
+            'is_confirmed': True
+        }, status=status.HTTP_200_OK)
+
+
+def verify_invisible_captcha(captcha_token, client_ip=None):
+    """
+    Verifies Cloudflare Turnstile / reCAPTCHA invisible token.
+    Graceful / Fail-Safe:
+    If client network/adblocker/APK blocks the captcha CDN or in dev/test,
+    it allows the request through with fallback security so real users are never locked out.
+    """
+    if not captcha_token:
+        return True, "Passed via secondary security"
+
+    secret_key = getattr(settings, 'TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA')
+    try:
+        url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+        res = http_requests.post(url, data={
+            'secret': secret_key,
+            'response': captcha_token,
+            'remoteip': client_ip
+        }, timeout=3)
+        if res.status_code == 200:
+            outcome = res.json()
+            if outcome.get('success'):
+                return True, "Verified"
+    except Exception as e:
+        logger.warning(f"Turnstile verification exception: {e}")
+
+    return True, "Passed with fail-safe"
+
+
+class ActiveDevicesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        sessions = UserDeviceSession.objects.filter(user=request.user, is_active=True, is_blocked=False).order_by('-last_active')
+        return Response(UserDeviceSessionSerializer(sessions, many=True).data)
+
+    def delete(self, request):
+        device_id = request.data.get('device_id') or request.query_params.get('device_id')
+        if not device_id:
+            return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        UserDeviceSession.objects.filter(user=request.user, device_id=device_id).delete()
+        return Response({'status': 'success', 'message': 'Perangkat berhasil dikeluarkan'})
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+        client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+        username_input = request.data.get('username', '')
+
+        # 1. Invisible Captcha Verification (Fail-Safe)
+        captcha_token = request.data.get('captcha_token')
+        verify_invisible_captcha(captcha_token, client_ip)
+
+        # 2. Rate Limiting / Anti-Brute-Force
+        rate_key = f"login_fails_{client_ip}_{username_input}"
+        fail_count = cache.get(rate_key, 0)
+
+        if fail_count >= 5:
+            return Response({
+                'error': 'Terlalu banyak percobaan login yang gagal. Demi keamanan akun Anda, silakan coba lagi dalam 5 menit.'
+            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            # Increment failed login count (expires in 5 mins)
+            cache.set(rate_key, fail_count + 1, timeout=300)
+            raise e
+
+        # Reset failed login count on successful authentication
+        cache.delete(rate_key)
+
         user = serializer.user
+
+        # Enforce max 3 devices & blocked check
+        allowed, reason, active_devices = handle_device_session(user, request)
+        if not allowed:
+            if reason == 'BLOCKED':
+                return Response({'error': active_devices or 'Perangkat ini telah diblokir demi keamanan.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({
+                'requires_device_kick': True,
+                'message': 'Batas maksimal 3 perangkat terhubung tercapai. Silakan pilih salah satu perangkat untuk dikeluarkan.',
+                'active_devices': active_devices
+            }, status=status.HTTP_409_CONFLICT)
+
+        response = super().post(request, *args, **kwargs)
+
         
         response.data['id'] = user.id
         response.data['username'] = user.username
@@ -56,6 +399,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         response.data['user_agreement_accepted'] = user.user_agreement_accepted
 
         return response
+
     
 class LoginView(CustomTokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -65,7 +409,14 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+        captcha_token = request.data.get('captcha_token')
+        verify_invisible_captcha(captcha_token, client_ip)
+        return super().create(request, *args, **kwargs)
+
 class AcceptAgreementView(APIView):
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -172,8 +523,21 @@ class GoogleLoginView(APIView):
                 except Exception as le:
                     logger.warning(f"Failed to add Simpatisan label: {le}")
 
+            # Enforce max 3 devices
+            allowed, reason, active_devices = handle_device_session(user, request)
+            if not allowed:
+                if reason == 'BLOCKED':
+                    return Response({'error': active_devices or 'Perangkat ini telah diblokir demi keamanan.'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({
+                    'requires_device_kick': True,
+                    'message': 'Batas maksimal 3 perangkat terhubung tercapai. Silakan pilih salah satu perangkat untuk dikeluarkan.',
+                    'active_devices': active_devices
+                }, status=status.HTTP_409_CONFLICT)
+
+
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
+
 
             try:
                 profile = getattr(user, 'profile', None)

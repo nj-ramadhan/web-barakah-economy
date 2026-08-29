@@ -81,13 +81,86 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return ChatSession.objects.filter(Q(user=user) | Q(consultant=user)).order_by('-updated_at')
+        return ChatSession.objects.filter(
+            Q(user=user) | Q(consultant=user) | Q(seller=user)
+        ).select_related('user', 'consultant', 'seller', 'category', 'product', 'order').order_by('-updated_at')
 
     def create(self, request, *args, **kwargs):
-        category_id = request.data.get('category')
-        consultant_id = request.data.get('consultant') # Explicit consultant choice
         user = request.user
+        session_type = request.data.get('session_type', 'consultant')
+        category_id = request.data.get('category')
+        consultant_id = request.data.get('consultant')
+        seller_id = request.data.get('seller')
+        product_id = request.data.get('product')
+        order_id = request.data.get('order')
+        initial_message = request.data.get('initial_message')
 
+        # 1. MARKETPLACE / STORE CHAT FLOW
+        if session_type in ['store', 'order']:
+            product = None
+            order = None
+            seller = None
+
+            if product_id:
+                from products.models import Product
+                product = Product.objects.filter(id=product_id).first()
+                if product and product.seller:
+                    seller = product.seller
+
+            if order_id:
+                from orders.models import Order
+                order = Order.objects.filter(id=order_id).first()
+                if order and order.seller:
+                    seller = order.seller
+
+            if seller_id and not seller:
+                seller = User.objects.filter(id=seller_id).first()
+
+            if not seller:
+                # If product or order has no explicit seller, fallback to admin
+                seller = User.objects.filter(is_superuser=True).first()
+
+            if seller == user:
+                return response.Response({"error": "Anda tidak dapat membuka obrolan dengan toko Anda sendiri"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check existing active session between user and seller for this type
+            existing_session = ChatSession.objects.filter(
+                user=user,
+                seller=seller,
+                session_type=session_type,
+                is_active=True
+            )
+            if product:
+                existing_session = existing_session.filter(product=product)
+            if order:
+                existing_session = existing_session.filter(order=order)
+
+            session = existing_session.first()
+            created = False
+            if not session:
+                session = ChatSession.objects.create(
+                    user=user,
+                    seller=seller,
+                    product=product,
+                    order=order,
+                    session_type=session_type,
+                    is_ai_active=False  # AI is ALWAYS turned off for store/seller chats
+                )
+                created = True
+
+            # If initial message or inquiry provided, send it
+            if initial_message:
+                Message.objects.create(
+                    session=session,
+                    sender=user,
+                    content=initial_message,
+                    message_type='text'
+                )
+
+            status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            return response.Response(ChatSessionSerializer(session, context={'request': request}).data, status=status_code)
+
+        # 2. CONSULTANT / SYARIAH EXPERT FLOW
         category = ConsultantCategory.objects.filter(id=category_id).first()
         if not category:
             return response.Response({"error": "Kategori tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
@@ -98,7 +171,6 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 consultant = User.objects.get(id=consultant_id)
                 # Verify consultant belongs to category
                 if not ConsultantProfile.objects.filter(user=consultant, category_id=category_id).exists():
-                    # For safety, allow staff/admin to consult anywhere
                     if not (consultant.is_staff or consultant.role == 'admin'):
                         return response.Response({"error": "Pakar tidak terdaftar di kategori ini"}, status=status.HTTP_400_BAD_REQUEST)
             except User.DoesNotExist:
@@ -113,7 +185,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         session = existing_session
         created = False
         if not session:
-            session = ChatSession.objects.create(user=user, consultant=consultant, category=category)
+            session = ChatSession.objects.create(user=user, consultant=consultant, category=category, session_type='consultant')
             created = True
         
         # Auto-send welcome message if exists in category AND has NEVER been sent for this session
@@ -123,7 +195,6 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 should_send_welcome = True
 
         if should_send_welcome:
-            # Use consultant as sender if exists, otherwise admin/system
             sender = consultant
             if not sender:
                 sender = User.objects.filter(is_superuser=True).first() or User.objects.filter(is_staff=True).first()
@@ -138,25 +209,52 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 session.save()
 
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        return response.Response(ChatSessionSerializer(session).data, status=status_code)
+        return response.Response(ChatSessionSerializer(session, context={'request': request}).data, status=status_code)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        user = request.user
+        sessions = self.get_queryset()
+        
+        unread_msgs = Message.objects.filter(
+            session__in=sessions,
+            is_read=False
+        ).exclude(sender=user)
+
+        total_unread = unread_msgs.count()
+        store_unread = unread_msgs.filter(session__session_type__in=['store', 'order']).count()
+        consultant_unread = unread_msgs.filter(session__session_type='consultant').count()
+
+        by_session = {}
+        for s in sessions:
+            c = unread_msgs.filter(session=s).count()
+            if c > 0:
+                by_session[str(s.id)] = c
+
+        return response.Response({
+            'total_unread': total_unread,
+            'store_unread': store_unread,
+            'consultant_unread': consultant_unread,
+            'by_session': by_session
+        })
 
     @action(detail=True, methods=['post'])
     def close_session(self, request, pk=None):
+
         session = self.get_object()
         user = request.user
         
-        # Only owner, expert or admin can close
         is_owner = session.user == user
         is_expert = session.consultant == user
+        is_seller = session.seller == user
         is_admin = user.is_staff or user.role == 'admin'
         
-        if not (is_owner or is_expert or is_admin):
+        if not (is_owner or is_expert or is_seller or is_admin):
             return response.Response({"error": "Anda tidak memiliki izin untuk menutup sesi ini."}, status=status.HTTP_403_FORBIDDEN)
             
         session.is_active = False
         session.save()
         
-        # Only send closure message if CLOSED BY EXPERT/ADMIN
         if is_expert or is_admin:
             closure_msg = "Sesi konsultasi ini telah ditutup oleh pakar. Terima kasih."
             Message.objects.create(
@@ -165,11 +263,17 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 content=closure_msg
             )
         
-        return response.Response(ChatSessionSerializer(session).data)
+        return response.Response(ChatSessionSerializer(session, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
     def toggle_ai(self, request, pk=None):
         session = self.get_object()
+        # For store/seller chats, do not allow turning on AI
+        if session.session_type in ['store', 'order']:
+            session.is_ai_active = False
+            session.save()
+            return response.Response({"is_ai_active": False, "message": "Fitur AI nonaktif untuk obrolan toko"})
+
         is_active = request.data.get('is_ai_active', not session.is_ai_active)
         session.is_ai_active = is_active
         session.save()
@@ -185,9 +289,9 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not session_id:
             return Message.objects.none()
         
-        # Ensure user part of session
+        # Ensure user is part of session (user, consultant, or seller)
         session = ChatSession.objects.filter(
-            Q(id=session_id) & (Q(user=self.request.user) | Q(consultant=self.request.user))
+            Q(id=session_id) & (Q(user=self.request.user) | Q(consultant=self.request.user) | Q(seller=self.request.user))
         ).first()
         
         if not session:
@@ -200,29 +304,36 @@ class MessageViewSet(viewsets.ModelViewSet):
         session = ChatSession.objects.get(id=session_id)
         user = self.request.user
         
-        # If the sender is the expert/consultant, automatically disable AI for this session
-        if session.consultant == user:
+        # If the sender is the expert/consultant or seller, disable AI
+        if session.consultant == user or session.seller == user or session.session_type in ['store', 'order']:
             session.is_ai_active = False
             
-        # Update session timestamp and AI status
+        # Update session timestamp
         session.save() 
         
-        serializer.save(sender=user)
+        message_type = self.request.data.get('message_type', 'text')
+        metadata = self.request.data.get('metadata', {})
+        if isinstance(metadata, str):
+            import json
+            try:
+                metadata = json.loads(metadata)
+            except Exception:
+                metadata = {}
 
-        # Trigger AI Response if session category has AI enabled AND session AI is active
-        # AND message is from the user (not expert/admin)
+        serializer.save(sender=user, message_type=message_type, metadata=metadata)
+
+        # Trigger AI Response ONLY IF session_type is consultant AND category has AI enabled AND session AI is active
+        # NEVER trigger for store or order sessions
         is_user_message = session.user == user
-        if session.category and session.category.is_ai_enabled and session.is_ai_active and is_user_message:
+        if session.session_type == 'consultant' and session.category and session.category.is_ai_enabled and session.is_ai_active and is_user_message:
             ai_reply = AIService.get_response(serializer.data['content'], session_id=session.id)
             
             ai_sender = None
             if session.consultant:
                 ai_sender = session.consultant
             else:
-                # Try to find a dedicated 'Asisten AI' user
                 ai_sender = User.objects.filter(username='Asisten AI').first()
                 if not ai_sender:
-                    # Fallback to admin user
                     ai_sender = User.objects.filter(username='admin').first() or User.objects.filter(is_superuser=True).first()
             
             if ai_sender:
@@ -231,7 +342,6 @@ class MessageViewSet(viewsets.ModelViewSet):
                     sender=ai_sender,
                     content=ai_reply
                 )
-                # Update session timestamp
                 session.save()
 
     @action(detail=False, methods=['post'])

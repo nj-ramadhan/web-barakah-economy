@@ -1,8 +1,10 @@
 import axios from 'axios';
 import api from './api';
 import { safeStorage } from '../utils/storageUtils';
+import { detectDeviceDetails } from '../utils/deviceUtils';
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api/auth/`;
+
 
 // Utility function to get the CSRF token from cookies
 function getCookie(name) {
@@ -48,11 +50,15 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-const googleLogin = (token) => {
+const googleLogin = (token, kickDeviceId = null) => {
+  const dev = detectDeviceDetails();
   return axiosInstance.post('google-login/', {
     token,
+    device_id: dev.deviceId,
+    device_name: dev.deviceName,
+    device_type: dev.deviceType,
+    kick_device_id: kickDeviceId,
   }).then((response) => {
-    // Return data only — let the caller (LoginPage/RegisterPage) handle localStorage
     return response.data;
   }).catch((error) => {
     console.error('Google login error:', error?.response?.data || error.message);
@@ -60,24 +66,53 @@ const googleLogin = (token) => {
   });
 };
 
-const register = (username, email, password, name_full = '', phone = '') => {
+const register = (username, email, password, name_full = '', phone = '', captchaToken = null) => {
   return axiosInstance.post('register/', {
     username,
     email,
     password,
     name_full,
     phone,
+    captcha_token: captchaToken,
   });
 };
 
-const login = (username, password) => {
+const login = (username, password, kickDeviceId = null, captchaToken = null) => {
+  const dev = detectDeviceDetails();
   return axiosInstance.post('login/', {
     username,
     password,
+    device_id: dev.deviceId,
+    device_name: dev.deviceName,
+    device_type: dev.deviceType,
+    kick_device_id: kickDeviceId,
+    captcha_token: captchaToken,
   }).then((response) => {
-    // Return data only — let the caller (LoginPage) handle localStorage
     return response.data;
   });
+};
+
+
+const getActiveDevices = async () => {
+  try {
+    const response = await api.get('/auth/active-devices/');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch active devices:', error);
+    throw error;
+  }
+};
+
+const kickDevice = async (deviceId) => {
+  try {
+    const response = await api.delete('/auth/active-devices/', {
+      data: { device_id: deviceId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to kick device:', error);
+    throw error;
+  }
 };
 
 const acceptAgreement = async () => {
@@ -127,6 +162,9 @@ const authService = {
   getProfile,
   updateProfile,
   acceptAgreement,
+  getActiveDevices,
+  kickDevice,
 };
 
-export default authService;
+export default authService;
+

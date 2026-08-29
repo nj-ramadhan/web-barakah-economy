@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import authService from '../services/auth';
+import { getInvisibleCaptchaToken } from '../utils/captchaUtils';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
@@ -44,11 +45,13 @@ const RegisterPage = () => {
 
         setLoading(true);
         try {
-            await authService.register(username, email, password, namaLengkap, phone);
+            const captchaToken = await getInvisibleCaptchaToken('register-turnstile-container');
+            await authService.register(username, email, password, namaLengkap, phone, captchaToken);
             sessionStorage.setItem('just_registered', 'true');
             const loginUrl = nextPath ? `/login?next=${nextPath}` : '/login';
             navigate(loginUrl, { state: { registered: true, email } });
         } catch (error) {
+
             let errorMsg = 'Gagal Mendaftar. Coba lagi.';
             if (error.response?.data) {
                 const data = error.response.data;

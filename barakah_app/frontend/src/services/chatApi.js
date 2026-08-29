@@ -10,16 +10,35 @@ export const getSessions = () => {
     return api.get(`${API_URL}sessions/`);
 };
 
-export const createSession = (categoryId, consultantId = null) => {
+export const createSession = (categoryIdOrPayload, consultantId = null) => {
+    if (typeof categoryIdOrPayload === 'object' && categoryIdOrPayload !== null) {
+        return api.post(`${API_URL}sessions/`, categoryIdOrPayload);
+    }
     return api.post(`${API_URL}sessions/`, {
-        category: categoryId,
-        consultant: consultantId
+        category: categoryIdOrPayload,
+        consultant: consultantId,
+        session_type: 'consultant'
     });
 };
 
-export const getConsultantsByCategory = (categoryId) => {
-    return api.get(`${API_URL}consultants/?category=${categoryId}`);
+export const createStoreChat = (productId, sellerId = null, initialMessage = '') => {
+    return api.post(`${API_URL}sessions/`, {
+        session_type: 'store',
+        product: productId,
+        seller: sellerId,
+        initial_message: initialMessage
+    });
 };
+
+export const createOrderChat = (orderId, sellerId = null, initialMessage = '') => {
+    return api.post(`${API_URL}sessions/`, {
+        session_type: 'order',
+        order: orderId,
+        seller: sellerId,
+        initial_message: initialMessage
+    });
+};
+
 
 export const getSessionDetail = (sessionId) => {
     return api.get(`${API_URL}sessions/${sessionId}/`);
@@ -90,3 +109,8 @@ export const toggleAISession = (sessionId, isActive) => {
 export const getChatCommands = () => {
     return api.get(`${API_URL}commands/`);
 };
+
+export const getUnreadChatCount = () => {
+    return api.get(`${API_URL}sessions/unread-count/`);
+};
+

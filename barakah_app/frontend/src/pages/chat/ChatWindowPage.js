@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMessages, sendMessage, markRead, getSessionDetail, toggleAISession, getConsultantsByCategory, createSession, getChatCommands, closeSession, submitReview } from '../../services/chatApi';
+import api from '../../services/api';
+import { 
+    getMessages, sendMessage, markRead, getSessionDetail, 
+    toggleAISession, getConsultantsByCategory, createSession, 
+    getChatCommands, closeSession, submitReview 
+} from '../../services/chatApi';
+import { formatCurrency } from '../../utils/formatters';
 
 const ChatWindowPage = () => {
     const { sessionId } = useParams();
@@ -23,6 +29,16 @@ const ChatWindowPage = () => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [showViewReviewModal, setShowViewReviewModal] = useState(false);
 
+    // Marketplace Order & Tracking Modals
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [showComplaintModal, setShowComplaintModal] = useState(false);
+    const [complaintForm, setComplaintForm] = useState({
+        reasonCategory: 'Barang Rusak / Cacat',
+        notes: '',
+    });
+    const [submittingComplaint, setSubmittingComplaint] = useState(false);
+    const [completingOrder, setCompletingOrder] = useState(false);
+
     const builtInCommands = [
         { code: '/pakar', label: 'Chat dengan Pakar', desc: 'AI akan dinonaktifkan sementara', icon: 'person' },
         { code: '/ai', label: 'Aktifkan AI', desc: 'Asisten AI akan mulai menjawab kembali', icon: 'smart_toy' },
@@ -32,7 +48,9 @@ const ChatWindowPage = () => {
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const fileInputRef = useRef(null);
-    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const isStoreChat = session?.session_type === 'store' || session?.session_type === 'order' || !!session?.product_details || !!session?.order_details || !!session?.seller_details;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,13 +90,11 @@ const ChatWindowPage = () => {
                     const uniqueNew = newMessages.filter(m => !existingIds.has(m.id));
                     if (uniqueNew.length === 0) return prev;
 
-                    // If pageNum is 1, these are "new" messages, so append to end
                     if (pageNum === 1) {
                         const updated = [...prev, ...uniqueNew.reverse()];
                         setTimeout(scrollToBottom, 50);
                         return updated;
                     }
-                    // If pageNum > 1, these are "older" messages, so prepend to start
                     return [...uniqueNew.reverse(), ...prev];
                 });
             }
@@ -96,7 +112,7 @@ const ChatWindowPage = () => {
 
         const interval = setInterval(() => {
             fetchMessages(1, false);
-        }, 5000);
+        }, 4000);
 
         return () => clearInterval(interval);
     }, [sessionId]);
@@ -111,18 +127,16 @@ const ChatWindowPage = () => {
     };
 
     const handleSend = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         if ((!content.trim() && !file) || sending) return;
 
-        // Command handler: if content starts with / and it's a known command
-        if (content.startsWith('/') && !file) {
+        // Command handler: only for consultant sessions
+        if (!isStoreChat && content.startsWith('/') && !file) {
             const cmd = filteredCommands.find(c => c.code === content.trim());
             if (cmd) {
                 handleCommandSelect(cmd);
                 return;
             } else if (content.length > 1) {
-                // If it looks like a command but unknown, warn or just send?
-                // User said "jangan di tampilkan /{command}", so let's block unknown commands too
                 alert('Command tidak dikenal.');
                 return;
             }
@@ -133,10 +147,10 @@ const ChatWindowPage = () => {
         formData.append('session', sessionId);
         if (content.trim()) formData.append('content', content);
         if (file) formData.append('attachment', file);
+        formData.append('message_type', 'text');
 
         try {
             const res = await sendMessage(formData);
-            // Append only if NOT already there (prevent double add if poll beat us)
             setMessages(prev => {
                 if (prev.some(m => m.id === res.data.id)) return prev;
                 return [...prev, res.data];
@@ -151,12 +165,29 @@ const ChatWindowPage = () => {
         }
     };
 
+    const handleQuickInquiry = (text) => {
+        setContent(text);
+        // Automatically send quick inquiry
+        setTimeout(() => {
+            const formData = new FormData();
+            formData.append('session', sessionId);
+            formData.append('content', text);
+            formData.append('message_type', 'text');
+            sendMessage(formData).then(res => {
+                setMessages(prev => [...prev, res.data]);
+                setContent('');
+                setTimeout(scrollToBottom, 50);
+            }).catch(() => {});
+        }, 100);
+    };
+
     const handleQuickReply = async (text) => {
         if (!text || sending) return;
         setSending(true);
         const formData = new FormData();
         formData.append('session', sessionId);
         formData.append('content', text);
+        formData.append('message_type', 'text');
 
         try {
             const res = await sendMessage(formData);
@@ -166,13 +197,29 @@ const ChatWindowPage = () => {
             });
             setTimeout(scrollToBottom, 50);
         } catch (err) {
-            alert('Gagal mengirim template.');
+            alert('Gagal mengirim pesan.');
         } finally {
             setSending(false);
         }
     };
 
+    const handleWhatsAppChat = () => {
+        const phone = session?.seller_phone;
+        if (!phone) {
+            alert('Nomor WhatsApp penjual belum tersedia.');
+            return;
+        }
+        let cleanPhone = String(phone).replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '62' + cleanPhone.slice(1);
+        }
+        const prodTitle = session?.product_details?.title || 'Produk';
+        const msg = encodeURIComponent(`Halo Penjual Barakah Economy, saya ingin bertanya mengenai: *${prodTitle}*`);
+        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+    };
+
     const handleToggleAI = async (isActive) => {
+        if (isStoreChat) return;
         try {
             await toggleAISession(sessionId, isActive);
             setSession(prev => ({ ...prev, is_ai_active: isActive }));
@@ -182,11 +229,11 @@ const ChatWindowPage = () => {
     };
 
     const handleCloseSession = async () => {
-        if (!window.confirm('Akhiri sesi konsultasi ini? User tidak akan bisa membalas lagi.')) return;
+        if (!window.confirm('Akhiri sesi ini?')) return;
         try {
             const res = await closeSession(sessionId);
             setSession(res.data);
-            handleQuickReply('🏁 *Sesi konsultasi telah dinyatakan selesai oleh pakar.*');
+            handleQuickReply('🏁 *Sesi ini telah dinyatakan selesai.*');
         } catch (err) {
             alert('Gagal menutup sesi.');
         }
@@ -202,7 +249,7 @@ const ChatWindowPage = () => {
             });
             alert('Terima kasih atas review Anda!');
             setShowReviewModal(false);
-            fetchData(); // Refresh to show review state
+            fetchData();
         } catch (err) {
             alert('Gagal mengirim review.');
         } finally {
@@ -210,8 +257,49 @@ const ChatWindowPage = () => {
         }
     };
 
+    // Submit Order Complaint / Return / Dispute
+    const handleComplaintSubmit = async (e) => {
+        e.preventDefault();
+        if (!session?.order_details?.id) return;
+        setSubmittingComplaint(true);
+        const reasonFull = `${complaintForm.reasonCategory}: ${complaintForm.notes}`;
+        try {
+            await api.patch(`/orders/seller-orders/${session.order_details.id}/`, {
+                status: 'Komplain',
+                action: 'request_cancel',
+                cancel_request_status: 'pending',
+                complaint_reason: reasonFull
+            });
+
+            setShowComplaintModal(false);
+            alert('Pengajuan komplain/retur barang berhasil dikirim. Penjual dan Admin akan segera meninjau.');
+            fetchData();
+        } catch (err) {
+            alert(err?.response?.data?.error || 'Gagal mengajukan komplain pesanan.');
+        } finally {
+            setSubmittingComplaint(false);
+        }
+    };
+
+    // Complete Order
+    const handleCompleteOrder = async () => {
+        if (!session?.order_details?.id) return;
+        if (!window.confirm('Konfirmasi bahwa barang telah Anda terima dengan baik? Pesanan akan diselesaikan.')) return;
+        setCompletingOrder(true);
+        try {
+            await api.patch(`/orders/seller-orders/${session.order_details.id}/`, {
+                status: 'Selesai'
+            });
+            alert('Pesanan telah berhasil diselesaikan! Terima kasih.');
+            fetchData();
+        } catch (err) {
+            alert(err?.response?.data?.error || 'Gagal menyelesaikan pesanan.');
+        } finally {
+            setCompletingOrder(false);
+        }
+    };
+
     const handleCommandSelect = async (cmd) => {
-        // Built-in handlers
         if (cmd.isBuiltIn) {
             if (cmd.code === '/pakar') {
                 await handleToggleAI(false);
@@ -223,12 +311,7 @@ const ChatWindowPage = () => {
                 handleCloseSession();
             }
         } else {
-            // Dynamic commands with actions
-            if (cmd.content) {
-                handleQuickReply(cmd.content);
-            }
-
-            // Perform actions if flags are set
+            if (cmd.content) handleQuickReply(cmd.content);
             if (cmd.is_toggle_ai_on) await handleToggleAI(true);
             if (cmd.is_toggle_ai_off) await handleToggleAI(false);
             if (cmd.is_close_session) {
@@ -238,7 +321,7 @@ const ChatWindowPage = () => {
                 } catch (err) { console.error('Failed to close via command', err); }
             }
             if (cmd.is_request_review) {
-                setTimeout(() => setShowReviewModal(true), 1000); // Small delay to let message appear
+                setTimeout(() => setShowReviewModal(true), 1000);
             }
         }
         setContent('');
@@ -256,34 +339,8 @@ const ChatWindowPage = () => {
         }
     };
 
-    const handleOpenExpertModal = async () => {
-        if (!session?.category) return;
-        setShowExpertModal(true);
-        setLoadingExperts(true);
-        try {
-            const res = await getConsultantsByCategory(session.category);
-            setAvailableExperts(res.data);
-        } catch (err) {
-            console.error('Failed to load experts:', err);
-        } finally {
-            setLoadingExperts(false);
-        }
-    };
-
-    const handleSelectExpert = async (expertId) => {
-        try {
-            setLoading(true);
-            const res = await createSession(session.category, expertId);
-            setShowExpertModal(false);
-            navigate(`/chat/${res.data.id}`);
-        } catch (err) {
-            alert('Gagal menghubungkan ke pakar.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const isExpert = session?.consultant === currentUser?.id;
+    const isSeller = session?.seller === currentUser?.id;
 
     const filteredCommands = [
         ...builtInCommands.map(c => ({ ...c, isBuiltIn: true })).filter(cmd => {
@@ -295,53 +352,54 @@ const ChatWindowPage = () => {
         ...availableCommands
     ];
 
+    const otherUser = session?.seller_details?.username === currentUser.username
+        ? session?.user_details
+        : (session?.consultant_details?.username === currentUser.username ? session?.user_details : (session?.seller_details || session?.consultant_details || session?.user_details));
+
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] lg:h-[700px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto relative overflow-hidden lg:my-4">
+        <div className="flex flex-col h-[calc(100vh-80px)] lg:h-[720px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto relative overflow-hidden lg:my-4 border border-gray-100">
             {/* Header Chat */}
-            <div className="bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
-                <button onClick={() => navigate('/chat')} className="material-icons text-gray-500">arrow_back</button>
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden border border-gray-100">
-                    {session?.consultant_details?.picture ? (
-                        <img src={session.consultant_details.picture} alt=" эксперт" className="w-full h-full object-cover" />
+            <div className="bg-white px-3.5 py-3 flex items-center gap-3 shadow-sm z-10 border-b border-gray-100">
+                <button onClick={() => navigate('/chat')} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100">
+                    <span className="material-icons text-xl">arrow_back</span>
+                </button>
+
+                <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-gray-100 shrink-0 bg-gray-50">
+                    {otherUser?.picture ? (
+                        <img src={otherUser.picture} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
-                        <span className="material-icons text-green-700">person</span>
+                        <span className={`material-icons ${isStoreChat ? 'text-blue-600' : 'text-emerald-600'}`}>
+                            {isStoreChat ? 'storefront' : 'psychology'}
+                        </span>
                     )}
                 </div>
+
                 <div className="flex-1 min-w-0">
-                    <h2 className="font-bold text-gray-800 text-sm truncate">
-                        {session ? (
-                            session.consultant_details?.username || `Chat ${session.category_name}`
-                        ) : (loading ? 'Memuat...' : 'Chat')}
+                    <h2 className="font-bold text-gray-900 text-xs truncate">
+                        {isStoreChat 
+                            ? (session?.seller_details ? `Toko @${session.seller_details.username}` : (session?.product_details?.title || 'Chat Toko'))
+                            : (otherUser?.username || session?.category_name || 'Konsultasi')}
                     </h2>
-                    <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
-                        {session && (
-                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${session?.is_ai_active ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                        )}
-                        {session?.category_name || (loading ? 'Memuat...' : 'Konsultasi')}
-                        {session && !session.is_ai_active && (
-                            <span className="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[8px] ml-1">PAKAR MODE</span>
-                        )}
+                    <p className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>{isStoreChat ? 'Toko Penjual' : (session?.category_name || 'Pakar Syariah')}</span>
+                        {isStoreChat && <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-1.5 py-0.2 rounded">Penjual Langsung</span>}
                     </p>
                 </div>
-                {session && session.is_active && !session.consultant && (
+
+                {/* WhatsApp button if phone exists */}
+                {session?.seller_phone && (
                     <button
-                        onClick={handleOpenExpertModal}
-                        className="bg-green-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-green-800 shadow-md transition whitespace-nowrap"
+                        onClick={handleWhatsAppChat}
+                        title="Chat via WhatsApp"
+                        className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition shadow-sm"
                     >
-                        <span className="material-icons text-xs">person</span>
-                        Tanya Pakar
+                        <span className="material-icons text-lg">whatsapp</span>
                     </button>
                 )}
-                {session && session.is_active && session.is_ai_active === false && currentUser?.is_staff && (
-                    <button
-                        onClick={() => handleToggleAI(true)}
-                        className="bg-indigo-50 text-indigo-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
-                    >
-                        <span className="material-icons text-xs">smart_toy</span>
-                        Aktifkan AI
-                    </button>
-                )}
-                {session && session.is_active && (isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && (
+
+                {/* Close Session action */}
+                {session && session.is_active && (isExpert || isSeller || currentUser?.is_staff || currentUser?.role === 'admin') && (
                     <button
                         onClick={handleCloseSession}
                         className="bg-red-50 text-red-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-red-100 transition whitespace-nowrap"
@@ -350,35 +408,136 @@ const ChatWindowPage = () => {
                         Selesai
                     </button>
                 )}
-                {session && !session.is_active && !session.review && !isExpert && !currentUser?.is_staff && (
-                    <button
-                        onClick={() => setShowReviewModal(true)}
-                        className="bg-amber-50 text-amber-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-100 transition whitespace-nowrap"
-                    >
-                        <span className="material-icons text-xs">star</span>
-                        Beri Review
-                    </button>
-                )}
-                {(isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && session?.review && (
-                    <button
-                        onClick={() => setShowViewReviewModal(true)}
-                        className="bg-amber-100 text-amber-600 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-200 transition whitespace-nowrap shadow-sm"
-                    >
-                        <span className="material-icons text-xs">star</span>
-                        Lihat Review
-                    </button>
-                )}
             </div>
+
+            {/* Pinned Product Card (If Product Chat) */}
+            {session?.product_details && (
+                <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border-b border-blue-100 p-2.5 z-10 shadow-sm">
+                    <div className="flex items-center gap-2.5">
+                        {session.product_details.thumbnail && (
+                            <img
+                                src={session.product_details.thumbnail}
+                                alt="Product"
+                                className="w-11 h-11 rounded-lg object-cover border border-blue-200 shrink-0"
+                            />
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-gray-900 truncate">
+                                {session.product_details.title}
+                            </h4>
+                            <p className="text-xs font-black text-emerald-700">
+                                Rp {formatCurrency(session.product_details.price)}
+                                <span className="text-[10px] text-gray-400 font-normal ml-1">
+                                    (Stok: {session.product_details.stock} {session.product_details.unit})
+                                </span>
+                            </p>
+                        </div>
+                        {session.product_details.slug && (
+                            <button
+                                onClick={() => navigate(`/store/product/${session.product_details.slug}`)}
+                                className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold shrink-0 transition"
+                            >
+                                Lihat
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Quick Inquiry Prompts Chips */}
+                    <div className="flex gap-1.5 mt-2 overflow-x-auto pb-0.5 custom-scrollbar">
+                        <button
+                            onClick={() => handleQuickInquiry(`Halo, apakah stok ${session.product_details.title} masih tersedia?`)}
+                            className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shadow-xs transition"
+                        >
+                            ⚡ Tanya Stok
+                        </button>
+                        <button
+                            onClick={() => handleQuickInquiry(`Halo, apakah ada pilihan ukuran / variasi lain untuk produk ini?`)}
+                            className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shadow-xs transition"
+                        >
+                            ⚡ Tanya Ukuran/Varian
+                        </button>
+                        <button
+                            onClick={() => handleQuickInquiry(`Halo, jika dipesan sekarang apakah bisa langsung dikirim hari ini?`)}
+                            className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shadow-xs transition"
+                        >
+                            ⚡ Tanya Pengiriman
+                        </button>
+                        <button
+                            onClick={() => handleQuickInquiry(`Halo, apakah harga produk ini masih bisa nego atau ada diskon?`)}
+                            className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shadow-xs transition"
+                        >
+                            ⚡ Nego Harga
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Pinned Order Status Card (If Order Chat) */}
+            {session?.order_details && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 p-2.5 z-10">
+                    <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <span className="material-icons text-amber-600 text-sm">local_shipping</span>
+                            <span className="text-xs font-bold text-gray-900">#{session.order_details.order_number}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            session.order_details.status === 'Dikirim' ? 'bg-blue-100 text-blue-700' :
+                            session.order_details.status === 'Selesai' ? 'bg-green-100 text-green-700' :
+                            session.order_details.status === 'Komplain' ? 'bg-red-100 text-red-700' :
+                            'bg-amber-100 text-amber-700'
+                        }`}>
+                            {session.order_details.status}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[11px] text-gray-600 mb-2">
+                        <span>Total: <b>Rp {formatCurrency(session.order_details.grand_total)}</b></span>
+                        {session.order_details.resi_number && (
+                            <span className="text-gray-500 font-mono">Resi: {session.order_details.resi_number}</span>
+                        )}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowTrackingModal(true)}
+                            className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition"
+                        >
+                            <span className="material-icons text-xs">track_changes</span>
+                            Lacak Pesanan
+                        </button>
+
+                        {session.order_details.status === 'Dikirim' && (
+                            <>
+                                <button
+                                    onClick={handleCompleteOrder}
+                                    disabled={completingOrder}
+                                    className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition"
+                                >
+                                    <span className="material-icons text-xs">check</span>
+                                    Selesaikan
+                                </button>
+                                <button
+                                    onClick={() => setShowComplaintModal(true)}
+                                    className="py-1.5 px-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-[10px] font-bold flex items-center gap-0.5 transition"
+                                >
+                                    <span className="material-icons text-xs">report_problem</span>
+                                    Komplain / Retur
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Chat Area */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8d9744158120732.jpg')] bg-repeat bg-center"
+                className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50"
             >
                 {hasMore && (
                     <button
                         onClick={handleLoadMore}
-                        className="w-full text-center py-2 text-xs text-gray-500 font-bold bg-white/50 rounded-full hover:bg-white/80 transition"
+                        className="w-full text-center py-1.5 text-xs text-gray-500 font-bold bg-white/80 rounded-full hover:bg-white shadow-xs transition"
                     >
                         Muat pesan terdahulu
                     </button>
@@ -391,20 +550,63 @@ const ChatWindowPage = () => {
                 ) : (
                     messages.map((msg, index) => {
                         const isMe = msg.sender === currentUser?.id;
+                        const isOrderUpdate = msg.message_type === 'order_update';
+                        const isComplaint = msg.message_type === 'complaint';
+
+                        // Special System Order Notification Bubble
+                        if (isOrderUpdate) {
+                            return (
+                                <div key={msg.id || index} className="flex justify-center my-2">
+                                    <div className="max-w-[90%] bg-amber-50 border border-amber-200 rounded-2xl p-3 shadow-xs text-center">
+                                        <div className="flex items-center justify-center gap-1.5 text-amber-700 font-bold text-xs mb-1">
+                                            <span className="material-icons text-sm">local_shipping</span>
+                                            <span>Update Pesanan</span>
+                                        </div>
+                                        <p className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                            {msg.content}
+                                        </p>
+                                        <p className="text-[9px] text-amber-500 mt-1">
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // Special Complaint / Return Bubble
+                        if (isComplaint) {
+                            return (
+                                <div key={msg.id || index} className="flex justify-center my-2">
+                                    <div className="max-w-[90%] bg-red-50 border border-red-200 rounded-2xl p-3 shadow-xs">
+                                        <div className="flex items-center gap-1.5 text-red-700 font-bold text-xs mb-1">
+                                            <span className="material-icons text-sm">report_problem</span>
+                                            <span>Pengajuan Komplain / Retur</span>
+                                        </div>
+                                        <p className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                            {msg.content}
+                                        </p>
+                                        <p className="text-[9px] text-red-400 mt-1 text-right">
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        }
+
                         return (
                             <div key={msg.id || index} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 {!isMe && (
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white shadow-sm mb-1">
+                                    <div className="w-7 h-7 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white shadow-sm mb-1">
                                         {msg.sender_picture ? (
                                             <img src={msg.sender_picture} alt="avatar" className="w-full h-full object-cover" />
                                         ) : (
-                                            <span className="material-icons text-[16px] text-gray-400">person</span>
+                                            <span className="material-icons text-[14px] text-gray-400">person</span>
                                         )}
                                     </div>
                                 )}
-                                <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMe
-                                    ? 'bg-green-700 text-white rounded-tr-none'
-                                    : 'bg-white text-gray-800 rounded-tl-none'
+                                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 shadow-sm ${isMe
+                                    ? 'bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-tr-none'
+                                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                                     }`}>
                                     {msg.attachment && (
                                         <div className="mb-2">
@@ -412,7 +614,7 @@ const ChatWindowPage = () => {
                                                 <img
                                                     src={msg.attachment}
                                                     alt="attachment"
-                                                    className="rounded-lg max-w-full h-auto cursor-pointer"
+                                                    className="rounded-xl max-w-full h-auto cursor-pointer"
                                                     onClick={() => window.open(msg.attachment, '_blank')}
                                                 />
                                             ) : (
@@ -420,7 +622,7 @@ const ChatWindowPage = () => {
                                                     href={msg.attachment}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className={`flex items-center gap-2 p-2 rounded-lg border ${isMe ? 'bg-green-600 border-green-500' : 'bg-gray-50 border-gray-100'}`}>
+                                                    className={`flex items-center gap-2 p-2 rounded-xl border ${isMe ? 'bg-green-800 border-green-600' : 'bg-gray-50 border-gray-200'}`}>
                                                     <span className="material-icons text-sm">insert_drive_file</span>
                                                     <span className="text-[10px] truncate max-w-[100px]">Dokumen</span>
                                                     <span className="material-icons text-sm">download</span>
@@ -428,7 +630,7 @@ const ChatWindowPage = () => {
                                             )}
                                         </div>
                                     )}
-                                    {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
+                                    {msg.content && <p className="text-xs whitespace-pre-wrap leading-relaxed">{msg.content}</p>}
                                     <p className={`text-[9px] mt-1 text-right ${isMe ? 'text-green-200' : 'text-gray-400'}`}>
                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
@@ -441,259 +643,202 @@ const ChatWindowPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+            <div className="bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] border-t border-gray-100">
                 {session && !session.is_active ? (
-                    <div className="text-center py-4 bg-gray-50 rounded-2xl text-gray-500 text-xs font-bold">
-                        Sesi konsultasi ini telah ditutup.
-                        {session.review ? (
-                            <span className="ml-2 text-amber-600">
-                                ⭐ Anda memberikan {session.review.rating} bintang
-                            </span>
-                        ) : (!isExpert && !currentUser?.is_staff && (
-                            <button
-                                onClick={() => setShowReviewModal(true)}
-                                className="ml-2 text-indigo-600 hover:underline flex inline-items items-center gap-0.5"
-                            >
-                                <span className="material-icons text-xs">edit_note</span>
-                                Klik di sini untuk memberi penilaian
-                            </button>
-                        ))}
+                    <div className="text-center py-3 bg-gray-50 rounded-2xl text-gray-500 text-xs font-bold">
+                        Obrolan ini telah ditutup.
                     </div>
                 ) : (
-                    <>
-
-                        {/* Command Popup */}
-                        {showCommands && (
-                            <div className="absolute bottom-full left-4 right-4 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-2xl mb-2 overflow-hidden animate-slide-up z-50">
-                                <div className="bg-gray-50 px-4 py-2 flex justify-between items-center border-b border-gray-100">
-                                    <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Pilih Perintah</span>
-                                    <button onClick={() => setShowCommands(false)} className="material-icons text-xs text-gray-300">close</button>
-                                </div>
-                                {/* Combine static built-in and dynamic commands */}
-                                {filteredCommands.map((cmd) => (
-                                    <button
-                                        key={cmd.code}
-                                        onClick={() => handleCommandSelect(cmd)}
-                                        className="w-full text-left px-4 py-3 hover:bg-indigo-50 flex items-center gap-3 transition group"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                            <span className="material-icons text-sm">{cmd.icon || 'code'}</span>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs font-bold text-gray-800">{cmd.label}</div>
-                                            <div className="text-[9px] text-gray-400">{cmd.desc || (cmd.content && cmd.content.length > 50 ? cmd.content.substring(0, 50) + '...' : cmd.content)}</div>
-                                        </div>
-                                        <span className="ml-auto text-[10px] font-mono text-gray-300 bg-gray-50 px-1.5 py-0.5 rounded uppercase">{cmd.code}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                    <form onSubmit={handleSend} className="space-y-2">
                         {file && (
-                            <div className="bg-gray-50 p-2 rounded-xl mb-3 flex items-center justify-between border border-gray-100 animate-slide-up">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                    <span className="material-icons text-gray-400 text-sm">attach_file</span>
-                                    <span className="text-[10px] text-gray-600 truncate">{file.name}</span>
-                                </div>
-                                <button onClick={() => setFile(null)} className="material-icons text-gray-400 text-sm">close</button>
+                            <div className="flex items-center justify-between bg-gray-100 px-3 py-1.5 rounded-xl text-xs">
+                                <span className="truncate max-w-[200px] text-gray-700">{file.name}</span>
+                                <button type="button" onClick={() => setFile(null)} className="text-red-500 font-bold ml-2">
+                                    <span className="material-icons text-sm">close</span>
+                                </button>
                             </div>
                         )}
 
-                        <form onSubmit={handleSend} className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current.click()}
-                                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-green-600 transition"
-                            >
-                                <span className="material-icons">attach_file</span>
-                            </button>
+                        <div className="flex items-center gap-2">
                             <input
                                 type="file"
-                                className="hidden"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
+                                className="hidden"
                             />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center shrink-0 transition"
+                            >
+                                <span className="material-icons text-lg">attach_file</span>
+                            </button>
 
-                            <textarea
-                                rows="1"
+                            <input
+                                type="text"
                                 value={content}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setContent(val);
-                                    if (val === '/') setShowCommands(true);
-                                    else if (showCommands && !val.startsWith('/')) setShowCommands(false);
-                                }}
-                                placeholder="Tulis pesan... atau ketik /"
-                                className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-green-500 resize-none max-h-32"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend(e);
-                                    } else if (e.key === 'Escape') {
-                                        setShowCommands(false);
-                                    }
-                                }}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder={isStoreChat ? "Tulis pesan ke penjual..." : "Tulis pesan..."}
+                                className="flex-1 px-3.5 py-2.5 bg-gray-50 rounded-xl text-xs border border-gray-200 focus:outline-none focus:border-green-600 focus:bg-white transition"
                             />
 
                             <button
                                 type="submit"
                                 disabled={sending || (!content.trim() && !file)}
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${content.trim() || file ? 'bg-green-700 text-white shadow-lg shadow-green-100' : 'bg-gray-100 text-gray-300'
-                                    }`}>
-                                <span className="material-icons">{sending ? 'sync' : 'send'}</span>
+                                className="w-9 h-9 rounded-xl bg-green-700 hover:bg-green-800 disabled:opacity-40 text-white flex items-center justify-center shrink-0 shadow-md shadow-green-200 transition"
+                            >
+                                {sending ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <span className="material-icons text-lg">send</span>
+                                )}
                             </button>
-                        </form>
-                    </>
+                        </div>
+                    </form>
                 )}
             </div>
 
-            {/* Expert Selection Modal */}
-            {showExpertModal && (
-                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 animate-slide-up shadow-2xl">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <span className="material-icons text-green-600">psychology</span>
-                                Pilih Pakar {session?.category_name}
-                            </h3>
-                            <button onClick={() => setShowExpertModal(false)} className="material-icons text-gray-400 hover:text-gray-600 transition">close</button>
+            {/* Modal Lacak Pesanan */}
+            {showTrackingModal && session?.order_details && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl animate-scale-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-sm text-gray-900">Lacak Pengiriman</h3>
+                            <button onClick={() => setShowTrackingModal(false)} className="material-icons text-gray-400">close</button>
                         </div>
-
-                        <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
-                            {loadingExperts ? (
-                                <div className="flex justify-center py-10">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                                </div>
-                            ) : availableExperts.length === 0 ? (
-                                <div className="text-center py-10 bg-gray-50 rounded-2xl">
-                                    <span className="material-icons text-gray-300 text-4xl mb-2">person_off</span>
-                                    <p className="text-xs text-gray-500 px-4">Maaf, saat ini belum ada pakar tersedia di kategori ini.</p>
-                                </div>
-                            ) : (
-                                availableExperts.map((exp) => (
-                                    <div
-                                        key={exp.id}
-                                        onClick={() => handleSelectExpert(exp.user)}
-                                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-200 hover:bg-green-50/50 transition cursor-pointer group"
-                                    >
-                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:bg-green-600 group-hover:text-white transition-colors">
-                                            <span className="material-icons">person</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-gray-800 text-sm group-hover:text-green-700 transition-colors">{exp.user_details.username}</div>
-                                            <div className="text-[10px] text-gray-400 italic line-clamp-1">{exp.bio || 'Pakar profesional'}</div>
-                                        </div>
-                                        <span className="material-icons text-gray-300 group-hover:text-green-600 transition-colors">chevron_right</span>
-                                    </div>
-                                ))
-                            )}
+                        <div className="bg-amber-50 rounded-2xl p-3 mb-4">
+                            <p className="text-xs font-bold text-amber-800">No. Resi: {session.order_details.resi_number || 'Belum diisi'}</p>
+                            <p className="text-[11px] text-amber-700">Kurir: {session.order_details.shipping_courier || 'Ekspedisi'}</p>
+                            <p className="text-[11px] text-amber-700">Status: {session.order_details.status}</p>
                         </div>
-
-                        <p className="text-[9px] text-gray-400 text-center italic mt-4 bg-gray-50 py-2 rounded-lg">
-                            Memulai chat dengan pakar akan membuat sesi diskusi baru yang lebih personal.
+                        <p className="text-xs text-gray-500 text-center mb-4">
+                            Paket sedang dalam proses perjalanan ke alamat tujuan Anda.
                         </p>
+                        <button
+                            onClick={() => setShowTrackingModal(false)}
+                            className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition"
+                        >
+                            Tutup
+                        </button>
                     </div>
                 </div>
             )}
-            {/* Review Modal for User */}
-            {showReviewModal && (
-                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <h3 className="text-lg font-bold text-gray-800 mb-2">Review Konsultasi</h3>
-                        <p className="text-[10px] text-gray-400 mb-6">Penilaian Anda sangat berarti untuk meningkatkan kualitas layanan kami.</p>
 
-                        <form onSubmit={handleReviewSubmit} className="space-y-5">
+            {/* Modal Ajukan Komplain / Pengembalian */}
+            {showComplaintModal && session?.order_details && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2 text-red-600">
+                                <span className="material-icons">report_problem</span>
+                                <h3 className="font-bold text-sm">Ajukan Komplain / Retur</h3>
+                            </div>
+                            <button onClick={() => setShowComplaintModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+
+                        <form onSubmit={handleComplaintSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Penilaian Anda</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Pilih Alasan Komplain:</label>
+                                <select
+                                    value={complaintForm.reasonCategory}
+                                    onChange={(e) => setComplaintForm(prev => ({ ...prev, reasonCategory: e.target.value }))}
+                                    className="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:bg-white"
+                                >
+                                    <option value="Barang Rusak / Cacat Pabrik">Barang Rusak / Cacat dari Penjual</option>
+                                    <option value="Kerusakan oleh Jasa Ekspedisi / Kurir">Kerusakan oleh Jasa Ekspedisi / Kurir</option>
+                                    <option value="Barang Tidak Sesuai / Salah Kirim">Barang Tidak Sesuai / Salah Kirim</option>
+                                    <option value="Barang Tidak Lengkap / Kurang Jumlah">Barang Tidak Lengkap / Kurang Jumlah</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Jelaskan Kendala & Kerusakan:</label>
+                                <textarea
+                                    required
+                                    rows="3"
+                                    placeholder="Ceritakan detail kerusakan barang atau kesalahan kirim..."
+                                    value={complaintForm.notes}
+                                    onChange={(e) => setComplaintForm(prev => ({ ...prev, notes: e.target.value }))}
+                                    className="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:bg-white"
+                                />
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowComplaintModal(false)}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-xs font-bold"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingComplaint}
+                                    className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md shadow-red-200 transition flex items-center justify-center gap-1"
+                                >
+                                    {submittingComplaint ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        'Kirim Komplain'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Review Konsultasi Pakar */}
+            {showReviewModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl animate-scale-in">
+                        <h3 className="font-bold text-sm text-gray-900 mb-2">Beri Ulasan Konsultasi</h3>
+                        <form onSubmit={handleReviewSubmit} className="space-y-3">
+                            <div>
+                                <label className="block text-xs text-gray-600 mb-1">Rating (1 - 5 Bintang):</label>
                                 <div className="flex gap-2">
-                                    {[1, 2, 3, 4, 5].map(star => (
+                                    {[1, 2, 3, 4, 5].map((num) => (
                                         <button
-                                            key={star} type="button"
-                                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${reviewForm.rating >= star ? 'bg-amber-100 text-amber-500' : 'bg-gray-50 text-gray-300'}`}
+                                            type="button"
+                                            key={num}
+                                            onClick={() => setReviewForm(prev => ({ ...prev, rating: num }))}
+                                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition ${
+                                                reviewForm.rating >= num ? 'bg-amber-400 text-white shadow-sm' : 'bg-gray-100 text-gray-400'
+                                            }`}
                                         >
-                                            <span className="material-icons">{reviewForm.rating >= star ? 'star' : 'star_outline'}</span>
+                                            ★
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Komentar untuk Pakar</label>
+                                <label className="block text-xs text-gray-600 mb-1">Komentar / Masukan:</label>
                                 <textarea
-                                    rows="3"
+                                    rows="2"
+                                    className="w-full p-2 border rounded-xl text-xs"
+                                    placeholder="Ceritakan kepuasan konsultasi..."
                                     value={reviewForm.comment}
-                                    onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 resize-none"
-                                    placeholder="Bagaimana pelayanan pakar tadi?"
+                                    onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Kritik & Saran Platform</label>
-                                <textarea
-                                    rows="3"
-                                    value={reviewForm.criticism_suggestion}
-                                    onChange={e => setReviewForm({ ...reviewForm, criticism_suggestion: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 resize-none"
-                                    placeholder="Saran untuk kemajuan Barakah App..."
-                                />
-                            </div>
-                            <div className="flex gap-2 pt-2">
+                            <div className="flex gap-2">
                                 <button
-                                    type="button" onClick={() => setShowReviewModal(false)}
-                                    className="flex-1 py-3.5 bg-gray-50 text-gray-400 rounded-2xl text-xs font-bold"
+                                    type="button"
+                                    onClick={() => setShowReviewModal(false)}
+                                    className="flex-1 py-2 border rounded-xl text-xs font-bold text-gray-700"
                                 >
-                                    Nanti Saja
+                                    Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submittingReview}
-                                    className="flex-[2] py-3.5 bg-indigo-600 text-white rounded-2xl text-xs font-bold shadow-lg shadow-indigo-100"
+                                    className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm"
                                 >
-                                    {submittingReview ? 'Mengirim...' : 'Kirim Review'}
+                                    {submittingReview ? 'Mengirim...' : 'Kirim Ulasan'}
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* View Review Modal for Expert/Admin */}
-            {showViewReviewModal && session?.review && (
-                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-800">Review Pengguna</h3>
-                            <button onClick={() => setShowViewReviewModal(false)} className="material-icons text-gray-400">close</button>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="text-center">
-                                <div className="flex justify-center gap-1 text-amber-500 mb-2">
-                                    {[...Array(session.review.rating)].map((_, i) => (
-                                        <span key={i} className="material-icons text-2xl">star</span>
-                                    ))}
-                                </div>
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{session.review.rating} Bintang</span>
-                            </div>
-
-                            <div className="bg-gray-50 p-4 rounded-2xl">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Komentar User</label>
-                                <p className="text-xs text-gray-700 italic leading-relaxed">"{session.review.comment || 'Tidak ada komentar'}"</p>
-                            </div>
-
-                            {session.review.criticism_suggestion && (
-                                <div className="bg-rose-50 p-4 rounded-2xl">
-                                    <label className="block text-[10px] font-bold text-rose-400 uppercase mb-2">Kritik/Saran Platform</label>
-                                    <p className="text-xs text-rose-700 italic leading-relaxed">"{session.review.criticism_suggestion}"</p>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => setShowViewReviewModal(false)}
-                                className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-xs font-bold"
-                            >
-                                Tutup
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
@@ -702,3 +847,4 @@ const ChatWindowPage = () => {
 };
 
 export default ChatWindowPage;
+

@@ -32,9 +32,20 @@ class ConsultantProfile(models.Model):
         return f"{self.user.username} - {self.category.name}"
 
 class ChatSession(models.Model):
+    SESSION_TYPE_CHOICES = [
+        ('consultant', 'Konsultasi Syariah / Pakar'),
+        ('store', 'Chat Toko / Penjual'),
+        ('order', 'Diskusi Pesanan'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_user')
     consultant = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_consultant')
-    category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True)
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='seller_chat_sessions')
+    category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey('products.Product', on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_sessions')
+    order = models.ForeignKey('orders.Order', on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_sessions')
+    session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='consultant')
+
     is_ai_active = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True, help_text="Sesi aktif atau sudah ditutup")
     last_welcome_sent_at = models.DateTimeField(null=True, blank=True)
@@ -42,15 +53,25 @@ class ChatSession(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Chat: {self.user.username} with {self.consultant.username} ({self.category.name if self.category else 'N/A'})"
+        other = self.seller.username if self.seller else (self.consultant.username if self.consultant else 'N/A')
+        return f"Chat ({self.session_type}): {self.user.username} with {other}"
 
     class Meta:
         ordering = ['-updated_at']
 
 class Message(models.Model):
+    MESSAGE_TYPE_CHOICES = [
+        ('text', 'Pesan Teks'),
+        ('product_card', 'Kartu Produk'),
+        ('order_update', 'Status Pesanan'),
+        ('complaint', 'Pengajuan Komplain'),
+    ]
+
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
+    message_type = models.CharField(max_length=30, choices=MESSAGE_TYPE_CHOICES, default='text')
+    metadata = models.JSONField(default=dict, blank=True)
     attachment = models.FileField(upload_to=chat_attachment_path, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -60,6 +81,7 @@ class Message(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
 class AISettings(models.Model):
     api_key = models.CharField(max_length=255, blank=True)
     base_url = models.URLField(default="https://ai.sumopod.com/v1")

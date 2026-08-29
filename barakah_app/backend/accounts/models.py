@@ -231,3 +231,29 @@ class UserAgreement(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class UserDeviceSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='device_sessions')
+    device_id = models.CharField(max_length=120, db_index=True)
+    device_name = models.CharField(max_length=150, default='Unknown Device', help_text="e.g. Chrome di Windows Desktop, Safari di iPhone")
+    device_type = models.CharField(max_length=50, default='desktop', help_text="desktop, mobile, tablet")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default='')
+    location_city = models.CharField(max_length=100, blank=True, default='')
+    location_province = models.CharField(max_length=100, blank=True, default='')
+    location_country = models.CharField(max_length=100, blank=True, default='Indonesia')
+    is_active = models.BooleanField(default=True)
+    is_blocked = models.BooleanField(default=False, help_text="Perangkat diblokir jika user mengklik Bukan Saya")
+    security_token = models.CharField(max_length=64, blank=True, null=True, unique=True, help_text="Token verifikasi keamanan untuk konfirmasi/blokir")
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_active = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-last_active']
+        unique_together = ('user', 'device_id')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device_name} ({self.device_id[:8]})"
+
+

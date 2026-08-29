@@ -288,3 +288,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role
         token['user_agreement_accepted'] = user.user_agreement_accepted
         return token
+
+
+class UserDeviceSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import UserDeviceSession
+        model = UserDeviceSession
+        fields = ('id', 'device_id', 'device_name', 'device_type', 'ip_address', 'location_city', 'location_province', 'location_country', 'is_active', 'is_blocked', 'created_at', 'last_active')

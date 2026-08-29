@@ -9,8 +9,10 @@ import { formatCurrency } from '../utils/formatters';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { toggleLikeProduct } from '../services/productApi';
+import { createStoreChat } from '../services/chatApi';
 import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
+
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -100,6 +102,48 @@ const EcommerceProductDetail = () => {
   const [isAddingCart, setIsAddingCart] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
 
+  const [isStartingChat, setIsStartingChat] = useState(false);
+
+  const handleChatSeller = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Silakan login terlebih dahulu untuk chat dengan penjual');
+      navigate(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    const currentUser = JSON.parse(userStr);
+    const sellerId = product.seller?.id || product.seller;
+    if (sellerId && sellerId === currentUser.id) {
+      alert('Ini adalah produk dari toko Anda sendiri');
+      return;
+    }
+
+    setIsStartingChat(true);
+    try {
+      const res = await createStoreChat(product.id, sellerId, `Halo, saya tertarik dengan produk *${product.title}*. Apakah stoknya masih tersedia?`);
+      navigate(`/chat/${res.data.id}`);
+    } catch (err) {
+      console.error('Failed to start store chat:', err);
+      alert(err?.response?.data?.error || 'Gagal memulai chat dengan penjual. Silakan coba lagi.');
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
+
+  const handleWhatsAppChat = () => {
+    const phone = product.seller_phone;
+    if (!phone) {
+      alert('Nomor WhatsApp penjual belum tersedia. Anda dapat menggunakan fitur Chat Penjual di aplikasi.');
+      return;
+    }
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62' + cleanPhone.slice(1);
+    }
+    const msg = encodeURIComponent(`Halo Penjual Barakah Economy, saya tertarik dengan produk *${product.title}* (${window.location.href}). Apakah stoknya masih tersedia?`);
+    window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+  };
+
   const addToCart = async () => {
     if (isAddingCart) return;
     const currentStock = selectedVariation ? selectedVariation.stock : (product?.total_stock || product?.stock || 0);
@@ -111,6 +155,7 @@ const EcommerceProductDetail = () => {
         alert('Silakan pilih variasi terlebih dahulu (misal: Warna/Ukuran)');
         return;
     }
+
 
     const csrfToken = getCsrfToken();
     try {
@@ -548,6 +593,34 @@ const EcommerceProductDetail = () => {
                         <span className="material-icons text-lg">add</span>
                       </button>
                     </div>
+                  </div>
+
+                  {/* Row Tombol Chat Penjual & WhatsApp Langsung */}
+                  <div className="flex gap-2.5 mb-4">
+                    <button
+                      type="button"
+                      onClick={handleChatSeller}
+                      disabled={isStartingChat}
+                      className="flex-1 py-2.5 px-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-200 flex items-center justify-center gap-2 transition active:scale-95 disabled:opacity-50"
+                    >
+                      {isStartingChat ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <span className="material-icons text-base">chat</span>
+                          <span>Chat Penjual</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleWhatsAppChat}
+                      className="flex-1 py-2.5 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 flex items-center justify-center gap-2 transition active:scale-95"
+                    >
+                      <span className="material-icons text-base">whatsapp</span>
+                      <span>Tanya via WA</span>
+                    </button>
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-4">
