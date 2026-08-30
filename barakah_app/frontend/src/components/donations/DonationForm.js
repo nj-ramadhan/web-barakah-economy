@@ -102,7 +102,8 @@ const DonationForm = ({ campaign }) => {
         otherwise: () => Yup.string(),
       }),
       fullName: Yup.string().required('Nama lengkap diperlukan'),
-      phone: Yup.string().required('Nomor telepon diperlukan'),
+      phone: Yup.string().required('Nomor telepon/WhatsApp diperlukan'),
+      email: Yup.string().email('Format email tidak valid').required('Email wajib diisi untuk pengiriman bukti donasi'),
     }),
     onSubmit: async (values) => {
       const donationData = {
@@ -201,14 +202,18 @@ const DonationForm = ({ campaign }) => {
           
           <Input
             type="email"
-            placeholder="Email Anda (tidak wajib)"
+            placeholder="Email Anda (wajib diisi)"
             name="email"
             value={formik.values.email}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
           />
+          {formik.touched.email && formik.errors.email && (
+            <div className="error">{formik.errors.email}</div>
+          )}
           
           <TextArea
-            placeholder="Pesan atau do'a Anda (tidak wajib)"
+            placeholder="Pesan atau do'a Anda (opsional)"
             name="message"
             value={formik.values.message}
             onChange={formik.handleChange}

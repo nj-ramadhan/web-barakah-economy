@@ -302,6 +302,27 @@ const CrowdfundingDonationPage = () => {
       return;
     }
 
+    if (!formData.hideIdentity && !formData.fullName.trim()) {
+      alert('Silakan masukkan nama lengkap Anda (wajib diisi)');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      alert('Silakan masukkan nomor WhatsApp atau Handphone Anda (wajib diisi)');
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      alert('Silakan masukkan alamat Email Anda (wajib diisi untuk pengiriman bukti donasi)');
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(formData.email.trim())) {
+      alert('Format email tidak valid. Silakan masukkan alamat email yang benar.');
+      return;
+    }
+
     const effectiveBank = (paymentConfig?.active_mode === 'dynaqris') ? 'qris' : selectedBank;
     if (!effectiveBank) {
       alert('Silakan pilih metode pembayaran');
@@ -526,12 +547,15 @@ const CrowdfundingDonationPage = () => {
           </div>
 
           <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Nama Lengkap <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="fullName"
               placeholder="Nama Lengkap Anda (wajib diisi)"
               className={`w-full p-3 rounded-lg border ${formData.hideIdentity ? 'bg-gray-100 border-gray-300' : 'border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500'
-                } outline-none`}
+                } outline-none text-sm`}
               value={formData.fullName}
               onChange={handleInputChange}
               disabled={formData.hideIdentity}
@@ -540,11 +564,14 @@ const CrowdfundingDonationPage = () => {
           </div>
 
           <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              No. WhatsApp / HP <span className="text-red-500">*</span>
+            </label>
             <input
               type="tel"
               name="phone"
               placeholder="No Whatsapp atau Handphone (wajib diisi)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm"
               value={formData.phone}
               onChange={handleInputChange}
               required
@@ -552,21 +579,32 @@ const CrowdfundingDonationPage = () => {
           </div>
 
           <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               name="email"
-              placeholder="Email Anda (opsional)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+              placeholder="Email Anda (wajib diisi)"
+              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm"
               value={formData.email}
               onChange={handleInputChange}
+              required
             />
+            <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1 font-medium">
+              <span className="material-icons text-xs">info</span>
+              Wajib diisi untuk pengiriman bukti &amp; tanda terima donasi Anda
+            </p>
           </div>
 
           <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Pesan / Do'a <span className="text-gray-400 font-normal">(opsional)</span>
+            </label>
             <textarea
               name="message"
               placeholder="Pesan atau do'a Anda (opsional)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm"
               rows="3"
               value={formData.message}
               onChange={handleInputChange}

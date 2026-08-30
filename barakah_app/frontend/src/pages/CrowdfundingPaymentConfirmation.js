@@ -238,6 +238,7 @@ const CrowdfundingPaymentConfirmation = () => {
     campaignTitle,
     donorName, // Extract the Donatur's name
     donorPhone,
+    email: donorEmail,
     campaignSlug, // Extract campaign slug
     message: donorMessage
   } = location.state;
@@ -381,7 +382,7 @@ const CrowdfundingPaymentConfirmation = () => {
     donationData.append('amount', amount);
     donationData.append('donor_name', donorName);
     donationData.append('donor_phone', donorPhone);
-    donationData.append('donor_email', formData.donor_email || '');
+    donationData.append('donor_email', donorEmail || location.state?.email || formData.donor_email || '');
     donationData.append('payment_method', selectedBankInfo.name);
     donationData.append('source_bank', formData.sourceBank);
     donationData.append('source_account', formData.sourceAccount);
