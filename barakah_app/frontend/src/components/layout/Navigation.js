@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getUnreadChatCount } from '../../services/chatApi';
+import PWAInstallGuideModal from '../common/PWAInstallGuideModal';
 import '../../styles/Navigation.css';
 
-const getLayananItems = (t, unreadCount = 0) => [
+const getLayananItems = (t, unreadCount = 0, onOpenPwaModal) => [
   { to: '/', icon: 'home', label: t('nav.home', 'Home'), color: 'text-green-600' },
   { to: '/chat', icon: 'chat', label: t('nav.chat', 'Chat / Pesan'), color: 'text-green-600', badge: unreadCount },
+  { to: '/whats-new', icon: 'auto_awesome', label: "What's New", color: 'text-amber-500' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: t('nav.activities', 'Kegiatan'), color: 'text-green-700' },
   { to: '/store', icon: 'storefront', label: t('nav.ecommerce', 'Toko'), color: 'text-blue-600' },
@@ -16,9 +18,11 @@ const getLayananItems = (t, unreadCount = 0) => [
   { to: '/digital-products', icon: 'storefront', label: t('nav.digital_products', 'Produk Digital'), color: 'text-emerald-600' },
   { to: '/event', icon: 'celebration', label: 'Event', color: 'text-indigo-600' },
   { to: '/forum', icon: 'forum', label: 'Forum', color: 'text-blue-500' },
+  { onClick: onOpenPwaModal, icon: 'install_mobile', label: 'Pasang App', color: 'text-emerald-700' },
   { to: '/about', icon: 'info', label: t('nav.about', 'About'), color: 'text-teal-600' },
   { to: '/profile', icon: 'person', label: t('nav.profile', 'Profile'), color: 'text-gray-600' },
 ];
+
 
 const NavigationButton = () => {
   const location = useLocation();
@@ -26,7 +30,9 @@ const NavigationButton = () => {
   const [isLayananOpen, setIsLayananOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [showPwaModal, setShowPwaModal] = useState(false);
   const layananRef = useRef(null);
+
 
   useEffect(() => {
     const logged = !!localStorage.getItem('user');
@@ -104,29 +110,47 @@ const NavigationButton = () => {
                     className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
                     style={{ scrollbarWidth: 'thin' }}
                   >
-                    {getLayananItems(t, unreadChatCount).map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
-                        onClick={() => setIsLayananOpen(false)}
-                      >
-                        <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
-                          <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
-                          {item.badge > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
-                      </Link>
+                    {getLayananItems(t, unreadChatCount, () => {
+                      setIsLayananOpen(false);
+                      setShowPwaModal(true);
+                    }).map((item, idx) => (
+                      item.to ? (
+                        <Link
+                          key={item.to || idx}
+                          to={item.to}
+                          className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
+                          onClick={() => setIsLayananOpen(false)}
+                        >
+                          <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
+                            <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
+                            {item.badge > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                                {item.badge > 99 ? '99+' : item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
+                        </Link>
+                      ) : (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={item.onClick}
+                          className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative text-left w-full"
+                        >
+                          <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
+                            <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
+                        </button>
+                      )
                     ))}
                   </div>
                   {/* Arrow */}
                   <div className="absolute -bottom-1.5 left-8 w-3.5 h-3.5 bg-white dark:bg-gray-900 rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
                 </div>
               )}
+
 
               <button
                 onClick={() => setIsLayananOpen(!isLayananOpen)}
@@ -192,6 +216,7 @@ const NavigationButton = () => {
         </nav>
       )}
 
+      <PWAInstallGuideModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </>
   );
 };

@@ -5,7 +5,9 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import PWAInstallGuideModal from '../components/common/PWAInstallGuideModal';
 import authService from '../services/auth';
+
 import businessProfileService from '../services/businessProfile';
 import Pagination from '../components/common/Pagination';
 import '../styles/Body.css';
@@ -990,8 +992,10 @@ const ProfilePage = () => {
 
     const [activeTab, setActiveTab] = useState('general');
     const [loadingProfile, setLoadingProfile] = useState(true);
+    const [showPwaGuideModal, setShowPwaGuideModal] = useState(false);
     // Change password state
     const [showChangePwModal, setShowChangePwModal] = useState(false);
+
     const [changePwForm, setChangePwForm] = useState({ old_password: '', new_password: '', confirm_password: '' });
     const [changePwLoading, setChangePwLoading] = useState(false);
     const [changePwError, setChangePwError] = useState('');
@@ -1613,6 +1617,14 @@ const ProfilePage = () => {
                             {/* Footer Actions */}
                             <div className="mt-12 pt-6 border-t border-gray-100">
                                 <button
+                                    onClick={() => setShowPwaGuideModal(true)}
+
+                                    className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3 border border-emerald-200/60 shadow-2xs"
+                                >
+                                    <span className="material-icons text-emerald-600">install_mobile</span>
+                                    PASANG APLIKASI (PWA)
+                                </button>
+                                <button
                                     onClick={() => setShowChangePwModal(true)}
                                     className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
                                 >
@@ -1638,6 +1650,8 @@ const ProfilePage = () => {
                 )}
             </div>
             <NavigationButton />
+            <PWAInstallGuideModal isOpen={showPwaGuideModal} onClose={() => setShowPwaGuideModal(false)} />
+
 
             {/* ======= MODAL GANTI PASSWORD ======= */}
             {showChangePwModal && (

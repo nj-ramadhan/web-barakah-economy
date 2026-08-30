@@ -153,17 +153,8 @@ const DesktopHeader = () => {
                     {i18n.language === 'en' ? 'EN' : 'ID'}
                 </button>
 
-                {/* PWA Install Guide Trigger */}
-                <button
-                    onClick={() => setShowPwaGuideModal(true)}
-                    className="flex items-center gap-1 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 font-bold transition px-2.5 py-1 rounded-xl text-xs border border-emerald-200 dark:border-emerald-800 shadow-2xs"
-                    title="Panduan Pasang Aplikasi (Android / iOS / PC)"
-                >
-                    <span className="material-icons text-sm">install_mobile</span>
-                    <span className="hidden xl:inline">Pasang App</span>
-                </button>
-
                 {/* Dark/Light Mode Toggle */}
+
                 <button
                     onClick={toggleTheme}
                     className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
