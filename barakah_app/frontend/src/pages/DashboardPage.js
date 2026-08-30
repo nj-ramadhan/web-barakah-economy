@@ -663,9 +663,10 @@ const DashboardPage = () => {
                 {/* Admin Management Section */}
                 {(() => {
                     const userRes = JSON.parse(localStorage.getItem('user'));
-                    const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin';
+                    const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin' || userRes?.profile?.role === 'admin' || userProfile?.role === 'admin' || userRes?.is_staff;
                     const accessibleMenus = userProfile?.accessible_menus || [];
                     const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
+
 
                     const adminSections = [
                         {

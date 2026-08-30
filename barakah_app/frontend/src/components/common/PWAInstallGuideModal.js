@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const PWAInstallGuideModal = ({ isOpen, onClose }) => {
     const [platform, setPlatform] = useState('android'); // 'android' | 'ios' | 'desktop'
@@ -46,13 +47,14 @@ const PWAInstallGuideModal = ({ isOpen, onClose }) => {
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || typeof document === 'undefined') return null;
 
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[1300] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-6 animate-scale-up flex flex-col">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-[99999] flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-auto animate-scale-up flex flex-col relative z-10">
                 {/* Modal Header */}
                 <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-5 flex items-center justify-between">
+
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 shrink-0">
                             <span className="material-icons text-2xl">install_mobile</span>
@@ -292,8 +294,10 @@ const PWAInstallGuideModal = ({ isOpen, onClose }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
 export default PWAInstallGuideModal;
+
