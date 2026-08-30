@@ -106,6 +106,23 @@ const DesktopHeader = () => {
     ];
 
 
+    const profileMenuRef = React.useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+                setShowProfileMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const userNickname = user?.nickname || user?.profile?.nickname || user?.name_nickname || user?.profile?.name_nickname || user?.name_full || user?.first_name || user?.username || 'Sahabat';
+    const userFullName = user?.name_full || user?.profile?.name_full || '';
+    const userEmail = user?.email || user?.profile?.email || user?.username || '';
+    const userRole = user?.position || user?.role || user?.profile?.role || (user?.is_staff ? 'Admin' : 'Anggota');
+
     return (
         <header className="w-full bg-white/80 dark:bg-gray-950/90 backdrop-blur-lg shadow-sm dark:shadow-gray-900 py-3 px-8 flex justify-between items-center fixed top-0 z-[1000] border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
             <Link to="/" className="flex items-center gap-2 group">
@@ -115,7 +132,7 @@ const DesktopHeader = () => {
                 <span className="text-xl font-black text-green-800 dark:text-green-400 tracking-tighter">Barakah App</span>
             </Link>
 
-            <nav className="flex gap-8 items-center">
+            <nav className="flex gap-6 items-center">
                 <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 font-semibold transition">{t('header.home')}</Link>
                 <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 font-semibold transition">{t('header.about')}</Link>
 
@@ -147,7 +164,6 @@ const DesktopHeader = () => {
                 </button>
 
                 {/* Dark/Light Mode Toggle */}
-
                 <button
                     onClick={toggleTheme}
                     className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
@@ -171,40 +187,132 @@ const DesktopHeader = () => {
                 </button>
 
                 {user ? (
-                    <div className="relative pl-4 border-l border-gray-200 dark:border-gray-700">
+                    <div className="relative pl-3 border-l border-gray-200 dark:border-gray-700" ref={profileMenuRef}>
                         <button
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
-                            className="flex items-center gap-2 p-1.5 pr-4 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-100 dark:border-gray-700"
+                            className={`flex items-center gap-2 p-1.5 pr-3.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition border ${
+                                showProfileMenu ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-200 dark:border-gray-700'
+                            }`}
                         >
                             {user.picture ? (
-                                <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm" />
+                                <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-white dark:border-gray-700 shadow-sm" />
                             ) : (
-                                <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm border-2 border-white dark:border-gray-700 shadow-sm animate-fade-in">
-                                    {(user.name_full || user.username || '?').charAt(0).toUpperCase()}
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-xs border border-white dark:border-gray-700 shadow-sm animate-fade-in">
+                                    {(userNickname || '?').charAt(0).toUpperCase()}
                                 </div>
                             )}
-                            <span className="text-sm max-w-[100px] truncate">{user.username || 'Admin'}</span>
-                            <span className="material-icons text-gray-400 dark:text-gray-500 text-sm transition-transform">{showProfileMenu ? 'expand_less' : 'expand_more'}</span>
+                            <div className="flex flex-col text-left leading-tight max-w-[110px]">
+                                <span className="text-xs font-black truncate">{userNickname}</span>
+                                <span className="text-[9px] text-gray-400 font-medium truncate">{userRole}</span>
+                            </div>
+                            <span className={`material-icons text-gray-400 dark:text-gray-500 text-base transition-transform duration-200 ${showProfileMenu ? 'rotate-180 text-emerald-600' : ''}`}>
+                                expand_more
+                            </span>
                         </button>
 
                         {showProfileMenu && (
-                            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50">
-                                <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800 mb-1">
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">Akun Saya</p>
-                                    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{user.email || user.username}</p>
+                            <div className="absolute right-0 mt-3 w-72 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-2 z-50 animate-scale-up">
+                                {/* User Card Header */}
+                                <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50/60 dark:from-emerald-950/40 dark:to-teal-950/20 rounded-2xl border border-emerald-100/80 dark:border-emerald-900/30 mb-2 flex items-center gap-3">
+                                    <div className="relative shrink-0">
+                                        {user.picture ? (
+                                            <img src={user.picture} alt="Profile" className="w-11 h-11 rounded-2xl object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
+                                        ) : (
+                                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-base shadow-sm border-2 border-white dark:border-gray-800">
+                                                {(userNickname || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <p className="text-xs font-black text-gray-900 dark:text-white truncate">
+                                                {userNickname}
+                                            </p>
+                                            <span className="px-1.5 py-0.2 bg-emerald-600 text-white text-[9px] font-black rounded-md shrink-0">
+                                                {userRole}
+                                            </span>
+                                        </div>
+                                        {userFullName && userFullName !== userNickname && (
+                                            <p className="text-[11px] text-gray-600 dark:text-gray-300 font-medium truncate">
+                                                {userFullName}
+                                            </p>
+                                        )}
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
+                                            {userEmail}
+                                        </p>
+                                    </div>
                                 </div>
-                                <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-400 text-sm font-medium transition">
-                                    <span className="material-icons text-lg">person_outline</span> Profile
-                                </Link>
-                                <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-400 text-sm font-medium transition">
-                                    <span className="material-icons text-lg">dashboard_customize</span> Dashboard
-                                </Link>
-                                <hr className="my-1 border-gray-50 dark:border-gray-800" />
+
+                                {/* Menu Items */}
+                                <div className="space-y-0.5">
+                                    <Link
+                                        to="/profile"
+                                        onClick={() => setShowProfileMenu(false)}
+                                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 text-xs font-bold transition group"
+                                    >
+                                        <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 flex items-center justify-center text-gray-500 group-hover:text-emerald-700 transition">
+                                            <span className="material-icons text-sm">person_outline</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <span>Profil & Data Saya</span>
+                                        </div>
+                                    </Link>
+
+                                    <Link
+                                        to="/dashboard"
+                                        onClick={() => setShowProfileMenu(false)}
+                                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 text-xs font-bold transition group"
+                                    >
+                                        <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 flex items-center justify-center text-gray-500 group-hover:text-emerald-700 transition">
+                                            <span className="material-icons text-sm">dashboard_customize</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <span>Dashboard & Manajemen</span>
+                                        </div>
+                                    </Link>
+
+                                    <Link
+                                        to="/whats-new"
+                                        onClick={() => setShowProfileMenu(false)}
+                                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 text-xs font-bold transition group"
+                                    >
+                                        <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 flex items-center justify-center text-gray-500 group-hover:text-emerald-700 transition">
+                                            <span className="material-icons text-sm">auto_awesome</span>
+                                        </div>
+                                        <div className="flex-1 flex items-center justify-between">
+                                            <span>What's New</span>
+                                            <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-md">Update</span>
+                                        </div>
+                                    </Link>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowProfileMenu(false);
+                                            setShowPwaGuideModal(true);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 text-xs font-bold transition group text-left"
+                                    >
+                                        <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 flex items-center justify-center text-gray-500 group-hover:text-emerald-700 transition">
+                                            <span className="material-icons text-sm">install_mobile</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <span>Pasang Aplikasi (PWA)</span>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <div className="my-1.5 border-t border-gray-100 dark:border-gray-800"></div>
+
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-bold text-left transition"
+                                    className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-black text-left transition"
                                 >
-                                    <span className="material-icons text-lg">logout</span> Keluar
+                                    <div className="w-7 h-7 rounded-lg bg-red-100/60 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+                                        <span className="material-icons text-sm">logout</span>
+                                    </div>
+                                    <span>Keluar dari Akun</span>
                                 </button>
                             </div>
                         )}
@@ -222,4 +330,5 @@ const DesktopHeader = () => {
 };
 
 export default DesktopHeader;
+
 

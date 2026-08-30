@@ -1,19 +1,18 @@
 /* styles/Navigation.css */
-nav {
+nav.mobile-bottom-nav {
+
   z-index: 100;
-  /* Ensure the navigation is above other content */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* Agar nav pas di bawah pada HP tanpa tombol fisik */
+  padding-bottom: max(env(safe-area-inset-bottom, 6px), 6px);
   box-sizing: border-box;
 }
 
 nav .flex {
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 nav .flex>a,
 nav .flex>div>button {
-  transition: color 0.3s ease;
+  transition: color 0.2s ease, transform 0.15s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23,19 +22,15 @@ nav .flex>div>button {
 nav .flex>a:hover,
 nav .flex>div>button:hover {
   color: #065f46;
-  /* Green-600 */
 }
 
-/* Active indicator */
 nav .flex>a.active {
   color: #065f46;
-  /* Green-600 */
 }
 
-/* Responsive styles */
 @media (max-width: 520px) {
   nav .flex {
-    padding: 0.3rem 0;
+    padding: 0.2rem 0;
   }
 
   nav .flex a {
@@ -43,6 +38,6 @@ nav .flex>a.active {
   }
 
   nav .flex a .material-icons {
-    font-size: 1.0rem;
+    font-size: 1.1rem;
   }
 }

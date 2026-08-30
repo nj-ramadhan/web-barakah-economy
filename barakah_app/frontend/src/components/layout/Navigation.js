@@ -81,21 +81,25 @@ const NavigationButton = () => {
       )}
 
       {isNavVisible && (
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.5)] transition-all duration-300 lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          <div className="grid grid-cols-12 items-center px-4 py-2 relative w-full">
+        <nav
+          className="mobile-bottom-nav fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 z-50 rounded-t-2xl shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_16px_-1px_rgba(0,0,0,0.6)] transition-all duration-300 lg:hidden"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 6px), 6px)' }}
+        >
+          <div className="grid grid-cols-12 items-center px-4 pt-1.5 pb-1 relative w-full">
 
             {/* Close Toggle Button */}
             <button
               onClick={() => setIsNavVisible(false)}
-              className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-full flex items-center justify-center shadow-sm z-[51]"
+              className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-full flex items-center justify-center shadow-xs z-[51]"
+              title="Sembunyikan Menu"
             >
-              <span className="material-icons text-gray-400 dark:text-gray-500 text-sm">keyboard_arrow_down</span>
+              <span className="material-icons text-gray-400 dark:text-gray-500 text-xs">keyboard_arrow_down</span>
             </button>
 
             {/* LAYANAN (Kiri - 3 cols) */}
             <div className="col-span-3 flex flex-col items-center justify-center relative" ref={layananRef}>
               {isLayananOpen && (
-                <div className="absolute bottom-full mb-4 left-0 w-56 bg-white dark:bg-gray-900 shadow-2xl dark:shadow-gray-950 rounded-2xl border border-gray-100 dark:border-gray-700 z-50 p-3">
+                <div className="absolute bottom-full mb-3 left-0 w-56 bg-white dark:bg-gray-900 shadow-2xl dark:shadow-gray-950 rounded-2xl border border-gray-100 dark:border-gray-700 z-50 p-3 animate-scale-up">
                   <div
                     className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
                     style={{ scrollbarWidth: 'thin' }}
@@ -104,11 +108,11 @@ const NavigationButton = () => {
                       <Link
                         key={item.to}
                         to={item.to}
-                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
+                        className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
                         onClick={() => setIsLayananOpen(false)}
                       >
-                        <div className={`w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
-                          <span className={`material-icons text-xl ${item.color}`}>{item.icon}</span>
+                        <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
+                          <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
                           {item.badge > 0 && (
                             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
                               {item.badge > 99 ? '99+' : item.badge}
@@ -120,7 +124,7 @@ const NavigationButton = () => {
                     ))}
                   </div>
                   {/* Arrow */}
-                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white dark:bg-gray-900 rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
+                  <div className="absolute -bottom-1.5 left-8 w-3.5 h-3.5 bg-white dark:bg-gray-900 rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
                 </div>
               )}
 
@@ -141,15 +145,14 @@ const NavigationButton = () => {
               </button>
             </div>
 
-
             {/* DONASI (Tengah - 6 cols) */}
             <div className="col-span-6 flex justify-center">
               <Link
                 to="/charity"
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 dark:from-green-600 dark:to-green-800 rounded-2xl shadow-lg shadow-green-200 dark:shadow-green-900/50 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
+                className="w-full flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-green-500 to-green-700 dark:from-green-600 dark:to-green-800 rounded-2xl shadow-md shadow-green-200/60 dark:shadow-green-900/40 text-white hover:scale-102 active:scale-95 transition-all -mt-2"
               >
-                <span className="material-icons text-xl">volunteer_activism</span>
-                <span className="text-sm font-bold">{t('nav.donation', 'Donasi')}</span>
+                <span className="material-icons text-lg">volunteer_activism</span>
+                <span className="text-xs font-bold">{t('nav.donation', 'Donasi')}</span>
               </Link>
             </div>
 
@@ -163,7 +166,7 @@ const NavigationButton = () => {
                   const user = JSON.parse(localStorage.getItem('user') || '{}');
                   if (user.picture) {
                     return (
-                      <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                         <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />
                       </div>
                     );
@@ -171,7 +174,7 @@ const NavigationButton = () => {
                     const name = user.name_full || user.username || '?';
                     const initial = name.charAt(0).toUpperCase();
                     return (
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-green-600 text-white flex items-center justify-center font-bold text-xs animate-fade-in">
+                      <div className="w-6 h-6 rounded-full overflow-hidden bg-green-600 text-white flex items-center justify-center font-bold text-[11px] animate-fade-in">
                         {initial}
                       </div>
                     );
@@ -188,6 +191,7 @@ const NavigationButton = () => {
           </div>
         </nav>
       )}
+
     </>
   );
 };
