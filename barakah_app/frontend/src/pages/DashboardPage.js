@@ -784,6 +784,15 @@ const DashboardPage = () => {
                             title: 'Admin Konten & Pengumuman',
                             items: [
                                 {
+                                    id: 'whats_new',
+                                    access: isAdmin || hasAccess('announcements') || hasAccess('whats_new'),
+                                    to: '/dashboard/admin/whats-new',
+                                    icon: 'auto_awesome',
+                                    color: 'emerald',
+                                    title: "What's New & Changelog",
+                                    desc: 'Kelola rilis fitur baru, update sistem, dan preview pengumuman (Admin)'
+                                },
+                                {
                                     id: 'announcements',
                                     access: hasAccess('announcements'),
                                     to: '/dashboard/admin/announcements',
@@ -792,6 +801,7 @@ const DashboardPage = () => {
                                     title: 'Manajemen Pengumuman',
                                     desc: 'Kelola pop-up pengumuman & iklan aplikasi (Admin)'
                                 },
+
                                 {
                                     id: 'activities',
                                     access: hasAccess('activities'),

@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner, WhatsNew
+
+@admin.register(WhatsNew)
+class WhatsNewAdmin(admin.ModelAdmin):
+    list_display = ('title', 'version', 'tag', 'content_type', 'is_published', 'is_popup_on_login', 'release_date', 'created_at')
+    list_filter = ('is_published', 'is_popup_on_login', 'tag', 'content_type', 'release_date')
+    search_fields = ('title', 'summary', 'version')
+
 
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):

@@ -181,3 +181,79 @@ class MaintenanceSetting(models.Model):
         settings, _ = cls.objects.get_or_create(id=1)
         return settings
 
+
+class WhatsNew(models.Model):
+    TAG_CHOICES = [
+        ('fitur_baru', 'Fitur Baru'),
+        ('peningkatan', 'Peningkatan & Optimasi'),
+        ('perbaikan', 'Perbaikan Bug'),
+        ('pengumuman', 'Pengumuman Penting'),
+        ('promo', 'Event & Promo'),
+    ]
+
+    CONTENT_TYPE_CHOICES = [
+        ('rich_text', 'Deskriptif (Rich Text / HTML)'),
+        ('bullet_list', 'Daftar Poin (List)'),
+    ]
+
+    title = models.CharField(max_length=255, help_text="Judul update / apa yang baru")
+    version = models.CharField(max_length=50, blank=True, null=True, help_text="Versi rilis, misal: v2.4.0 (opsional)")
+    tag = models.CharField(max_length=30, choices=TAG_CHOICES, default='fitur_baru')
+    badge_label = models.CharField(max_length=50, blank=True, null=True, help_text="Custom badge label (opsional)")
+    
+    cover_image = models.ImageField(upload_to='whats_new/', blank=True, null=True, help_text="Banner / foto ilustrasi")
+    summary = models.TextField(blank=True, null=True, help_text="Ringkasan singkat untuk kartu preview")
+    
+    content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES, default='rich_text')
+    content_html = RichTextField(blank=True, default='', help_text="Isi konten deskriptif / artikel lengkap")
+    bullet_items = models.JSONField(blank=True, default=list, help_text="Daftar poin perubahan (list array string)")
+    
+    action_button_text = models.CharField(max_length=100, blank=True, null=True, help_text="Teks tombol aksi, misal: 'Coba Sekarang' (opsional)")
+    action_button_url = models.CharField(max_length=255, blank=True, null=True, help_text="Link tombol aksi, misal: '/store' (opsional)")
+    
+    is_published = models.BooleanField(default=True, help_text="Status publikasi")
+    is_popup_on_login = models.BooleanField(default=False, help_text="Tampilkan otomatis sebagai popup pengumuman saat user membuka aplikasi")
+    release_date = models.DateField(help_text="Tanggal rilis update")
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_whats_new')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-release_date', '-created_at']
+        verbose_name = "What's New"
+        verbose_name_plural = "What's New"
+
+    def __str__(self):
+        return f"[{self.version or self.get_tag_display()}] {self.title}"
+
+
+class WhatsNewFeatureSuggestion(models.Model):
+    CATEGORY_CHOICES = [
+        ('fitur_baru', 'Fitur Baru'),
+        ('peningkatan', 'Peningkatan UI/UX'),
+        ('keamanan', 'Keamanan & Autentikasi'),
+        ('perbaikan', 'Perbaikan Bug'),
+        ('sistem', 'Infrastruktur & Sistem'),
+    ]
+
+    title = models.CharField(max_length=255, help_text="Nama/ringkasan fitur atau pembaruan")
+    description = models.TextField(blank=True, default='', help_text="Penjelasan detail atau bullet point fitur")
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default='fitur_baru')
+    is_used = models.BooleanField(default=False, help_text="Status apakah sudah pernah digunakan pada What's New")
+    used_in_version = models.CharField(max_length=100, blank=True, null=True, help_text="Keterangan rilis What's New yang memakai saran ini")
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_feature_suggestions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['is_used', '-created_at']
+        verbose_name = "Saran Fitur What's New"
+        verbose_name_plural = "Saran Fitur What's New"
+
+    def __str__(self):
+        return f"[{'SUDAH' if self.is_used else 'BELUM'}] {self.title}"
+
+
+

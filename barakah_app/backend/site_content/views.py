@@ -439,3 +439,100 @@ class AdminMaintenanceSettingView(APIView):
             'setting': serializer.data
         }, status=status.HTTP_200_OK)
 
+
+class WhatsNewViewSet(viewsets.ModelViewSet):
+    from .models import WhatsNew
+    from .serializers import WhatsNewSerializer
+    queryset = WhatsNew.objects.all()
+    serializer_class = WhatsNewSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'popup_latest']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+    def _is_admin(self, user):
+        return bool(
+            user and user.is_authenticated and (
+                user.is_staff or 
+                user.is_superuser or 
+                getattr(user, 'role', '') == 'admin' or
+                getattr(getattr(user, 'profile', None), 'role', '') == 'admin' or
+                user.username == 'admin'
+            )
+        )
+
+    def get_queryset(self):
+        from .models import WhatsNew
+        user = self.request.user
+        if self._is_admin(user):
+            return WhatsNew.objects.all()
+        return WhatsNew.objects.filter(is_published=True)
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(created_by=user)
+
+    @action(detail=False, methods=['get'], url_path='popup-latest')
+    def popup_latest(self, request):
+        from .models import WhatsNew
+        from .serializers import WhatsNewSerializer
+        latest = WhatsNew.objects.filter(is_published=True, is_popup_on_login=True).order_by('-release_date', '-created_at').first()
+        if latest:
+            return Response(WhatsNewSerializer(latest, context={'request': request}).data)
+        return Response(None)
+
+
+class WhatsNewFeatureSuggestionViewSet(viewsets.ModelViewSet):
+    from .models import WhatsNewFeatureSuggestion
+    from .serializers import WhatsNewFeatureSuggestionSerializer
+    queryset = WhatsNewFeatureSuggestion.objects.all()
+    serializer_class = WhatsNewFeatureSuggestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _is_admin(self, user):
+        return bool(
+            user and user.is_authenticated and (
+                user.is_staff or 
+                user.is_superuser or 
+                getattr(user, 'role', '') == 'admin' or
+                getattr(getattr(user, 'profile', None), 'role', '') == 'admin' or
+                user.username == 'admin'
+            )
+        )
+
+    def get_queryset(self):
+        from .models import WhatsNewFeatureSuggestion
+        if not self._is_admin(self.request.user):
+            return WhatsNewFeatureSuggestion.objects.none()
+        return WhatsNewFeatureSuggestion.objects.all()
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(created_by=user)
+
+    @action(detail=True, methods=['post'], url_path='toggle-used')
+    def toggle_used(self, request, pk=None):
+        suggestion = self.get_object()
+        suggestion.is_used = not suggestion.is_used
+        if suggestion.is_used and 'version' in request.data:
+            suggestion.used_in_version = request.data.get('version')
+        elif not suggestion.is_used:
+            suggestion.used_in_version = None
+        suggestion.save()
+        from .serializers import WhatsNewFeatureSuggestionSerializer
+        return Response(WhatsNewFeatureSuggestionSerializer(suggestion).data)
+
+    @action(detail=False, methods=['post'], url_path='bulk-mark-used')
+    def bulk_mark_used(self, request):
+        from .models import WhatsNewFeatureSuggestion
+        ids = request.data.get('ids', [])
+        is_used = request.data.get('is_used', True)
+        version = request.data.get('version', None)
+        
+        qs = WhatsNewFeatureSuggestion.objects.filter(id__in=ids)
+        qs.update(is_used=is_used, used_in_version=version if is_used else None)
+        return Response({'success': True, 'count': qs.count()})
+
+
+

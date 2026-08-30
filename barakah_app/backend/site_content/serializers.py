@@ -120,3 +120,33 @@ class MaintenanceSettingSerializer(serializers.ModelSerializer):
                 return obj.updated_by.username
         return None
 
+
+class WhatsNewSerializer(serializers.ModelSerializer):
+    tag_display = serializers.CharField(source='get_tag_display', read_only=True)
+    content_type_display = serializers.CharField(source='get_content_type_display', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import WhatsNew
+        model = WhatsNew
+        fields = '__all__'
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            try:
+                return obj.created_by.profile.name_full or obj.created_by.username
+            except Exception:
+                return obj.created_by.username
+        return None
+
+
+class WhatsNewFeatureSuggestionSerializer(serializers.ModelSerializer):
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        from .models import WhatsNewFeatureSuggestion
+        model = WhatsNewFeatureSuggestion
+        fields = '__all__'
+
+
+

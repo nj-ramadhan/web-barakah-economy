@@ -7,6 +7,8 @@ from .views import (
     ActivityCalendarView, HeroBannerViewSet,
     CalendarNoteView,
     PublicMaintenanceSettingView, AdminMaintenanceSettingView,
+    WhatsNewViewSet,
+    WhatsNewFeatureSuggestionViewSet,
 )
 
 router = SimpleRouter()
@@ -17,6 +19,10 @@ router.register(r'testimonials', TestimonialViewSet)
 router.register(r'activities', ActivityViewSet)
 router.register(r'announcements', AnnouncementViewSet)
 router.register(r'hero-banners', HeroBannerViewSet)
+router.register(r'whats-new', WhatsNewViewSet)
+router.register(r'whats-new-suggestions', WhatsNewFeatureSuggestionViewSet)
+
+
 
 urlpatterns = [
     path('activities/share/<int:pk>/', ActivityShareView.as_view({'get': 'retrieve'}), name='activity-share'),

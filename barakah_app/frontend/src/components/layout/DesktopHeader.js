@@ -95,10 +95,12 @@ const DesktopHeader = () => {
     ];
 
     const group3 = [
+        { label: "What's New", to: '/whats-new', icon: 'auto_awesome' },
         { label: t('menu.article'), to: '/articles', icon: 'info' },
         { label: t('menu.discussion_forum'), to: '/forum', icon: 'forum' },
         { label: t('menu.consultation'), to: '/chat', icon: 'support_agent' },
     ];
+
 
     return (
         <header className="w-full bg-white/80 dark:bg-gray-950/90 backdrop-blur-lg shadow-sm dark:shadow-gray-900 py-3 px-8 flex justify-between items-center fixed top-0 z-[1000] border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
