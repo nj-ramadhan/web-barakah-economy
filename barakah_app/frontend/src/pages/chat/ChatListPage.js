@@ -349,9 +349,21 @@ const ChatListPage = () => {
                 </div>
             )}
 
+            {/* Floating Action Button (FAB) for New Chat */}
+
+            <button
+                onClick={() => setShowNewChat(true)}
+                title="Mulai Chat Baru"
+                className="fixed bottom-20 right-5 z-40 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white font-bold py-2.5 px-4 rounded-2xl shadow-xl shadow-green-600/30 flex items-center gap-2 transition active:scale-95 group hover:-translate-y-0.5"
+            >
+                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">add_comment</span>
+                <span className="text-xs">Chat Baru</span>
+            </button>
+
             <NavigationButton />
         </div>
     );
 };
+
 
 export default ChatListPage;

@@ -121,7 +121,13 @@ const EcommerceProductDetail = () => {
     setIsStartingChat(true);
     try {
       const res = await createStoreChat(product.id, sellerId, `Halo, saya tertarik dengan produk *${product.title}*. Apakah stoknya masih tersedia?`);
-      navigate(`/chat/${res.data.id}`);
+      if (window.innerWidth >= 1024) {
+        window.dispatchEvent(new CustomEvent('openDesktopChat', { 
+          detail: { session: res.data, sessionId: res.data.id } 
+        }));
+      } else {
+        navigate(`/chat/${res.data.id}`);
+      }
     } catch (err) {
       console.error('Failed to start store chat:', err);
       alert(err?.response?.data?.error || 'Gagal memulai chat dengan penjual. Silakan coba lagi.');
@@ -129,6 +135,7 @@ const EcommerceProductDetail = () => {
       setIsStartingChat(false);
     }
   };
+
 
   const handleWhatsAppChat = () => {
     const phone = product.seller_phone;
