@@ -871,20 +871,6 @@ const EcommerceMainPage = () => {
               {sortedFilteredProducts.length} Produk
             </span>
 
-            {/* Quick Share Link Button */}
-            <button
-              onClick={handleShareStoreFilter}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
-                copiedShare
-                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                  : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 shadow-sm'
-              }`}
-              title="Bagikan link dengan pencarian / filter aktif saat ini"
-            >
-              <span className="material-icons text-sm">{copiedShare ? 'check_circle' : 'share'}</span>
-              <span>{copiedShare ? 'Tersalin!' : 'Bagikan Filter'}</span>
-            </button>
-
             {/* View Mode Toggle when category is 'Semua' */}
             {selectedCategory === 'Semua' && (
               <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
