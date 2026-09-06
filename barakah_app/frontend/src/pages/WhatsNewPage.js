@@ -51,6 +51,7 @@ const WhatsNewPage = () => {
     });
 
     const getTag = (tagKey) => TAG_COLORS[tagKey] || TAG_COLORS.fitur_baru;
+    const latestVersion = items.find(i => i.version)?.version || 'v2.5.0';
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pb-24">
@@ -60,10 +61,17 @@ const WhatsNewPage = () => {
                 {/* Hero Header Banner */}
                 <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white p-6 sm:p-8 mb-8 shadow-xl">
                     <div className="relative z-10 max-w-xl">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-emerald-100 text-xs font-black uppercase tracking-wider mb-3">
-                            <span className="material-icons text-xs text-amber-300">auto_awesome</span>
-                            <span>Release Notes & Changelog</span>
-                        </span>
+                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-emerald-100 text-xs font-black uppercase tracking-wider">
+                                <span className="material-icons text-xs text-amber-300">auto_awesome</span>
+                                <span>Release Notes & Changelog</span>
+                            </span>
+                            {latestVersion && (
+                                <span className="text-[11px] text-emerald-200/85 font-mono font-medium tracking-wider px-2.5 py-0.5 rounded-full bg-black/25 border border-white/10">
+                                    Versi {latestVersion}
+                                </span>
+                            )}
+                        </div>
                         <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2">
                             Apa yang Baru di Barakah Economy?
                         </h1>
@@ -244,6 +252,11 @@ const WhatsNewPage = () => {
                         })}
                     </div>
                 )}
+
+                {/* Subtle Footnote Version */}
+                <div className="text-center pt-8 pb-4 text-[11px] text-gray-400 font-normal tracking-wide">
+                    Barakah Economy Community Platform • Versi {latestVersion}
+                </div>
             </div>
 
             <NavigationButton />

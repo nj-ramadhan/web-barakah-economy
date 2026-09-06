@@ -1,6 +1,6 @@
 // pages/EcommerceMainPage.js
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome';
@@ -55,77 +55,112 @@ const EcommerceMainPage = () => {
   const [products, setProducts] = useState([]);
   const [featuredProducts, setfeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [sortBy, setSortBy] = useState('populer');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'blocks'
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return searchParams.get('search') ?? searchParams.get('seller') ?? searchParams.get('q') ?? '';
+  });
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || 'Semua';
+  });
+  const [sortBy, setSortBy] = useState(() => {
+    return searchParams.get('sort') || searchParams.get('urutkan') || searchParams.get('order') || 'populer';
+  });
+  const [viewMode, setViewMode] = useState(() => {
+    const v = searchParams.get('view');
+    return v === 'blocks' ? 'blocks' : 'grid';
+  });
+
   const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
-  const navigate = useNavigate();
-  const location = useLocation();
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
 
-  // Read query params from URL on initial load and when location.search changes
+  // Sync state when URL searchParams change (browser Back / Forward or external direct link)
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const q = params.get('search') ?? params.get('seller') ?? params.get('q');
-    if (q !== null && q !== undefined) {
-      setSearchQuery(q);
-    }
+    const q = searchParams.get('search') ?? searchParams.get('seller') ?? searchParams.get('q') ?? '';
+    setSearchQuery(q);
 
-    const cat = params.get('category') || params.get('kategori') || params.get('cat');
-    if (cat) {
-      setSelectedCategory(cat);
-    }
+    const cat = searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || 'Semua';
+    setSelectedCategory(cat);
 
-    const sort = params.get('sort') || params.get('urutkan') || params.get('order');
-    if (sort) {
-      setSortBy(sort);
-    }
+    const sort = searchParams.get('sort') || searchParams.get('urutkan') || searchParams.get('order') || 'populer';
+    setSortBy(sort);
 
-    const view = params.get('view');
+    const view = searchParams.get('view') || 'grid';
     if (view === 'grid' || view === 'blocks') {
       setViewMode(view);
     }
-  }, [location.search]);
+  }, [searchParams]);
 
-  // Synchronize state changes to URL query parameters
-  const isFirstMount = useRef(true);
-  useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
+  // Handlers that update state and URL query arguments synchronously
+  const handleCategoryChange = (newCat) => {
+    setSelectedCategory(newCat);
+    const newParams = new URLSearchParams(searchParams);
+    if (newCat && newCat !== 'Semua') {
+      newParams.set('category', newCat);
+      newParams.delete('kategori');
+      newParams.delete('cat');
+    } else {
+      newParams.delete('category');
+      newParams.delete('kategori');
+      newParams.delete('cat');
     }
+    setSearchParams(newParams, { replace: true });
+  };
 
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams();
-      if (searchQuery.trim()) {
-        params.set('search', searchQuery.trim());
-      }
-      if (selectedCategory && selectedCategory !== 'Semua') {
-        params.set('category', selectedCategory);
-      }
-      if (sortBy && sortBy !== 'populer') {
-        params.set('sort', sortBy);
-      }
-      if (viewMode && viewMode !== 'grid') {
-        params.set('view', viewMode);
-      }
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    const newParams = new URLSearchParams(searchParams);
+    if (query && query.trim()) {
+      newParams.set('search', query.trim());
+      newParams.delete('q');
+      newParams.delete('seller');
+    } else {
+      newParams.delete('search');
+      newParams.delete('q');
+      newParams.delete('seller');
+    }
+    setSearchParams(newParams, { replace: true });
+  };
 
-      const newSearch = params.toString() ? `?${params.toString()}` : '';
-      if (location.search !== newSearch) {
-        navigate({
-          pathname: location.pathname,
-          search: newSearch
-        }, { replace: true });
-      }
-    }, 200);
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    const newParams = new URLSearchParams(searchParams);
+    if (newSort && newSort !== 'populer') {
+      newParams.set('sort', newSort);
+      newParams.delete('urutkan');
+      newParams.delete('order');
+    } else {
+      newParams.delete('sort');
+      newParams.delete('urutkan');
+      newParams.delete('order');
+    }
+    setSearchParams(newParams, { replace: true });
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategory, sortBy, viewMode]);
+  const handleViewModeChange = (newView) => {
+    setViewMode(newView);
+    const newParams = new URLSearchParams(searchParams);
+    if (newView && newView !== 'grid') {
+      newParams.set('view', newView);
+    } else {
+      newParams.delete('view');
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleResetFilters = () => {
+    setSelectedCategory('Semua');
+    setSearchQuery('');
+    setSortBy('populer');
+    setViewMode('grid');
+    setSearchParams({}, { replace: true });
+  };
 
   const handleShareStoreFilter = async () => {
     const currentUrl = window.location.href;
@@ -141,7 +176,7 @@ const EcommerceMainPage = () => {
         });
         return;
       } catch (err) {
-        // Fallback to clipboard if dismissed or unsupported
+        // Fallback to clipboard
       }
     }
 
@@ -155,8 +190,9 @@ const EcommerceMainPage = () => {
   };
 
   const isCategorySelected = (catKey, catLabel = '') => {
-    if (!selectedCategory) return catKey === 'Semua';
-    if (selectedCategory === 'Semua') return catKey === 'Semua';
+    if (!selectedCategory || selectedCategory === 'Semua') {
+      return catKey === 'Semua';
+    }
     const sel = selectedCategory.toLowerCase().trim();
     return (
       catKey.toLowerCase() === sel ||
@@ -295,7 +331,7 @@ const EcommerceMainPage = () => {
   };
 
   const handleSearch = (query) => {
-    setSearchQuery(query);
+    handleSearchChange(query);
   };
 
   // Extract unique categories from products
@@ -680,13 +716,13 @@ const EcommerceMainPage = () => {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Cari produk, toko, atau kota..."
               className="w-full pl-10 pr-10 py-2.5 bg-white rounded-2xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-sm transition"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => handleSearchChange('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <span className="material-icons text-base">cancel</span>
@@ -704,7 +740,7 @@ const EcommerceMainPage = () => {
                 return (
                   <button
                     key={cat.key}
-                    onClick={() => setSelectedCategory(cat.key)}
+                    onClick={() => handleCategoryChange(cat.key)}
                     className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
@@ -756,7 +792,7 @@ const EcommerceMainPage = () => {
                 <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
                   <span>Kategori: {selectedCategory}</span>
                   <button
-                    onClick={() => setSelectedCategory('Semua')}
+                    onClick={() => handleCategoryChange('Semua')}
                     className="text-gray-400 hover:text-red-500 flex items-center"
                     title="Hapus filter kategori"
                   >
@@ -768,7 +804,7 @@ const EcommerceMainPage = () => {
                 <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
                   <span>Cari: "{searchQuery}"</span>
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => handleSearchChange('')}
                     className="text-gray-400 hover:text-red-500 flex items-center"
                     title="Hapus pencarian"
                   >
@@ -788,10 +824,7 @@ const EcommerceMainPage = () => {
                 {copiedShare ? 'Tautan Tersalin!' : 'Bagikan Filter Ini'}
               </button>
               <button
-                onClick={() => {
-                  setSelectedCategory('Semua');
-                  setSearchQuery('');
-                }}
+                onClick={handleResetFilters}
                 className="text-xs text-gray-500 hover:text-red-600 font-bold underline px-1"
               >
                 Reset Semua
@@ -817,7 +850,7 @@ const EcommerceMainPage = () => {
               ].map(opt => (
                 <button
                   key={opt.key}
-                  onClick={() => setSortBy(opt.key)}
+                  onClick={() => handleSortChange(opt.key)}
                   title={opt.title}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
                     sortBy === opt.key
@@ -855,7 +888,7 @@ const EcommerceMainPage = () => {
             {selectedCategory === 'Semua' && (
               <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => handleViewModeChange('grid')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
                     viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
@@ -865,7 +898,7 @@ const EcommerceMainPage = () => {
                   Semua
                 </button>
                 <button
-                  onClick={() => setViewMode('blocks')}
+                  onClick={() => handleViewModeChange('blocks')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
                     viewMode === 'blocks' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
@@ -895,10 +928,7 @@ const EcommerceMainPage = () => {
             </p>
             {(searchQuery || selectedCategory !== 'Semua') && (
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('Semua');
-                }}
+                onClick={handleResetFilters}
                 className="mt-4 px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200 transition"
               >
                 Reset Pencarian & Filter
@@ -925,7 +955,7 @@ const EcommerceMainPage = () => {
                   </div>
 
                   <button
-                    onClick={() => setSelectedCategory(block.key)}
+                    onClick={() => handleCategoryChange(block.key)}
                     className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
                   >
                     <span>Filter Kategori Ini</span>
