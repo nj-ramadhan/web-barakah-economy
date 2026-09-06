@@ -122,7 +122,10 @@ Tim Keamanan Barakah Economy
             )
 
         # 2. SEND WHATSAPP NOTIFICATION
-        phone = user.phone or (user.profile.phone if hasattr(user, 'profile') and user.profile else None)
+        phone = getattr(user, 'phone', None)
+        if not phone and hasattr(user, 'profile') and user.profile:
+            phone = getattr(user.profile, 'phone', None)
+
         if phone:
             wa_text = (
                 f"⚠️ *PERINGATAN KEAMANAN BARAKAH ECONOMY*\n\n"
@@ -143,11 +146,11 @@ Tim Keamanan Barakah Economy
         logger.error(f"Failed to send security new device alert: {e}")
 
 
-def handle_device_session(user, request):
+def handle_device_session(user, request, is_new_registration=False):
     """
     Ensures a user has maximum 3 simultaneously active devices.
     Checks if device is blocked.
-    Detects new device logins and sends security alert notifications.
+    Detects new device logins and sends security alert notifications (only for existing accounts).
     """
     device_id = request.data.get('device_id')
     device_name = request.data.get('device_name', 'Unknown Device')
@@ -170,6 +173,7 @@ def handle_device_session(user, request):
         UserDeviceSession.objects.filter(user=user, device_id=kick_device_id).delete()
 
     active_sessions = list(UserDeviceSession.objects.filter(user=user, is_active=True, is_blocked=False).order_by('-last_active'))
+    had_prior_sessions = len(active_sessions) > 0
 
     # Check if current device is already in active sessions
     existing_session = next((s for s in active_sessions if s.device_id == device_id), None)
@@ -209,8 +213,10 @@ def handle_device_session(user, request):
         }
     )
 
-    # Trigger security notification alert
-    send_new_device_security_alert(user, new_session, request)
+    # Trigger security notification alert ONLY for existing accounts with prior devices
+    # (Do NOT alert for brand new registrations or first device login)
+    if had_prior_sessions and not is_new_registration:
+        send_new_device_security_alert(user, new_session, request)
 
     return True, None, None
 
@@ -515,7 +521,8 @@ class GoogleLoginView(APIView):
             except Exception as pe:
                 logger.warning(f"Failed to auto-fill/update profile on Google login: {pe}")
 
-                # Beri label Simpatisan otomatis (sama seperti register biasa)
+            # Beri label Simpatisan otomatis jika akun baru (sama seperti register biasa)
+            if created:
                 try:
                     from .models import UserLabel
                     label_simpatisan, _ = UserLabel.objects.get_or_create(name='Simpatisan')
@@ -523,8 +530,8 @@ class GoogleLoginView(APIView):
                 except Exception as le:
                     logger.warning(f"Failed to add Simpatisan label: {le}")
 
-            # Enforce max 3 devices
-            allowed, reason, active_devices = handle_device_session(user, request)
+            # Enforce max 3 devices (no security alert on new registration)
+            allowed, reason, active_devices = handle_device_session(user, request, is_new_registration=created)
             if not allowed:
                 if reason == 'BLOCKED':
                     return Response({'error': active_devices or 'Perangkat ini telah diblokir demi keamanan.'}, status=status.HTTP_403_FORBIDDEN)

@@ -212,6 +212,11 @@ class Profile(models.Model):
     shop_supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes")
 
 
+    @property
+    def phone(self):
+        """Proxy to access user phone safely."""
+        return getattr(self.user, 'phone', None) if getattr(self, 'user', None) else None
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         # Auto-verify member if essential KTP data or KTP image is provided

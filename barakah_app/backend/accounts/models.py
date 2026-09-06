@@ -214,8 +214,8 @@ class User(AbstractUser):
     def is_profile_complete(self):
         """Checks if user has filled minimal mandatory fields."""
         profile = getattr(self, 'profile', None)
-        phone = self.phone or (profile.phone if profile else None)
-        name_full = profile.name_full if profile else None
+        phone = self.phone or (getattr(profile, 'phone', None) if profile else None)
+        name_full = getattr(profile, 'name_full', None) if profile else None
         return bool(phone and name_full and str(phone).strip() and str(name_full).strip())
 
 

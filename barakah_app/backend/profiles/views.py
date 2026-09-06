@@ -99,7 +99,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         missing = []
         for field in required_fields:
             if field == 'phone':
-                val = user.phone or profile.phone
+                val = user.phone or getattr(profile, 'phone', None)
             else:
                 val = getattr(profile, field, None)
             if not val or (isinstance(val, str) and not val.strip()):
