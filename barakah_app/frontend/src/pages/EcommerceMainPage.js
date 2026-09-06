@@ -55,6 +55,7 @@ const EcommerceMainPage = () => {
   const [products, setProducts] = useState([]);
   const [featuredProducts, setfeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
