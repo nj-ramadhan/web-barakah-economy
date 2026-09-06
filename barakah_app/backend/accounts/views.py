@@ -74,6 +74,7 @@ def send_new_device_security_alert(user, device_session, request=None):
     """
     Sends automated security notification via Email and WhatsApp when a new device logs in.
     Contains details (Device, IP, Province, Country, Time) and direct 'Bukan Saya' block link.
+    If phone is not available, it only sends via Email (phone is completely optional).
     """
     try:
         token = device_session.security_token
@@ -90,11 +91,10 @@ def send_new_device_security_alert(user, device_session, request=None):
         block_link = f"{frontend_base}/security/block-device?token={token}"
         confirm_link = f"{frontend_base}/security/confirm-device?token={token}"
 
-        # 1. SEND EMAIL NOTIFICATION
+        # 1. SEND EMAIL NOTIFICATION (Primary & Always attempted if email exists)
         if user.email:
             email_subject = "⚠️ Peringatan Keamanan: Perangkat Baru Terdeteksi Masuk ke Akun Anda"
-            email_body = f"""
-Halo {user.username},
+            email_body = f"""Halo {user.username},
 
 Sistem mendeteksi adanya aktivitas login dari perangkat baru ke akun Barakah Economy Anda:
 
@@ -114,19 +114,22 @@ Segera amankan akun Anda! Klik tombol atau tautan di bawah untuk langsung MEMBLO
 Salam hangat,
 Tim Keamanan Barakah Economy
 """
-            send_email(
-                subject=email_subject,
-                message=email_body,
-                recipient_list=[user.email],
-                fail_silently=True
-            )
+            try:
+                send_email(
+                    subject=email_subject,
+                    message=email_body,
+                    recipient_list=[user.email],
+                    fail_silently=True
+                )
+            except Exception as mail_err:
+                logger.warning(f"Failed to send device alert email: {mail_err}")
 
-        # 2. SEND WHATSAPP NOTIFICATION
+        # 2. SEND WHATSAPP NOTIFICATION (Optional: only if phone number is provided and registered)
         phone = getattr(user, 'phone', None)
         if not phone and hasattr(user, 'profile') and user.profile:
             phone = getattr(user.profile, 'phone', None)
 
-        if phone:
+        if phone and str(phone).strip():
             wa_text = (
                 f"⚠️ *PERINGATAN KEAMANAN BARAKAH ECONOMY*\n\n"
                 f"Halo *{user.username}*, terdeteksi ada login dari *perangkat baru* ke akun Anda:\n\n"
@@ -140,7 +143,10 @@ Tim Keamanan Barakah Economy
                 f"👉 {confirm_link}\n\n"
                 f"_Pesan otomatis sistem keamanan Barakah Economy_"
             )
-            send_wa_message(phone, wa_text)
+            try:
+                send_wa_message(phone, wa_text)
+            except Exception as wa_err:
+                logger.warning(f"Failed to send device alert WhatsApp: {wa_err}")
 
     except Exception as e:
         logger.error(f"Failed to send security new device alert: {e}")
@@ -610,32 +616,37 @@ class GoogleLoginView(APIView):
                 clock_skew_in_seconds=10
             )
 
-            email = id_info.get('email')
-            name = id_info.get('name', '')
+            email = (id_info.get('email') or '').strip().lower()
+            name = (id_info.get('name') or '').strip()
             google_picture = id_info.get('picture', '')
 
             # Validate email BEFORE attempting get_or_create
             if not email:
-                return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Email not found in Google account'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Generate username yang unik jika sudah ada
-            base_username = str(name).replace(" ", "_").lower() if name else email.split('@')[0]
-            username = base_username
-            counter = 1
-            while User.objects.filter(username=username).exclude(email=email).exists():
-                username = f"{base_username}_{counter}"
-                counter += 1
+            # Check if user already exists (case-insensitive)
+            user = User.objects.filter(email__iexact=email).first()
+            created = False
 
-            logger.info(f"Google login attempt: email={email}, username={username}")
+            if not user:
+                # Generate unique username
+                base_username = str(name).replace(" ", "_").lower() if name else email.split('@')[0]
+                base_username = re.sub(r'[^a-z0-9_]', '', base_username) or 'user'
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
 
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    'username': username,
-                    'email': email,
-                }
-            )
-            logger.info(f"User created: {created}, User: {user}")
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=User.objects.make_random_password()
+                )
+                created = True
+                logger.info(f"New user registered via Google: email={email}, username={username}")
+            else:
+                logger.info(f"Existing user logged in via Google: email={email}, username={user.username}")
 
             # Auto-isi data profil dari Google dan tandai sebagai Google user
             try:
