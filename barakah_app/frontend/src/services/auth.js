@@ -66,13 +66,25 @@ const googleLogin = (token, kickDeviceId = null) => {
   });
 };
 
-const register = (username, email, password, name_full = '', phone = '', captchaToken = null) => {
+const sendRegisterOTP = (username, email, password, name_full = '', phone = '', captchaToken = null) => {
+  return axiosInstance.post('register/send-otp/', {
+    username,
+    email,
+    password,
+    name_full,
+    phone,
+    captcha_token: captchaToken,
+  });
+};
+
+const register = (username, email, password, name_full = '', phone = '', otpCode = '', captchaToken = null) => {
   return axiosInstance.post('register/', {
     username,
     email,
     password,
     name_full,
     phone,
+    otp_code: otpCode,
     captcha_token: captchaToken,
   });
 };
@@ -156,6 +168,7 @@ const updateProfile = async (userId, profileData) => {
 
 const authService = {
   googleLogin,
+  sendRegisterOTP,
   register,
   login,
   logout,
@@ -167,4 +180,5 @@ const authService = {
 };
 
 export default authService;
+
 

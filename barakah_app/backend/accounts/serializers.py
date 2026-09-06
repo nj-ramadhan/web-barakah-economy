@@ -212,42 +212,142 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return instance
 
 
+import re
+from django.core.validators import validate_email as django_validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.cache import cache
+
+def clean_and_validate_phone(phone_str):
+    if not phone_str:
+        raise serializers.ValidationError("Nomor HP / WhatsApp wajib diisi.")
+    
+    # Remove all spaces, dashes, dots, parentheses
+    cleaned = re.sub(r'[\s\-\.\(\)]', '', str(phone_str))
+    
+    # Check general phone regex (+ followed by digits, or digits only)
+    if not re.match(r'^\+?[0-9]{10,15}$', cleaned):
+        raise serializers.ValidationError("Nomor HP / WhatsApp tidak valid (harus 10 - 15 digit angka).")
+    
+    # Normalize Indonesian phone numbers:
+    # If starts with 8 -> convert to 08
+    digits = cleaned.lstrip('+')
+    if digits.startswith('8'):
+        cleaned = '0' + digits
+    elif digits.startswith('628'):
+        cleaned = '0' + digits[2:]
+    elif cleaned.startswith('+628'):
+        cleaned = '0' + cleaned[3:]
+
+    return cleaned
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
-    phone = serializers.CharField(max_length=20, required=False, allow_blank=True, allow_null=True)
-    name_full = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=25, required=True)
+    name_full = serializers.CharField(max_length=100, required=True)
+    otp_code = serializers.CharField(max_length=6, min_length=6, write_only=True, required=True)
     is_verified_member = serializers.BooleanField(default=False)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'phone', 'name_full', 'role', 'is_verified_member')
+        fields = ('username', 'email', 'password', 'phone', 'name_full', 'otp_code', 'role', 'is_verified_member')
+
+    def validate_username(self, value):
+        val = str(value).strip().lower()
+        if len(val) < 3 or len(val) > 30:
+            raise serializers.ValidationError("Username harus antara 3 hingga 30 karakter.")
+        if not re.match(r'^[a-z0-9_]+$', val):
+            raise serializers.ValidationError("Username hanya boleh terdiri dari huruf kecil, angka, dan underscore (_).")
+        if User.objects.filter(username=val).exists():
+            raise serializers.ValidationError("Username ini sudah digunakan.")
+        return val
+
+    def validate_email(self, value):
+        val = str(value).strip().lower()
+        try:
+            django_validate_email(val)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Format alamat email tidak valid.")
+            
+        if User.objects.filter(email__iexact=val).exists():
+            raise serializers.ValidationError("Alamat email ini sudah terdaftar. Silakan login atau reset password.")
+        return val
+
+    def validate_phone(self, value):
+        return clean_and_validate_phone(value)
+
+    def validate_name_full(self, value):
+        val = str(value).strip()
+        if len(val) < 2:
+            raise serializers.ValidationError("Nama lengkap minimal 2 karakter.")
+        return val
+
+    def validate(self, attrs):
+        email = attrs.get('email', '').strip().lower()
+        otp_code = attrs.get('otp_code', '').strip()
+
+        # Verify OTP code from cache
+        cache_key = f"reg_otp_{email}"
+        cached_data = cache.get(cache_key)
+
+        if not cached_data:
+            raise serializers.ValidationError({
+                'otp_code': "Kode verifikasi telah kedaluwarsa atau belum diminta. Silakan kirim ulang kode verifikasi ke email Anda."
+            })
+
+        stored_otp = str(cached_data.get('otp', ''))
+        attempts = cached_data.get('attempts', 0)
+
+        if attempts >= 5:
+            cache.delete(cache_key)
+            raise serializers.ValidationError({
+                'otp_code': "Terlalu banyak percobaan kode yang salah. Silakan minta kode verifikasi baru."
+            })
+
+        if otp_code != stored_otp:
+            cached_data['attempts'] = attempts + 1
+            # Keep remaining TTL
+            cache.set(cache_key, cached_data, timeout=300)
+            remaining = 5 - cached_data['attempts']
+            raise serializers.ValidationError({
+                'otp_code': f"Kode verifikasi salah. Sisa percobaan: {remaining} kali."
+            })
+
+        return attrs
 
     def create(self, validated_data):
+        # Remove otp_code before user creation
+        validated_data.pop('otp_code', None)
         name_full = validated_data.pop('name_full', '')
+        email = validated_data['email'].strip().lower()
+        username = validated_data['username'].strip().lower()
+        phone = validated_data.get('phone', '')
+
         user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
+            username=username,
+            email=email,
             password=validated_data['password'],
-            phone=validated_data.get('phone', ''),
+            phone=phone,
         )
-        # Auto-buat profil dengan nama lengkap
+        
+        # Auto-create profile with full name and phone
+        from profiles.models import Profile
+        profile, _ = Profile.objects.get_or_create(user=user)
         if name_full:
-            from profiles.models import Profile
-            profile, _ = Profile.objects.get_or_create(user=user)
             profile.name_full = name_full
-            profile.save()
+        if phone:
+            profile.phone = phone
+        profile.save()
             
-        # Beri label Simpatisan otomatis
+        # Add default label Simpatisan
         from .models import UserLabel
         label_simpatisan, _ = UserLabel.objects.get_or_create(name='Simpatisan')
         user.labels.add(label_simpatisan)
+
+        # Delete verified OTP from cache (one-time use)
+        cache.delete(f"reg_otp_{email}")
             
         return user
-
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return value
 
 class UserSimpleSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()

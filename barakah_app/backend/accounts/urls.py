@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    RegisterView, LoginView, LogoutView, GoogleLoginView,
+    RegisterView, RegisterSendOTPView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
     ChangePasswordView, SendTempPasswordWAView, AcceptAgreementView, UserAgreementView,
     UserViewSet, RoleViewSet, UserLabelViewSet,
@@ -18,6 +18,7 @@ router.register(r'lingkup-tugas', LingkupTugasViewSet, basename='lingkup-tugas')
 router.register(r'bidang-tugas', BidangTugasViewSet, basename='bidang-tugas')
 
 urlpatterns = [
+    path('register/send-otp/', RegisterSendOTPView.as_view(), name='register_send_otp'),
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('active-devices/', ActiveDevicesView.as_view(), name='active_devices'),

@@ -410,7 +410,137 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class LoginView(CustomTokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+import re
+from django.core.validators import validate_email as django_validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
+from .serializers import clean_and_validate_phone
+
+class RegisterSendOTPView(APIView):
+    """
+    Step 1 of Registration:
+    Validates form data (name, username, email, phone, password),
+    checks rate limits and invisible captcha,
+    generates 6-digit OTP code and emails it to the user.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+        captcha_token = request.data.get('captcha_token')
+        verify_invisible_captcha(captcha_token, client_ip)
+
+        name_full = str(request.data.get('name_full', '')).strip()
+        username = str(request.data.get('username', '')).strip().lower()
+        email = str(request.data.get('email', '')).strip().lower()
+        phone = str(request.data.get('phone', '')).strip()
+        password = str(request.data.get('password', ''))
+
+        # 1. Validate Nama Lengkap
+        if not name_full or len(name_full) < 2:
+            return Response({'error': 'Nama lengkap wajib diisi (minimal 2 karakter).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Validate Username
+        if not username or len(username) < 3 or len(username) > 30:
+            return Response({'error': 'Username harus antara 3 hingga 30 karakter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.match(r'^[a-z0-9_]+$', username):
+            return Response({'error': 'Username hanya boleh terdiri dari huruf kecil, angka, dan underscore (_).'}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'Username ini sudah digunakan. Silakan pilih username lain.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Validate Email
+        if not email:
+            return Response({'error': 'Alamat email wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            django_validate_email(email)
+        except DjangoValidationError:
+            return Response({'error': 'Format alamat email tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(email__iexact=email).exists():
+            return Response({'error': 'Alamat email ini sudah terdaftar. Silakan gunakan fitur Login atau Lupa Password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Validate Phone
+        try:
+            cleaned_phone = clean_and_validate_phone(phone)
+        except Exception as pe:
+            return Response({'error': str(pe.detail[0] if hasattr(pe, 'detail') else pe)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 5. Validate Password
+        if not password or len(password) < 8:
+            return Response({'error': 'Kata sandi minimal 8 karakter.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 6. Rate Limiting per IP and per Email
+        ip_rate_key = f"otp_rate_ip_{client_ip}"
+        ip_requests = cache.get(ip_rate_key, 0)
+        if ip_requests >= 10:
+            return Response({
+                'error': 'Terlalu banyak permintaan pendaftaran dari jaringan Anda. Silakan coba lagi setelah 1 jam.'
+            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        cooldown_key = f"cooldown_otp_{email}"
+        if cache.get(cooldown_key):
+            return Response({
+                'error': 'Kode verifikasi telah dikirim baru-baru ini. Harap tunggu 60 detik sebelum meminta kode baru.'
+            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        # 7. Generate 6-digit numeric OTP
+        otp_code = f"{random.randint(100000, 999999)}"
+        cache_key = f"reg_otp_{email}"
+        cache.set(cache_key, {
+            'otp': otp_code,
+            'attempts': 0,
+            'username': username,
+            'email': email,
+            'name_full': name_full,
+            'phone': cleaned_phone
+        }, timeout=600)  # 10 minutes
+
+        cache.set(cooldown_key, True, timeout=60)  # 60s cooldown
+        cache.set(ip_rate_key, ip_requests + 1, timeout=3600)
+
+        # 8. Send Verification Email
+        subject = f"[Barakah Economy] Kode Verifikasi Pendaftaran: {otp_code}"
+        message = f"""Halo {name_full},
+
+Terima kasih telah mendaftar di Barakah Economy Community.
+Gunakan kode verifikasi berikut untuk mengonfirmasi pendaftaran akun Anda:
+
+==================================================
+KODE VERIFIKASI:  {otp_code}
+==================================================
+
+Kode verifikasi ini berlaku selama 10 menit.
+Demi keamanan akun Anda, jangan pernah memberikan kode ini kepada siapapun.
+
+Jika Anda tidak merasa melakukan pendaftaran di Barakah Economy, silakan abaikan email ini.
+
+Salam hangat,
+Tim Barakah Economy Community
+"""
+        try:
+            send_email(
+                subject=subject,
+                message=message,
+                recipient_list=[email],
+                fail_silently=False
+            )
+        except Exception as e:
+            logger.error(f"Failed to send registration OTP email to {email}: {e}")
+            return Response({
+                'error': 'Gagal mengirim email kode verifikasi. Pastikan alamat email Anda aktif atau coba beberapa saat lagi.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'status': 'success',
+            'message': f'Kode verifikasi 6-digit telah dikirim ke {email}. Silakan cek kotak masuk atau folder spam.',
+            'email': email,
+            'cooldown_seconds': 60
+        }, status=status.HTTP_200_OK)
+
+
 class RegisterView(generics.CreateAPIView):
+    """
+    Step 2 of Registration:
+    Verifies OTP code and creates user account + profile.
+    """
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
