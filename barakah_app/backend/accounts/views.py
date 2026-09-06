@@ -1509,6 +1509,33 @@ class UserViewSet(viewsets.ModelViewSet):
         ok = cancel_blast_task(task_id, user_id=request.user.id, is_superuser=request.user.is_superuser)
         return Response({"success": ok, "message": "Antrian blasting berhasil dibatalkan."})
 
+    @action(detail=False, methods=['post', 'delete'])
+    def bulk_delete(self, request):
+        """Bulk delete multiple users by their IDs (Admin only)."""
+        user_ids = request.data.get('user_ids', [])
+        if isinstance(user_ids, str):
+            import json
+            try:
+                user_ids = json.loads(user_ids)
+            except Exception:
+                user_ids = [int(x.strip()) for x in user_ids.split(',') if x.strip().isdigit()]
+
+        if not user_ids:
+            return Response({'error': 'Tidak ada user yang dipilih untuk dihapus.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Protect current logged in admin user from deleting own account
+        safe_user_ids = [uid for uid in user_ids if int(uid) != request.user.id]
+
+        if not safe_user_ids:
+            return Response({'error': 'Anda tidak dapat menghapus akun Anda sendiri.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        deleted_count, _ = User.objects.filter(id__in=safe_user_ids).delete()
+        return Response({
+            'status': 'success',
+            'message': f'{deleted_count} akun pengguna berhasil dihapus.',
+            'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'])
     def roles_list(self, request):
         """Get all available roles for filter dropdown."""

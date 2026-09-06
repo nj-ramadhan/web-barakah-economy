@@ -81,6 +81,7 @@ const DashboardUserPage = () => {
     const [resetPasswordResult, setResetPasswordResult] = useState(null);
     const [resettingPassword, setResettingPassword] = useState(false);
     const [batching, setBatching] = useState(false);
+    const [deletingBulk, setDeletingBulk] = useState(false);
     // Batch edit state
     const [showBatchModal, setShowBatchModal] = useState(false);
     const [batchField, setBatchField] = useState('');
@@ -366,6 +367,26 @@ const DashboardUserPage = () => {
         } catch (err) { alert('Gagal menghapus user'); }
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedUserIds.length === 0) return;
+        const count = selectedUserIds.length;
+        if (!window.confirm(`⚠️ PERINGATAN: Apakah Anda yakin ingin MENGHAPUS PERMANEN ${count} akun pengguna yang dipilih?\n\nSemua data terkait akun tersebut akan dihapus dan tindakan ini TIDAK dapat dibatalkan!`)) {
+            return;
+        }
+        setDeletingBulk(true);
+        try {
+            const payload = { user_ids: selectedUserIds };
+            const res = await axios.post(`${API}/api/auth/users/bulk_delete/`, payload, getAuth());
+            alert(res.data?.message || `${count} akun berhasil dihapus.`);
+            setSelectedUserIds([]);
+            fetchUsers(currentPage);
+        } catch (err) {
+            alert('Gagal menghapus user: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setDeletingBulk(false);
+        }
+    };
+
     const handleResetPassword = async (user) => {
         if (!window.confirm(`Reset password untuk @${user.username}? Password lama akan tidak berlaku.`)) return;
         setResettingPassword(true);
@@ -558,18 +579,23 @@ const DashboardUserPage = () => {
                             <span className="material-icons text-sm">download</span> Export CSV
                         </button>
                         {selectedUserIds.length > 0 && (
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <button onClick={() => { setBatchField(''); setBatchValue(''); setShowBatchModal(true); }}
-                                    className="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition">
+                                    className="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition active:scale-95">
                                     <span className="material-icons text-sm">edit</span> Edit ({selectedUserIds.length})
                                 </button>
                                 <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
-                                    className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-700 transition">
+                                    className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-700 transition active:scale-95">
                                     <span className="material-icons text-sm">chat</span> Blast WA ({selectedUserIds.length})
                                 </button>
                                 <button onClick={() => { setEmailBlastResult(null); setShowEmailBlastModal(true); }}
-                                    className="bg-amber-50 text-amber-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm border border-amber-200 hover:bg-amber-100 hover:text-amber-800 transition">
+                                    className="bg-amber-50 text-amber-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm border border-amber-200 hover:bg-amber-100 hover:text-amber-800 transition active:scale-95">
                                     <span className="material-icons text-sm text-amber-600">mail</span> Blast Email ({selectedUserIds.length})
+                                </button>
+                                <button onClick={handleBulkDelete} disabled={deletingBulk}
+                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-100 transition active:scale-95 disabled:opacity-50">
+                                    <span className="material-icons text-sm">{deletingBulk ? 'sync' : 'delete_forever'}</span>
+                                    {deletingBulk ? 'Menghapus...' : `Hapus Akun (${selectedUserIds.length})`}
                                 </button>
                             </div>
                         )}
@@ -899,6 +925,41 @@ const DashboardUserPage = () => {
                             className={`w-10 h-10 flex items-center justify-center rounded-xl border transition ${currentPage === totalPages ? 'bg-gray-50 text-gray-300' : 'bg-white text-green-700 border-green-200 hover:bg-green-50 shadow-sm'}`}>
                             <span className="material-icons">chevron_right</span>
                         </button>
+                    </div>
+                )}
+
+                {/* Floating Bulk Actions Bar */}
+                {selectedUserIds.length > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[95] bg-gray-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-4 border border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-[95vw] overflow-x-auto">
+                        <div className="flex items-center gap-2 pr-2 border-r border-gray-700 whitespace-nowrap">
+                            <span className="w-6 h-6 rounded-full bg-green-500 text-gray-900 flex items-center justify-center font-black text-xs">
+                                {selectedUserIds.length}
+                            </span>
+                            <span className="text-xs font-bold text-gray-300">user dipilih</span>
+                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                            <button onClick={() => { setBatchField(''); setBatchValue(''); setShowBatchModal(true); }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95">
+                                <span className="material-icons text-xs">edit</span> Edit
+                            </button>
+                            <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
+                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95">
+                                <span className="material-icons text-xs">chat</span> Blast WA
+                            </button>
+                            <button onClick={() => { setEmailBlastResult(null); setShowEmailBlastModal(true); }}
+                                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95">
+                                <span className="material-icons text-xs">mail</span> Blast Email
+                            </button>
+                            <button onClick={handleBulkDelete} disabled={deletingBulk}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-red-900/40 transition active:scale-95 disabled:opacity-50">
+                                <span className="material-icons text-xs">{deletingBulk ? 'sync' : 'delete_forever'}</span>
+                                {deletingBulk ? 'Menghapus...' : 'Hapus Akun'}
+                            </button>
+                            <button onClick={() => setSelectedUserIds([])}
+                                className="text-gray-400 hover:text-white px-2 py-1.5 text-xs transition flex items-center justify-center" title="Batal Pilih">
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
