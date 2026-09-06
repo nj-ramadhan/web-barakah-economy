@@ -55,7 +55,6 @@ const EcommerceMainPage = () => {
   const [products, setProducts] = useState([]);
   const [featuredProducts, setfeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [sortBy, setSortBy] = useState('populer');
@@ -67,14 +66,104 @@ const EcommerceMainPage = () => {
   const location = useLocation();
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
+  // Read query params from URL on initial load and when location.search changes
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const q = params.get('search') || params.get('seller') || params.get('q');
-    if (q) {
+    const q = params.get('search') ?? params.get('seller') ?? params.get('q');
+    if (q !== null && q !== undefined) {
       setSearchQuery(q);
     }
+
+    const cat = params.get('category') || params.get('kategori') || params.get('cat');
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+
+    const sort = params.get('sort') || params.get('urutkan') || params.get('order');
+    if (sort) {
+      setSortBy(sort);
+    }
+
+    const view = params.get('view');
+    if (view === 'grid' || view === 'blocks') {
+      setViewMode(view);
+    }
   }, [location.search]);
+
+  // Synchronize state changes to URL query parameters
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (selectedCategory && selectedCategory !== 'Semua') {
+        params.set('category', selectedCategory);
+      }
+      if (sortBy && sortBy !== 'populer') {
+        params.set('sort', sortBy);
+      }
+      if (viewMode && viewMode !== 'grid') {
+        params.set('view', viewMode);
+      }
+
+      const newSearch = params.toString() ? `?${params.toString()}` : '';
+      if (location.search !== newSearch) {
+        navigate({
+          pathname: location.pathname,
+          search: newSearch
+        }, { replace: true });
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory, sortBy, viewMode]);
+
+  const handleShareStoreFilter = async () => {
+    const currentUrl = window.location.href;
+    const shareTitle = `Barakah Store - ${selectedCategory !== 'Semua' ? `Kategori ${selectedCategory}` : 'Katalog UMKM'}${searchQuery ? ` (Cari: ${searchQuery})` : ''}`;
+    const shareText = `Yuk cek produk di Barakah Store${selectedCategory !== 'Semua' ? ` untuk kategori ${selectedCategory}` : ''}${searchQuery ? ` dengan kata kunci "${searchQuery}"` : ''}!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: currentUrl,
+        });
+        return;
+      } catch (err) {
+        // Fallback to clipboard if dismissed or unsupported
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 3000);
+    } catch (e) {
+      alert('Tautan halaman: ' + currentUrl);
+    }
+  };
+
+  const isCategorySelected = (catKey, catLabel = '') => {
+    if (!selectedCategory) return catKey === 'Semua';
+    if (selectedCategory === 'Semua') return catKey === 'Semua';
+    const sel = selectedCategory.toLowerCase().trim();
+    return (
+      catKey.toLowerCase() === sel ||
+      catLabel.toLowerCase() === sel ||
+      catKey.toLowerCase().replace(/[-_]/g, ' ') === sel.replace(/[-_]/g, ' ')
+    );
+  };
 
   const CATEGORY_LIMIT = 8; // Number of category chips shown initially
 
@@ -241,8 +330,18 @@ const EcommerceMainPage = () => {
       );
     }
 
-    if (selectedCategory !== 'Semua') {
-      result = result.filter(p => (p.category || 'lainnya') === selectedCategory);
+    if (selectedCategory && selectedCategory !== 'Semua') {
+      const target = selectedCategory.toLowerCase().trim();
+      result = result.filter(p => {
+        const catKey = (p.category || 'lainnya').toLowerCase().trim();
+        const catDisplay = (p.category_display || p.category_name || '').toLowerCase().trim();
+        return (
+          catKey === target ||
+          catDisplay === target ||
+          catKey.replace(/[-_]/g, ' ') === target.replace(/[-_]/g, ' ') ||
+          catDisplay.replace(/[-_&]/g, ' ') === target.replace(/[-_&]/g, ' ')
+        );
+      });
     }
 
     return result;
@@ -600,25 +699,28 @@ const EcommerceMainPage = () => {
         {categoriesList.length > 1 && (
           <div className="mb-6">
             <div className="flex flex-wrap gap-2 transition-all duration-500 mb-3">
-              {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => (
-                <button
-                  key={cat.key}
-                  onClick={() => setSelectedCategory(cat.key)}
-                  className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
-                    selectedCategory === cat.key
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                  } uppercase tracking-wider`}
-                >
-                  <span className="material-icons text-sm">{getCategoryIcon(cat.key)}</span>
-                  <span>{cat.label}</span>
-                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                    selectedCategory === cat.key ? 'bg-emerald-800 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {cat.count}
-                  </span>
-                </button>
-              ))}
+              {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => {
+                const isSelected = isCategorySelected(cat.key, cat.label);
+                return (
+                  <button
+                    key={cat.key}
+                    onClick={() => setSelectedCategory(cat.key)}
+                    className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                    } uppercase tracking-wider`}
+                  >
+                    <span className="material-icons text-sm">{getCategoryIcon(cat.key)}</span>
+                    <span>{cat.label}</span>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                      isSelected ? 'bg-emerald-800 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {cat.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {categoriesList.length > CATEGORY_LIMIT && (
@@ -639,6 +741,62 @@ const EcommerceMainPage = () => {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Active Filter Indicators Bar */}
+        {(selectedCategory !== 'Semua' || searchQuery.trim()) && (
+          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 mb-6 flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1 text-[11px]">
+                <span className="material-icons text-sm text-emerald-700">filter_alt</span>
+                Filter Aktif:
+              </span>
+              {selectedCategory !== 'Semua' && (
+                <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
+                  <span>Kategori: {selectedCategory}</span>
+                  <button
+                    onClick={() => setSelectedCategory('Semua')}
+                    className="text-gray-400 hover:text-red-500 flex items-center"
+                    title="Hapus filter kategori"
+                  >
+                    <span className="material-icons text-sm">close</span>
+                  </button>
+                </span>
+              )}
+              {searchQuery.trim() && (
+                <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
+                  <span>Cari: "{searchQuery}"</span>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-gray-400 hover:text-red-500 flex items-center"
+                    title="Hapus pencarian"
+                  >
+                    <span className="material-icons text-sm">close</span>
+                  </button>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShareStoreFilter}
+                className="text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 bg-white hover:bg-emerald-100/70 border border-emerald-300 px-3 py-1.5 rounded-xl transition shadow-sm"
+                title="Salin atau bagikan tautan dengan filter ini"
+              >
+                <span className="material-icons text-sm">{copiedShare ? 'check_circle' : 'share'}</span>
+                {copiedShare ? 'Tautan Tersalin!' : 'Bagikan Filter Ini'}
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedCategory('Semua');
+                  setSearchQuery('');
+                }}
+                className="text-xs text-gray-500 hover:text-red-600 font-bold underline px-1"
+              >
+                Reset Semua
+              </button>
+            </div>
           </div>
         )}
 
@@ -675,9 +833,23 @@ const EcommerceMainPage = () => {
           </div>
 
           <div className="flex items-center justify-between w-full md:w-auto gap-2.5 text-xs text-gray-500 font-medium">
-            <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-3 py-1 rounded-xl border border-emerald-100">
+            <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-3 py-1 rounded-xl border border-emerald-100 shrink-0">
               {sortedFilteredProducts.length} Produk
             </span>
+
+            {/* Quick Share Link Button */}
+            <button
+              onClick={handleShareStoreFilter}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
+                copiedShare
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                  : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 shadow-sm'
+              }`}
+              title="Bagikan link dengan pencarian / filter aktif saat ini"
+            >
+              <span className="material-icons text-sm">{copiedShare ? 'check_circle' : 'share'}</span>
+              <span>{copiedShare ? 'Tersalin!' : 'Bagikan Filter'}</span>
+            </button>
 
             {/* View Mode Toggle when category is 'Semua' */}
             {selectedCategory === 'Semua' && (
