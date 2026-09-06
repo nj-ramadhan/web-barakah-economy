@@ -61,6 +61,33 @@ def get_logged_in_device_ids():
     return _cached_device_ids or []
 
 
+def get_logged_in_devices_info():
+    """
+    Fetch and return detailed info of all active logged_in devices.
+    """
+    try:
+        url = f"{WA_API_URL.rstrip('/')}/devices"
+        res = requests.get(url, auth=(WA_API_USER, WA_API_PASS), timeout=10, verify=False)
+        if res.status_code == 200:
+            data = res.json()
+            results = data.get('results', [])
+            logged_in = [d for d in results if d.get('state') == 'logged_in' and d.get('id')]
+            logged_in.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+            return [
+                {
+                    'id': d.get('id'),
+                    'name': d.get('display_name') or 'WhatsApp Account',
+                    'jid': d.get('jid', ''),
+                    'phone': d.get('jid', '').split('@')[0] if d.get('jid') else '',
+                    'state': d.get('state')
+                }
+                for d in logged_in
+            ]
+    except Exception as e:
+        logger.error(f"Error fetching detailed WA devices from {WA_API_URL}: {e}")
+    return []
+
+
 def get_default_device_id():
     devices = get_logged_in_device_ids()
     return devices[0] if devices else None

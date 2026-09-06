@@ -1264,7 +1264,8 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception:
             pass
 
-        from .whatsapp_service import blast_messages
+        from .whatsapp_service import blast_messages, get_default_device_id
+        active_device_id = device_id or get_default_device_id()
         result = blast_messages(
             phone_list=phone_list,
             message_template=message_template,
@@ -1275,7 +1276,7 @@ class UserViewSet(viewsets.ModelViewSet):
             min_delay=min_delay,
             max_delay=max_delay,
             created_by_user_id=request.user.id,
-            device_id=device_id
+            device_id=active_device_id
         )
 
         return Response({
@@ -1290,12 +1291,12 @@ class UserViewSet(viewsets.ModelViewSet):
         """List active WhatsApp devices connected via GoWA."""
         if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
             return Response({"devices": []})
-        from .whatsapp_service import get_logged_in_device_ids, WA_API_URL
-        device_ids = get_logged_in_device_ids()
+        from .whatsapp_service import get_logged_in_devices_info, WA_API_URL
+        devices_info = get_logged_in_devices_info()
         return Response({
             "server": WA_API_URL,
-            "devices": device_ids,
-            "total_active": len(device_ids)
+            "devices": devices_info,
+            "total_active": len(devices_info)
         })
 
     @action(detail=False, methods=['post'])

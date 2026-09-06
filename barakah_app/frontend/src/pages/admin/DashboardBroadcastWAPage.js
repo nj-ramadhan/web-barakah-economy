@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import api from '../../services/api';
@@ -92,11 +92,12 @@ const DashboardBroadcastWAPage = () => {
     const fetchDevices = useCallback(async () => {
         try {
             setDeviceStatusLoading(true);
-            const res = await api.get('/users/wa_devices/');
+            const res = await api.get('/auth/users/wa_devices/');
             if (res.data && Array.isArray(res.data.devices)) {
                 setDevices(res.data.devices);
                 if (res.data.devices.length > 0 && !selectedDevice) {
-                    setSelectedDevice(res.data.devices[0]);
+                    const first = res.data.devices[0];
+                    setSelectedDevice(typeof first === 'object' ? first.id : first);
                 }
             }
         } catch (err) {
@@ -109,7 +110,7 @@ const DashboardBroadcastWAPage = () => {
     // Fetch Queue Tasks
     const fetchQueueStatus = useCallback(async () => {
         try {
-            const res = await api.get('/users/blast_queue_status/');
+            const res = await api.get('/auth/users/blast_queue_status/');
             if (res.data && Array.isArray(res.data.tasks)) {
                 setActiveTasks(res.data.tasks.filter(t => t.task_type === 'whatsapp'));
             }
@@ -122,7 +123,7 @@ const DashboardBroadcastWAPage = () => {
     const fetchUsersList = async () => {
         try {
             setLoadingUsers(true);
-            const res = await api.get('/users/?page_size=1000');
+            const res = await api.get('/auth/users/?page_size=1000');
             const list = res.data?.results || (Array.isArray(res.data) ? res.data : []);
             // Only keep users that have phone number
             const usersWithPhone = list.filter(u => u.phone || u.profile?.phone_number);
@@ -353,7 +354,7 @@ const DashboardBroadcastWAPage = () => {
                 device_id: selectedDevice || null
             };
 
-            const res = await api.post('/users/custom_blast_whatsapp/', payload);
+            const res = await api.post('/auth/users/custom_blast_whatsapp/', payload);
 
             setSubmitResult({
                 type: 'success',
@@ -388,7 +389,7 @@ const DashboardBroadcastWAPage = () => {
     const handleCancelTask = async (taskId) => {
         if (!window.confirm('Batalkan pengiriman antrean ini? Pesan yang belum terkirim tidak akan diproses.')) return;
         try {
-            await api.post('/users/cancel_blast_task/', { task_id: taskId });
+            await api.post('/auth/users/cancel_blast_task/', { task_id: taskId });
             fetchQueueStatus();
         } catch (err) {
             console.error('Failed to cancel blast task:', err);
@@ -970,15 +971,24 @@ const DashboardBroadcastWAPage = () => {
                                     <select
                                         value={selectedDevice}
                                         onChange={(e) => setSelectedDevice(e.target.value)}
-                                        className="w-full p-2.5 text-xs rounded-xl border border-gray-300 bg-white font-bold text-gray-800"
+                                        className="w-full p-2.5 text-xs rounded-xl border border-gray-300 bg-white font-bold text-gray-800 focus:ring-emerald-500 focus:border-emerald-500"
                                     >
-                                        <option value="">Otomatis (Perangkat Default Terbaru)</option>
-                                        {devices.map((devId, idx) => (
-                                            <option key={idx} value={devId}>Perangkat ID: {devId}</option>
-                                        ))}
+                                        {devices.map((dev, idx) => {
+                                            const devId = typeof dev === 'object' ? dev.id : dev;
+                                            const devLabel = typeof dev === 'object' 
+                                                ? `📱 ${dev.name} (${dev.phone ? '+' + dev.phone : dev.id.slice(0, 8)})` 
+                                                : `📱 Perangkat: ${dev.slice(0, 8)}`;
+                                            return (
+                                                <option key={idx} value={devId}>{devLabel}</option>
+                                            );
+                                        })}
+                                        {devices.length === 0 && (
+                                            <option value="">Tidak ada perangkat terhubung</option>
+                                        )}
                                     </select>
-                                    <p className="text-[10px] text-gray-500 mt-2">
-                                        Multi-device GoWA engine aktif untuk failover otomatis jika satu perangkat sibuk.
+                                    <p className="text-[10px] text-emerald-800 font-bold mt-2 flex items-center gap-1">
+                                        <span className="material-icons text-xs text-emerald-600">verified</span>
+                                        <span>Seluruh pesan broadcast akan dikirim eksklusif dari 1 nomor WhatsApp yang Anda pilih.</span>
                                     </p>
                                 </div>
                             </div>
@@ -1055,11 +1065,24 @@ const DashboardBroadcastWAPage = () => {
                                     <div className="bg-[#1f2c34] p-3 flex items-center gap-2.5 border-b border-[#2a3942]">
                                         <span className="material-icons text-sm text-gray-400">arrow_back</span>
                                         <div className="w-8 h-8 rounded-full bg-emerald-800 flex items-center justify-center font-bold text-xs text-white">
-                                            BAE
+                                            {(() => {
+                                                const activeDev = devices.find(d => (typeof d === 'object' ? d.id : d) === selectedDevice);
+                                                return activeDev?.name ? activeDev.name.slice(0, 2).toUpperCase() : 'BAE';
+                                            })()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-white truncate">Barakah Economy Info</p>
-                                            <p className="text-[10px] text-emerald-400">Official Channel</p>
+                                            <p className="text-xs font-bold text-white truncate">
+                                                {(() => {
+                                                    const activeDev = devices.find(d => (typeof d === 'object' ? d.id : d) === selectedDevice);
+                                                    return activeDev?.name || 'Barakah Economy Info';
+                                                })()}
+                                            </p>
+                                            <p className="text-[10px] text-emerald-400">
+                                                {(() => {
+                                                    const activeDev = devices.find(d => (typeof d === 'object' ? d.id : d) === selectedDevice);
+                                                    return activeDev?.phone ? '+' + activeDev.phone : 'Nomor Pengirim Terpilih';
+                                                })()}
+                                            </p>
                                         </div>
                                         <span className="material-icons text-base text-gray-400">more_vert</span>
                                     </div>
