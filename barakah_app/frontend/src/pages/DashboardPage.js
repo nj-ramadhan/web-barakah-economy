@@ -794,11 +794,20 @@ const DashboardPage = () => {
                                     desc: 'Kirim pesan massal multi-nomor dengan jeda acak 1-4s anti-ban (Admin)'
                                 },
                                 {
+                                    id: 'whatsapp_settings',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/whatsapp-settings',
+                                    icon: 'phonelink_setup',
+                                    color: 'teal',
+                                    title: 'Pengaturan Gateway WhatsApp',
+                                    desc: 'Pilih nomor WhatsApp pengirim utama untuk notifikasi otomatis seluruh sistem (Admin)'
+                                },
+                                {
                                     id: 'whats_new',
                                     access: isAdmin || hasAccess('announcements') || hasAccess('whats_new'),
                                     to: '/dashboard/admin/whats-new',
                                     icon: 'auto_awesome',
-                                    color: 'teal',
+                                    color: 'indigo',
                                     title: "What's New & Changelog",
                                     desc: 'Kelola rilis fitur baru, update sistem, dan preview pengumuman (Admin)'
                                 },

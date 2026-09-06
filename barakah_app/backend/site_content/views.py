@@ -535,4 +535,85 @@ class WhatsNewFeatureSuggestionViewSet(viewsets.ModelViewSet):
         return Response({'success': True, 'count': qs.count()})
 
 
+class WhatsAppGatewaySettingView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+        from .models import WhatsAppGatewaySetting
+        from .serializers import WhatsAppGatewaySettingSerializer
+        from accounts.whatsapp_service import get_logged_in_devices_info, WA_API_URL
+        gw = WhatsAppGatewaySetting.get_settings()
+        devices = get_logged_in_devices_info()
+        serializer = WhatsAppGatewaySettingSerializer(gw)
+        return Response({
+            "setting": serializer.data,
+            "connected_devices": devices,
+            "total_connected": len(devices),
+            "server_url": WA_API_URL
+        })
+
+    def post(self, request):
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+        from .models import WhatsAppGatewaySetting
+        from .serializers import WhatsAppGatewaySettingSerializer
+        from accounts.whatsapp_service import get_logged_in_devices_info
+        gw = WhatsAppGatewaySetting.get_settings()
+        
+        device_id = request.data.get('default_device_id')
+        device_name = request.data.get('default_device_name')
+        device_phone = request.data.get('default_device_phone')
+        
+        if device_id and (not device_name or not device_phone):
+            devices = get_logged_in_devices_info()
+            match = next((d for d in devices if d.get('id') == device_id), None)
+            if match:
+                device_name = match.get('name')
+                device_phone = match.get('phone')
+
+        gw.default_device_id = device_id
+        gw.default_device_name = device_name
+        gw.default_device_phone = device_phone
+        gw.updated_by = request.user
+        gw.save()
+
+        return Response({
+            "success": True,
+            "message": f"Nomor WhatsApp default sistem berhasil diubah ke: {gw.default_device_name or gw.default_device_phone or gw.default_device_id}",
+            "setting": WhatsAppGatewaySettingSerializer(gw).data
+        })
+
+
+class WhatsAppGatewayTestSendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+        
+        phone = request.data.get('phone')
+        custom_message = request.data.get('message') or "Test WhatsApp Gateway dari Barakah Economy. Sistem notifikasi otomatis berfungsi normal! ✅"
+        device_id = request.data.get('device_id')
+        
+        if not phone:
+            return Response({"error": "Nomor HP tujuan tes wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from accounts.whatsapp_service import send_message
+        res = send_message(phone, custom_message, device_id=device_id)
+        if res.get('success'):
+            return Response({
+                "success": True,
+                "message": f"Pesan tes WhatsApp berhasil dikirim ke {phone}!",
+                "details": res
+            })
+        else:
+            return Response({
+                "success": False,
+                "error": res.get('message', 'Gagal mengirim pesan tes WhatsApp.')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 

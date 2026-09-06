@@ -256,4 +256,27 @@ class WhatsNewFeatureSuggestion(models.Model):
         return f"[{'SUDAH' if self.is_used else 'BELUM'}] {self.title}"
 
 
+class WhatsAppGatewaySetting(models.Model):
+    default_device_id = models.CharField(max_length=255, blank=True, null=True, help_text="ID Perangkat GoWA yang dipilih sebagai default pengirim WhatsApp sistem")
+    default_device_name = models.CharField(max_length=255, blank=True, null=True, help_text="Nama akun WhatsApp pengirim default")
+    default_device_phone = models.CharField(max_length=50, blank=True, null=True, help_text="Nomor HP pengirim default")
+    api_url = models.CharField(max_length=255, default='https://bae.dailykas.com', help_text="URL GoWA Server API")
+    is_active = models.BooleanField(default=True, help_text="Status keaktifan gateway WhatsApp")
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_gateway_updates')
+
+    class Meta:
+        verbose_name = "Pengaturan WhatsApp Gateway"
+        verbose_name_plural = "Pengaturan WhatsApp Gateway"
+
+    def __str__(self):
+        return f"WA Gateway ({self.default_device_name or self.default_device_phone or self.default_device_id or 'Belum Dipilih'})"
+
+    @classmethod
+    def get_settings(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+
+
 

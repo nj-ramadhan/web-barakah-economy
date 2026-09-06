@@ -89,8 +89,25 @@ def get_logged_in_devices_info():
 
 
 def get_default_device_id():
+    """
+    Get the default WhatsApp device ID configured in WhatsAppGatewaySetting.
+    Falls back to settings.WHATSAPP_API_DEVICE_ID, env, or the first logged in device.
+    """
+    try:
+        from site_content.models import WhatsAppGatewaySetting
+        gw = WhatsAppGatewaySetting.get_settings()
+        if gw and gw.default_device_id and gw.is_active:
+            return gw.default_device_id
+    except Exception as e:
+        logger.warning(f"Could not load WhatsAppGatewaySetting from DB: {e}")
+
+    configured = getattr(settings, 'WHATSAPP_API_DEVICE_ID', None) or os.environ.get('WHATSAPP_API_DEVICE_ID')
+    if configured:
+        return configured
+
     devices = get_logged_in_device_ids()
     return devices[0] if devices else None
+
 
 
 def get_wa_headers(device_id=None):

@@ -9,6 +9,8 @@ from .views import (
     PublicMaintenanceSettingView, AdminMaintenanceSettingView,
     WhatsNewViewSet,
     WhatsNewFeatureSuggestionViewSet,
+    WhatsAppGatewaySettingView,
+    WhatsAppGatewayTestSendView,
 )
 
 router = SimpleRouter()
@@ -31,6 +33,9 @@ urlpatterns = [
     path('calendar-notes/', CalendarNoteView.as_view(), name='calendar-notes'),
     path('maintenance/', PublicMaintenanceSettingView.as_view(), name='public-maintenance'),
     path('maintenance/admin/', AdminMaintenanceSettingView.as_view(), name='admin-maintenance'),
+    path('whatsapp-gateway/', WhatsAppGatewaySettingView.as_view(), name='whatsapp-gateway-setting'),
+    path('whatsapp-gateway/test-send/', WhatsAppGatewayTestSendView.as_view(), name='whatsapp-gateway-test-send'),
     path('', include(router.urls)),
 ]
+
 

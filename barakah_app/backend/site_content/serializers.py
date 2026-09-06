@@ -149,4 +149,23 @@ class WhatsNewFeatureSuggestionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class WhatsAppGatewaySettingSerializer(serializers.ModelSerializer):
+    updated_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import WhatsAppGatewaySetting
+        model = WhatsAppGatewaySetting
+        fields = ['id', 'default_device_id', 'default_device_name', 'default_device_phone', 'api_url', 'is_active', 'updated_at', 'updated_by', 'updated_by_name']
+        read_only_fields = ['id', 'updated_at', 'updated_by', 'updated_by_name']
+
+    def get_updated_by_name(self, obj):
+        if obj.updated_by:
+            try:
+                return obj.updated_by.profile.name_full or obj.updated_by.username
+            except Exception:
+                return obj.updated_by.username
+        return None
+
+
+
 
