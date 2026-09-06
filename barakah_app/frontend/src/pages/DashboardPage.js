@@ -785,11 +785,20 @@ const DashboardPage = () => {
                             title: 'Admin Konten & Pengumuman',
                             items: [
                                 {
+                                    id: 'broadcast_wa',
+                                    access: isAdmin || hasAccess('broadcast_wa') || hasAccess('announcements'),
+                                    to: '/dashboard/admin/broadcast-wa',
+                                    icon: 'send_to_mobile',
+                                    color: 'emerald',
+                                    title: 'Broadcast WhatsApp',
+                                    desc: 'Kirim pesan massal multi-nomor dengan jeda acak 1-4s anti-ban (Admin)'
+                                },
+                                {
                                     id: 'whats_new',
                                     access: isAdmin || hasAccess('announcements') || hasAccess('whats_new'),
                                     to: '/dashboard/admin/whats-new',
                                     icon: 'auto_awesome',
-                                    color: 'emerald',
+                                    color: 'teal',
                                     title: "What's New & Changelog",
                                     desc: 'Kelola rilis fitur baru, update sistem, dan preview pengumuman (Admin)'
                                 },

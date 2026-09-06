@@ -1172,6 +1172,133 @@ class UserViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=False, methods=['post'])
+    def custom_blast_whatsapp(self, request):
+        """
+        Send custom WhatsApp broadcast to arbitrary list of phone numbers (comma-separated, list, or array),
+        with auto phone formatting (+62, 62, 08, 8xxx), deduplication, optional name lookup,
+        and random 1-4s anti-ban delay in background queue.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+
+        raw_numbers = request.data.get('numbers', [])
+        message_template = request.data.get('message', '').strip()
+        image_base64 = request.data.get('image_base64')
+        filename = request.data.get('filename', 'broadcast.jpg')
+        device_id = request.data.get('device_id') or None
+        min_delay = float(request.data.get('min_delay', 1.0))
+        max_delay = float(request.data.get('max_delay', 4.0))
+
+        if not raw_numbers or not message_template:
+            return Response(
+                {'error': 'Daftar nomor dan pesan broadcast wajib diisi.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Parse numbers if given as string (comma separated, newline separated, semicolon, space)
+        if isinstance(raw_numbers, str):
+            import re
+            parts = re.split(r'[\r\n,;]+', raw_numbers)
+            raw_numbers = [p.strip() for p in parts if p.strip()]
+
+        phone_list = []
+        placeholder_data_list = []
+        seen_phones = set()
+
+        for item in raw_numbers:
+            phone_str = item.get('phone') if isinstance(item, dict) else str(item)
+            custom_name = item.get('name', '') if isinstance(item, dict) else ''
+
+            raw_digits = ''.join(filter(str.isdigit, str(phone_str)))
+            if not raw_digits or len(raw_digits) < 7:
+                continue
+
+            # Robust normalizer
+            if raw_digits.startswith('620'):
+                core_digits = raw_digits[3:]
+            elif raw_digits.startswith('62'):
+                core_digits = raw_digits[2:]
+            elif raw_digits.startswith('0'):
+                core_digits = raw_digits[1:]
+            elif raw_digits.startswith('8'):
+                core_digits = raw_digits
+            else:
+                core_digits = raw_digits
+
+            if core_digits.startswith('8') and len(core_digits) >= 8:
+                standard_e164 = "+62" + core_digits
+            elif raw_digits.startswith('62'):
+                standard_e164 = "+" + raw_digits
+            else:
+                standard_e164 = "+62" + core_digits
+
+            if standard_e164 not in seen_phones:
+                seen_phones.add(standard_e164)
+                phone_list.append(standard_e164)
+                placeholder_data_list.append({
+                    'name': custom_name,
+                    'phone': standard_e164,
+                    'number': standard_e164
+                })
+
+        if not phone_list:
+            return Response(
+                {'error': 'Tidak ada nomor WhatsApp yang valid untuk dikirimkan.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Optional: Enrich recipient names from registered database profiles if available and name is blank
+        try:
+            users_map = {}
+            for u in User.objects.filter(phone__isnull=False).exclude(phone='').select_related('profile'):
+                u_digits = ''.join(filter(str.isdigit, str(u.phone)))
+                if u_digits:
+                    users_map[u_digits[-9:]] = getattr(getattr(u, 'profile', None), 'name_full', None) or u.username
+
+            for p_data in placeholder_data_list:
+                if not p_data.get('name'):
+                    p_digits = ''.join(filter(str.isdigit, str(p_data.get('phone'))))
+                    matched_name = users_map.get(p_digits[-9:])
+                    if matched_name:
+                        p_data['name'] = matched_name
+        except Exception:
+            pass
+
+        from .whatsapp_service import blast_messages
+        result = blast_messages(
+            phone_list=phone_list,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data_list,
+            file_data_base64=image_base64,
+            filename=filename,
+            delay_seconds=2.5,
+            min_delay=min_delay,
+            max_delay=max_delay,
+            created_by_user_id=request.user.id,
+            device_id=device_id
+        )
+
+        return Response({
+            "success": True,
+            "total_recipients": len(phone_list),
+            "message": result.get('message', f"Broadcast WhatsApp dimasukkan ke antrian ({len(phone_list)} nomor)."),
+            "details": result
+        })
+
+    @action(detail=False, methods=['get'])
+    def wa_devices(self, request):
+        """List active WhatsApp devices connected via GoWA."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"devices": []})
+        from .whatsapp_service import get_logged_in_device_ids, WA_API_URL
+        device_ids = get_logged_in_device_ids()
+        return Response({
+            "server": WA_API_URL,
+            "devices": device_ids,
+            "total_active": len(device_ids)
+        })
+
+    @action(detail=False, methods=['post'])
     def blast_email(self, request):
         """Send Email message blast to selected users via background queue."""
         user_ids = request.data.get('user_ids', [])

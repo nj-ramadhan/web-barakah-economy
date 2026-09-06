@@ -105,6 +105,7 @@ import AdminZISConfigPage from './pages/admin/AdminZISConfigPage';
 import AdminZISVerifyPage from './pages/admin/AdminZISVerifyPage';
 import AdminPaymentSettingsPage from './pages/admin/AdminPaymentSettingsPage';
 import DashboardWhatsNewPage from './pages/admin/DashboardWhatsNewPage';
+import DashboardBroadcastWAPage from './pages/admin/DashboardBroadcastWAPage';
 import WhatsNewPage from './pages/WhatsNewPage';
 import WhatsNewPopup from './components/whatsnew/WhatsNewPopup';
 
@@ -535,6 +536,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/user-agreement" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserAgreementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/maintenance" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminMaintenancePage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/whats-new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardWhatsNewPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/broadcast-wa" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardBroadcastWAPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/whats-new" element={<ResponsiveLayout isDesktop={isDesktop}><WhatsNewPage /></ResponsiveLayout>} />
 
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />

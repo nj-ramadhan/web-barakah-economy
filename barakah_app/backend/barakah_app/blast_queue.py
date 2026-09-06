@@ -197,10 +197,15 @@ def _process_task(task):
                 break
 
             if idx > 0:
-                # Random jitter delay to prevent anti-spam bot detection
-                # WhatsApp: random 3.0 to 6.0 seconds per message (average ~4.5s)
-                # Email: random 1.0 to 2.5 seconds per message
-                actual_delay = random.uniform(3.0, 6.0) if task.task_type == 'whatsapp' else random.uniform(1.0, 2.5)
+                # Random jitter delay to prevent anti-spam bot detection (default 1.0 ~ 4.0s random)
+                if task.task_type == 'whatsapp':
+                    min_d = float(task.extra_data.get('min_delay', 1.0))
+                    max_d = float(task.extra_data.get('max_delay', 4.0))
+                    if min_d > max_d:
+                        min_d, max_d = max_d, min_d
+                    actual_delay = random.uniform(min_d, max_d)
+                else:
+                    actual_delay = random.uniform(1.0, 2.5)
                 time.sleep(actual_delay)
 
             if task_data.get('is_cancelled'):
@@ -275,7 +280,7 @@ def _process_task(task):
     logger.info(f"Completed BlastTask {task_id} ({task.task_type}): {task_data['success_count']} success, {task_data['failed_count']} failed out of {len(task.items)}.")
 
 
-def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=5.0, created_by_user_id=None, device_id=None):
+def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=2.5, min_delay=1.0, max_delay=4.0, created_by_user_id=None, device_id=None):
     """
     Enqueue a WhatsApp message blast task to run asynchronously in background.
     Returns task metadata immediately.
@@ -303,7 +308,9 @@ def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=N
         extra_data={
             'file_data_base64': file_data_base64,
             'filename': filename,
-            'device_id': device_id
+            'device_id': device_id,
+            'min_delay': min_delay,
+            'max_delay': max_delay
         },
         created_by_user_id=created_by_user_id
     )
