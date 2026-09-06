@@ -640,9 +640,10 @@ class GoogleLoginView(APIView):
 
                 user = User.objects.create_user(
                     username=username,
-                    email=email,
-                    password=User.objects.make_random_password()
+                    email=email
                 )
+                user.set_unusable_password()
+                user.save()
                 created = True
                 logger.info(f"New user registered via Google: email={email}, username={username}")
             else:
