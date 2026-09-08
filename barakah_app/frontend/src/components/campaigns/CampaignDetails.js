@@ -50,14 +50,27 @@ const CampaignDetail = () => {
       {/* Campaign Details */}
       <div className="px-4 py-4">
         <div className="bg-white rounded-lg overflow-hidden shadow">
-          <img
-            src={campaign.thumbnail || '/placeholder-image.jpg'}
-            alt={campaign.title}
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.target.src = '/placeholder-image.jpg';
-            }}
-          />
+          <div className="relative w-full h-64 sm:h-80 overflow-hidden bg-slate-950 flex items-center justify-center">
+            <img
+              src={campaign.thumbnail || '/placeholder-image.jpg'}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-125 opacity-60 brightness-75 select-none pointer-events-none"
+              style={{ filter: 'blur(24px) brightness(0.75)', transform: 'scale(1.25)' }}
+              onError={(e) => {
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
+            <div className="absolute inset-0 bg-black/20 select-none pointer-events-none" />
+            <img
+              src={campaign.thumbnail || '/placeholder-image.jpg'}
+              alt={campaign.title}
+              className="relative z-10 w-full h-full object-contain drop-shadow-xl select-none"
+              onError={(e) => {
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
+          </div>
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{campaign.title}</h1>
             <p className="text-gray-700 mb-4">{campaign.description}</p>

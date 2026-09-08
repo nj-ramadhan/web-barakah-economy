@@ -234,11 +234,27 @@ const CrowdfundingCampaignDetail = () => {
       {/* Campaign Details */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
         <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row">
-          <div className="md:w-1/2">
+          {/* Campaign Thumbnail Container with Cinematic Blurred Background */}
+          <div className="relative w-full md:w-1/2 overflow-hidden bg-slate-950 flex items-center justify-center self-stretch min-h-[300px] md:min-h-0">
+            {/* Cinematic Blurred Background for Letterboxing / Pillarboxing */}
+            <img
+              src={campaign.thumbnail || '/placeholder-image.jpg'}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-125 opacity-60 brightness-75 select-none pointer-events-none"
+              style={{ filter: 'blur(24px) brightness(0.75)', transform: 'scale(1.25)' }}
+              onError={(e) => {
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
+            {/* Ambient Overlay */}
+            <div className="absolute inset-0 bg-black/20 select-none pointer-events-none" />
+
+            {/* Sharp Full Foreground Image */}
             <img
               src={campaign.thumbnail || '/placeholder-image.jpg'}
               alt={campaign.title}
-              className="w-full h-64 md:h-full object-cover"
+              className="relative z-10 w-full h-72 sm:h-80 md:h-full object-contain drop-shadow-xl select-none"
               onError={(e) => {
                 e.target.src = '/placeholder-image.jpg';
               }}
