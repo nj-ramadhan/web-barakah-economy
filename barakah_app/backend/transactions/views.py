@@ -73,7 +73,7 @@ class AdminIncomingFundsView(APIView):
             from orders.models import Order
             store_orders = Order.objects.all().select_related(
                 'user', 'seller', 'user__profile', 'seller__profile'
-            ).prefetch_related('items', 'items__product', 'items__product__seller', 'items__product__seller__profile')
+            ).prefetch_related('items', 'items__product', 'items__variation', 'items__product__seller', 'items__product__seller__profile').order_by('-created_at')
 
             for o in store_orders:
                 try:
@@ -87,14 +87,10 @@ class AdminIncomingFundsView(APIView):
                     used_bal = float(getattr(o, 'used_balance', 0) or 0)
                     was_paid_before_cancel = is_batal and (has_proof or has_refund_tx or used_bal > 0)
 
-                    # If cancelled WITHOUT any payment / transfer, skip so data doesn't get cluttered by unpaid expired checkouts
-                    if is_batal and not was_paid_before_cancel:
-                        continue
-
                     if is_paid_status:
                         norm_status = 'verified'
-                    elif is_batal and was_paid_before_cancel:
-                        norm_status = 'refunded'
+                    elif is_batal:
+                        norm_status = 'refunded' if was_paid_before_cancel else 'batal'
                     else:
                         norm_status = 'pending'
 
@@ -104,8 +100,12 @@ class AdminIncomingFundsView(APIView):
                         seller_candidates.append(o.seller)
 
                     for it in o.items.all():
-                        prod_names.append(it.product_name or (it.product.title if it.product else 'Produk'))
-                        if it.product and it.product.seller:
+                        var_str = f" ({it.variation.name})" if getattr(it, 'variation', None) and it.variation else ""
+                        prod_title = it.product.title if getattr(it, 'product', None) and it.product else 'Produk'
+                        qty_str = f"{it.quantity}x " if getattr(it, 'quantity', None) else ""
+                        prod_names.append(f"{qty_str}{prod_title}{var_str}")
+
+                        if getattr(it, 'product', None) and getattr(it.product, 'seller', None):
                             seller_candidates.append(it.product.seller)
 
                     title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
@@ -126,8 +126,11 @@ class AdminIncomingFundsView(APIView):
                     extra_notes = []
                     if resolved_seller:
                         extra_notes.append(f"Penjual: {seller_name} (@{seller_username})")
-                    if is_batal and was_paid_before_cancel:
-                        extra_notes.append(f"⚠️ Uang Sempat Masuk & Telah Direfund ({o.cancel_request_reason or 'Dibatalkan'})")
+                    if is_batal:
+                        if was_paid_before_cancel:
+                            extra_notes.append(f"⚠️ Dibatalkan & Telah Direfund ({o.cancel_request_reason or 'Refund'})")
+                        else:
+                            extra_notes.append(f"Pesanan Dibatalkan ({o.cancel_request_reason or 'Batal'})")
                     elif o.status:
                         extra_notes.append(f"Status Pesanan: {o.status}")
 
@@ -331,7 +334,7 @@ class AdminIncomingFundsView(APIView):
         # 5. CHARITY / DONATIONS
         try:
             from donations.models import Donation
-            donations = Donation.objects.all().select_related('campaign', 'donor')
+            donations = Donation.objects.all().select_related('campaign', 'donor').prefetch_related('waqaf_items', 'waqaf_items__product')
             for d in donations:
                 raw_status = (d.payment_status or '').lower()
                 has_proof = bool(getattr(d, 'proof_file', None) and hasattr(d.proof_file, 'url') and d.proof_file)
@@ -347,6 +350,9 @@ class AdminIncomingFundsView(APIView):
                 amt = float(d.amount or 0)
 
                 extra_notes = []
+                if getattr(d, 'donation_type', '') == 'waqaf':
+                    w_items = [f"{it.quantity}x {it.product.title}" for it in d.waqaf_items.all() if it.product]
+                    extra_notes.append("📦 Waqaf: " + (", ".join(w_items) if w_items else "Produk Store"))
                 if d.is_anonymous:
                     extra_notes.append("Donatur Anonim (Hamba Allah)")
                 if d.message:

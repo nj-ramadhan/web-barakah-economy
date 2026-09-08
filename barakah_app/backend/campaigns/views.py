@@ -129,17 +129,33 @@ class CampaignViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def submit(self, request):
         """User submits a new campaign for admin approval."""
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        collab_products_raw = None
+        if hasattr(data, 'getlist') and data.getlist('collab_products'):
+            collab_products_raw = data.getlist('collab_products')
+        elif 'collab_products' in data:
+            collab_products_raw = data.get('collab_products')
+
+        if isinstance(collab_products_raw, str):
+            import json
+            try:
+                collab_products_raw = json.loads(collab_products_raw)
+            except:
+                collab_products_raw = [x.strip() for x in collab_products_raw.split(',') if x.strip().isdigit()]
+
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             status_val = 'approved' if request.user.is_staff else 'pending'
             is_active = True if request.user.is_staff else False
-            serializer.save(
+            campaign = serializer.save(
                 created_by=request.user,
                 approval_status=status_val,
                 is_active=is_active
             )
+            if collab_products_raw:
+                campaign.collab_products.set(collab_products_raw)
             return Response(
-                {'message': 'Kampanye berhasil diajukan dan menunggu verifikasi admin.', 'data': serializer.data},
+                {'message': 'Kampanye berhasil diajukan dan menunggu verifikasi admin.', 'data': self.get_serializer(campaign).data},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

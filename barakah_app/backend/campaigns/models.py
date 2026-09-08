@@ -60,6 +60,16 @@ class Campaign(models.Model):
     )
     rejection_reason = models.TextField(blank=True)
 
+    # Store Collaboration (Waqaf / Donasi)
+    COLLABORATION_CHOICES = [
+        ('none', 'Tidak Ada Kolaborasi'),
+        ('donasi', 'Kolaborasi Donasi'),
+        ('waqaf', 'Kolaborasi Waqaf Produk'),
+    ]
+    is_collaboration = models.BooleanField(default=False)
+    collaboration_type = models.CharField(max_length=20, choices=COLLABORATION_CHOICES, default='none', blank=True)
+    collab_products = models.ManyToManyField('products.Product', blank=True, related_name='collab_campaigns')
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)

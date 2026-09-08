@@ -240,8 +240,12 @@ const CrowdfundingPaymentConfirmation = () => {
     donorPhone,
     email: donorEmail,
     campaignSlug, // Extract campaign slug
-    message: donorMessage
+    message: donorMessage,
+    donationType,
+    waqafItems
   } = location.state;
+
+  const isWaqaf = donationType === 'waqaf';
 
   if (isSuccess) {
     return (
@@ -255,19 +259,36 @@ const CrowdfundingPaymentConfirmation = () => {
 
             <div>
               <span className="bg-emerald-50 text-emerald-700 text-xs font-black uppercase px-3.5 py-1.5 rounded-full tracking-wider">
-                Pembayaran Berhasil
+                {isWaqaf ? 'Waqaf Berhasil Diterima' : 'Pembayaran Berhasil'}
               </span>
               <h2 className="text-2xl font-black text-gray-800 mt-3">Jazakallah Khairan!</h2>
-              <p className="text-xs text-gray-500 mt-1">Donasi Anda telah berhasil diterima oleh sistem.</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {isWaqaf
+                  ? 'Amanah waqaf barang Anda telah berhasil diterima dan tercatat dalam sistem.'
+                  : 'Donasi Anda telah berhasil diterima oleh sistem.'}
+              </p>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-3 text-xs border border-gray-100">
               <div className="flex justify-between border-b border-gray-200/60 pb-2">
-                <span className="text-gray-500 font-medium">Program Donasi</span>
+                <span className="text-gray-500 font-medium">Program</span>
                 <span className="font-bold text-gray-800 text-right max-w-[200px] truncate">{campaignTitle}</span>
               </div>
+              {isWaqaf && waqafItems && waqafItems.length > 0 && (
+                <div className="border-b border-gray-200/60 pb-2">
+                  <span className="text-gray-500 font-medium block mb-1.5">Barang Diwakafkan:</span>
+                  <div className="space-y-1">
+                    {waqafItems.map((it, idx) => (
+                      <div key={idx} className="flex justify-between bg-white px-2.5 py-1.5 rounded-lg border border-teal-100 text-gray-800 text-[11px]">
+                        <span className="font-medium">{it.quantity}x {it.product_title}</span>
+                        <span className="font-bold text-teal-800">Rp {new Intl.NumberFormat('id-ID').format(it.subtotal || (it.price * it.quantity))}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between border-b border-gray-200/60 pb-2">
-                <span className="text-gray-500 font-medium">Nama Donatur</span>
+                <span className="text-gray-500 font-medium">Nama Donatur / Wakif</span>
                 <span className="font-bold text-gray-800">{donorName}</span>
               </div>
               <div className="flex justify-between border-b border-gray-200/60 pb-2">
@@ -384,6 +405,10 @@ const CrowdfundingPaymentConfirmation = () => {
     donationData.append('donor_phone', donorPhone);
     donationData.append('donor_email', donorEmail || location.state?.email || formData.donor_email || '');
     donationData.append('payment_method', selectedBankInfo.name);
+    donationData.append('donation_type', donationType || 'donation');
+    if (isWaqaf && waqafItems && waqafItems.length > 0) {
+      donationData.append('waqaf_items', typeof waqafItems === 'string' ? waqafItems : JSON.stringify(waqafItems));
+    }
     donationData.append('source_bank', formData.sourceBank);
     donationData.append('source_account', formData.sourceAccount);
     donationData.append('transfer_date', formData.transferDate);
@@ -414,18 +439,24 @@ const CrowdfundingPaymentConfirmation = () => {
       ? ''
       : `, dengan No. Rekening ${formData.sourceAccount}`;
 
-    const message = `*Donasi BAE Community*%0A
+    let waqafDetailsText = '';
+    if (isWaqaf && waqafItems && waqafItems.length > 0) {
+      waqafDetailsText = `%0A*Rincian Barang Waqaf:*%0A` +
+        waqafItems.map(it => `- ${it.quantity}x ${it.product_title || 'Produk'} (Rp ${new Intl.NumberFormat('id-ID').format(it.price || it.price_per_unit || 0)})`).join('%0A') + '%0A';
+    }
+
+    const message = `*${isWaqaf ? 'Amanah Waqaf Produk Store' : 'Donasi'} BAE Community*%0A
 ------------------------------------%0A
 Bismillah..%0A
 Pada hari ini,%0A 
 Tanggal ${formatDate(formData.transferDate)}%0A
-Saya ${formData.accountName || ''} berniat menitipkan donasi pada program ${campaignTitle}%0A
-dengan nominal Rp ${formattedAmount} melalui ${selectedBankInfo.fullName}%0A
+Saya ${formData.accountName || donorName || ''} berniat menitipkan ${isWaqaf ? 'amanah waqaf' : 'donasi'} pada program ${campaignTitle}%0A
+${waqafDetailsText}dengan total nominal Rp ${formattedAmount} melalui ${selectedBankInfo.fullName}%0A
 %0A
 Saya mengirim donasi dari Bank ${formData.sourceBank}${sourceAccountInfo}%0A
 ------------------------------------%0A%0A
 Bukti transfer telah saya upload, mohon konfirmasi.%0A
-Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
+Semoga dapat menjadi amal jariyah ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
 
     try {
       // Send a request to create a new donation
@@ -482,9 +513,35 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
             Terimakasih, <span className="text-green-600">{donorName}</span>
           </h1>
           <p className="text-gray-600">
-            atas Donasi yang akan anda berikan pada program :
+            atas {isWaqaf ? 'Waqaf Produk' : 'Donasi'} yang akan anda berikan pada program :
           </p>
-          <h2 className="text-2xl font-bold mt-2 mb-6">{campaignTitle}</h2>
+          <h2 className="text-2xl font-bold mt-2 mb-4">{campaignTitle}</h2>
+
+          {isWaqaf && waqafItems && waqafItems.length > 0 && (
+            <div className="max-w-md mx-auto bg-teal-50 border border-teal-200 rounded-2xl p-4 text-left shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="material-icons text-teal-600 text-sm">inventory_2</span>
+                  Rincian Barang Yang Diwakafkan
+                </span>
+                <span className="bg-teal-200 text-teal-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+                  {waqafItems.reduce((acc, it) => acc + it.quantity, 0)} Unit
+                </span>
+              </div>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                {waqafItems.map((it, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-white px-3 py-1.5 rounded-lg border border-teal-100 text-xs">
+                    <span className="text-gray-800 font-medium truncate max-w-[220px]">
+                      {it.quantity}x {it.product_title || 'Produk'}
+                    </span>
+                    <span className="font-black text-teal-800 shrink-0">
+                      Rp {new Intl.NumberFormat('id-ID').format(it.subtotal || (it.price * it.quantity))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Payment Card Section */}

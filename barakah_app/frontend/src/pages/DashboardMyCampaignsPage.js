@@ -31,6 +31,15 @@ const DashboardMyCampaignsPage = () => {
         title: '', category: 'infak', description: '', target_amount: '', thumbnail: null
     });
 
+    // Store Collaboration States
+    const [isCollaboration, setIsCollaboration] = useState(false);
+    const [collaborationType, setCollaborationType] = useState('waqaf');
+    const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [storeProducts, setStoreProducts] = useState([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
+    const [showProductDropdown, setShowProductDropdown] = useState(false);
+
     const categoryAdditionalAmounts = {
         infak: { value: 25 }, sedekah: { value: 50 }, zakat: { value: 75 }, donasi: { value: 100 },
         bencana: { value: 125 }, kemanusiaan: { value: 150 }, kesehatan: { value: 175 }, lingkungan: { value: 200 },
@@ -69,6 +78,19 @@ const DashboardMyCampaignsPage = () => {
         fetchCampaigns();
     }, [navigate, fetchCampaigns]);
 
+    useEffect(() => {
+        if (showForm && isCollaboration && storeProducts.length === 0) {
+            setLoadingProducts(true);
+            axios.get(`${API}/api/products/`)
+                .then(res => {
+                    const list = res.data.results || res.data || [];
+                    setStoreProducts(list);
+                })
+                .catch(err => console.error("Error fetching store products:", err))
+                .finally(() => setLoadingProducts(false));
+        }
+    }, [showForm, isCollaboration, storeProducts.length]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -80,6 +102,16 @@ const DashboardMyCampaignsPage = () => {
             fd.append('target_amount', formData.target_amount);
             if (formData.thumbnail) fd.append('thumbnail', formData.thumbnail);
 
+            fd.append('is_collaboration', isCollaboration);
+            if (isCollaboration) {
+                fd.append('collaboration_type', collaborationType);
+                if (collaborationType === 'waqaf') {
+                    selectedProductIds.forEach(pid => {
+                        fd.append('collab_products', pid);
+                    });
+                }
+            }
+
             await axios.post(`${API}/api/campaigns/submit/`, fd, {
                 headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
             });
@@ -87,6 +119,9 @@ const DashboardMyCampaignsPage = () => {
             setShowForm(false);
             setFormData({ title: '', category: 'infak', description: '', target_amount: '', thumbnail: null });
             setPreviewImage(null);
+            setIsCollaboration(false);
+            setCollaborationType('waqaf');
+            setSelectedProductIds([]);
             fetchCampaigns();
         } catch (err) {
             console.error(err);
@@ -176,6 +211,185 @@ const DashboardMyCampaignsPage = () => {
                                     {previewImage && <img src={previewImage} alt="Preview" className="h-24 object-cover rounded-xl mt-2" />}
                                 </div>
                             </div>
+
+                            {/* Kolaborasi dengan Store Section */}
+                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                            <span className="material-icons text-xl">storefront</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-900">Kolaborasi dengan Store</h4>
+                                            <p className="text-xs text-gray-500">Hubungkan program charity ini dengan kolaborasi store (Waqaf Produk / Donasi)</p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={isCollaboration}
+                                            onChange={(e) => setIsCollaboration(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+
+                                {isCollaboration && (
+                                    <div className="pt-3 border-t border-emerald-100/60 space-y-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pilihan Kolaborasi</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCollaborationType('waqaf')}
+                                                    className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition ${
+                                                        collaborationType === 'waqaf' 
+                                                            ? 'bg-green-700 text-white border-green-700 shadow-sm' 
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <span className="material-icons text-sm">inventory_2</span>
+                                                    Waqaf Produk Store
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCollaborationType('donasi')}
+                                                    className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition ${
+                                                        collaborationType === 'donasi' 
+                                                            ? 'bg-green-700 text-white border-green-700 shadow-sm' 
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <span className="material-icons text-sm">handshake</span>
+                                                    Kolaborasi Donasi
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {collaborationType === 'waqaf' && (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                        Pilih Produk Store untuk Kolaborasi Waqaf (Bisa Pilih Banyak)
+                                                    </label>
+                                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                                        {selectedProductIds.length} Produk Dipilih
+                                                    </span>
+                                                </div>
+
+                                                {/* Search & Selector Input */}
+                                                <div className="relative">
+                                                    <div className="relative">
+                                                        <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Cari nama produk store untuk di-sandingkan..."
+                                                            value={productSearch}
+                                                            onChange={(e) => {
+                                                                setProductSearch(e.target.value);
+                                                                setShowProductDropdown(true);
+                                                            }}
+                                                            onFocus={() => setShowProductDropdown(true)}
+                                                            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                                                        />
+                                                    </div>
+
+                                                    {loadingProducts ? (
+                                                        <div className="text-center py-4 text-xs text-gray-500">Memuat produk store...</div>
+                                                    ) : (
+                                                        showProductDropdown && (
+                                                            <div className="absolute z-20 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-2xl shadow-xl p-2 space-y-1">
+                                                                <div className="flex justify-between items-center px-2 py-1 text-[10px] text-gray-400 font-bold border-b">
+                                                                    <span>KLIK PRODUK UNTUK PILIH / HAPUS</span>
+                                                                    <button type="button" onClick={() => setShowProductDropdown(false)} className="text-emerald-700 hover:underline">Selesai</button>
+                                                                </div>
+                                                                {storeProducts
+                                                                    .filter(p => !productSearch || p.title.toLowerCase().includes(productSearch.toLowerCase()))
+                                                                    .map(p => {
+                                                                        const isSelected = selectedProductIds.includes(p.id);
+                                                                        return (
+                                                                            <div
+                                                                                key={p.id}
+                                                                                onClick={() => {
+                                                                                    if (isSelected) {
+                                                                                        setSelectedProductIds(prev => prev.filter(id => id !== p.id));
+                                                                                    } else {
+                                                                                        setSelectedProductIds(prev => [...prev, p.id]);
+                                                                                    }
+                                                                                }}
+                                                                                className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
+                                                                                    isSelected ? 'bg-emerald-50 border border-emerald-300' : 'hover:bg-gray-50 border border-transparent'
+                                                                                }`}
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isSelected}
+                                                                                    readOnly
+                                                                                    className="w-4 h-4 text-green-600 rounded cursor-pointer"
+                                                                                />
+                                                                                {p.thumbnail ? (
+                                                                                    <img src={p.thumbnail} alt="" className="w-10 h-10 object-cover rounded-lg shrink-0" />
+                                                                                ) : (
+                                                                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                                                                                        <span className="material-icons text-sm text-gray-400">image</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <h5 className="text-xs font-bold text-gray-900 truncate">{p.title}</h5>
+                                                                                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                                                                                        <span className="font-bold text-emerald-700">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                        <span>•</span>
+                                                                                        <span>Stok: {p.stock} {p.unit || 'pcs'}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                {storeProducts.length === 0 && (
+                                                                    <div className="text-center py-4 text-xs text-gray-400">Belum ada produk aktif di toko</div>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+
+                                                {/* Selected Products Preview Cards */}
+                                                {selectedProductIds.length > 0 && (
+                                                    <div className="space-y-1.5 pt-1">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Produk Terpilih ({selectedProductIds.length}):</span>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {storeProducts.filter(p => selectedProductIds.includes(p.id)).map(p => (
+                                                                <div key={p.id} className="flex items-center justify-between p-2.5 bg-white border border-emerald-200 rounded-xl shadow-xs">
+                                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                                        {p.thumbnail && (
+                                                                            <img src={p.thumbnail} alt="" className="w-9 h-9 object-cover rounded-lg shrink-0" />
+                                                                        )}
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-xs font-bold text-gray-900 truncate">{p.title}</p>
+                                                                            <p className="text-[10px] text-emerald-700 font-black">
+                                                                                Nominal Fix: Rp {Number(p.price).toLocaleString('id-ID')} ({p.stock} {p.unit || 'pcs'} tersedia)
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setSelectedProductIds(prev => prev.filter(id => id !== p.id))}
+                                                                        className="text-red-400 hover:text-red-600 p-1"
+                                                                    >
+                                                                        <span className="material-icons text-sm">close</span>
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex justify-end">
                                 <button type="submit" disabled={submitting} className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-800 transition disabled:opacity-50">
                                     {submitting ? 'Mengirim...' : 'Ajukan Charity'}
@@ -204,7 +418,15 @@ const DashboardMyCampaignsPage = () => {
                                     )}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between gap-2">
-                                            <h3 className="font-bold text-gray-900 truncate">{c.title}</h3>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 truncate">{c.title}</h3>
+                                                {c.is_collaboration && c.collaboration_type === 'waqaf' && (
+                                                    <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                                                        <span className="material-icons text-[12px]">inventory_2</span>
+                                                        Kolaborasi Waqaf ({c.collab_products_details?.length || 0} Produk)
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className={`shrink-0 px-3 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1 ${badge.color}`}>
                                                 <span className="material-icons text-[12px]">{badge.icon}</span>
                                                 {badge.label}

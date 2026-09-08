@@ -3,6 +3,8 @@ from rest_framework import serializers
 from .models import Campaign, Update, CampaignRealization
 from donations.models import Donation
 
+from products.models import Product
+
 class DonationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donation
@@ -25,6 +27,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.username', read_only=True, default=None)
+    collab_products = serializers.PrimaryKeyRelatedField(many=True, queryset=Product.objects.all(), required=False)
+    collab_products_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Campaign
@@ -34,7 +38,8 @@ class CampaignSerializer(serializers.ModelSerializer):
             'created_at', 'deadline', 'donations', 'updates',
             'has_unlimited_deadline', 'total_realization', 'view_count',
             'created_by', 'created_by_username', 'approval_status', 'rejection_reason',
-            'likes_count', 'is_liked'
+            'likes_count', 'is_liked',
+            'is_collaboration', 'collaboration_type', 'collab_products', 'collab_products_details'
         ]
         read_only_fields = ['created_by', 'approval_status', 'rejection_reason']
 
@@ -49,3 +54,24 @@ class CampaignSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(id=request.user.id).exists()
         return False
+
+    def get_collab_products_details(self, obj):
+        products = obj.collab_products.filter(is_active=True)
+        request = self.context.get('request')
+        result = []
+        for p in products:
+            thumb_url = ''
+            if p.thumbnail:
+                thumb_url = request.build_absolute_uri(p.thumbnail.url) if request else p.thumbnail.url
+            seller_name = getattr(getattr(p.seller, 'profile', None), 'name_full', None) or (p.seller.username if p.seller else 'BAE Store')
+            result.append({
+                'id': p.id,
+                'title': p.title,
+                'slug': p.slug,
+                'price': float(p.price),
+                'stock': p.stock,
+                'unit': p.unit,
+                'thumbnail': thumb_url,
+                'seller_name': seller_name,
+            })
+        return result

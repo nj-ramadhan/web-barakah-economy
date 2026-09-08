@@ -60,7 +60,8 @@ const formatDeadline = (deadline) => {
 };
 
 
-const getButtonLabel = (title = '') => {
+const getButtonLabel = (title = '', isWaqaf = false) => {
+  if (isWaqaf) return 'WAKAF / DONASI SEKARANG';
   const lowerTitle = title.toLowerCase();
   if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
   if (lowerTitle.includes('sedekah')) return 'SEDEKAH SEKARANG';
@@ -296,6 +297,44 @@ const CrowdfundingCampaignDetail = () => {
                 </div>
               </div>
 
+              {/* Waqaf Collaboration Showcase */}
+              {campaign.is_collaboration && campaign.collaboration_type === 'waqaf' && campaign.collab_products_details?.length > 0 && (
+                <div className="mb-6 p-4 bg-teal-50/70 border border-teal-200/80 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-icons text-teal-700 text-lg">inventory_2</span>
+                      <span className="text-xs font-black text-teal-900 uppercase tracking-wider">
+                        Program Kolaborasi Waqaf Produk Store
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full">
+                      {campaign.collab_products_details.length} Produk Tersedia
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Anda dapat berdonasi tunai atau memilih untuk <b>mewakafkan langsung produk store</b> di bawah ini:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {campaign.collab_products_details.map(cp => (
+                      <div key={cp.id} className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-teal-100 shadow-2xs">
+                        {cp.thumbnail ? (
+                          <img src={cp.thumbnail} alt="" className="w-11 h-11 object-cover rounded-lg shrink-0" />
+                        ) : (
+                          <div className="w-11 h-11 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                            <span className="material-icons text-gray-400">image</span>
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-gray-900 truncate">{cp.title}</p>
+                          <p className="text-[11px] font-black text-teal-700">Rp {Number(cp.price).toLocaleString('id-ID')} / {cp.unit || 'unit'}</p>
+                          <span className="text-[10px] text-gray-400">Stok: {cp.stock} {cp.unit || 'pcs'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Expired Message */}
               {isExpired && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-2">
@@ -312,14 +351,14 @@ const CrowdfundingCampaignDetail = () => {
                     className="w-full bg-gray-300 text-white py-3 rounded-xl font-bold cursor-not-allowed"
                     disabled
                   >
-                    {getButtonLabel(campaign.title)}
+                    {getButtonLabel(campaign.title, campaign.is_collaboration && campaign.collaboration_type === 'waqaf')}
                   </button>
                 ) : (
                   <Link
                     to={`/bayar-donasi/${campaign.slug}`}
                     className="block text-center bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-md"
                   >
-                    {getButtonLabel(campaign.title)}
+                    {getButtonLabel(campaign.title, campaign.is_collaboration && campaign.collaboration_type === 'waqaf')}
                   </Link>
                 )}
               </div>
@@ -398,35 +437,64 @@ const CrowdfundingCampaignDetail = () => {
           )}
 
           {activeTab === 'donations' && (
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
               <ul>
                 {donations.length > 0 ? (
-                  donations.map((donation, index) => (
-                    <li key={index} className="border-b py-2 px-4">
-                      <div className="flex justify-between items-center">
-                        <p className="text-green-700 font-semibold">
-                          <strong>{donation.donor_name}</strong>
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(donation.transfer_date).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })} - {getTimeElapsed(donation.transfer_date)}
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-500 font-bold">
-                        {formatIDR(donation.amount)}
-                      </p>
-                      {donation.message && (
-                        <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100/60">
-                          💬 "{donation.message}"
-                        </p>
-                      )}
-                    </li>
-                  ))
+                  donations.map((donation, index) => {
+                    const isWaqaf = donation.donation_type === 'waqaf' || (donation.waqaf_items && donation.waqaf_items.length > 0);
+                    return (
+                      <li key={index} className="border-b border-gray-100 py-3.5 px-3 first:pt-1 last:border-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-900 font-bold text-sm">
+                                {donation.donor_name}
+                              </p>
+                              {isWaqaf && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200 flex items-center gap-1">
+                                  <span className="material-icons text-[11px]">inventory_2</span>
+                                  Waqaf Produk
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-black text-emerald-700 mt-0.5">
+                              {formatIDR(donation.amount)}
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            {new Date(donation.transfer_date || donation.created_at).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })} • {getTimeElapsed(donation.transfer_date || donation.created_at)}
+                          </p>
+                        </div>
+
+                        {/* Rincian Produk yang diwakafkan */}
+                        {isWaqaf && donation.waqaf_items && donation.waqaf_items.length > 0 && (
+                          <div className="mt-2.5 p-2.5 bg-teal-50/50 rounded-xl border border-teal-100 flex flex-wrap items-center gap-2">
+                            <span className="text-[11px] font-bold text-teal-900 flex items-center gap-1">
+                              <span className="material-icons text-[13px] text-teal-700">card_giftcard</span>
+                              Diwakafkan:
+                            </span>
+                            {donation.waqaf_items.map((it, idx) => (
+                              <span key={idx} className="text-[11px] font-bold text-teal-800 bg-white px-2.5 py-1 rounded-lg border border-teal-200 shadow-2xs">
+                                {it.quantity}x {it.product_title}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {donation.message && (
+                          <p className="text-xs text-gray-600 italic mt-2 bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
+                            💬 "{donation.message}"
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })
                 ) : (
-                  <li className="py-2 px-4 text-gray-500">Belum ada donasi yang terverifikasi.</li>
+                  <li className="py-8 text-center text-gray-400 text-sm">Belum ada donasi atau waqaf yang terverifikasi.</li>
                 )}
               </ul>
             </div>

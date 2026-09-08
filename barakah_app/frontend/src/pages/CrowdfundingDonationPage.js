@@ -1,5 +1,5 @@
 // pages/CrowdfundingDonationPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
@@ -41,6 +41,10 @@ const CrowdfundingDonationPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentConfig, setPaymentConfig] = useState(null);
   const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
+
+  // Waqaf & Collaboration States
+  const [donationMode, setDonationMode] = useState('donation'); // 'donation' or 'waqaf'
+  const [waqafCart, setWaqafCart] = useState({}); // { [productId]: qty }
 
   useEffect(() => {
     getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(e => console.error(e));
@@ -138,6 +142,13 @@ const CrowdfundingDonationPage = () => {
         setLoading(true);
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/${slug}/`);
         setCampaign(response.data);
+        if (response.data.is_collaboration && response.data.collaboration_type === 'waqaf' && response.data.collab_products_details?.length > 0) {
+          setDonationMode('waqaf');
+          const firstP = response.data.collab_products_details[0];
+          if (firstP && firstP.stock > 0) {
+            setWaqafCart({ [firstP.id]: 1 });
+          }
+        }
       } catch (err) {
         console.error('Error fetching campaign:', err);
         // Use placeholder data if API fails
@@ -152,6 +163,43 @@ const CrowdfundingDonationPage = () => {
 
     fetchCampaign();
   }, [slug]);
+
+  const hasWaqafCollab = Boolean(
+    campaign?.is_collaboration && 
+    campaign?.collaboration_type === 'waqaf' && 
+    campaign?.collab_products_details?.length > 0
+  );
+
+  const updateWaqafQty = (productId, delta, maxStock) => {
+    setWaqafCart(prev => {
+      const current = prev[productId] || 0;
+      const updated = Math.max(0, Math.min(maxStock, current + delta));
+      if (updated === 0) {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      }
+      return { ...prev, [productId]: updated };
+    });
+  };
+
+  const selectedWaqafItems = useMemo(() => {
+    if (!campaign?.collab_products_details) return [];
+    return campaign.collab_products_details
+      .filter(p => (waqafCart[p.id] || 0) > 0)
+      .map(p => ({
+        product_id: p.id,
+        product_title: p.title,
+        product_unit: p.unit,
+        price: Number(p.price),
+        quantity: waqafCart[p.id],
+        subtotal: Number(p.price) * waqafCart[p.id]
+      }));
+  }, [campaign, waqafCart]);
+
+  const totalWaqafAmount = useMemo(() => {
+    return selectedWaqafItems.reduce((sum, it) => sum + it.subtotal, 0);
+  }, [selectedWaqafItems]);
 
   const donationAmounts = [
     { label: 'Rp 25 rb', value: 25000 },
@@ -295,16 +343,27 @@ const CrowdfundingDonationPage = () => {
     e.preventDefault();
 
     const csrfToken = getCsrfToken();
+    const isWaqaf = donationMode === 'waqaf';
 
     // Validate form
-    if (!selectedAmount || (selectedAmount === 'custom' && !customAmount)) {
-      alert('Silakan pilih nominal donasi');
-      return;
-    }
-
-    if (!formData.hideIdentity && !formData.fullName.trim()) {
-      alert('Silakan masukkan nama lengkap Anda (wajib diisi)');
-      return;
+    if (isWaqaf) {
+      if (selectedWaqafItems.length === 0 || totalWaqafAmount <= 0) {
+        alert('Silakan pilih minimal 1 produk store yang ingin diwakafkan beserta jumlahnya.');
+        return;
+      }
+      if (!formData.fullName.trim() || ['hamba allah', 'anonim', 'anonymous'].includes(formData.fullName.trim().toLowerCase())) {
+        alert('Untuk program waqaf, biodata asli (nama lengkap) wajib diisi dan tidak dapat disamarkan.');
+        return;
+      }
+    } else {
+      if (!selectedAmount || (selectedAmount === 'custom' && !customAmount)) {
+        alert('Silakan pilih nominal donasi');
+        return;
+      }
+      if (!formData.hideIdentity && !formData.fullName.trim()) {
+        alert('Silakan masukkan nama lengkap Anda (wajib diisi)');
+        return;
+      }
     }
 
     if (!formData.phone.trim()) {
@@ -332,13 +391,13 @@ const CrowdfundingDonationPage = () => {
     // Generate additional amount based on category if manual transfer mode (for finance tracking)
     const category = campaign?.category || 'default';
     const { value } = categoryAdditionalAmounts[category] || { value: 0 };
-    const amount = selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0);
+    const amount = isWaqaf ? totalWaqafAmount : (selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0));
     const isDynaQRISActive = (paymentConfig?.active_mode === 'dynaqris') || (effectiveBank === 'qris');
     const appliedFee = isDynaQRISActive ? uniqueAdminFee : value;
     const finalAmount = amount + appliedFee;
 
-    // Set the display name based on hideIdentity checkbox
-    const donorName = formData.hideIdentity ? 'Hamba Allah' : formData.fullName;
+    // Set the display name based on waqaf or hideIdentity checkbox
+    const donorName = isWaqaf ? formData.fullName.trim() : (formData.hideIdentity ? 'Hamba Allah' : formData.fullName);
     const donorPhone = formData.phone;
 
     // Only create a pending donation record if QRIS is active (needed for QRIS auto-tracking)
@@ -353,6 +412,10 @@ const CrowdfundingDonationPage = () => {
         formDataObj.append('donor_phone', donorPhone);
         formDataObj.append('donor_email', formData.email || '');
         formDataObj.append('payment_method', effectiveBank);
+        formDataObj.append('donation_type', donationMode);
+        if (isWaqaf) {
+          formDataObj.append('waqaf_items', JSON.stringify(selectedWaqafItems));
+        }
         if (formData.message) formDataObj.append('message', formData.message);
 
         const userStr = localStorage.getItem('user');
@@ -380,7 +443,9 @@ const CrowdfundingDonationPage = () => {
       amount: finalAmount,
       donorName: donorName,
       donorPhone: donorPhone,
-      campaignSlug: slug
+      campaignSlug: slug,
+      donationType: donationMode,
+      waqafItems: isWaqaf ? selectedWaqafItems : []
     };
 
     // If Midtrans is selected, handle payment via Midtrans
@@ -415,10 +480,12 @@ const CrowdfundingDonationPage = () => {
           campaignTitle: campaign?.title || 'Program Donasi',
           donorName: donorName,
           fullName: formData.fullName,
-          hideIdentity: formData.hideIdentity,
+          hideIdentity: isWaqaf ? false : formData.hideIdentity,
           donorPhone: donorPhone,
           email: formData.email,
           message: formData.message,
+          donationType: donationMode,
+          waqafItems: isWaqaf ? selectedWaqafItems : []
         },
       });
     }
@@ -427,7 +494,7 @@ const CrowdfundingDonationPage = () => {
   return (
     <div className="body">
       <Header />
-      {/* Header with program image - now dynamic */}
+      {/* Header with program image */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 relative">
         {loading ? (
           <div className="w-full h-58 bg-green-500 animate-pulse"></div>
@@ -451,33 +518,150 @@ const CrowdfundingDonationPage = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-md">
-        <h2 className="text-xl font-semibold mb-6 text-center">Donasi Terbaik Anda</h2>
-
-        {/* Donation Amount Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {donationAmounts.map((amount) => (
-            <button
-              key={amount.value}
-              className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${selectedAmount === amount.value
-                ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-green-50'
-                }`}
-              onClick={() => setSelectedAmount(amount.value)}
-            >
-              {amount.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom Amount Input */}
-        {selectedAmount === 'custom' && (
+        {/* Toggle Mode Switcher if Campaign has Waqaf collaboration */}
+        {hasWaqafCollab ? (
           <div className="mb-6">
-            <CurrencyInput
-              value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
-              placeholder="Masukkan Nominal"
-            />
+            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-2xl mb-3">
+              <button
+                type="button"
+                onClick={() => setDonationMode('waqaf')}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                  donationMode === 'waqaf'
+                    ? 'bg-teal-700 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span className="material-icons text-sm">inventory_2</span>
+                Waqaf Produk Store
+              </button>
+              <button
+                type="button"
+                onClick={() => setDonationMode('donation')}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                  donationMode === 'donation'
+                    ? 'bg-green-700 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span className="material-icons text-sm">volunteer_activism</span>
+                Donasi Tunai
+              </button>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 text-center">
+              {donationMode === 'waqaf' ? 'Pilih Produk yang Ingin Diwakafkan' : 'Donasi Terbaik Anda'}
+            </h2>
           </div>
+        ) : (
+          <h2 className="text-xl font-semibold mb-6 text-center">Donasi Terbaik Anda</h2>
+        )}
+
+        {/* WAQAF PRODUCTS PICKER */}
+        {donationMode === 'waqaf' && hasWaqafCollab ? (
+          <div className="mb-6 space-y-3">
+            <p className="text-xs text-gray-500">
+              Pilih produk dan tentukan kuantitas yang ingin Anda wakafkan. Nominal donasi dihitung otomatis:
+            </p>
+
+            <div className="space-y-2.5">
+              {campaign.collab_products_details.map((p) => {
+                const currentQty = waqafCart[p.id] || 0;
+                const isOutOfStock = p.stock <= 0;
+                return (
+                  <div
+                    key={p.id}
+                    className={`p-3 rounded-2xl border transition-all ${
+                      currentQty > 0
+                        ? 'bg-teal-50/70 border-teal-300 shadow-xs'
+                        : 'bg-white border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {p.thumbnail ? (
+                        <img src={p.thumbnail} alt="" className="w-14 h-14 object-cover rounded-xl shrink-0" />
+                      ) : (
+                        <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
+                          <span className="material-icons text-gray-400">image</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-gray-900 truncate">{p.title}</h4>
+                        <p className="text-xs font-black text-teal-700 mt-0.5">
+                          Rp {Number(p.price).toLocaleString('id-ID')} <span className="text-[10px] font-normal text-gray-500">/ {p.unit || 'unit'}</span>
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {isOutOfStock ? (
+                            <span className="text-red-500 font-bold">Stok Habis</span>
+                          ) : (
+                            `Stok: ${p.stock} ${p.unit || 'pcs'}`
+                          )}
+                        </p>
+                      </div>
+
+                      {/* Stepper */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateWaqafQty(p.id, -1, p.stock)}
+                          disabled={currentQty <= 0}
+                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center disabled:opacity-30 transition font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="w-6 text-center text-xs font-black text-gray-900">
+                          {currentQty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateWaqafQty(p.id, 1, p.stock)}
+                          disabled={isOutOfStock || currentQty >= p.stock}
+                          className="w-7 h-7 rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center disabled:opacity-30 transition font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {currentQty > 0 && (
+                      <div className="mt-2 pt-2 border-t border-teal-200/60 flex justify-between items-center text-[11px]">
+                        <span className="text-gray-500">Subtotal ({currentQty} {p.unit || 'unit'}):</span>
+                        <span className="font-black text-teal-800">
+                          Rp {(Number(p.price) * currentQty).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* REGULAR DONATION AMOUNT GRID */
+          <>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {donationAmounts.map((amount) => (
+                <button
+                  key={amount.value}
+                  className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${selectedAmount === amount.value
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-green-50'
+                    }`}
+                  onClick={() => setSelectedAmount(amount.value)}
+                >
+                  {amount.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedAmount === 'custom' && (
+              <div className="mb-6">
+                <CurrencyInput
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  placeholder="Masukkan Nominal"
+                />
+              </div>
+            )}
+          </>
         )}
 
         {/* Payment Method */}
@@ -526,25 +710,34 @@ const CrowdfundingDonationPage = () => {
         {/* Personal Data Form */}
         <h3 className="font-semibold mb-3">Data Anda</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center mb-2">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name="hideIdentity"
-                checked={formData.hideIdentity}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  setFormData((prev) => ({
-                    ...prev,
-                    hideIdentity: isChecked,
-                    fullName: isChecked ? 'Hamba Allah' : '',
-                  }));
-                }}
-                className="mr-2 accent-green-600"
-              />
-              <span className="text-sm">Sembunyikan Nama Anda (Hamba Allah)</span>
-            </label>
-          </div>
+          {donationMode === 'waqaf' ? (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 mb-2">
+              <span className="material-icons text-amber-600 text-base shrink-0 mt-0.5">verified_user</span>
+              <p className="text-xs text-amber-800 leading-tight">
+                <b>Ketentuan Akad Waqaf:</b> Biodata donatur <b>tidak dapat disamarkan</b>. Nama lengkap asli, nomor WhatsApp, dan email wajib diisi.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center mb-2">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="hideIdentity"
+                  checked={formData.hideIdentity}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setFormData((prev) => ({
+                      ...prev,
+                      hideIdentity: isChecked,
+                      fullName: isChecked ? 'Hamba Allah' : '',
+                    }));
+                  }}
+                  className="mr-2 accent-green-600"
+                />
+                <span className="text-sm">Sembunyikan Nama Anda (Hamba Allah)</span>
+              </label>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -611,9 +804,10 @@ const CrowdfundingDonationPage = () => {
             />
           </div>
 
-          {/* Rincian Donasi & Akad Ijarah */}
+          {/* Rincian Donasi / Waqaf & Akad Ijarah */}
           {(() => {
-            const numAmount = selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0);
+            const isWaqaf = donationMode === 'waqaf';
+            const numAmount = isWaqaf ? totalWaqafAmount : (selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0));
             const isDynaQRIS = (paymentConfig?.active_mode === 'dynaqris') || (selectedBank === 'qris');
             const fee = isDynaQRIS ? uniqueAdminFee : 0;
             const grandTotal = numAmount + fee;
@@ -621,11 +815,34 @@ const CrowdfundingDonationPage = () => {
             if (numAmount <= 0) return null;
 
             return (
-              <div className="bg-emerald-50/80 p-4 rounded-xl border border-emerald-100 space-y-2.5">
-                <div className="flex justify-between items-center text-xs text-gray-700">
-                  <span>Nominal Donasi</span>
-                  <span className="font-bold">Rp {new Intl.NumberFormat('id-ID').format(numAmount)}</span>
-                </div>
+              <div className={`${isWaqaf ? 'bg-teal-50/90 border-teal-200' : 'bg-emerald-50/80 border-emerald-100'} p-4 rounded-xl border space-y-2.5`}>
+                {isWaqaf ? (
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-bold text-teal-900 mb-2">
+                      <span>Rincian Produk Waqaf</span>
+                      <span className="bg-teal-100 text-teal-800 px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-wider">
+                        {selectedWaqafItems.reduce((acc, it) => acc + it.quantity, 0)} Item
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                      {selectedWaqafItems.map((it) => (
+                        <div key={it.product_id} className="flex justify-between items-center text-xs text-gray-700 bg-white/80 p-2 rounded-lg border border-teal-100">
+                          <span className="truncate max-w-[200px]">{it.quantity}x {it.product_title}</span>
+                          <span className="font-semibold text-teal-800">Rp {new Intl.NumberFormat('id-ID').format(it.subtotal)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-gray-700 pt-2 border-t border-teal-200/60 mt-2">
+                      <span>Total Nilai Waqaf</span>
+                      <span className="font-bold">Rp {new Intl.NumberFormat('id-ID').format(numAmount)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center text-xs text-gray-700">
+                    <span>Nominal Donasi</span>
+                    <span className="font-bold">Rp {new Intl.NumberFormat('id-ID').format(numAmount)}</span>
+                  </div>
+                )}
 
                 {isDynaQRIS && (
                   <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-white/90 p-2.5 rounded-lg border border-emerald-100">
@@ -637,9 +854,11 @@ const CrowdfundingDonationPage = () => {
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-emerald-200/70 flex justify-between items-center">
-                  <span className="text-xs font-bold uppercase text-emerald-900">Total Donasi</span>
-                  <span className="text-lg font-black text-emerald-700">
+                <div className={`pt-2 border-t ${isWaqaf ? 'border-teal-200/70' : 'border-emerald-200/70'} flex justify-between items-center`}>
+                  <span className={`text-xs font-bold uppercase ${isWaqaf ? 'text-teal-900' : 'text-emerald-900'}`}>
+                    Total {isWaqaf ? 'Waqaf' : 'Donasi'}
+                  </span>
+                  <span className={`text-lg font-black ${isWaqaf ? 'text-teal-700' : 'text-emerald-700'}`}>
                     Rp {new Intl.NumberFormat('id-ID').format(grandTotal)}
                   </span>
                 </div>

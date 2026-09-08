@@ -9,10 +9,67 @@ from rest_framework import viewsets
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from campaigns.models import Campaign
-from .models import Donation
+from .models import Donation, DonationWaqafItem
 from .serializers import DonationSerializer
 import logging
+import json
+from decimal import Decimal
+
 logger = logging.getLogger('donations')
+
+
+def process_waqaf_completion(donation):
+    """
+    Handles stock reduction and automatic 5-star testimonial creation
+    when a Waqaf donation is processed.
+    """
+    if donation.donation_type != 'waqaf' or donation.is_stock_deducted:
+        return
+
+    try:
+        from products.models import Testimoni, Product
+        from reviews.models import Review
+
+        for item in donation.waqaf_items.select_related('product').all():
+            product = item.product
+            qty = item.quantity
+            if product:
+                # 1. Decrease product stock
+                if product.stock >= qty:
+                    product.stock -= qty
+                else:
+                    product.stock = 0
+                product.save(update_fields=['stock'])
+
+                # 2. Automatically create 5-star Testimoni
+                customer_name = donation.donor_name or (donation.donor.username if donation.donor else 'Donatur Waqaf')
+                unit_label = product.unit or 'unit'
+                description_text = f"Diwakafkan {qty} {unit_label}"
+
+                Testimoni.objects.create(
+                    product=product,
+                    user=donation.donor,
+                    customer=customer_name,
+                    stars=5,
+                    description=description_text,
+                    is_admin_entry=False
+                )
+
+                # 3. Automatically create Review if donor is a registered user
+                if donation.donor:
+                    Review.objects.create(
+                        product=product,
+                        user=donation.donor,
+                        rating=5,
+                        comment=description_text
+                    )
+
+        donation.is_stock_deducted = True
+        donation.save(update_fields=['is_stock_deducted'])
+        logger.info(f"Waqaf stock reduction and testimoni successfully processed for Donation {donation.id}")
+    except Exception as e:
+        logger.error(f"Error processing waqaf completion for Donation {donation.id}: {str(e)}", exc_info=True)
+
 
 class DonationViewSet(viewsets.ModelViewSet):
     queryset = Donation.objects.filter(payment_status='pending')
@@ -58,35 +115,29 @@ class DonationView(APIView):
 class CampaignDonationsView(APIView):
     def get(self, request, slug):
         try:
-            logger.info(f"Fetching donations for campaign: {slug}")  # Log campaign_slug
+            logger.info(f"Fetching donations for campaign: {slug}")
 
             # Get the campaign
             campaign = get_object_or_404(Campaign, slug=slug)
-            logger.info(f"Campaign found: {campaign.title}")  # Log campaign title
+            logger.info(f"Campaign found: {campaign.title}")
 
-            # Filter only verified donations
+            # Filter only verified donations (or waqaf donations)
             donations = Donation.objects.filter(
                 campaign=campaign,
-                payment_status='verified'  # Only include verified donations
-            )
-            logger.info(f"Found {donations.count()} verified donations")  # Log the number of donations
+                payment_status='verified'
+            ).prefetch_related('waqaf_items', 'waqaf_items__product').order_by('-created_at')
+            logger.info(f"Found {donations.count()} verified donations")
 
-            # Serialize the donations
             serializer = DonationSerializer(donations, many=True, context={'request': request})
-
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"Error fetching donations: {str(e)}", exc_info=True)  # Log the full error with traceback
+            logger.error(f"Error fetching donations: {str(e)}", exc_info=True)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class UpdateDonationView(APIView):
-    def post(self, request, donation_id):  # Accept donation_id as a parameter
+    def post(self, request, donation_id):
         try:
-            logger.info(f"Donation ID: {donation_id}")
-            logger.info(f"Request data: {request.data}")
-            logger.info(f"Request files: {request.FILES}")
-            # Extract data from the request
             amount = request.data.get('amount')
             donor_name = request.data.get('donor_name')
             source_bank = request.data.get('source_bank')
@@ -94,12 +145,11 @@ class UpdateDonationView(APIView):
             transfer_date = request.data.get('transfer_date')
             proof_file = request.FILES.get('proof_file')
 
-            # Find the donation
             donation = get_object_or_404(Donation, id=donation_id)
 
-            # Update donation details
             donation.amount = amount
-            donation.donor_name = donor_name
+            if donor_name:
+                donation.donor_name = donor_name
             donation.source_bank = source_bank
             donation.source_account = source_account
             donation.transfer_date = transfer_date
@@ -111,6 +161,9 @@ class UpdateDonationView(APIView):
                 donation.message = request.data.get('message')
 
             donation.save()
+
+            if donation.donation_type == 'waqaf':
+                process_waqaf_completion(donation)
 
             return Response({
                 'status': 'success',
@@ -125,56 +178,94 @@ class UpdateDonationView(APIView):
 
 
 class CreateDonationView(APIView):
-    permission_classes = [AllowAny]  # Allow both authenticated and unauthenticated users
+    permission_classes = [AllowAny]
 
     def post(self, request, campaign_slug):
         try:
-            logger.info(f"Incoming request data: {request.data}")  # Log request data
-            logger.info(f"Incoming files: {request.FILES}")  # Log uploaded files
-            # Log the Authorization header
+            logger.info(f"Incoming request data: {request.data}")
             auth_header = request.headers.get('Authorization')
-            logger.info(f"Authorization header: {auth_header}")
 
-            # Authenticate the user using JWT
             jwt_authenticator = JWTAuthentication()
             authenticated_user = None
 
             if auth_header and auth_header.startswith('Bearer '):
                 try:
-                    # Decode the JWT token
                     validated_token = jwt_authenticator.get_validated_token(auth_header.split(' ')[1])
                     authenticated_user = jwt_authenticator.get_user(validated_token)
-                    logger.info(f"Authenticated user from JWT: {authenticated_user}")
                 except Exception as e:
                     logger.error(f"JWT authentication failed: {str(e)}")
-            # Fetch the campaign using the slug
+
             campaign = get_object_or_404(Campaign, slug=campaign_slug)
 
-            # Log the authenticated user (for debugging)
-            logger.info(f"Authenticated user: {authenticated_user}")
-            logger.info(f"User is authenticated: {authenticated_user is not None}")
-
-            # Extract data from the request
+            donation_type = request.data.get('donation_type', 'donation')
             amount = request.data.get('amount')
             admin_fee = request.data.get('admin_fee', 0)
             try:
-                import decimal
-                admin_fee = decimal.Decimal(str(admin_fee or 0))
+                admin_fee = Decimal(str(admin_fee or 0))
             except:
-                admin_fee = decimal.Decimal('0')
-            donor_name = request.data.get('donor_name')
-            donor_phone = request.data.get('donor_phone')
-            donor_email = request.data.get('donor_email')
+                admin_fee = Decimal('0')
+
+            donor_name = (request.data.get('donor_name') or '').strip()
+            donor_phone = (request.data.get('donor_phone') or '').strip()
+            donor_email = (request.data.get('donor_email') or '').strip()
             payment_method = request.data.get('payment_method')
             source_bank = request.data.get('source_bank')
             source_account = request.data.get('source_account')
             transfer_date = request.data.get('transfer_date')
             proof_file = request.FILES.get('proof_file')
-
             message = request.data.get('message', '')
 
-            # Check if the user is authenticated
+            # Parse waqaf items if provided
+            waqaf_items_data = request.data.get('waqaf_items')
+            if isinstance(waqaf_items_data, str):
+                try:
+                    waqaf_items_data = json.loads(waqaf_items_data)
+                except Exception:
+                    waqaf_items_data = []
+
+            is_waqaf = (donation_type == 'waqaf') or bool(waqaf_items_data)
+            if is_waqaf:
+                donation_type = 'waqaf'
+                # Mandatory Real Biodata for Waqaf (no anonymous / Hamba Allah)
+                if not donor_name or donor_name.lower() in ['hamba allah', 'anonim', 'anonymous']:
+                    return Response({
+                        'error': 'Untuk program waqaf, biodata asli (nama lengkap) wajib diisi dan tidak dapat disamarkan.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if not donor_phone:
+                    return Response({
+                        'error': 'Nomor telepon / WhatsApp wajib diisi untuk waqaf.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if not donor_email or '@' not in donor_email:
+                    return Response({
+                        'error': 'Alamat email valid wajib diisi untuk waqaf.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
             donor = authenticated_user if authenticated_user else None
+            is_anon = False if is_waqaf else bool(request.data.get('is_anonymous', False))
+
+            # If waqaf, calculate accurate amount from items if needed
+            calculated_waqaf_total = Decimal('0')
+            resolved_items = []
+            if is_waqaf and waqaf_items_data:
+                from products.models import Product
+                for it in waqaf_items_data:
+                    p_id = it.get('product_id') or it.get('id')
+                    qty = int(it.get('quantity') or it.get('qty') or 1)
+                    if p_id and qty > 0:
+                        prod = Product.objects.filter(id=p_id).first()
+                        if prod:
+                            unit_price = Decimal(str(it.get('price') or prod.price))
+                            item_subtotal = unit_price * qty
+                            calculated_waqaf_total += item_subtotal
+                            resolved_items.append({
+                                'product': prod,
+                                'quantity': qty,
+                                'price_per_unit': unit_price,
+                                'subtotal': item_subtotal
+                            })
+
+                if calculated_waqaf_total > 0:
+                    amount = calculated_waqaf_total + admin_fee
 
             # Create a new donation
             donation = Donation.objects.create(
@@ -184,30 +275,44 @@ class CreateDonationView(APIView):
                 donor_name=donor_name,
                 donor_phone=donor_phone,
                 donor_email=donor_email,
+                is_anonymous=is_anon,
                 payment_method=payment_method,
                 source_bank=source_bank,
                 source_account=source_account,
                 transfer_date=transfer_date,
                 message=message,
-                payment_status='pending',  # Set initial status as pending
-                donor=donor  # Associate the donation with the logged-in user (if any)
+                donation_type=donation_type,
+                payment_status='pending',
+                donor=donor
             )
+
+            # Create Waqaf Items records
+            for res_it in resolved_items:
+                DonationWaqafItem.objects.create(
+                    donation=donation,
+                    product=res_it['product'],
+                    quantity=res_it['quantity'],
+                    price_per_unit=res_it['price_per_unit'],
+                    subtotal=res_it['subtotal']
+                )
+
+            # In waqaf donations, process stock reduction immediately upon waqaf order creation
+            if is_waqaf:
+                process_waqaf_completion(donation)
 
             if proof_file:
                 donation.proof_file = proof_file
                 donation.save()
-                logger.debug(f"Proof of payment uploaded: {donation.proof_file.url}")
-
-            logger.debug(f"Donation created: {donation.id}")  # Log the donation
 
             return Response({
                 'status': 'success',
                 'message': 'Donation created successfully',
-                'donation_id': donation.id
+                'donation_id': donation.id,
+                'donation_type': donation.donation_type
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            logger.error(f"Error creating donation: {str(e)}")  # Log the error
+            logger.error(f"Error creating donation: {str(e)}", exc_info=True)
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -278,13 +383,17 @@ class AdminDonationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Admin manual inputs are auto-verified
-        serializer.save(payment_status='verified')
+        donation = serializer.save(payment_status='verified')
+        if donation.donation_type == 'waqaf':
+            process_waqaf_completion(donation)
 
     @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):
         donation = self.get_object()
         donation.payment_status = 'verified'
         donation.save()
+        if donation.donation_type == 'waqaf':
+            process_waqaf_completion(donation)
         return Response({'status': 'verified'})
 
     @action(detail=True, methods=['post'])

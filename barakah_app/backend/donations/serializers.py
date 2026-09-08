@@ -1,8 +1,26 @@
-# donations/serializers.py
 from rest_framework import serializers
-from .models import Donation
+from .models import Donation, DonationWaqafItem
 from campaigns.models import Campaign
 from campaigns.serializers import CampaignSerializer
+
+class DonationWaqafItemSerializer(serializers.ModelSerializer):
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
+    product_title = serializers.CharField(source='product.title', read_only=True)
+    product_unit = serializers.CharField(source='product.unit', read_only=True)
+    product_thumbnail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DonationWaqafItem
+        fields = [
+            'id', 'product_id', 'product_title', 'product_unit', 
+            'product_thumbnail', 'quantity', 'price_per_unit', 'subtotal'
+        ]
+
+    def get_product_thumbnail(self, obj):
+        request = self.context.get('request')
+        if obj.product and obj.product.thumbnail:
+            return request.build_absolute_uri(obj.product.thumbnail.url) if request else obj.product.thumbnail.url
+        return ''
 
 class DonationSerializer(serializers.ModelSerializer):
     campaign = CampaignSerializer(read_only=True)
@@ -12,6 +30,7 @@ class DonationSerializer(serializers.ModelSerializer):
     campaign_title = serializers.CharField(source='campaign.title', read_only=True)
     campaign_slug = serializers.CharField(source='campaign.slug', read_only=True)
     proof_file_url = serializers.SerializerMethodField()
+    waqaf_items = DonationWaqafItemSerializer(many=True, read_only=True)
     
     class Meta:
         model = Donation
@@ -20,9 +39,10 @@ class DonationSerializer(serializers.ModelSerializer):
             'donor_name', 'donor_phone', 'donor_email', 'is_anonymous', 
             'message', 'payment_method', 'payment_status', 'source_bank',
             'source_account', 'account_name', 'transfer_date', 'proof_file_url',
+            'donation_type', 'waqaf_items', 'is_stock_deducted',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'campaign_title', 'campaign_slug', 'proof_file_url', 'updated_at']
+        read_only_fields = ['id', 'campaign_title', 'campaign_slug', 'proof_file_url', 'updated_at', 'waqaf_items']
     
     def get_proof_file_url(self, obj):
         request = self.context.get('request')

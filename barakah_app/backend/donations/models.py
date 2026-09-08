@@ -58,6 +58,14 @@ class Donation(models.Model):
     whatsapp_sent = models.BooleanField(default=False)
     whatsapp_sent_at = models.DateTimeField(blank=True, null=True)
     
+    # Waqaf tracking
+    DONATION_TYPE_CHOICES = [
+        ('donation', 'Donasi Tunai'),
+        ('waqaf', 'Waqaf Produk'),
+    ]
+    donation_type = models.CharField(max_length=20, choices=DONATION_TYPE_CHOICES, default='donation')
+    is_stock_deducted = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -82,3 +90,18 @@ class Donation(models.Model):
     
     class Meta:
         ordering = ['-created_at']    
+
+class DonationWaqafItem(models.Model):
+    donation = models.ForeignKey(Donation, on_delete=models.CASCADE, related_name='waqaf_items')
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='waqaf_donations')
+    quantity = models.PositiveIntegerField(default=1)
+    price_per_unit = models.DecimalField(max_digits=12, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        if not self.subtotal:
+            self.subtotal = self.price_per_unit * self.quantity
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.title} in Donation {self.donation.id}"    
