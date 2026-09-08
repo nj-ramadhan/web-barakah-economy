@@ -242,10 +242,13 @@ const CrowdfundingPaymentConfirmation = () => {
     campaignSlug, // Extract campaign slug
     message: donorMessage,
     donationType,
-    waqafItems
+    waqafItems,
+    isAnonymous,
+    hideIdentity
   } = location.state;
 
   const isWaqaf = donationType === 'waqaf';
+  const shouldHideIdentity = !isWaqaf && (Boolean(isAnonymous) || Boolean(hideIdentity));
 
   if (isSuccess) {
     return (
@@ -289,7 +292,14 @@ const CrowdfundingPaymentConfirmation = () => {
               )}
               <div className="flex justify-between border-b border-gray-200/60 pb-2">
                 <span className="text-gray-500 font-medium">Nama Donatur / Wakif</span>
-                <span className="font-bold text-gray-800">{donorName}</span>
+                <span className="font-bold text-gray-800 text-right">
+                  {donorName}
+                  {shouldHideIdentity && (
+                    <span className="block text-[10px] font-normal text-gray-500">
+                      (Disamarkan sebagai &quot;Hamba Allah&quot; di daftar donatur publik)
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="flex justify-between border-b border-gray-200/60 pb-2">
                 <span className="text-gray-500 font-medium">Total Nominal</span>
@@ -406,6 +416,7 @@ const CrowdfundingPaymentConfirmation = () => {
     donationData.append('donor_email', donorEmail || location.state?.email || formData.donor_email || '');
     donationData.append('payment_method', selectedBankInfo.name);
     donationData.append('donation_type', donationType || 'donation');
+    donationData.append('is_anonymous', shouldHideIdentity ? 'true' : 'false');
     if (isWaqaf && waqafItems && waqafItems.length > 0) {
       donationData.append('waqaf_items', typeof waqafItems === 'string' ? waqafItems : JSON.stringify(waqafItems));
     }
@@ -450,7 +461,7 @@ const CrowdfundingPaymentConfirmation = () => {
 Bismillah..%0A
 Pada hari ini,%0A 
 Tanggal ${formatDate(formData.transferDate)}%0A
-Saya ${formData.accountName || donorName || ''} berniat menitipkan ${isWaqaf ? 'amanah waqaf' : 'donasi'} pada program ${campaignTitle}%0A
+Saya ${formData.accountName || donorName || ''}${shouldHideIdentity ? ' (Hamba Allah)' : ''} berniat menitipkan ${isWaqaf ? 'amanah waqaf' : 'donasi'} pada program ${campaignTitle}%0A
 ${waqafDetailsText}dengan total nominal Rp ${formattedAmount} melalui ${selectedBankInfo.fullName}%0A
 %0A
 Saya mengirim donasi dari Bank ${formData.sourceBank}${sourceAccountInfo}%0A

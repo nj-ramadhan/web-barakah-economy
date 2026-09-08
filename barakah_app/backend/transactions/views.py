@@ -358,6 +358,13 @@ class AdminIncomingFundsView(APIView):
                 if d.message:
                     extra_notes.append(f'Doa: "{d.message[:40]}..."' if len(d.message) > 40 else f'Doa: "{d.message}"')
 
+                cust_name = d.donor_name
+                if (not cust_name or cust_name.strip().lower() in ['hamba allah', 'anonim', 'anonymous']) and d.donor:
+                    donor_full = f"{d.donor.first_name} {d.donor.last_name}".strip()
+                    cust_name = donor_full or d.donor.username
+                elif not cust_name:
+                    cust_name = 'Hamba Allah'
+
                 transactions.append({
                     'id': f"charity_{d.id}",
                     'raw_id': d.id,
@@ -365,7 +372,7 @@ class AdminIncomingFundsView(APIView):
                     'category_label': 'Charity / Donasi',
                     'order_number': f"DON-{d.id:06d}",
                     'title': d.campaign.title if d.campaign else "Program Charity",
-                    'customer_name': d.donor_name or (d.donor.username if d.donor else 'Hamba Allah'),
+                    'customer_name': cust_name,
                     'customer_email': d.donor_email or (d.donor.email if d.donor else ''),
                     'customer_phone': d.donor_phone or '',
                     'base_amount': amt,

@@ -129,7 +129,11 @@ class CampaignDonationsView(APIView):
             logger.info(f"Found {donations.count()} verified donations")
 
             serializer = DonationSerializer(donations, many=True, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            for item in data:
+                if item.get('is_anonymous') and item.get('donation_type') != 'waqaf':
+                    item['donor_name'] = 'Hamba Allah'
+            return Response(data, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(f"Error fetching donations: {str(e)}", exc_info=True)
@@ -241,7 +245,8 @@ class CreateDonationView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
             donor = authenticated_user if authenticated_user else None
-            is_anon = False if is_waqaf else bool(request.data.get('is_anonymous', False))
+            raw_anon = request.data.get('is_anonymous', False)
+            is_anon = False if is_waqaf else (str(raw_anon).strip().lower() in ['true', '1', 'yes'])
 
             # If waqaf, calculate accurate amount from items if needed
             calculated_waqaf_total = Decimal('0')

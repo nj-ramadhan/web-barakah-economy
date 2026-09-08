@@ -442,13 +442,15 @@ const CrowdfundingCampaignDetail = () => {
                 {donations.length > 0 ? (
                   donations.map((donation, index) => {
                     const isWaqaf = donation.donation_type === 'waqaf' || (donation.waqaf_items && donation.waqaf_items.length > 0);
+                    const isAnonymous = !isWaqaf && (donation.is_anonymous || donation.donor_name === 'Hamba Allah');
+                    const displayName = isAnonymous ? 'Hamba Allah' : (donation.donor_name || 'Hamba Allah');
                     return (
                       <li key={index} className="border-b border-gray-100 py-3.5 px-3 first:pt-1 last:border-0">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-gray-900 font-bold text-sm">
-                                {donation.donor_name}
+                              <p className={`font-bold text-sm ${isAnonymous ? 'text-gray-500 italic' : 'text-gray-900'}`}>
+                                {displayName}
                               </p>
                               {isWaqaf && (
                                 <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200 flex items-center gap-1">

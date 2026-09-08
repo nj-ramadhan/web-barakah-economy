@@ -360,7 +360,7 @@ const CrowdfundingDonationPage = () => {
         alert('Silakan pilih nominal donasi');
         return;
       }
-      if (!formData.hideIdentity && !formData.fullName.trim()) {
+      if (!formData.fullName.trim()) {
         alert('Silakan masukkan nama lengkap Anda (wajib diisi)');
         return;
       }
@@ -396,9 +396,10 @@ const CrowdfundingDonationPage = () => {
     const appliedFee = isDynaQRISActive ? uniqueAdminFee : value;
     const finalAmount = amount + appliedFee;
 
-    // Set the display name based on waqaf or hideIdentity checkbox
-    const donorName = isWaqaf ? formData.fullName.trim() : (formData.hideIdentity ? 'Hamba Allah' : formData.fullName);
+    // Set the real donor name
+    const donorName = formData.fullName.trim();
     const donorPhone = formData.phone;
+    const isAnonymous = isWaqaf ? false : Boolean(formData.hideIdentity);
 
     // Only create a pending donation record if QRIS is active (needed for QRIS auto-tracking)
     // For manual transfer, donation will be created only when user uploads proof & confirms payment
@@ -413,6 +414,7 @@ const CrowdfundingDonationPage = () => {
         formDataObj.append('donor_email', formData.email || '');
         formDataObj.append('payment_method', effectiveBank);
         formDataObj.append('donation_type', donationMode);
+        formDataObj.append('is_anonymous', isAnonymous ? 'true' : 'false');
         if (isWaqaf) {
           formDataObj.append('waqaf_items', JSON.stringify(selectedWaqafItems));
         }
@@ -445,6 +447,7 @@ const CrowdfundingDonationPage = () => {
       donorPhone: donorPhone,
       campaignSlug: slug,
       donationType: donationMode,
+      isAnonymous: isAnonymous,
       waqafItems: isWaqaf ? selectedWaqafItems : []
     };
 
@@ -480,7 +483,8 @@ const CrowdfundingDonationPage = () => {
           campaignTitle: campaign?.title || 'Program Donasi',
           donorName: donorName,
           fullName: formData.fullName,
-          hideIdentity: isWaqaf ? false : formData.hideIdentity,
+          hideIdentity: isAnonymous,
+          isAnonymous: isAnonymous,
           donorPhone: donorPhone,
           email: formData.email,
           message: formData.message,
@@ -718,7 +722,7 @@ const CrowdfundingDonationPage = () => {
               </p>
             </div>
           ) : (
-            <div className="flex items-center mb-2">
+            <div className="mb-2">
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -729,13 +733,17 @@ const CrowdfundingDonationPage = () => {
                     setFormData((prev) => ({
                       ...prev,
                       hideIdentity: isChecked,
-                      fullName: isChecked ? 'Hamba Allah' : '',
                     }));
                   }}
                   className="mr-2 accent-green-600"
                 />
-                <span className="text-sm">Sembunyikan Nama Anda (Hamba Allah)</span>
+                <span className="text-sm font-medium text-gray-700">Sembunyikan Nama Anda (Hamba Allah)</span>
               </label>
+              {formData.hideIdentity && (
+                <p className="text-[11px] text-gray-500 mt-1 pl-6">
+                  Nama asli Anda tetap tercatat di sistem admin, tetapi akan disamarkan sebagai &quot;Hamba Allah&quot; di daftar donatur publik.
+                </p>
+              )}
             </div>
           )}
 
@@ -747,11 +755,9 @@ const CrowdfundingDonationPage = () => {
               type="text"
               name="fullName"
               placeholder="Nama Lengkap Anda (wajib diisi)"
-              className={`w-full p-3 rounded-lg border ${formData.hideIdentity ? 'bg-gray-100 border-gray-300' : 'border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500'
-                } outline-none text-sm`}
+              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm"
               value={formData.fullName}
               onChange={handleInputChange}
-              disabled={formData.hideIdentity}
               required
             />
           </div>
