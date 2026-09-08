@@ -355,7 +355,15 @@ const DashboardMyCampaignsPage = () => {
                                                                         <div className="flex-1 min-w-0">
                                                                             <h5 className="text-xs font-bold text-gray-900 truncate">{p.title}</h5>
                                                                             <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                                                                                <span className="font-bold text-emerald-700">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                {p.discounted_price != null && Number(p.discounted_price) < Number(p.price) ? (
+                                                                                    <span className="flex items-center gap-1">
+                                                                                        <span className="font-bold text-emerald-700">Rp {Number(p.discounted_price).toLocaleString('id-ID')}</span>
+                                                                                        <span className="line-through text-gray-400 text-[9px]">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                        <span className="bg-red-50 text-red-600 font-bold px-1 rounded text-[8px] uppercase">Kampanye</span>
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="font-bold text-emerald-700">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                )}
                                                                                 <span>•</span>
                                                                                 <span className={`px-1.5 py-0.2 rounded font-bold ${
                                                                                     hasStock ? 'bg-emerald-100 text-emerald-800' : 'bg-red-50 text-red-600'
@@ -420,9 +428,26 @@ const DashboardMyCampaignsPage = () => {
                                                                 )}
                                                                 <div className="min-w-0">
                                                                     <p className="text-xs font-bold text-gray-900 truncate">{p.title}</p>
-                                                                    <p className="text-[10px] text-emerald-700 font-black">
-                                                                        Rp {Number(p.price).toLocaleString('id-ID')} • Stok {p.stock} {p.unit || 'pcs'}
-                                                                    </p>
+                                                                    <div className="text-[10px] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                                        {p.discounted_price != null && Number(p.discounted_price) < Number(p.price) ? (
+                                                                            <>
+                                                                                <span className="text-emerald-700 font-black">
+                                                                                    Rp {Number(p.discounted_price).toLocaleString('id-ID')}
+                                                                                </span>
+                                                                                <span className="line-through text-gray-400 text-[9px]">
+                                                                                    Rp {Number(p.price).toLocaleString('id-ID')}
+                                                                                </span>
+                                                                                <span className="bg-red-50 text-red-600 text-[8px] font-bold px-1 rounded">
+                                                                                    Harga Kampanye
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className="text-emerald-700 font-black">
+                                                                                Rp {Number(p.price).toLocaleString('id-ID')}
+                                                                            </span>
+                                                                        )}
+                                                                        <span className="text-gray-400">• Stok {p.stock} {p.unit || 'pcs'}</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <button

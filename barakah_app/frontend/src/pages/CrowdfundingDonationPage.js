@@ -525,32 +525,35 @@ const CrowdfundingDonationPage = () => {
         {/* Toggle Mode Switcher if Campaign has Waqaf collaboration */}
         {hasWaqafCollab ? (
           <div className="mb-6">
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-2xl mb-3">
+            {/* Tab Bar Header */}
+            <div className="flex border-b-2 border-gray-100 mb-5">
               <button
                 type="button"
                 onClick={() => setDonationMode('waqaf')}
-                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                className={`flex-1 py-3 px-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-all rounded-t-lg ${
                   donationMode === 'waqaf'
-                    ? 'bg-teal-700 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-green-600 border-green-600 bg-green-50/40'
+                    : 'text-gray-400 border-transparent hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <span className="material-icons text-sm">inventory_2</span>
-                Waqaf Produk Store
+                <span className="material-icons text-base sm:text-lg">inventory_2</span>
+                <span>Waqaf Produk Store</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setDonationMode('donation')}
-                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                className={`flex-1 py-3 px-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-all rounded-t-lg ${
                   donationMode === 'donation'
-                    ? 'bg-green-700 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-green-600 border-green-600 bg-green-50/40'
+                    : 'text-gray-400 border-transparent hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <span className="material-icons text-sm">volunteer_activism</span>
-                Donasi Tunai
+                <span className="material-icons text-base sm:text-lg">volunteer_activism</span>
+                <span>Donasi Tunai</span>
               </button>
             </div>
+
             <h2 className="text-lg font-bold text-gray-800 text-center">
               {donationMode === 'waqaf' ? 'Pilih Produk yang Ingin Diwakafkan' : 'Donasi Terbaik Anda'}
             </h2>
@@ -567,7 +570,9 @@ const CrowdfundingDonationPage = () => {
             </p>
 
             <div className="space-y-2.5">
-              {campaign.collab_products_details.map((p) => {
+              {[...(campaign.collab_products_details || [])]
+                .sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0))
+                .map((p) => {
                 const currentQty = waqafCart[p.id] || 0;
                 const isOutOfStock = p.stock <= 0;
                 return (
@@ -588,10 +593,24 @@ const CrowdfundingDonationPage = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-bold text-gray-900 truncate">{p.title}</h4>
-                        <p className="text-xs font-black text-teal-700 mt-0.5">
-                          Rp {Number(p.price).toLocaleString('id-ID')} <span className="text-[10px] font-normal text-gray-500">/ {p.unit || 'unit'}</span>
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="text-xs font-bold text-gray-900 truncate">{p.title}</h4>
+                          {p.has_campaign && (
+                            <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                              {p.campaign_title || 'Harga Kampanye'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-baseline gap-1.5 flex-wrap mt-0.5">
+                          <p className="text-xs font-black text-teal-700">
+                            Rp {Number(p.price).toLocaleString('id-ID')} <span className="text-[10px] font-normal text-gray-500">/ {p.unit || 'unit'}</span>
+                          </p>
+                          {p.original_price && Number(p.original_price) > Number(p.price) && (
+                            <span className="text-[10px] text-gray-400 line-through">
+                              Rp {Number(p.original_price).toLocaleString('id-ID')}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-gray-400 mt-0.5">
                           {isOutOfStock ? (
                             <span className="text-red-500 font-bold">Stok Habis</span>

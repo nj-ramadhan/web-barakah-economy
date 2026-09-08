@@ -72,6 +72,8 @@ def calculate_product_item_price(product, variation=None, quantity=1):
         except Exception:
             return Decimal('0')
 
+calculate_effective_unit_price = calculate_product_item_price
+
 
 def format_idr(amount):
     return 'Rp ' + '{:,.0f}'.format(amount).replace(',', '.')

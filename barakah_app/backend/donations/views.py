@@ -259,7 +259,9 @@ class CreateDonationView(APIView):
                     if p_id and qty > 0:
                         prod = Product.objects.filter(id=p_id).first()
                         if prod:
-                            unit_price = Decimal(str(it.get('price') or prod.price))
+                            from orders.utils import calculate_effective_unit_price
+                            eff_price = calculate_effective_unit_price(prod, quantity=qty)
+                            unit_price = Decimal(str(eff_price))
                             item_subtotal = unit_price * qty
                             calculated_waqaf_total += item_subtotal
                             resolved_items.append({

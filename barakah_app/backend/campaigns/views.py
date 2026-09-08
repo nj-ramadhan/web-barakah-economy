@@ -73,7 +73,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
             # Staff sees everything
             queryset = Campaign.objects.all()
         
-        search = self.request.query_params.get('search', None)
+        search = getattr(self.request, 'query_params', getattr(self.request, 'GET', {})).get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) |
@@ -121,7 +121,6 @@ class CampaignViewSet(viewsets.ModelViewSet):
             campaign.likes.add(user)
             liked = True
         return Response({
-            'status': 'success',
             'liked': liked,
             'likes_count': campaign.likes.count()
         })
@@ -169,8 +168,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def pending(self, request):
-        """Get all pending campaigns for admin review."""
-        campaigns = Campaign.objects.filter(approval_status='pending').order_by('-created_at')
+        """Get campaigns for admin review. Supports filtering with ?status=all|pending|approved|rejected (default 'all')."""
+        status_filter = request.query_params.get('status', 'all')
+        if status_filter in ['pending', 'approved', 'rejected']:
+            campaigns = Campaign.objects.filter(approval_status=status_filter).order_by('-created_at')
+        else:
+            campaigns = Campaign.objects.all().order_by('-created_at')
         serializer = self.get_serializer(campaigns, many=True)
         return Response(serializer.data)
 
@@ -180,9 +183,13 @@ class CampaignViewSet(viewsets.ModelViewSet):
         campaign = self.get_object()
         campaign.approval_status = 'approved'
         campaign.is_active = True
-        campaign.save(update_fields=['approval_status', 'is_active'])
-        from barakah_app.utils import send_status_update_email
-        send_status_update_email(campaign.created_by, campaign.title, 'approved')
+        campaign.rejection_reason = ''
+        campaign.save(update_fields=['approval_status', 'is_active', 'rejection_reason'])
+        try:
+            from barakah_app.utils import send_status_update_email
+            send_status_update_email(campaign.created_by, campaign.title, 'approved')
+        except Exception:
+            pass
         return Response({'message': 'Kampanye berhasil disetujui.'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
@@ -191,11 +198,59 @@ class CampaignViewSet(viewsets.ModelViewSet):
         campaign = self.get_object()
         reason = request.data.get('reason', '')
         campaign.approval_status = 'rejected'
+        campaign.is_active = False
         campaign.rejection_reason = reason
-        campaign.save(update_fields=['approval_status', 'rejection_reason'])
-        from barakah_app.utils import send_status_update_email
-        send_status_update_email(campaign.created_by, campaign.title, 'rejected', reason)
+        campaign.save(update_fields=['approval_status', 'is_active', 'rejection_reason'])
+        try:
+            from barakah_app.utils import send_status_update_email
+            send_status_update_email(campaign.created_by, campaign.title, 'rejected', reason)
+        except Exception:
+            pass
         return Response({'message': 'Kampanye ditolak.'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def set_pending(self, request, slug=None):
+        """Admin sets a campaign back to pending."""
+        campaign = self.get_object()
+        campaign.approval_status = 'pending'
+        campaign.is_active = False
+        campaign.rejection_reason = ''
+        campaign.save(update_fields=['approval_status', 'is_active', 'rejection_reason'])
+        return Response({'message': 'Status kampanye berhasil diubah menjadi pending.'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def update_status(self, request, slug=None):
+        """Admin changes campaign approval status to approved, pending, or rejected."""
+        campaign = self.get_object()
+        new_status = request.data.get('status')
+        if new_status not in ['approved', 'pending', 'rejected']:
+            return Response({'error': 'Status tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reason = request.data.get('reason', '')
+        campaign.approval_status = new_status
+        if new_status == 'approved':
+            campaign.is_active = True
+            campaign.rejection_reason = ''
+        elif new_status == 'rejected':
+            campaign.is_active = False
+            campaign.rejection_reason = reason
+        else:
+            campaign.is_active = False
+            campaign.rejection_reason = ''
+
+        campaign.save(update_fields=['approval_status', 'is_active', 'rejection_reason'])
+        if new_status in ['approved', 'rejected']:
+            try:
+                from barakah_app.utils import send_status_update_email
+                send_status_update_email(campaign.created_by, campaign.title, new_status, reason if new_status == 'rejected' else None)
+            except Exception:
+                pass
+
+        return Response({
+            'status': 'success',
+            'message': f'Status kampanye berhasil diubah menjadi {new_status}.',
+            'approval_status': campaign.approval_status
+        })
 
 
 class CampaignShareView(APIView):

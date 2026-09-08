@@ -325,8 +325,20 @@ const CrowdfundingCampaignDetail = () => {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-gray-900 truncate">{cp.title}</p>
-                          <p className="text-[11px] font-black text-teal-700">Rp {Number(cp.price).toLocaleString('id-ID')} / {cp.unit || 'unit'}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-bold text-gray-900 truncate">{cp.title}</p>
+                            {cp.has_campaign && (
+                              <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                                {cp.campaign_title || 'Harga Kampanye'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-baseline gap-1.5 flex-wrap mt-0.5">
+                            <p className="text-[11px] font-black text-teal-700">Rp {Number(cp.price).toLocaleString('id-ID')} / {cp.unit || 'unit'}</p>
+                            {cp.original_price && Number(cp.original_price) > Number(cp.price) && (
+                              <p className="text-[10px] text-gray-400 line-through">Rp {Number(cp.original_price).toLocaleString('id-ID')}</p>
+                            )}
+                          </div>
                           <span className="text-[10px] text-gray-400">Stok: {cp.stock} {cp.unit || 'pcs'}</span>
                         </div>
                       </div>
