@@ -29,6 +29,7 @@ class CampaignSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True, default=None)
     collab_products = serializers.PrimaryKeyRelatedField(many=True, queryset=Product.objects.all(), required=False)
     collab_products_details = serializers.SerializerMethodField()
+    thumbnail = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Campaign
@@ -41,7 +42,7 @@ class CampaignSerializer(serializers.ModelSerializer):
             'likes_count', 'is_liked',
             'is_collaboration', 'collaboration_type', 'collab_products', 'collab_products_details'
         ]
-        read_only_fields = ['created_by', 'approval_status', 'rejection_reason']
+        read_only_fields = ['created_by', 'approval_status', 'rejection_reason', 'current_amount']
 
     def get_has_unlimited_deadline(self, obj):
         return obj.deadline is None

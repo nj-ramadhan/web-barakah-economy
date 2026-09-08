@@ -28,8 +28,10 @@ const DashboardMyCampaignsPage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const [formData, setFormData] = useState({
-        title: '', category: 'infak', description: '', target_amount: '', thumbnail: null
+        title: '', category: 'infak', description: '', target_amount: '', thumbnail: null, deadline: ''
     });
+    const [hasUnlimitedDeadline, setHasUnlimitedDeadline] = useState(true);
+    const [editingCampaign, setEditingCampaign] = useState(null);
 
     // Store Collaboration States
     const [isCollaboration, setIsCollaboration] = useState(false);
@@ -130,21 +132,64 @@ const DashboardMyCampaignsPage = () => {
                 });
             }
 
-            await axios.post(`${API}/api/campaigns/submit/`, fd, {
-                headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
-            });
-            alert('Charity berhasil diajukan! Menunggu verifikasi admin.');
-            setShowForm(false);
-            setFormData({ title: '', category: 'infak', description: '', target_amount: '', thumbnail: null });
-            setPreviewImage(null);
-            setIsCollaboration(false);
-            setSelectedProductIds([]);
+            if (!hasUnlimitedDeadline && formData.deadline) {
+                fd.append('deadline', `${formData.deadline}T23:59:59`);
+            } else {
+                fd.append('deadline', '');
+            }
+
+            if (editingCampaign) {
+                await axios.patch(`${API}/api/campaigns/${editingCampaign.slug}/`, fd, {
+                    headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
+                });
+                alert('Charity berhasil diperbarui! Riwayat donatur dan nominal terkumpul tetap aman.');
+            } else {
+                await axios.post(`${API}/api/campaigns/submit/`, fd, {
+                    headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
+                });
+                alert('Charity berhasil diajukan! Menunggu verifikasi admin.');
+            }
+
+            handleCancelEdit();
             fetchCampaigns();
         } catch (err) {
             console.error(err);
-            alert('Gagal mengajukan charity');
+            alert(editingCampaign ? 'Gagal memperbarui charity' : 'Gagal mengajukan charity');
         }
         setSubmitting(false);
+    };
+
+    const handleStartEdit = (c) => {
+        setEditingCampaign(c);
+        setFormData({
+            title: c.title || '',
+            category: c.category || 'infak',
+            description: c.description || '',
+            target_amount: String(c.target_amount || ''),
+            thumbnail: null,
+            deadline: c.deadline ? c.deadline.split('T')[0] : ''
+        });
+        setHasUnlimitedDeadline(!c.deadline);
+        const hasCollab = Boolean(c.is_collaboration && c.collaboration_type === 'waqaf');
+        setIsCollaboration(hasCollab);
+        setSelectedProductIds(
+            (c.collab_products && c.collab_products.length > 0)
+                ? c.collab_products
+                : (c.collab_products_details ? c.collab_products_details.map(p => p.id) : [])
+        );
+        setPreviewImage(c.thumbnail || null);
+        setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingCampaign(null);
+        setShowForm(false);
+        setFormData({ title: '', category: 'infak', description: '', target_amount: '', thumbnail: null, deadline: '' });
+        setHasUnlimitedDeadline(true);
+        setPreviewImage(null);
+        setIsCollaboration(false);
+        setSelectedProductIds([]);
     };
 
     const toggleVisibility = async (id, currentStatus) => {
@@ -184,16 +229,46 @@ const DashboardMyCampaignsPage = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-gray-900">Charity Saya</h1>
                     </div>
-                    <button onClick={() => setShowForm(!showForm)} className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
+                    <button 
+                        onClick={() => {
+                            if (showForm) {
+                                handleCancelEdit();
+                            } else {
+                                setShowForm(true);
+                            }
+                        }} 
+                        className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition"
+                    >
                         <span className="material-icons text-sm">{showForm ? 'close' : 'add'}</span>
-                        {showForm ? 'Tutup Form' : 'Ajukan Baru'}
+                        {showForm ? (editingCampaign ? 'Tutup Edit' : 'Tutup Form') : 'Ajukan Baru'}
                     </button>
                 </div>
 
-                {/* Submit Form */}
+                {/* Submit / Edit Form */}
                 {showForm && (
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">Ajukan Charity Baru</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">
+                                    {editingCampaign ? 'Edit Program Charity' : 'Ajukan Charity Baru'}
+                                </h2>
+                                {editingCampaign && (
+                                    <p className="text-xs text-emerald-700 font-medium mt-0.5">
+                                        Mengedit: <b>{editingCampaign.title}</b> • Riwayat donatur &amp; nominal terkumpul tetap aman dan tidak berubah.
+                                    </p>
+                                )}
+                            </div>
+                            {editingCampaign && (
+                                <button
+                                    type="button"
+                                    onClick={handleCancelEdit}
+                                    className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold transition flex items-center gap-1"
+                                >
+                                    <span className="material-icons text-xs">close</span>
+                                    Batal Edit
+                                </button>
+                            )}
+                        </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
@@ -227,6 +302,91 @@ const DashboardMyCampaignsPage = () => {
                                     <input type="file" accept="image/*" onChange={handleImageChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm" />
                                     {previewImage && <img src={previewImage} alt="Preview" className="h-24 object-cover rounded-xl mt-2" />}
                                 </div>
+                            </div>
+
+                            {/* Pilihan Batas Waktu Berakhirnya Charity */}
+                            <div className="bg-gray-50/80 border border-gray-200/80 rounded-2xl p-4 space-y-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                                        Batas Waktu Berakhirnya Charity
+                                    </label>
+                                    <p className="text-xs text-gray-500">
+                                        Tentukan apakah program charity ini memiliki batas waktu tertentu atau aktif tanpa batasan waktu.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {/* Option 1: Unlimited */}
+                                    <label 
+                                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                                            hasUnlimitedDeadline 
+                                                ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 ring-1 ring-emerald-500/20 shadow-xs' 
+                                                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            name="deadlineOption"
+                                            checked={hasUnlimitedDeadline}
+                                            onChange={() => {
+                                                setHasUnlimitedDeadline(true);
+                                                setFormData(prev => ({ ...prev, deadline: '' }));
+                                            }}
+                                            className="mt-0.5 w-4 h-4 text-emerald-600 accent-emerald-600"
+                                        />
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold flex items-center gap-1.5">
+                                                <span className="material-icons text-sm text-emerald-600">all_inclusive</span>
+                                                <span>Tidak Ada Batasan</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Charity aktif terus tanpa batas waktu (unlimited)</p>
+                                        </div>
+                                    </label>
+
+                                    {/* Option 2: Custom Date */}
+                                    <label 
+                                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                                            !hasUnlimitedDeadline 
+                                                ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 ring-1 ring-emerald-500/20 shadow-xs' 
+                                                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            name="deadlineOption"
+                                            checked={!hasUnlimitedDeadline}
+                                            onChange={() => setHasUnlimitedDeadline(false)}
+                                            className="mt-0.5 w-4 h-4 text-emerald-600 accent-emerald-600"
+                                        />
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold flex items-center gap-1.5">
+                                                <span className="material-icons text-sm text-gray-600">event</span>
+                                                <span>Tentukan Tanggal Berakhir</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Pilih tanggal spesifik kapan charity berakhir</p>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {/* Date picker input if not unlimited */}
+                                {!hasUnlimitedDeadline && (
+                                    <div className="pt-2 border-t border-gray-200/60 animate-fadeIn">
+                                        <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider block mb-1">
+                                            Pilih Tanggal Berakhir *
+                                        </label>
+                                        <input
+                                            type="date"
+                                            required={!hasUnlimitedDeadline}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            value={formData.deadline || ''}
+                                            onChange={e => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1">
+                                            Charity otomatis ditutup / berakhir setelah melewati tanggal yang dipilih.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Kolaborasi dengan Store Section */}
@@ -471,9 +631,19 @@ const DashboardMyCampaignsPage = () => {
                                 )}
                             </div>
 
-                            <div className="flex justify-end">
-                                <button type="submit" disabled={submitting} className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-800 transition disabled:opacity-50">
-                                    {submitting ? 'Mengirim...' : 'Ajukan Charity'}
+                            <div className="flex items-center justify-end gap-3">
+                                {editingCampaign && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                        className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition"
+                                    >
+                                        Batal
+                                    </button>
+                                )}
+                                <button type="submit" disabled={submitting} className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-800 transition disabled:opacity-50 flex items-center gap-1.5">
+                                    <span className="material-icons text-sm">{editingCampaign ? 'save' : 'send'}</span>
+                                    <span>{submitting ? 'Menyimpan...' : (editingCampaign ? 'Simpan Perubahan' : 'Ajukan Charity')}</span>
                                 </button>
                             </div>
                         </form>
@@ -514,28 +684,55 @@ const DashboardMyCampaignsPage = () => {
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-500 mt-1 line-clamp-2">{c.description?.replace(/<[^>]*>/g, '')}</p>
-                                        <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                                            <span>Target: Rp {formatCurrency(c.target_amount)}</span>
-                                            <span>Terkumpul: Rp {formatCurrency(c.current_amount)}</span>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
+                                            <span>Target: <b className="text-gray-700">Rp {formatCurrency(c.target_amount)}</b></span>
+                                            <span>Terkumpul: <b className="text-emerald-700">Rp {formatCurrency(c.current_amount)}</b></span>
+                                            <span>
+                                                Batas Waktu: <b className="text-gray-700">
+                                                    {c.deadline 
+                                                        ? new Date(c.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                        : 'Tidak Ada Batasan'
+                                                    }
+                                                </b>
+                                            </span>
                                         </div>
                                         
-                                        {c.approval_status === 'approved' && (
-                                            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                                                        {c.is_active ? 'Tampil (Public)' : 'Disembunyikan'}
+                                        <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-2">
+                                                {c.approval_status === 'approved' ? (
+                                                    <>
+                                                        <div className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                                            {c.is_active ? 'Tampil (Public)' : 'Disembunyikan'}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-400 italic">
+                                                        {c.approval_status === 'pending' ? 'Menunggu verifikasi admin' : 'Perbaiki charity & simpan'}
                                                     </span>
-                                                </div>
-                                                <button 
-                                                    onClick={() => toggleVisibility(c.id, c.is_active)}
-                                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all border flex items-center gap-1 ${c.is_active ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}`}
-                                                >
-                                                    <span className="material-icons text-sm">{c.is_active ? 'visibility_off' : 'visibility'}</span>
-                                                    {c.is_active ? 'SEMBUNYIKAN' : 'PUBLIKASIKAN'}
-                                                </button>
+                                                )}
                                             </div>
-                                        )}
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleStartEdit(c)}
+                                                    className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center gap-1 shadow-xs"
+                                                    title="Edit informasi charity"
+                                                >
+                                                    <span className="material-icons text-xs">edit</span>
+                                                    <span>Edit Charity</span>
+                                                </button>
+                                                {c.approval_status === 'approved' && (
+                                                    <button 
+                                                        onClick={() => toggleVisibility(c.id, c.is_active)}
+                                                        className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-1 ${c.is_active ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}`}
+                                                    >
+                                                        <span className="material-icons text-xs">{c.is_active ? 'visibility_off' : 'visibility'}</span>
+                                                        <span>{c.is_active ? 'SEMBUNYIKAN' : 'PUBLIKASIKAN'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
 
                                         {c.approval_status === 'rejected' && c.rejection_reason && (
                                             <div className="mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-xs text-red-700">

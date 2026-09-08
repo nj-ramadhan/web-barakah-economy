@@ -110,6 +110,60 @@ class CampaignViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Check permissions: Creator or Staff/Admin
+        user = request.user
+        is_creator = (instance.created_by == user)
+        is_admin_or_staff = (user.is_staff or getattr(user, 'role', '') == 'admin')
+        if not (is_creator or is_admin_or_staff):
+            return Response(
+                {'error': 'Hanya pembuat charity atau admin yang dapat mengedit charity ini.'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+
+        # If thumbnail is not a file, don't overwrite existing thumbnail
+        if 'thumbnail' in data and not hasattr(data['thumbnail'], 'read'):
+            data.pop('thumbnail', None)
+
+        # Clean deadline
+        if 'deadline' in data:
+            deadline_val = data.get('deadline')
+            if not deadline_val or str(deadline_val).strip().lower() in ['', 'null', 'none', 'undefined']:
+                data['deadline'] = None
+
+        # Parse collab_products
+        collab_products_raw = None
+        if hasattr(data, 'getlist') and data.getlist('collab_products'):
+            collab_products_raw = data.getlist('collab_products')
+        elif 'collab_products' in data:
+            collab_products_raw = data.get('collab_products')
+
+        if isinstance(collab_products_raw, str):
+            import json
+            try:
+                collab_products_raw = json.loads(collab_products_raw)
+            except:
+                collab_products_raw = [x.strip() for x in collab_products_raw.split(',') if x.strip().isdigit()]
+
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        if serializer.is_valid():
+            campaign = serializer.save()
+            if collab_products_raw is not None:
+                campaign.collab_products.set(collab_products_raw)
+            elif not data.get('is_collaboration') or str(data.get('is_collaboration')).lower() in ['false', '0']:
+                campaign.collab_products.clear()
+            return Response(self.get_serializer(campaign).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, slug=None):
         campaign = self.get_object()
@@ -141,6 +195,11 @@ class CampaignViewSet(viewsets.ModelViewSet):
                 collab_products_raw = json.loads(collab_products_raw)
             except:
                 collab_products_raw = [x.strip() for x in collab_products_raw.split(',') if x.strip().isdigit()]
+
+        if 'deadline' in data:
+            deadline_val = data.get('deadline')
+            if not deadline_val or str(deadline_val).strip().lower() in ['', 'null', 'none', 'undefined']:
+                data['deadline'] = None
 
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
