@@ -15,8 +15,6 @@ const DashboardSinergySellersPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
     const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
-    const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
-    const [guideModalTab, setGuideModalTab] = useState('flowchart'); // 'flowchart' | 'page1' | 'page2'
     const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [description, setDescription] = useState('');
@@ -399,16 +397,7 @@ const DashboardSinergySellersPage = () => {
         <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setIsGuideModalOpen(true)}
-                        className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3.5 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                        title="Buka Diagram Alur & Panduan Lengkap Menambah Produk (Seller)"
-                    >
-                        <span className="material-icons text-sm text-emerald-600">account_tree</span>
-                        <span>Alur & Panduan Produk</span>
-                    </button>
+                <div className="flex gap-2">
                     <Link to="/dashboard/sinergy/seller/orders" className="relative bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">shopping_basket</span> 
                         <span>Pesanan Masuk</span>
@@ -583,19 +572,9 @@ const DashboardSinergySellersPage = () => {
 
     const renderForm = () => (
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up">
-            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100 flex-wrap">
-                <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
-                    <h2 className="text-xl font-bold text-gray-800">{activeTab === 'edit' ? 'Edit Produk E-commerce' : 'Tambah Produk E-commerce Baru'}</h2>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => setIsGuideModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-200 transition cursor-pointer shadow-2xs"
-                >
-                    <span className="material-icons text-xs text-emerald-600">account_tree</span>
-                    <span>Lihat Diagram Alur &amp; Panduan</span>
-                </button>
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                <button type="button" onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
+                <h2 className="text-xl font-bold text-gray-800">{activeTab === 'edit' ? 'Edit Produk E-commerce' : 'Tambah Produk E-commerce Baru'}</h2>
             </div>
             
             <form className="space-y-6" onSubmit={handleSaveProduct}>
@@ -1107,220 +1086,6 @@ const DashboardSinergySellersPage = () => {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Panduan & Diagram Alur Seller */}
-            {isGuideModalOpen && (
-                <div className="fixed inset-0 bg-black/75 z-[150] flex items-center justify-center p-3 sm:p-5 backdrop-blur-xs overflow-y-auto">
-                    <div className="bg-white w-full max-w-5xl rounded-3xl p-5 sm:p-7 shadow-2xl animate-fade-in max-h-[92vh] flex flex-col my-auto border border-gray-100">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-100 flex-wrap gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                                    <span className="material-icons text-xl">account_tree</span>
-                                </div>
-                                <div>
-                                    <h3 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
-                                        Diagram Alur &amp; Panduan Tambah Produk
-                                    </h3>
-                                    <p className="text-xs text-gray-500">Khusus Mitra Seller E-Commerce Barakah Economy (BAE)</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Link
-                                    to="/seller/panduan-produk"
-                                    target="_blank"
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl text-xs font-bold transition"
-                                    title="Buka panduan lengkap di tab baru"
-                                >
-                                    <span className="material-icons text-xs">open_in_new</span>
-                                    <span>Halaman Penuh / Cetak</span>
-                                </Link>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsGuideModalOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition cursor-pointer"
-                                >
-                                    <span className="material-icons text-sm">close</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Navigation Tabs */}
-                        <div className="flex bg-gray-100 p-1 rounded-2xl gap-1 mb-4 shrink-0 overflow-x-auto">
-                            <button
-                                type="button"
-                                onClick={() => setGuideModalTab('flowchart')}
-                                className={`flex-1 min-w-[200px] py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    guideModalTab === 'flowchart' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                <span className="material-icons text-sm">account_tree</span>
-                                <span>Diagram Alur (1 Gambar Utuh)</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setGuideModalTab('page1')}
-                                className={`flex-1 min-w-[180px] py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    guideModalTab === 'page1' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                <span className="material-icons text-sm">looks_one</span>
-                                <span>Halaman 1: Data Pokok</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setGuideModalTab('page2')}
-                                className={`flex-1 min-w-[180px] py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    guideModalTab === 'page2' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                <span className="material-icons text-sm">looks_two</span>
-                                <span>Halaman 2: Logistik &amp; Varian</span>
-                            </button>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="overflow-y-auto flex-1 pr-1 space-y-4">
-                            {guideModalTab === 'flowchart' && (
-                                <div className="space-y-4">
-                                    <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between gap-3 flex-wrap">
-                                        <div className="flex items-center gap-2">
-                                            <span className="material-icons text-emerald-600 text-base">info</span>
-                                            <span><strong>Diagram Flowchart Lengkap:</strong> Menjelaskan urutan langkah dari 01 hingga 08 secara terstruktur.</span>
-                                        </div>
-                                        <a
-                                            href="/images/guide/alur_tambah_produk_seller.svg"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-700 transition flex items-center gap-1"
-                                        >
-                                            <span className="material-icons text-[13px]">zoom_in</span>
-                                            <span>Buka Gambar Asli Resolusi Penuh</span>
-                                        </a>
-                                    </div>
-
-                                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-slate-50 shadow-inner flex justify-center p-2">
-                                        <img
-                                            src="/images/guide/alur_tambah_produk_seller.svg"
-                                            alt="Diagram Alur Lengkap Tambah Produk Seller"
-                                            className="w-full max-w-4xl h-auto rounded-xl shadow-xs"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {guideModalTab === 'page1' && (
-                                <div className="space-y-4 text-xs">
-                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2">
-                                        <h4 className="font-black text-emerald-950 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white text-[10px] flex items-center justify-center">1</span>
-                                            Langkah 01: Buka Dashboard Seller &amp; Tombol &quot;+ Tambah Produk&quot;
-                                        </h4>
-                                        <p className="text-emerald-800">
-                                            Akses menu <strong>Dashboard &gt; Sinergy / Seller Produk</strong>. Pada toolbar atas, klik tombol hijau bertuliskan <strong>&quot;+ Tambah Produk&quot;</strong>. Di sampingnya terdapat counter <strong>Pesanan Masuk</strong> dan tombol <strong>Buat Voucher</strong>.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white text-[10px] flex items-center justify-center">2</span>
-                                            Langkah 02: Mengisi Identitas Dasar Produk
-                                        </h4>
-                                        <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                            <li><strong>Nama Produk</strong>: Gunakan format [Kategori] + [Nama Merk] + [Ukuran/Varian] (Contoh: <em>Madu Hutan Asli Sumbawa 500ml</em>).</li>
-                                            <li><strong>Kategori</strong>: Pilih kategori dari daftar autocomplete atau ketik kategori baru.</li>
-                                            <li><strong>Satuan Unit</strong>: Pilih unit yang tepat (pcs, buku, kg, botol, dus, lusin, dll).</li>
-                                            <li><strong>Berat (gram)</strong>: Bobot produk dalam gram (contoh: 500 g) untuk kalkulasi tarif ongkir kurir.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white text-[10px] flex items-center justify-center">3</span>
-                                            Langkah 03: Skema Harga &amp; Stok
-                                        </h4>
-                                        <p className="text-gray-700 leading-relaxed">
-                                            • <strong>Harga Beli Dasar (HPP)</strong>: Modal pokok Anda (catatan internal pribadi).<br />
-                                            • <strong>Harga Jual (Rp)</strong>: Harga yang dibayar pembeli. Jika Anda menggunakan varian di bawahnya, kolom ini otomatis mengadopsi harga varian terendah.<br />
-                                            • <strong>Stok Gudang</strong>: Jumlah persediaan barang. Otomatis menjumlahkan total seluruh stok varian jika ada.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white text-[10px] flex items-center justify-center">4</span>
-                                            Langkah 04: Deskripsi Produk (Rich Text Editor)
-                                        </h4>
-                                        <p className="text-gray-700 leading-relaxed">
-                                            Gunakan editor <strong>CKEditor</strong> untuk memformat teks: <strong>Bold</strong> untuk garansi keaslian, <strong>Bullets</strong> untuk rincian manfaat/isi paket, dan <strong>Heading</strong> untuk memisahkan bab informasi.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {guideModalTab === 'page2' && (
-                                <div className="space-y-4 text-xs">
-                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2">
-                                        <h4 className="font-black text-emerald-950 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-teal-700 text-white text-[10px] flex items-center justify-center">5</span>
-                                            Langkah 05: Sistem Pengiriman, COD &amp; Ongkir Flat Toko
-                                        </h4>
-                                        <p className="text-emerald-800 leading-relaxed">
-                                            • <strong>Fitur Ongkir Flat Toko</strong>: Aktifkan sakelar switch dan masukkan tarif flat (misal Rp 10.000). Jika pembeli memesan lebih dari 1 barang di toko Anda sekaligus, ongkir <strong>disamakan dan tidak berlipat ganda</strong>.<br />
-                                            • <strong>Fitur COD (Bayar di Tempat)</strong>: Aktifkan sakelar jika Anda menerima pembayaran tunai saat kurir tiba di alamat pelanggan.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-teal-700 text-white text-[10px] flex items-center justify-center">6</span>
-                                            Langkah 06: Unggah Foto Utama (Thumbnail) &amp; Galeri Carousel
-                                        </h4>
-                                        <p className="text-gray-700 leading-relaxed">
-                                            • <strong>Foto Utama</strong>: Format .jpg / .jpeg, rasio 1:1 persegi atau vertikal jernih.<br />
-                                            • <strong>Galeri Carousel</strong>: Pilih hingga 5 foto .jpg untuk menampilkan produk dari berbagai sudut pandang (detail jahitan, kemasan, buku isi, dsb).
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-teal-700 text-white text-[10px] flex items-center justify-center">7</span>
-                                            Langkah 07: Tabel Varian Produk Dinamis
-                                        </h4>
-                                        <p className="text-gray-700 leading-relaxed">
-                                            Klik tombol <strong>&quot;+ Varian&quot;</strong>. Isi <strong>Nama Varian</strong> (contoh: Ukuran XL / Merah), <strong>Harga Varian</strong> (Harga Total final yang dibayar pembeli), dan <strong>Stok Varian</strong>. Sistem otomatis mensinkronkan harga dan total stok ke form utama.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                                        <h4 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
-                                            <span className="w-5 h-5 rounded-full bg-teal-700 text-white text-[10px] flex items-center justify-center">8</span>
-                                            Langkah 08: Simpan &amp; Fitur Pasca-Tayang
-                                        </h4>
-                                        <p className="text-gray-700 leading-relaxed">
-                                            Klik tombol hijau <strong>&quot;Simpan Produk&quot;</strong>. Produk Anda <strong>langsung tayang resmi</strong> di etalase katalog publik tanpa menunggu moderasi admin! Setelah tayang, Anda dapat mengklik tombol <strong>Edit</strong>, memasang diskon coret di tombol <strong>Promo</strong>, mengalihkan ke seller lain di tombol <strong>Pindah Kepemilikan</strong>, atau membuat kupon di menu <strong>Buat Voucher</strong>.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-3 mt-4 flex-wrap">
-                            <span className="text-xs text-gray-400">
-                                💡 Diagram ini dapat diakses kapan saja melalui tombol &quot;Alur &amp; Panduan Produk&quot;.
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setIsGuideModalOpen(false)}
-                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition cursor-pointer shadow-sm"
-                            >
-                                Tutup &amp; Lanjut Buat Produk
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
