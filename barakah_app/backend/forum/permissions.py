@@ -21,3 +21,13 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
         is_author = obj.author == user
         
         return is_admin or is_author
+
+class IsAdminUserOrRole(permissions.BasePermission):
+    """
+    Allows access only to admin/staff users (checking role, is_staff, is_superuser).
+    """
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return getattr(user, 'role', '') == 'admin' or user.is_staff or user.is_superuser

@@ -79,6 +79,7 @@ const ForumMainPage = () => {
             setShowForm(false);
             setNewThread({ title: '', content: '', image: null });
             fetchThreads();
+            alert('Diskusi Anda berhasil dibuat! Diskusi akan ditinjau oleh Admin terlebih dahulu sebelum tayang ke publik.');
         } catch (error) {
             console.error('Failed to create thread', error);
             alert('Gagal membuat thread');
@@ -300,6 +301,15 @@ const ForumMainPage = () => {
                                         <p className="text-xs text-gray-500">{formatDate(thread.created_at)}</p>
                                     </div>
                                 </div>
+
+                                {!thread.is_approved && (
+                                    <div className="mb-2">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-200">
+                                            <span className="material-icons text-[11px]">schedule</span>
+                                            Menunggu Persetujuan Admin
+                                        </span>
+                                    </div>
+                                )}
 
                                 <h3 className="text-md md:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                                     {thread.title}

@@ -19,6 +19,9 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 class ReplySerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    thread_title = serializers.CharField(source='thread.title', read_only=True)
+    thread_slug = serializers.CharField(source='thread.slug', read_only=True)
     is_expert = serializers.BooleanField(read_only=True)
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
@@ -26,16 +29,25 @@ class ReplySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reply
-        fields = ['id', 'thread', 'author', 'content', 'parent', 'created_at', 'updated_at', 'is_expert', 'likes_count', 'is_liked', 'children']
-        read_only_fields = ['thread', 'author']
+        fields = [
+            'id', 'thread', 'thread_title', 'thread_slug', 'author', 'author_username',
+            'content', 'parent', 'status', 'is_approved', 'is_spam', 'spam_reason', 'created_at', 'updated_at',
+            'is_expert', 'likes_count', 'is_liked', 'children'
+        ]
+        read_only_fields = ['thread', 'author', 'status', 'is_approved', 'is_spam', 'spam_reason']
 
     def get_children(self, obj):
         # Recursively get children replies
-        if obj.children.exists():
-            # In purely recursive trees this can hit the DB hard, 
-            # ideally we just grab top level and let the frontend flatten, or limit breadth.
-            from .serializers import ReplySerializer
-            return ReplySerializer(obj.children.all(), many=True).data
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+        is_admin = user and (user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser)
+
+        qs = obj.children.all()
+        if not is_admin:
+            qs = qs.filter(is_approved=True, is_spam=False)
+
+        if qs.exists():
+            return ReplySerializer(qs, many=True, context=self.context).data
         return []
 
     def get_likes_count(self, obj):
@@ -49,17 +61,25 @@ class ReplySerializer(serializers.ModelSerializer):
 
 class ThreadSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
     replies_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Thread
-        fields = ['id', 'title', 'slug', 'content', 'author', 'image', 'views', 'created_at', 'updated_at', 'replies_count', 'likes_count', 'is_liked']
-        read_only_fields = ['author', 'slug', 'views']
+        fields = [
+            'id', 'title', 'slug', 'content', 'author', 'author_username',
+            'image', 'views', 'status', 'is_approved', 'created_at', 'updated_at',
+            'replies_count', 'likes_count', 'is_liked'
+        ]
+        read_only_fields = ['author', 'slug', 'views', 'status', 'is_approved']
 
     def get_replies_count(self, obj):
-        return obj.replies.count()
+        request = self.context.get('request')
+        if request and (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+            return obj.replies.count()
+        return obj.replies.filter(is_approved=True).count()
 
     def get_likes_count(self, obj):
         return obj.likes.count()
@@ -77,12 +97,15 @@ class ThreadDetailSerializer(ThreadSerializer):
         fields = ThreadSerializer.Meta.fields + ['replies']
 
     def get_replies(self, obj):
-        # Get only top-level replies, order by is_expert then related created_at
-        # Since is_expert is a property and not a database field, sorting in db by it is tricky.
-        # Let's fetch the top level, and sort in memory for now.
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+        is_admin = user and (user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser)
+
         replies = obj.replies.filter(parent__isnull=True).select_related('author')
+        if not is_admin:
+            replies = replies.filter(is_approved=True, is_spam=False)
         sorted_replies = sorted(replies, key=lambda r: (not r.is_expert, r.created_at))
-        return ReplySerializer(sorted_replies, many=True).data
+        return ReplySerializer(sorted_replies, many=True, context=self.context).data
 
 class MentionNotificationSerializer(serializers.ModelSerializer):
     sender_name = serializers.CharField(source='sender.username', read_only=True)

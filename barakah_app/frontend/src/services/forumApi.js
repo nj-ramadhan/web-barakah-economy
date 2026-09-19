@@ -20,4 +20,19 @@ export const forumApi = {
     markNotificationRead: (id) => api.post(`${API_ROOT}/notifications/${id}/mark_read/`, {}),
     likeThread: (slug) => api.post(`${API_ROOT}/threads/${slug}/like/`, {}),
     likeReply: (id) => api.post(`${API_ROOT}/replies/${id}/like/`, {}),
+
+    // Admin Moderation APIs
+    getAdminThreads: (params = {}) => api.get(`${API_ROOT}/threads/`, { params }),
+    getAdminReplies: (params = {}) => api.get(`${API_ROOT}/replies/`, { params }),
+    approveThread: (slug) => api.post(`${API_ROOT}/threads/${slug}/approve/`, {}),
+    rejectThread: (slug) => api.post(`${API_ROOT}/threads/${slug}/reject/`, {}),
+    bulkApproveThreads: (ids = [], slugs = []) => api.post(`${API_ROOT}/threads/bulk_approve/`, { ids, slugs }),
+    bulkRejectThreads: (ids = [], slugs = []) => api.post(`${API_ROOT}/threads/bulk_reject/`, { ids, slugs }),
+    bulkDeleteThreads: (ids = [], slugs = []) => api.post(`${API_ROOT}/threads/bulk_delete/`, { ids, slugs }),
+
+    approveReply: (id) => api.post(`${API_ROOT}/replies/${id}/approve/`, {}),
+    rejectReply: (id) => api.post(`${API_ROOT}/replies/${id}/reject/`, {}),
+    bulkApproveReplies: (ids = []) => api.post(`${API_ROOT}/replies/bulk_approve/`, { ids }),
+    bulkRejectReplies: (ids = []) => api.post(`${API_ROOT}/replies/bulk_reject/`, { ids }),
+    bulkDeleteReplies: (ids = []) => api.post(`${API_ROOT}/replies/bulk_delete/`, { ids }),
 };

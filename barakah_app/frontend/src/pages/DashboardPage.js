@@ -976,8 +976,9 @@ const DashboardPage = () => {
                                     to: '/dashboard/admin/forum',
                                     icon: 'forum',
                                     color: 'cyan',
-                                    title: 'Manajemen Forum',
-                                    desc: 'Moderasi diskusi dan balasan postingan (Admin)'
+                                    title: 'Moderasi Forum',
+                                    desc: 'Persetujuan dan moderasi postingan diskusi & balasan (Admin)',
+                                    badge: managementStats.forum
                                 },
                                 {
                                     id: 'live_meet',

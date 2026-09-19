@@ -207,7 +207,7 @@ const ForumThreadDetail = () => {
         if (!replyContent.trim()) return;
 
         try {
-            await forumApi.replyToThread({
+            const res = await forumApi.replyToThread({
                 thread: thread.id,
                 content: replyContent,
                 parent: replyingTo
@@ -215,9 +215,13 @@ const ForumThreadDetail = () => {
             setReplyContent('');
             setReplyingTo(null);
             fetchThread(); // Refresh thread
+            
+            if (res.data?.is_spam) {
+                alert('Peringatan: Balasan Anda terdeteksi mengandung spam atau kata kunci promosi terlarang dan telah disembunyikan otomatis oleh sistem.');
+            }
         } catch (error) {
             console.error('Failed to submit reply', error);
-            alert('Gagal membalas');
+            alert('Gagal mengirim balasan. Silakan coba lagi.');
         }
     };
 
@@ -430,6 +434,16 @@ const ForumThreadDetail = () => {
                                 </button>
                             )}
                         </div>
+
+                        {!thread.is_approved && (
+                            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-900 text-xs font-bold shadow-2xs">
+                                <span className="material-icons text-amber-600 text-xl">schedule</span>
+                                <div>
+                                    <p className="text-amber-950 font-black">Status: Menunggu Persetujuan Admin</p>
+                                    <p className="text-amber-800 text-[11px] font-normal mt-0.5">Diskusi ini belum tayang untuk publik dan hanya dapat dilihat oleh Anda dan Admin pengelola.</p>
+                                </div>
+                            </div>
+                        )}
 
                         <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-6 leading-tight">
                             {thread.title}

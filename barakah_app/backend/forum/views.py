@@ -9,7 +9,8 @@ import re
 from accounts.models import User
 from .models import Thread, Reply, MentionNotification
 from .serializers import ThreadSerializer, ThreadDetailSerializer, ReplySerializer, MentionNotificationSerializer
-from .permissions import IsAuthorOrAdminOrReadOnly
+from .permissions import IsAuthorOrAdminOrReadOnly, IsAdminUserOrRole
+from .spam_detector import check_spam
 
 def process_mentions(content, sender, thread_slug, thread_title):
     usernames = re.findall(r'@(\w+)', content)
@@ -31,7 +32,26 @@ class ThreadViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     
     def get_queryset(self):
-        return Thread.objects.all()
+        user = self.request.user
+        is_admin = user.is_authenticated and (user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser)
+
+        if is_admin:
+            qs = Thread.objects.all().select_related('author')
+            status_param = self.request.query_params.get('status')
+            if status_param in ['pending', 'approved', 'rejected']:
+                qs = qs.filter(status=status_param)
+            search_param = self.request.query_params.get('search')
+            if search_param:
+                qs = qs.filter(
+                    Q(title__icontains=search_param) |
+                    Q(content__icontains=search_param) |
+                    Q(author__username__icontains=search_param)
+                )
+            return qs
+
+        if user.is_authenticated:
+            return Thread.objects.filter(Q(is_approved=True) | Q(author=user)).select_related('author')
+        return Thread.objects.filter(is_approved=True).select_related('author')
 
     def get_serializer_class(self):
         if self.action in ['retrieve']:
@@ -39,8 +59,13 @@ class ThreadViewSet(viewsets.ModelViewSet):
         return ThreadSerializer
 
     def perform_create(self, serializer):
-        instance = serializer.save(author=self.request.user)
-        process_mentions(instance.content, self.request.user, instance.slug, instance.title)
+        user = self.request.user
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser
+        if is_admin:
+            instance = serializer.save(author=user, status='approved', is_approved=True)
+        else:
+            instance = serializer.save(author=user, status='pending', is_approved=False)
+        process_mentions(instance.content, user, instance.slug, instance.title)
 
     def perform_update(self, serializer):
         instance = serializer.save()
@@ -52,6 +77,53 @@ class ThreadViewSet(viewsets.ModelViewSet):
         instance.save(update_fields=['views'])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def approve(self, request, slug=None):
+        thread = self.get_object()
+        thread.status = 'approved'
+        thread.is_approved = True
+        thread.save(update_fields=['status', 'is_approved'])
+        return Response({'status': 'approved', 'message': f'Diskusi "{thread.title}" berhasil disetujui.'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def reject(self, request, slug=None):
+        thread = self.get_object()
+        thread.status = 'rejected'
+        thread.is_approved = False
+        thread.save(update_fields=['status', 'is_approved'])
+        return Response({'status': 'rejected', 'message': f'Diskusi "{thread.title}" berhasil ditolak.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_approve(self, request):
+        ids = request.data.get('ids', [])
+        slugs = request.data.get('slugs', [])
+        if not ids and not slugs:
+            return Response({'error': 'Tidak ada thread yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        qs = Thread.objects.filter(Q(id__in=ids) | Q(slug__in=slugs))
+        count = qs.update(status='approved', is_approved=True)
+        return Response({'status': 'success', 'updated_count': count, 'message': f'{count} diskusi berhasil disetujui.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_reject(self, request):
+        ids = request.data.get('ids', [])
+        slugs = request.data.get('slugs', [])
+        if not ids and not slugs:
+            return Response({'error': 'Tidak ada thread yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        qs = Thread.objects.filter(Q(id__in=ids) | Q(slug__in=slugs))
+        count = qs.update(status='rejected', is_approved=False)
+        return Response({'status': 'success', 'updated_count': count, 'message': f'{count} diskusi berhasil ditolak.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_delete(self, request):
+        ids = request.data.get('ids', [])
+        slugs = request.data.get('slugs', [])
+        if not ids and not slugs:
+            return Response({'error': 'Tidak ada thread yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        qs = Thread.objects.filter(Q(id__in=ids) | Q(slug__in=slugs))
+        count = qs.count()
+        qs.delete()
+        return Response({'status': 'success', 'deleted_count': count, 'message': f'{count} diskusi berhasil dihapus massal.'})
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, slug=None):
@@ -74,7 +146,45 @@ class ReplyViewSet(viewsets.ModelViewSet):
     serializer_class = ReplySerializer
     
     def get_queryset(self):
-        return Reply.objects.all()
+        user = self.request.user
+        is_admin = user.is_authenticated and (user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser)
+
+        if is_admin:
+            qs = Reply.objects.all().select_related('author', 'thread')
+            status_param = self.request.query_params.get('status')
+            if status_param in ['pending', 'approved', 'rejected', 'spam']:
+                qs = qs.filter(status=status_param)
+            
+            is_spam_param = self.request.query_params.get('is_spam')
+            if is_spam_param in ['true', '1']:
+                qs = qs.filter(is_spam=True)
+
+            thread_slug = self.request.query_params.get('thread_slug')
+            if thread_slug:
+                qs = qs.filter(thread__slug=thread_slug)
+            search_param = self.request.query_params.get('search')
+            if search_param:
+                qs = qs.filter(
+                    Q(content__icontains=search_param) |
+                    Q(author__username__icontains=search_param) |
+                    Q(thread__title__icontains=search_param) |
+                    Q(spam_reason__icontains=search_param)
+                )
+            return qs
+
+        return Reply.objects.filter(is_approved=True, is_spam=False).select_related('author', 'thread')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        if data.get('is_spam'):
+            data['message'] = 'Balasan Anda terdeteksi mengandung spam/promosi dan disembunyikan otomatis.'
+        else:
+            data['message'] = 'Balasan berhasil dikirim.'
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         thread_id = self.request.data.get('thread')
@@ -85,12 +195,83 @@ class ReplyViewSet(viewsets.ModelViewSet):
         if parent_id:
             parent = get_object_or_404(Reply, id=parent_id)
             
-        instance = serializer.save(author=self.request.user, thread=thread, parent=parent)
-        process_mentions(instance.content, self.request.user, thread.slug, thread.title)
+        user = self.request.user
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin' or user.is_superuser
+        raw_content = serializer.validated_data.get('content', '') or self.request.data.get('content', '')
+
+        if is_admin:
+            instance = serializer.save(author=user, thread=thread, parent=parent, status='approved', is_approved=True, is_spam=False)
+        else:
+            is_spam, reason = check_spam(raw_content, user=user, thread=thread)
+            if is_spam:
+                instance = serializer.save(
+                    author=user,
+                    thread=thread,
+                    parent=parent,
+                    status='spam',
+                    is_approved=False,
+                    is_spam=True,
+                    spam_reason=reason
+                )
+            else:
+                instance = serializer.save(
+                    author=user,
+                    thread=thread,
+                    parent=parent,
+                    status='approved',
+                    is_approved=True,
+                    is_spam=False
+                )
+
+        if instance.is_approved and not instance.is_spam:
+            process_mentions(instance.content, user, thread.slug, thread.title)
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        process_mentions(instance.content, self.request.user, instance.thread.slug, instance.thread.title)
+        if instance.is_approved and not instance.is_spam:
+            process_mentions(instance.content, self.request.user, instance.thread.slug, instance.thread.title)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def approve(self, request, pk=None):
+        reply = self.get_object()
+        reply.status = 'approved'
+        reply.is_approved = True
+        reply.save(update_fields=['status', 'is_approved'])
+        return Response({'status': 'approved', 'message': 'Balasan berhasil disetujui.'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def reject(self, request, pk=None):
+        reply = self.get_object()
+        reply.status = 'rejected'
+        reply.is_approved = False
+        reply.save(update_fields=['status', 'is_approved'])
+        return Response({'status': 'rejected', 'message': 'Balasan berhasil ditolak.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_approve(self, request):
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'error': 'Tidak ada balasan yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        count = Reply.objects.filter(id__in=ids).update(status='approved', is_approved=True)
+        return Response({'status': 'success', 'updated_count': count, 'message': f'{count} balasan berhasil disetujui.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_reject(self, request):
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'error': 'Tidak ada balasan yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        count = Reply.objects.filter(id__in=ids).update(status='rejected', is_approved=False)
+        return Response({'status': 'success', 'updated_count': count, 'message': f'{count} balasan berhasil ditolak.'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUserOrRole])
+    def bulk_delete(self, request):
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'error': 'Tidak ada balasan yang dipilih.'}, status=status.HTTP_400_BAD_REQUEST)
+        qs = Reply.objects.filter(id__in=ids)
+        count = qs.count()
+        qs.delete()
+        return Response({'status': 'success', 'deleted_count': count, 'message': f'{count} balasan berhasil dihapus massal.'})
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, pk=None):

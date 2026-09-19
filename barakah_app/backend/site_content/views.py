@@ -197,6 +197,7 @@ from digital_products.models import WithdrawalRequest
 from events.models import Event
 from donations.models import Donation
 from meetings.models import Meeting
+from forum.models import Thread
 
 class ManagementStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -210,6 +211,7 @@ class ManagementStatsView(APIView):
             'testimonials': Testimonial.objects.filter(is_approved=False).count(),
             'admin_events': Event.objects.filter(status='pending').count(),
             'pending_donations': Donation.objects.filter(payment_status='pending').count(),
+            'forum': Thread.objects.filter(is_approved=False).count(),
         }
         return Response(stats)
 
