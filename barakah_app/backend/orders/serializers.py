@@ -10,19 +10,32 @@ class StoreCourierSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
+    product_slug = serializers.CharField(source='product.slug', read_only=True)
     variation_name = serializers.CharField(source='variation.name', read_only=True)
     product_image = serializers.SerializerMethodField(read_only=True)
     purchase_instructions = serializers.CharField(source='product.purchase_instructions', read_only=True)
+    has_reviewed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions']
+        fields = ['id', 'product', 'product_name', 'product_slug', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions', 'has_reviewed']
 
     def get_product_image(self, obj):
-        if obj.product.thumbnail:
+        if obj.product and obj.product.thumbnail:
             # Construct full URL if needed, or just relative
             return obj.product.thumbnail.url
         return None
+
+    def get_has_reviewed(self, obj):
+        try:
+            request = self.context.get('request')
+            user = request.user if request and request.user.is_authenticated else getattr(obj.order, 'user', None)
+            if not user or not obj.product:
+                return False
+            from products.models import Testimoni
+            return Testimoni.objects.filter(product=obj.product, user=user).exclude(description='').exists()
+        except Exception:
+            return False
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

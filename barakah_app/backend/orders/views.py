@@ -53,50 +53,74 @@ def sync_order_chat_message(order, text, message_type='order_update', metadata=N
 
 def perform_order_maintenance():
     """
-    1. Auto-complete orders older than 5 days shipped (auto_complete_at <= now or shipped_at <= now - 5 days),
-       and automatically insert 5-star review/testimoni without notes if buyer hasn't given one.
+    1. Auto-complete shipped orders:
+       - If delivery_date is set and delivery_date <= today (tanggal pengiriman sudah lewat atau hari ini)
+       - If auto_complete_at is set and auto_complete_at <= now
+       - If shipped_at is set and (shipped_at + timedelta(days=est_days) <= now or shipped_at <= cutoff_3days)
+       - Fallback for orders with null shipped_at & delivery_date: (updated_at or created_at) <= cutoff_3days
     2. Auto-cancel pending orders older than 48 hours (2x24 jam), restore stock, and refund if paid.
     """
     now = timezone.now()
+    today = timezone.localdate()
     try:
         from products.models import Testimoni
         from reviews.models import Review
         from django.db.models import Q
 
-        # 1. Auto-complete shipped orders older than 5 days
-        cutoff_5days = now - timedelta(days=5)
-        shipped_orders = Order.objects.filter(status='Dikirim').filter(
-            Q(auto_complete_at__lte=now) | (Q(auto_complete_at__isnull=True) & Q(shipped_at__lte=cutoff_5days))
+        # 1. Auto-complete shipped orders
+        cutoff_3days = now - timedelta(days=3)
+        shipped_orders = Order.objects.filter(
+            status__in=['Dikirim', 'dikirim', 'shipped', 'Shipped']
         )
 
         for ord_obj in shipped_orders:
-            ord_obj.status = 'Selesai'
-            ord_obj.completed_at = now
-            ord_obj.save(update_fields=['status', 'completed_at'])
+            should_complete = False
 
-            # Automatically create 5-star review without note for each product in order if not reviewed yet
-            buyer = ord_obj.user
-            customer_name = getattr(buyer.profile, 'name_full', None) or buyer.username if hasattr(buyer, 'profile') else buyer.username
+            # Check 1: Tanggal pengiriman kurir toko sudah lewat atau hari ini
+            if ord_obj.delivery_date and ord_obj.delivery_date <= today:
+                should_complete = True
+            # Check 2: Batas waktu auto_complete_at tercapai
+            elif ord_obj.auto_complete_at and ord_obj.auto_complete_at <= now:
+                should_complete = True
+            # Check 3: shipped_at + estimated_delivery_days (default 3 hari)
+            elif ord_obj.shipped_at:
+                est_days = ord_obj.estimated_delivery_days or 3
+                if (ord_obj.shipped_at + timedelta(days=est_days) <= now) or (ord_obj.shipped_at <= cutoff_3days):
+                    should_complete = True
+            # Check 4: Fallback untuk pesanan lama tanpa shipped_at & delivery_date yang sudah lewat >= 3 hari
+            else:
+                ref_time = ord_obj.updated_at or ord_obj.created_at
+                if ref_time and (ref_time <= cutoff_3days or ref_time.date() + timedelta(days=3) <= today):
+                    should_complete = True
 
-            for item in ord_obj.items.all():
-                prod = item.product
-                if prod and buyer:
-                    if not Testimoni.objects.filter(product=prod, user=buyer).exists():
-                        Testimoni.objects.create(
-                            product=prod,
-                            user=buyer,
-                            customer=customer_name,
-                            stars=5,
-                            description='',
-                            is_admin_entry=False
-                        )
-                    if not Review.objects.filter(product=prod, user=buyer).exists():
-                        Review.objects.create(
-                            product=prod,
-                            user=buyer,
-                            rating=5,
-                            comment=''
-                        )
+            if should_complete:
+                ord_obj.status = 'Selesai'
+                ord_obj.completed_at = now
+                ord_obj.save(update_fields=['status', 'completed_at'])
+
+                # Automatically create 5-star review without note for each product in order if not reviewed yet
+                buyer = ord_obj.user
+                if buyer:
+                    customer_name = getattr(buyer.profile, 'name_full', None) or buyer.username if hasattr(buyer, 'profile') else buyer.username
+                    for item in ord_obj.items.all():
+                        prod = item.product
+                        if prod:
+                            if not Testimoni.objects.filter(product=prod, user=buyer).exists():
+                                Testimoni.objects.create(
+                                    product=prod,
+                                    user=buyer,
+                                    customer=customer_name,
+                                    stars=5,
+                                    description='',
+                                    is_admin_entry=False
+                                )
+                            if not Review.objects.filter(product=prod, user=buyer).exists():
+                                Review.objects.create(
+                                    product=prod,
+                                    user=buyer,
+                                    rating=5,
+                                    comment=''
+                                )
 
         # 2. Auto-cancel pending orders older than 48 hours
         deadline_48h = now - timedelta(hours=48)
@@ -621,8 +645,9 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
         # Buyer setting 'Selesai' or 'Komplain'
         if is_buyer and not is_seller:
-            if new_status in ['Selesai', 'Komplain']:
-                if instance.status not in ['Dikirim', 'shipped', 'Proses']:
+            if new_status and new_status.lower() in ['selesai', 'komplain']:
+                current_st = (instance.status or '').lower()
+                if current_st not in ['dikirim', 'shipped', 'proses', 'processing']:
                     return Response(
                         {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah dikirim atau diproses.'},
                         status=status.HTTP_400_BAD_REQUEST
@@ -633,10 +658,10 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
 
-        # Seller cannot manually set status to 'Selesai' (only buyer or 5-day auto-complete system)
-        if is_seller and not is_buyer and not user.is_superuser and new_status == 'Selesai':
+        # Seller cannot manually set status to 'Selesai' (only buyer or auto-complete system)
+        if is_seller and not is_buyer and not user.is_superuser and new_status and new_status.lower() == 'selesai':
             return Response(
-                {'error': 'Penjual tidak dapat mengubah status menjadi Selesai. Pesanan hanya dapat diselesaikan oleh pembeli atau otomatis oleh sistem setelah 5 hari pengiriman.'},
+                {'error': 'Penjual tidak dapat mengubah status menjadi Selesai. Pesanan hanya dapat diselesaikan oleh pembeli atau otomatis oleh sistem jika sudah melewati batas waktu pengiriman.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -694,6 +719,27 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         if response.status_code in [200, 201]:
             try:
                 instance.refresh_from_db()
+                new_st = (instance.status or '').capitalize()
+
+                # Ensure timestamps are persisted in database
+                extra_fields_to_save = []
+                if new_st == 'Dikirim':
+                    if not instance.shipped_at:
+                        instance.shipped_at = timezone.now()
+                        extra_fields_to_save.append('shipped_at')
+                    if not instance.auto_complete_at:
+                        est_days = instance.estimated_delivery_days or 3
+                        instance.auto_complete_at = instance.shipped_at + timedelta(days=est_days)
+                        extra_fields_to_save.append('auto_complete_at')
+                elif new_st == 'Selesai' and not instance.completed_at:
+                    instance.completed_at = timezone.now()
+                    extra_fields_to_save.append('completed_at')
+                elif new_st == 'Komplain' and not instance.complaint_at:
+                    instance.complaint_at = timezone.now()
+                    extra_fields_to_save.append('complaint_at')
+
+                if extra_fields_to_save:
+                    instance.save(update_fields=extra_fields_to_save)
                 new_st = (instance.status or '').capitalize()
                 # Auto send notification when shipped or when delivery details are updated for a shipped order
                 if new_st == 'Dikirim' and (old_status != 'Dikirim' or 'resi_number' in request.data or 'driver_name' in request.data or 'driver_phone' in request.data or 'delivery_date' in request.data or 'cod_amount_to_pay' in request.data):

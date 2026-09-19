@@ -208,6 +208,7 @@ const DashboardSinergySellerOrdersPage = () => {
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
     const [localShippingType, setLocalShippingType] = useState({});
+    const [localShippingCourier, setLocalShippingCourier] = useState({});
     const [localResi, setLocalResi] = useState({});
     const [localDriverName, setLocalDriverName] = useState({});
     const [localDriverPhone, setLocalDriverPhone] = useState({});
@@ -1136,6 +1137,7 @@ ${stopsText}
         
         const order = orders.find(o => o.id === orderId);
         const shippingTypeToSave = localShippingType[orderId] !== undefined ? localShippingType[orderId] : (order?.shipping_type || 'ekspedisi');
+        const shippingCourierToSave = localShippingCourier[orderId] !== undefined ? localShippingCourier[orderId] : (order?.shipping_courier || '');
         const resiToSave = localResi[orderId] !== undefined ? localResi[orderId] : (order?.resi_number || '');
         const driverNameToSave = localDriverName[orderId] !== undefined ? localDriverName[orderId] : (order?.driver_name || '');
         const driverPhoneToSave = localDriverPhone[orderId] !== undefined ? localDriverPhone[orderId] : (order?.driver_phone || '');
@@ -1152,6 +1154,7 @@ ${stopsText}
                 { 
                     status: newStatus,
                     shipping_type: shippingTypeToSave,
+                    shipping_courier: shippingCourierToSave,
                     resi_number: resiToSave,
                     driver_name: driverNameToSave,
                     driver_phone: driverPhoneToSave,
@@ -1167,6 +1170,7 @@ ${stopsText}
                 ...o, 
                 status: newStatus, 
                 shipping_type: shippingTypeToSave,
+                shipping_courier: shippingCourierToSave,
                 resi_number: resiToSave, 
                 driver_name: driverNameToSave,
                 driver_phone: driverPhoneToSave,
@@ -1240,18 +1244,52 @@ ${stopsText}
                         <div className="flex items-center justify-between text-[10px]">
                             <label className="font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
                                 <span className="material-icons text-xs text-indigo-600">local_shipping</span>
-                                No. Resi Kurir
+                                Pilihan Ekspedisi &amp; Nomor Resi
                             </label>
-                            <span className="text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
+                            <span className="text-[10px] bg-indigo-200 text-indigo-900 font-bold px-2 py-0.5 rounded-full">
+                                {localShippingCourier[order.id] || order.shipping_courier || 'Ekspedisi Logistik'}
+                            </span>
                         </div>
-                        <input 
-                            type="text"
-                            placeholder="Masukkan No. Resi Kurir..."
-                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                            disabled={updatingId === order.id}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                        />
+
+                        <div className="space-y-2">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-600 block mb-1">Nama Ekspedisi / Kurir:</label>
+                                <input 
+                                    type="text"
+                                    list={`couriers-list-${order.id}`}
+                                    placeholder="Pilih atau ketik nama ekspedisi (cth: JNE, J&T, SiCepat)..."
+                                    value={localShippingCourier[order.id] !== undefined ? localShippingCourier[order.id] : (order.shipping_courier || '')}
+                                    onChange={(e) => setLocalShippingCourier({ ...localShippingCourier, [order.id]: e.target.value })}
+                                    disabled={updatingId === order.id}
+                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                />
+                                <datalist id={`couriers-list-${order.id}`}>
+                                    <option value="JNE" />
+                                    <option value="J&T Express" />
+                                    <option value="SiCepat" />
+                                    <option value="Anteraja" />
+                                    <option value="Pos Indonesia" />
+                                    <option value="Ninja Xpress" />
+                                    <option value="Lion Parcel" />
+                                    <option value="ID Express" />
+                                    <option value="TIKI" />
+                                    <option value="Wahana" />
+                                    <option value="Shopee Xpress (SPX)" />
+                                </datalist>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-600 block mb-1">Nomor Resi Pelacakan:</label>
+                                <input 
+                                    type="text"
+                                    placeholder="Masukkan No. Resi Pengiriman..."
+                                    value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                    onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                    disabled={updatingId === order.id}
+                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition font-mono"
+                                />
+                            </div>
+                        </div>
                         <div className="flex items-center justify-between pt-0.5">
                             <span className="text-[11px] text-gray-600 font-medium flex items-center gap-1">
                                 <span className="material-icons text-xs text-indigo-500">schedule</span>

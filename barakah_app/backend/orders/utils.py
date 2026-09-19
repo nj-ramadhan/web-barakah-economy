@@ -380,11 +380,17 @@ Tautan Chat WhatsApp  : {wa_link_str}
 {jadwal_line}
 Metode Pengantaran    : Diantar Langsung oleh Toko (Kurir Pribadi)"""
         else:
-            subject = f"[Barakah Economy] Pesanan #{order.order_number} Telah Dikirim ({order.shipping_courier or 'Ekspedisi'}) 🚚"
+            courier_name = order.shipping_courier or 'Ekspedisi Logistik'
+            resi_num = order.resi_number or 'Sedang diperbarui oleh penjual'
+            tracking_url = f"https://cekresi.com/?noresi={order.resi_number}" if order.resi_number else confirmation_link
+
+            subject = f"[Barakah Economy] Pesanan #{order.order_number} Telah Dikirim via {courier_name} 🚚"
             shipping_section = f"""=== INFORMASI PENGIRIMAN (EKSPEDISI) ===
-Ekspedisi / Kurir    : {order.shipping_courier or 'Ekspedisi'}
-Nomor Resi Pelacakan : {order.resi_number or 'Sedang diperbarui oleh penjual'}
-Estimasi Pengiriman  : {order.estimated_delivery_days or 3} Hari"""
+Ekspedisi / Kurir    : {courier_name}{f' ({order.shipping_service})' if order.shipping_service else ''}
+Nomor Resi Pelacakan : {resi_num}
+Tautan Cek Resi      : {tracking_url}
+Estimasi Pengiriman  : {order.estimated_delivery_days or 3} Hari
+Tips Pelacakan       : Lacak nomor resi di situs resmi {courier_name} atau klik tautan cek resi di atas agar tepat sasaran."""
 
         cod_email_section = ""
         if has_cod_pay:
@@ -514,20 +520,26 @@ def send_status_update_notification(order):
                 f"Terima kasih telah berbelanja di Barakah Economy!"
             )
         else:
+            courier_name = order.shipping_courier or 'Ekspedisi Logistik'
+            resi_num = order.resi_number or 'Sedang diperbarui penjual'
+            tracking_url = f"https://cekresi.com/?noresi={order.resi_number}" if order.resi_number else confirmation_link
+
             message = (
                 f"*PESANAN TELAH DIKIRIM (EKSPEDISI)* 🚚\n"
                 f"No. Pesanan: {order.order_number}\n\n"
                 f"Halo *{shipping_info['recipient_name'] or order.user.username}*, pesanan Anda telah *DISERAHKAN KE EKSPEDISI* untuk dikirimkan!\n\n"
                 f"🚚 *Detail Ekspedisi:*\n"
-                f"• Kurir: *{order.shipping_courier or 'Ekspedisi'}*\n"
-                f"• Nomor Resi: *{order.resi_number or 'Sedang diperbarui penjual'}*\n"
+                f"• Nama Ekspedisi: *{courier_name}*{f' ({order.shipping_service})' if order.shipping_service else ''}\n"
+                f"• Nomor Resi: *{resi_num}*\n"
+                f"• Cek Resi Langsung: {tracking_url}\n"
                 f"• Estimasi Pengiriman: *{order.estimated_delivery_days or 3} Hari*\n\n"
                 f"📍 *Alamat Tujuan:*\n"
                 f"{shipping_info['formatted_address']}\n\n"
                 f"📋 *Daftar Produk:*\n{items_str}\n"
                 f"Total Tagihan: *{format_idr(order.grand_total)}*\n"
                 f"{cod_section_wa}\n"
-                f"Lacak pesanan dan konfirmasi penerimaan melalui tautan:\n"
+                f"💡 *Tips Cek Resi:* Lacak nomor resi di situs resmi *{courier_name}* atau klik link di atas agar hasil pelacakan tepat sasaran.\n\n"
+                f"Konfirmasi penerimaan saat paket tiba melalui tautan:\n"
                 f"{confirmation_link}\n\n"
                 f"Terima kasih telah berbelanja di Barakah Economy!"
             )

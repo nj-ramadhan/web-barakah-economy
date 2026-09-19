@@ -326,15 +326,42 @@ class ProductViewSet(viewsets.ModelViewSet):
         compressed_img = self._compress_image(image_file) if image_file else None
 
         from .models import Testimoni
-        testimoni = Testimoni.objects.create(
-            product=product,
-            user=user,
-            customer=customer_name,
-            stars=max(1, min(5, stars)),
-            description=description,
-            image=compressed_img,
-            is_admin_entry=False
-        )
+        existing_testimoni = Testimoni.objects.filter(product=product, user=user).first()
+        if existing_testimoni:
+            existing_testimoni.customer = customer_name
+            existing_testimoni.stars = max(1, min(5, stars))
+            existing_testimoni.description = description
+            if compressed_img:
+                existing_testimoni.image = compressed_img
+            existing_testimoni.save()
+            testimoni = existing_testimoni
+        else:
+            testimoni = Testimoni.objects.create(
+                product=product,
+                user=user,
+                customer=customer_name,
+                stars=max(1, min(5, stars)),
+                description=description,
+                image=compressed_img,
+                is_admin_entry=False
+            )
+
+        try:
+            from reviews.models import Review
+            rev = Review.objects.filter(product=product, user=user).first()
+            if rev:
+                rev.rating = max(1, min(5, stars))
+                rev.comment = description
+                rev.save()
+            else:
+                Review.objects.create(
+                    product=product,
+                    user=user,
+                    rating=max(1, min(5, stars)),
+                    comment=description
+                )
+        except Exception:
+            pass
 
         from .serializers import TestimoniSerializer
         return Response(TestimoniSerializer(testimoni).data, status=status.HTTP_201_CREATED)

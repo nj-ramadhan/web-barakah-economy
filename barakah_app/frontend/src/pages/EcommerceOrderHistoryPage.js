@@ -33,6 +33,41 @@ const getMediaUrl = (url) => {
     return `${process.env.REACT_APP_API_BASE_URL}${url}`;
 };
 
+const getCourierTrackingUrl = (courierName, resiNumber) => {
+    if (!resiNumber) return 'https://cekresi.com';
+    const cleanResi = String(resiNumber).trim();
+    const c = String(courierName || '').toLowerCase();
+
+    if (c.includes('jne')) {
+        return `https://www.jne.co.id/id/tracking/trace?noresi=${encodeURIComponent(cleanResi)}`;
+    }
+    if (c.includes('j&t') || c.includes('jnt')) {
+        return `https://www.jet.co.id/track`;
+    }
+    if (c.includes('sicepat')) {
+        return `https://www.sicepat.com/checkAwb`;
+    }
+    if (c.includes('anteraja')) {
+        return `https://anteraja.id/tracking`;
+    }
+    if (c.includes('pos')) {
+        return `https://posindonesia.co.id/`;
+    }
+    if (c.includes('ninja')) {
+        return `https://www.ninjaxpress.co/id-id/tracking`;
+    }
+    if (c.includes('lion')) {
+        return `https://lionparcel.com/track`;
+    }
+    if (c.includes('tiki')) {
+        return `https://www.tiki.id/id/tracking`;
+    }
+    if (c.includes('wahana')) {
+        return `https://www.wahana.com/`;
+    }
+    return `https://cekresi.com/?noresi=${encodeURIComponent(cleanResi)}`;
+};
+
 const EcommerceOrderHistoryPage = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -179,8 +214,20 @@ const EcommerceOrderHistoryPage = () => {
         }
     };
 
-    const handleCompleteOrder = async (orderId) => {
-        if (!window.confirm('Konfirmasi bahwa pesanan telah diterima? Status akan menjadi Selesai dan tidak dapat diubah lagi.')) return;
+    const handleOpenReviewModal = (item, orderNumber) => {
+        if (!item) return;
+        setReviewProduct({
+            id: item.product,
+            title: item.product_name,
+            thumbnail: item.product_image,
+            slug: item.product_slug
+        });
+        setReviewOrderNumber(orderNumber || '');
+        setIsReviewModalOpen(true);
+    };
+
+    const handleCompleteOrder = async (orderId, targetOrder = null) => {
+        if (!window.confirm('Konfirmasi bahwa pesanan telah diterima dengan baik? Status akan menjadi Selesai.')) return;
         
         const userData = localStorage.getItem('user');
         if (!userData) return;
@@ -191,8 +238,17 @@ const EcommerceOrderHistoryPage = () => {
                 { status: 'Selesai' },
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );
-            alert('Terima kasih! Pesanan telah selesai.');
-            fetchOrders();
+            alert('Alhamdulillah! Pesanan telah selesai. Silakan berikan testimoni ulasan Anda untuk produk ini.');
+            
+            setShowDetailModal(false);
+            await fetchOrders();
+
+            // Auto prompt review modal for the completed order
+            const currentOrder = targetOrder || orders.find(o => o.id === orderId);
+            if (currentOrder && currentOrder.items && currentOrder.items.length > 0) {
+                const unreviewedItem = currentOrder.items.find(it => !it.has_reviewed) || currentOrder.items[0];
+                handleOpenReviewModal(unreviewedItem, currentOrder.order_number);
+            }
         } catch (error) {
             alert(error.response?.data?.error || 'Gagal mengubah status pesanan');
         }
@@ -428,19 +484,56 @@ const EcommerceOrderHistoryPage = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                            ) : order.resi_number ? (
-                                                <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs flex items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="material-icons text-purple-600 text-sm">local_shipping</span>
-                                                        <span className="text-gray-600 font-bold">Resi ({order.shipping_courier || 'Kurir'}):</span>
-                                                        <span className="font-mono font-black text-purple-900">{order.resi_number}</span>
+                                            ) : (order.shipping_courier || order.resi_number) ? (
+                                                <div className="p-3.5 bg-gradient-to-r from-purple-50/90 to-indigo-50/90 rounded-2xl border border-purple-200 text-xs space-y-2.5">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                                                <span className="material-icons text-sm">local_shipping</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-[10px] text-purple-700 font-bold uppercase tracking-wider block">Ekspedisi Logistik:</span>
+                                                                <span className="text-xs font-black text-purple-950">
+                                                                    {order.shipping_courier ? order.shipping_courier.toUpperCase() : 'EKSPEDISI LOGISTIK'}
+                                                                    {order.shipping_service ? ` (${order.shipping_service})` : ''}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {order.resi_number && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="font-mono font-black text-purple-950 bg-white px-2.5 py-1 rounded-lg border border-purple-200 shadow-xs">
+                                                                    {order.resi_number}
+                                                                </span>
+                                                                <button 
+                                                                    onClick={() => { navigator.clipboard.writeText(order.resi_number); alert(`Nomor resi ${order.shipping_courier || 'ekspedisi'} disalin: ${order.resi_number}`); }}
+                                                                    className="text-[10px] bg-purple-200 hover:bg-purple-300 text-purple-900 font-black px-2.5 py-1 rounded-lg transition"
+                                                                    title="Salin Nomor Resi"
+                                                                >
+                                                                    Salin
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <button 
-                                                        onClick={() => { navigator.clipboard.writeText(order.resi_number); alert('Nomor resi berhasil disalin!'); }}
-                                                        className="text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-800 font-black px-2.5 py-1 rounded-lg transition"
-                                                    >
-                                                        Salin
-                                                    </button>
+                                                    <div className="pt-2 border-t border-purple-100/80 flex flex-wrap items-center justify-between gap-2">
+                                                        <p className="text-[11px] text-purple-900 font-medium">
+                                                            {order.resi_number ? (
+                                                                <>Lacak posisi barang di ekspedisi <strong>{order.shipping_courier || 'terkait'}</strong> agar akurat.</>
+                                                            ) : (
+                                                                <>Nomor resi pengiriman akan segera diperbarui oleh penjual.</>
+                                                            )}
+                                                        </p>
+                                                        {order.resi_number && (
+                                                            <a 
+                                                                href={getCourierTrackingUrl(order.shipping_courier, order.resi_number)} 
+                                                                target="_blank" 
+                                                                rel="noreferrer" 
+                                                                className="px-3 py-1 bg-white hover:bg-purple-100/70 text-purple-800 border border-purple-300 rounded-lg font-bold text-[11px] transition flex items-center gap-1 shadow-xs"
+                                                            >
+                                                                <span className="material-icons text-xs text-purple-600">travel_explore</span>
+                                                                Lacak Resi ({order.shipping_courier || 'Ekspedisi'})
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ) : null}
 
@@ -492,10 +585,35 @@ const EcommerceOrderHistoryPage = () => {
                                                     </button>
                                                 )}
 
-                                                {order.status === 'Dikirim' && (
+                                                {['dikirim', 'shipped'].includes(statusLower) && (
                                                     <>
-                                                        <button onClick={() => handleCompleteOrder(order.id)} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center gap-1"><span className="material-icons text-sm">check_circle</span>Diterima</button>
+                                                        <button 
+                                                            onClick={() => handleCompleteOrder(order.id, order)} 
+                                                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
+                                                            title="Konfirmasi bahwa pesanan sudah sampai dan diterima"
+                                                        >
+                                                            <span className="material-icons text-sm">check_circle</span>
+                                                            Pesanan Diterima &amp; Selesai
+                                                        </button>
                                                         <button onClick={() => handleComplaintOrder(order.id)} className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition flex items-center gap-1"><span className="material-icons text-sm">report_problem</span>Komplain</button>
+                                                    </>
+                                                )}
+
+                                                {['selesai', 'completed', 'delivered'].includes(statusLower) && (
+                                                    <>
+                                                        {(() => {
+                                                            const hasUnreviewed = (order.items || []).some(it => !it.has_reviewed);
+                                                            const firstUnreviewed = (order.items || []).find(it => !it.has_reviewed) || (order.items || [])[0];
+                                                            return (
+                                                                <button 
+                                                                    onClick={() => handleOpenReviewModal(firstUnreviewed, order.order_number)} 
+                                                                    className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center gap-1.5 ${hasUnreviewed ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-amber-200 animate-pulse' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'}`}
+                                                                >
+                                                                    <span className="material-icons text-sm">{hasUnreviewed ? 'star' : 'rate_review'}</span>
+                                                                    {hasUnreviewed ? '⭐ Beri Testimoni / Ulasan' : 'Lihat / Ubah Ulasan'}
+                                                                </button>
+                                                            );
+                                                        })()}
                                                     </>
                                                 )}
 
@@ -539,18 +657,37 @@ const EcommerceOrderHistoryPage = () => {
                         <div className="space-y-2">
                             <h4 className="text-xs font-black text-gray-800 flex items-center gap-1.5"><span className="material-icons text-emerald-600 text-sm">inventory_2</span> Rincian Barang</h4>
                             <div className="space-y-2">
-                                {(selectedDetailOrder.items || []).map((it, idx) => (
-                                    <div key={idx} className="flex gap-3 items-center p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div className="w-12 h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 shrink-0">
-                                            {it.product_image || it.product_thumbnail ? <img src={getMediaUrl(it.product_image || it.product_thumbnail)} alt={it.product_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-emerald-600"><span className="material-icons text-base">inventory_2</span></div>}
+                                {(selectedDetailOrder.items || []).map((it, idx) => {
+                                    const isOrderDone = ['selesai', 'completed', 'delivered'].includes((selectedDetailOrder.status || '').toLowerCase());
+                                    return (
+                                        <div key={idx} className="flex gap-3 items-center p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <div className="w-12 h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 shrink-0">
+                                                {it.product_image || it.product_thumbnail ? <img src={getMediaUrl(it.product_image || it.product_thumbnail)} alt={it.product_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-emerald-600"><span className="material-icons text-base">inventory_2</span></div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-gray-900 truncate">{it.product_name}</p>
+                                                <p className="text-[11px] text-gray-500 font-medium">{it.quantity} x Rp {formatIDR(it.price)}</p>
+                                            </div>
+                                            <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                                                <p className="text-xs font-black text-gray-900">Rp {formatIDR(Number(it.price || 0) * Number(it.quantity || 1))}</p>
+                                                {isOrderDone && (
+                                                    <button
+                                                        onClick={() => handleOpenReviewModal(it, selectedDetailOrder.order_number)}
+                                                        className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition flex items-center gap-1 ${
+                                                            it.has_reviewed
+                                                                ? 'bg-emerald-100/80 text-emerald-800 hover:bg-emerald-200'
+                                                                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-200 animate-pulse'
+                                                        }`}
+                                                        title={it.has_reviewed ? 'Ubah ulasan produk ini' : 'Tulis ulasan/testimoni produk ini'}
+                                                    >
+                                                        <span className="material-icons text-[12px]">{it.has_reviewed ? 'check_circle' : 'star'}</span>
+                                                        {it.has_reviewed ? 'Sudah Diulas' : 'Beri Ulasan'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-gray-900 truncate">{it.product_name}</p>
-                                            <p className="text-[11px] text-gray-500 font-medium">{it.quantity} x Rp {formatIDR(it.price)}</p>
-                                        </div>
-                                        <p className="text-xs font-black text-gray-900">Rp {formatIDR(Number(it.price || 0) * Number(it.quantity || 1))}</p>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -603,27 +740,41 @@ const EcommerceOrderHistoryPage = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="text-xs space-y-1.5 text-gray-700">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500">Ekspedisi Kurir:</span>
-                                            <span className="font-bold text-gray-900">{selectedDetailOrder.shipping_courier || 'Ekspedisi'} {selectedDetailOrder.shipping_service ? `(${selectedDetailOrder.shipping_service})` : ''}</span>
+                                    <div className="text-xs space-y-2.5 text-gray-700 bg-purple-50/50 p-3 rounded-2xl border border-purple-100">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-500 font-medium">Jasa Ekspedisi:</span>
+                                            <span className="font-black text-purple-950 bg-white px-2.5 py-1 rounded-lg border border-purple-200 uppercase tracking-wider text-[11px]">
+                                                {selectedDetailOrder.shipping_courier || 'Ekspedisi Logistik'} {selectedDetailOrder.shipping_service ? `(${selectedDetailOrder.shipping_service})` : ''}
+                                            </span>
                                         </div>
                                         {selectedDetailOrder.resi_number && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-500">Nomor Resi:</span>
+                                            <div className="flex justify-between items-center pt-1 border-t border-purple-100">
+                                                <span className="text-gray-500 font-medium">Nomor Resi:</span>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="font-mono font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">{selectedDetailOrder.resi_number}</span>
+                                                    <span className="font-mono font-bold text-purple-900 bg-white px-2.5 py-1 rounded-lg border border-purple-200">{selectedDetailOrder.resi_number}</span>
                                                     <button
-                                                        onClick={() => { navigator.clipboard.writeText(selectedDetailOrder.resi_number); alert('Nomor resi disalin!'); }}
-                                                        className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded hover:bg-purple-200"
+                                                        onClick={() => { navigator.clipboard.writeText(selectedDetailOrder.resi_number); alert(`Nomor resi ${selectedDetailOrder.shipping_courier || 'ekspedisi'} disalin!`); }}
+                                                        className="text-[10px] bg-purple-200 hover:bg-purple-300 text-purple-900 font-bold px-2 py-1 rounded-lg transition"
                                                     >
                                                         Salin
                                                     </button>
+                                                    <a 
+                                                        href={getCourierTrackingUrl(selectedDetailOrder.shipping_courier, selectedDetailOrder.resi_number)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-[10px] bg-purple-600 hover:bg-purple-700 text-white font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-xs"
+                                                    >
+                                                        <span className="material-icons text-[12px]">travel_explore</span>
+                                                        Lacak di {selectedDetailOrder.shipping_courier || 'Ekspedisi'}
+                                                    </a>
                                                 </div>
                                             </div>
                                         )}
+                                        <div className="text-[10px] text-purple-900/90 bg-white/80 p-2.5 rounded-xl border border-purple-100 leading-relaxed">
+                                            💡 <strong>Cek Resi Tepat Sasaran:</strong> Paket dikirim menggunakan jasa <strong>{selectedDetailOrder.shipping_courier || 'ekspedisi logistik'}</strong>. Silakan lacak langsung di situs resmi kurir tersebut atau gunakan tombol <strong>Lacak</strong> di atas.
+                                        </div>
                                         {((selectedDetailOrder.payment_method || '').toLowerCase() === 'cod' || Number(selectedDetailOrder.cod_amount_to_pay) > 0) && (
-                                            <div className="flex justify-between pt-1 border-t border-gray-200 text-amber-900">
+                                            <div className="flex justify-between pt-1 border-t border-purple-200 text-amber-900">
                                                 <span className="font-bold">Tagihan Tunai COD:</span>
                                                 <span className="font-black text-amber-800">Rp {formatIDR(selectedDetailOrder.cod_amount_to_pay || selectedDetailOrder.grand_total)}</span>
                                             </div>
@@ -657,9 +808,51 @@ const EcommerceOrderHistoryPage = () => {
                             </div>
                         </div>
                         
-                        <div className="pt-2">
-                            <button onClick={() => setShowDetailModal(false)} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition">Tutup</button>
-                        </div>
+                        {(() => {
+                            const detailStatusLower = (selectedDetailOrder.status || '').toLowerCase();
+                            if (['dikirim', 'shipped'].includes(detailStatusLower)) {
+                                return (
+                                    <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                                        <button 
+                                            onClick={() => handleCompleteOrder(selectedDetailOrder.id, selectedDetailOrder)} 
+                                            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center justify-center gap-1.5"
+                                        >
+                                            <span className="material-icons text-sm">check_circle</span>
+                                            Pesanan Diterima &amp; Selesai
+                                        </button>
+                                        <button 
+                                            onClick={() => { setShowDetailModal(false); handleComplaintOrder(selectedDetailOrder.id); }} 
+                                            className="px-4 py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                                        >
+                                            <span className="material-icons text-sm">report_problem</span>
+                                            Komplain
+                                        </button>
+                                        <button onClick={() => setShowDetailModal(false)} className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">Tutup</button>
+                                    </div>
+                                );
+                            }
+                            if (['selesai', 'completed', 'delivered'].includes(detailStatusLower)) {
+                                const firstUnreviewed = (selectedDetailOrder.items || []).find(it => !it.has_reviewed) || (selectedDetailOrder.items || [])[0];
+                                const hasUnreviewed = (selectedDetailOrder.items || []).some(it => !it.has_reviewed);
+                                return (
+                                    <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                                        <button 
+                                            onClick={() => handleOpenReviewModal(firstUnreviewed, selectedDetailOrder.order_number)} 
+                                            className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-1.5 ${hasUnreviewed ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-amber-200 animate-pulse' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'}`}
+                                        >
+                                            <span className="material-icons text-sm">{hasUnreviewed ? 'star' : 'rate_review'}</span>
+                                            {hasUnreviewed ? '⭐ Beri Testimoni / Ulasan Produk' : 'Tulis / Ubah Ulasan'}
+                                        </button>
+                                        <button onClick={() => setShowDetailModal(false)} className="px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">Tutup</button>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div className="pt-2">
+                                    <button onClick={() => setShowDetailModal(false)} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition">Tutup</button>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
