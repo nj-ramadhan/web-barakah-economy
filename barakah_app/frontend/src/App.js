@@ -118,6 +118,7 @@ import StreamingPage from './pages/StreamingPage';
 import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
 import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrdersPage';
 import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
+import SellerProductGuidePage from './pages/SellerProductGuidePage';
 import BaeRunLandingPage from './pages/BaeRunLandingPage';
 import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
@@ -511,6 +512,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/seller/panduan-produk" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProductGuidePage /></ResponsiveLayout>} />
+        <Route path="/dashboard/sinergy/seller/guide" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><SellerProductGuidePage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/sinergy/seller" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/sinergy/seller/orders" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellerOrdersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergyAdminPage /></ResponsiveLayout></PrivateRoute>} />

@@ -1,0 +1,354 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 2860" width="1200" height="2860" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <linearGradient id="page1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="page2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-3%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06"/>
+    </filter>
+    <filter id="glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#10b981" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- ==================== HEADER ==================== -->
+  <rect x="0" y="0" width="1200" height="200" fill="url(#headerGrad)" />
+  <rect x="50" y="30" width="300" height="28" rx="14" fill="#065f46" />
+  <text x="65" y="49" fill="#6ee7b7" font-size="11" font-weight="bold" letter-spacing="1.5">DIAGRAM ALUR SELLER • BAE</text>
+  <text x="50" y="100" fill="#ffffff" font-size="28" font-weight="900" letter-spacing="-0.5">Alur Lengkap &amp; Fitur Tambah Produk E-Commerce</text>
+  <text x="50" y="135" fill="#a7f3d0" font-size="14" font-weight="500">Diagram flowchart visual dari langkah awal buka dashboard hingga produk tayang dan kelola pesanan.</text>
+  
+  <rect x="920" y="50" width="230" height="95" rx="16" fill="#ffffff" opacity="0.1" />
+  <text x="940" y="82" fill="#ffffff" font-size="13" font-weight="bold">Mitra Seller BAE</text>
+  <text x="940" y="105" fill="#d1fae5" font-size="11">✓ Bebas Izin Tayang</text>
+  <text x="940" y="125" fill="#d1fae5" font-size="11">✓ Ongkir Flat &amp; Varian</text>
+
+  <!-- ==================== HALAMAN 1 BANNER ==================== -->
+  <g transform="translate(50, 230)">
+    <rect x="0" y="0" width="1100" height="46" rx="12" fill="url(#page1Grad)" />
+    <circle cx="24" cy="23" r="13" fill="#ffffff" />
+    <text x="20" y="28" fill="#059669" font-size="13" font-weight="900">1</text>
+    <text x="50" y="29" fill="#ffffff" font-size="14" font-weight="900" letter-spacing="1">HALAMAN 1: PERSIAPAN &amp; FORMULIR DATA POKOK PRODUK</text>
+    <text x="950" y="29" fill="#d1fae5" font-size="12" font-weight="bold">Langkah 01 - 04</text>
+  </g>
+
+  <!-- STEP 1 CARD -->
+  <g transform="translate(50, 295)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="240" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#ecfdf5" />
+    <text x="34" y=\"51\" fill="#059669" font-size="16" font-weight="900">01</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Buka Dashboard Seller &amp; Klik Tombol "+ Tambah Produk"</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Navigasi awal untuk membuka formulir penambahan barang e-commerce Anda.</text>
+
+    <!-- UI Representation -->
+    <rect x="25" y="85" width="1050" height="130" rx="14" fill="#f8fafc" stroke="#e2e8f0" />
+    <text x="45" y="115" fill="#334155" font-size="13" font-weight="bold">Bilah Navigasi / Toolbar Penjual (Menu Sinergy / Seller Produk):</text>
+    
+    <!-- Button 1: Pesanan Masuk -->
+    <rect x="45" y="135" width="170" height="44" rx="12" fill="#dbeafe" />
+    <text x="65" y="162" fill="#1d4ed8" font-size="13" font-weight="bold">📦 Pesanan Masuk</text>
+    <circle cx="195" cy="145" r="10" fill="#ef4444" />
+    <text x="192" y="149" fill="#ffffff" font-size="10" font-weight="900">3</text>
+
+    <!-- Button 2: Buat Voucher -->
+    <rect x="230" y="135" width="150" height="44" rx="12" fill="#ffedd5" />
+    <text x="250" y="162" fill="#c2410c" font-size="13" font-weight="bold">🎟️ Buat Voucher</text>
+
+    <!-- Button 3: Panduan Seller -->
+    <rect x="395" y="135" width="150" height="44" rx="12" fill="#ecfdf5" stroke="#a7f3d0" />
+    <text x="415" y="162" fill="#065f46" font-size="13" font-weight="bold">📖 Panduan Seller</text>
+
+    <!-- Button 4: Tambah Produk (TARGET) -->
+    <rect x="560" y="132" width="200" height="50" rx="14" fill="#059669" filter="url(#glow)" />
+    <text x="585" y="163" fill="#ffffff" font-size="15" font-weight="900">+ Tambah Produk</text>
+
+    <!-- Pointer Callout -->
+    <rect x="780" y="132" width="275" height="50" rx="10" fill="#fef3c7" stroke="#fde047" />
+    <text x="795" y="153" fill="#854d0e" font-size="11" font-weight="bold">👈 KLIK TOMBOL INI</text>
+    <text x="795" y="171" fill="#92400e" font-size="10">Membuka formulir pembuatan produk baru</text>
+  </g>
+
+  <!-- ARROW 1 -> 2 -->
+  <g transform="translate(600, 545)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#10b981" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#10b981" />
+  </g>
+
+  <!-- STEP 2 CARD -->
+  <g transform="translate(50, 595)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="250" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#ecfdf5" />
+    <text x="34" y="51" fill="#059669" font-size="16" font-weight="900">02</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Mengisi Identitas Pokok Produk</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Lengkapi nama produk yang spesifik, kategori yang pas, satuan unit kemasan, dan berat gram.</text>
+
+    <!-- 4 Mockup Fields -->
+    <!-- Field 1: Nama Produk -->
+    <rect x="25" y="90" width="250" height="75" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+    <text x="40" y="112" fill="#475569" font-size="11" font-weight="bold">NAMA PRODUK *</text>
+    <rect x="40" y="122" width="220" height="32" rx="8" fill="#ffffff" stroke="#94a3b8" />
+    <text x="48" y="143" fill="#0f172a" font-size="11" font-weight="600">Madu Asli Hutan 500ml</text>
+
+    <!-- Field 2: Kategori -->
+    <rect x="290" y="90" width="250" height="75" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+    <text x="305" y="112" fill="#475569" font-size="11" font-weight="bold">KATEGORI *</text>
+    <rect x="305" y="122" width="220" height="32" rx="8" fill="#ffffff" stroke="#94a3b8" />
+    <text x="315" y="143" fill="#0f172a" font-size="11">Herbal / Buku / Pakaian ▾</text>
+
+    <!-- Field 3: Satuan Unit -->
+    <rect x="555" y="90" width="250" height="75" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+    <text x="570" y="112" fill="#475569" font-size="11" font-weight="bold">SATUAN UNIT (UNIT)</text>
+    <rect x="570" y="122" width="220" height="32" rx="8" fill="#ffffff" stroke="#94a3b8" />
+    <text x="580" y="143" fill="#0f172a" font-size="11">botol (pilihan lebih dari 20 unit) ▾</text>
+
+    <!-- Field 4: Berat (gram) -->
+    <rect x="820" y="90" width="255" height="75" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+    <text x="835" y="112" fill="#475569" font-size="11" font-weight="bold">BERAT (GRAM) *</text>
+    <rect x="835" y="122" width="225" height="32" rx="8" fill="#ffffff" stroke="#94a3b8" />
+    <text x="845" y="143" fill="#0f172a" font-size="11" font-weight="600">500 (gram untuk ekspedisi)</text>
+
+    <!-- Helper note -->
+    <rect x="25" y="180" width="1050" height="45" rx="10" fill="#ecfdf5" />
+    <text x="40" y="207" fill="#065f46" font-size="12">💡 Tips Penamaan: Gunakan formula: [Kategori Produk] + [Nama Merek] + [Spesifikasi / Ukuran] agar memikat pembeli.</text>
+  </g>
+
+  <!-- ARROW 2 -> 3 -->
+  <g transform="translate(600, 855)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#10b981" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#10b981" />
+  </g>
+
+  <!-- STEP 3 CARD -->
+  <g transform="translate(50, 905)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="230" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#ecfdf5" />
+    <text x="34" y="51" fill="#059669" font-size="16" font-weight="900">03</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Menentukan Harga Modal, Harga Jual &amp; Stok Gudang</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Skema harga transparan syariah dan otomatis tersinkronisasi jika menggunakan varian produk.</text>
+
+    <g transform="translate(25, 85)">
+      <!-- Card HPP -->
+      <rect x="0" y="0" width="330" height="120" rx="14" fill="#f1f5f9" stroke="#cbd5e1" />
+      <text x="20" y="28" fill="#64748b" font-size="11" font-weight="bold">HARGA BELI DASAR (HPP)</text>
+      <text x="20" y="60" fill="#0f172a" font-size="20" font-weight="900">Rp 85.000</text>
+      <text x="20" y="88" fill="#64748b" font-size="11">Harga modal pokok per unit (rahasia seller untuk mencatat margin usaha).</text>
+
+      <!-- Card Harga Jual -->
+      <rect x="355" y="0" width="340" height="120" rx="14" fill="#ecfdf5" stroke="#a7f3d0" />
+      <text x="375" y="28" fill="#059669" font-size="11" font-weight="bold">HARGA JUAL KONSUMEN (RP) *</text>
+      <text x="375" y="60" fill="#065f46" font-size="22" font-weight="900">Rp 120.000</text>
+      <text x="375" y="88" fill="#047857" font-size="11">Harga etalase. Otomatis terkunci jika ada Varian Produk (mengikuti harga varian).</text>
+
+      <!-- Card Stok -->
+      <rect x="720" y="0" width="330" height="120" rx="14" fill="#eff6ff" stroke="#bfdbfe" />
+      <text x="740" y="28" fill="#1d4ed8" font-size="11" font-weight="bold">STOK GUDANG *</text>
+      <text x="740" y="60" fill="#1e3a8a" font-size="22" font-weight="900">100 pcs</text>
+      <text x="740" y="88" fill="#2563eb" font-size="11">Jumlah barang fisik. Terkalkulasi otomatis dari jumlah total seluruh varian.</text>
+    </g>
+  </g>
+
+  <!-- ARROW 3 -> 4 -->
+  <g transform="translate(600, 1145)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#10b981" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#10b981" />
+  </g>
+
+  <!-- STEP 4 CARD -->
+  <g transform="translate(50, 1195)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="245" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#ecfdf5" />
+    <text x="34" y="51" fill="#059669" font-size="16" font-weight="900">04</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Menyusun Deskripsi dengan Rich Text Editor (CKEditor)</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Gunakan formatting rapi (Bold, Bullets, Heading) agar pembeli tertarik dan jelas.</text>
+
+    <!-- Editor Mockup -->
+    <rect x="25" y="85" width="1050" height="135" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+    <!-- Toolbar -->
+    <rect x="25" y="85" width="1050" height="36" rx="12" fill="#f1f5f9" />
+    <text x="45" y="108" fill="#0f172a" font-size="13" font-weight="bold">B  /  I  /  H1  /  H2  /  • Bullet  /  1. Number  /  🔗 Link</text>
+    
+    <!-- Text area mockup -->
+    <text x="45" y="145" fill="#0f172a" font-size="12" font-weight="bold">Madu Asli Hutan Sumbawa Murni 100%</text>
+    <text x="45" y="168" fill="#475569" font-size="11">• Teruji klinis berkhasiat meningkatkan daya tahan tubuh</text>
+    <text x="45" y="186" fill="#475569" font-size="11">• Kemasan botol kaca anti-bocor, siap kirim ke seluruh nusantara</text>
+    <text x="45" y="204" fill="#64748b" font-size="10">Tersedia juga kolom khusus "Informasi Pengambilan / Teknis" untuk catatan teknis bagi pembeli.</text>
+  </g>
+
+  <!-- ==================== HALAMAN 2 DIVIDER BANNER ==================== -->
+  <g transform="translate(50, 1480)">
+    <rect x="0" y="0" width="1100" height="55" rx="14" fill="url(#page2Grad)" />
+    <circle cx="28" cy="28" r="14" fill="#ffffff" />
+    <text x="23" y="33" fill="#0d9488" font-size="14" font-weight="900">2</text>
+    <text x="55" y="34" fill="#ffffff" font-size="15" font-weight="900" letter-spacing="1">HALAMAN 2: PENGATURAN LOGISTIK, ONGKIR, VARIAN &amp; PASCA-TAYANG</text>
+    <text x="950" y="34" fill="#ccfbf1" font-size="12" font-weight="bold">Langkah 05 - 08</text>
+  </g>
+
+  <!-- STEP 5 CARD -->
+  <g transform="translate(50, 1555)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="250" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#f0fdfa" />
+    <text x="34" y="51" fill="#0d9488" font-size="16" font-weight="900">05</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Sistem Pengiriman, COD &amp; Ongkir Flat Toko</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Atur kebijakan pengiriman fleksibel yang menarik minat pembeli memborong produk.</text>
+
+    <g transform="translate(25, 85)">
+      <!-- COD Toggle Card -->
+      <rect x="0" y="0" width="450" height="135" rx="14" fill="#eff6ff" stroke="#bfdbfe" />
+      <text x="20" y="30" fill="#1d4ed8" font-size="13" font-weight="bold">💵 FITUR COD (BAYAR DI TEMPAT)</text>
+      <!-- Switch mockup -->
+      <rect x="20" y="45" width="50" height="26" rx="13" fill="#10b981" />
+      <circle cx="57" cy="58" r="10" fill="#ffffff" />
+      <text x="80" y="62" fill="#047857" font-size="12" font-weight="bold">STATUS: AKTIF</text>
+      <text x="20" y="95" fill="#475569" font-size="11">Pembeli dapat membayar uang tunai kepada kurir saat pesanan sampai di tujuan.</text>
+
+      <!-- Flat Shipping Cost Card -->
+      <rect x="480" y="0" width="570" height="135" rx="14" fill="#ecfdf5" stroke="#a7f3d0" />
+      <text x="500" y="30" fill="#047857" font-size="13" font-weight="bold">🚚 FITUR ONGKIR FLAT TOKO (BEBAS KELIPATAN)</text>
+      <!-- Switch mockup -->
+      <rect x="500" y="45" width="50" height="26" rx="13" fill="#10b981" />
+      <circle cx="537" cy="58" r="10" fill="#ffffff" />
+      <rect x="565" y="43" width="140" height="30" rx="8" fill="#ffffff" stroke="#059669" />
+      <text x="575" y="63" fill="#047857" font-size="12" font-weight="bold">Rp 10.000</text>
+      <text x="500" y="95" fill="#065f46" font-size="11" font-weight="bold">Prinsip Hemat Pembeli:</text>
+      <text x="500" y="112" fill="#047857" font-size="11">Jika pembeli checkout 2 atau lebih barang di toko Anda, ongkir DISAMAKAN (tidak berlaku kelipatan)!</text>
+    </g>
+  </g>
+
+  <!-- ARROW 5 -> 6 -->
+  <g transform="translate(600, 1815)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#0d9488" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#0d9488" />
+  </g>
+
+  <!-- STEP 6 CARD -->
+  <g transform="translate(50, 1865)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="230" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#f0fdfa" />
+    <text x="34" y="51" fill="#0d9488" font-size="16" font-weight="900">06</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Unggah Foto Utama (Thumbnail) &amp; Galeri Foto Carousel</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Tampilkan visual produk berkualitas tinggi dari berbagai sudut pandang.</text>
+
+    <g transform="translate(25, 85)">
+      <!-- Box 1: Thumbnail -->
+      <rect x="0" y="0" width="500" height="115" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="6,6" />
+      <text x="30" y="38" fill="#0f172a" font-size="13" font-weight="bold">📷 Foto Utama (Thumbnail) *</text>
+      <text x="30" y="62" fill="#64748b" font-size="11">Format: .jpg / .jpeg. Tampil di kartu katalog utama.</text>
+      <rect x="30" y="72" width="130" height="28" rx="8" fill="#059669" />
+      <text x="48" y="91" fill="#ffffff" font-size="11" font-weight="bold">Pilih Foto Utama</text>
+
+      <!-- Box 2: Carousel -->
+      <rect x="540" y="0" width="510" height="115" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="6,6" />
+      <text x="570" y="38" fill="#0f172a" font-size="13" font-weight="bold">🖼️ Galeri Carousel (Hingga 5 Foto .jpg)</text>
+      <text x="570" y="62" fill="#64748b" font-size="11">Tampil sebagai slider geser di halaman detail produk pembeli.</text>
+      <!-- Mini photo badges -->
+      <rect x="570" y="72" width="32" height="32" rx="6" fill="#e2e8f0" />
+      <rect x="610" y="72" width="32" height="32" rx="6" fill="#e2e8f0" />
+      <rect x="650" y="72" width="32" height="32" rx="6" fill="#e2e8f0" />
+      <text x="695" y="92" fill="#059669" font-size="11" font-weight="bold">+ Tambah Galeri</text>
+    </g>
+  </g>
+
+  <!-- ARROW 6 -> 7 -->
+  <g transform="translate(600, 2105)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#0d9488" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#0d9488" />
+  </g>
+
+  <!-- STEP 7 CARD -->
+  <g transform="translate(50, 2155)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="280" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#f0fdfa" />
+    <text x="34" y="51" fill="#0d9488" font-size="16" font-weight="900">07</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Tabel Varian Produk Dinamis (Ukuran / Warna / Rasa)</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Harga varian adalah harga total yang dibayar pembeli. Stok varian mengakumulasi total stok gudang.</text>
+
+    <!-- Table Mockup -->
+    <g transform="translate(25, 85)">
+      <rect x="0" y="0" width="1050" height="130" rx="12" fill="#ecfdf5" stroke="#a7f3d0" />
+      <!-- Table Header -->
+      <rect x="0" y="0" width="1050" height="34" rx="12" fill="#d1fae5" />
+      <text x="20" y="22" fill="#065f46" font-size="11" font-weight="bold">NAMA VARIAN (UKURAN / WARNA)</text>
+      <text x="420" y="22" fill="#065f46" font-size="11" font-weight="bold">HARGA VARIAN (RP TOTAL)</text>
+      <text x="720" y="22" fill="#065f46" font-size="11" font-weight="bold">STOK VARIAN</text>
+      <text x="960" y="22" fill="#065f46" font-size="11" font-weight="bold">AKSI</text>
+
+      <!-- Row 1 -->
+      <rect x="10" y="42" width="380" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="25" y="62" fill="#0f172a" font-size="11">Botol 500ml (Kemasan Sedang)</text>
+      <rect x="410" y="42" width="280" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="425" y="62" fill="#047857" font-size="12" font-weight="bold">Rp 120.000</text>
+      <rect x="710" y="42" width="180" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="725" y="62" fill="#0f172a" font-size="12" font-weight="bold">60 pcs</text>
+      <circle cx="980" cy="58" r="12" fill="#fee2e2" />
+      <text x="974" y="62" fill="#dc2626" font-size="11">🗑️</text>
+
+      <!-- Row 2 -->
+      <rect x="10" y="82" width="380" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="25" y="102" fill="#0f172a" font-size="11">Botol 1000ml (1 Liter Jumbo)</text>
+      <rect x="410" y="82" width="280" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="425" y="102" fill="#047857" font-size="12" font-weight="bold">Rp 210.000</text>
+      <rect x="710" y="82" width="180" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+      <text x="725" y="102" fill="#0f172a" font-size="12" font-weight="bold">40 pcs</text>
+      <circle cx="980" cy="98" r="12" fill="#fee2e2" />
+      <text x="974" y="102" fill="#dc2626" font-size="11">🗑️</text>
+    </g>
+
+    <rect x="25" y="228" width="120" height="34" rx="10" fill="#d1fae5" />
+    <text x="42" y="250" fill="#065f46" font-size="12" font-weight="bold">+ Varian Baru</text>
+    <text x="165" y="250" fill="#64748b" font-size="11">Klik tombol "+ Varian" untuk menambahkan opsi variasi warna/ukuran sesuai stok.</text>
+  </g>
+
+  <!-- ARROW 7 -> 8 -->
+  <g transform="translate(600, 2445)">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#0d9488" stroke-width="3" stroke-dasharray="4,4" />
+    <polygon points="-6,30 6,30 0,40" fill="#0d9488" />
+  </g>
+
+  <!-- STEP 8 CARD -->
+  <g transform="translate(50, 2495)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1100" height="280" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="25" width="40" height="40" rx="12" fill="#f0fdfa" />
+    <text x="34" y="51" fill="#0d9488" font-size="16" font-weight="900">08</text>
+    <text x="80" y="43" fill="#0f172a" font-size="18" font-weight="800">Langkah Akhir: Simpan &amp; Pasca-Tayang di Katalog</text>
+    <text x="80" y="63" fill="#64748b" font-size="12">Produk langsung tayang ke publik e-commerce BAE secara instan tanpa menunggu izin admin.</text>
+
+    <!-- Success Button Banner -->
+    <rect x="25" y="85" width="1050" height="52" rx="14" fill="#059669" filter="url(#glow)" />
+    <text x="50" y="117" fill="#ffffff" font-size="16" font-weight="900">💾 KLIK "SIMPAN PRODUK" ➔ PRODUK LANGSUNG TAYANG DI ETALASE PUBLIK!</text>
+
+    <!-- Post-Publish Features Grid -->
+    <g transform="translate(25, 150)">
+      <rect x="0" y="0" width="250" height="95" rx="12" fill="#f8fafc" stroke="#cbd5e1" />
+      <text x="15" y="28" fill="#059669" font-size="12" font-weight="bold">✏️ Edit Produk</text>
+      <text x="15" y="48" fill="#64748b" font-size="10">Ubah stok, harga, atau foto kapan saja saat barang bertambah.</text>
+
+      <rect x="265" y="0" width="250" height="95" rx="12" fill="#faf5ff" stroke="#e9d5ff" />
+      <text x="280" y="28" fill="#7e22ce" font-size="12" font-weight="bold">🏷️ Atur Promo / Diskon</text>
+      <text x="280" y="48" fill="#6b21a8" font-size="10">Pasang harga coret promo sementara untuk meningkatkan konversi.</text>
+
+      <rect x="530" y="0" width="250" height="95" rx="12" fill="#fffbeb" stroke="#fef3c7" />
+      <text x="545" y="28" fill="#b45309" font-size="12" font-weight="bold">🔄 Pindah Kepemilikan</text>
+      <text x="545" y="48" fill="#92400e" font-size="10">Alihkan kepemilikan produk ke seller rekanan/mitra lain.</text>
+
+      <rect x="795" y="0" width="255" height="95" rx="12" fill="#eff6ff" stroke="#bfdbfe" />
+      <text x="810" y="28" fill="#1d4ed8" font-size="12" font-weight="bold">📦 Kelola Pesanan Masuk</text>
+      <text x="810" y="48" fill="#1e40af" font-size="10">Lihat bukti bayar, cetak invoice, dan input nomor resi kurir.</text>
+    </g>
+  </g>
+
+  <!-- ==================== FOOTER ==================== -->
+  <g transform="translate(50, 2800)">
+    <rect x="0" y="0" width="1100" height="40" rx="10" fill="#0f172a" />
+    <text x="400" y="25" fill="#94a3b8" font-size="11" font-weight="bold">© Barakah Economy Platform • Panduan Resmi Alur &amp; Fitur Seller</text>
+  </g>
+</svg>
