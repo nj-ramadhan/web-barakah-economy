@@ -12,9 +12,9 @@ from datetime import timedelta
 from decimal import Decimal
 import logging
 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, StoreCourier
 from carts.models import Cart
-from .serializers import OrderSerializer, OrderItemSerializer
+from .serializers import OrderSerializer, OrderItemSerializer, StoreCourierSerializer
 from transactions.models import UserWallet, WalletTransaction
 
 logger = logging.getLogger('accounts')
@@ -849,3 +849,15 @@ class UnreviewedProductsView(APIView):
                         })
 
         return Response(unreviewed_items)
+
+
+class StoreCourierViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = StoreCourierSerializer
+
+    def get_queryset(self):
+        return StoreCourier.objects.filter(seller=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(seller=self.request.user)
+

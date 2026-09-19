@@ -80,7 +80,22 @@ const EcommerceCheckoutSinergy = () => {
                 items.forEach(item => {
                     const s_id = item.product?.seller_id || "0";
                     if (!initialConfigs[s_id]) {
-                        initialConfigs[s_id] = { shipping_cost: 0, shipping_courier: '', shipping_service: '', voucher_code: '', voucher_nominal: 0, payment_method: 'manual', buyer_note: '' };
+                        // Calculate flat store shipping cost: unified per store (tidak berlaku kelipatan kuantitas)
+                        const itemsFromSeller = items.filter(it => (it.product?.seller_id || "0") === s_id);
+                        const storeShippingCosts = itemsFromSeller
+                            .filter(it => it.product?.is_shipping_cost_active && Number(it.product?.shipping_cost || 0) > 0)
+                            .map(it => Number(it.product.shipping_cost));
+                        const flatShippingCost = storeShippingCosts.length > 0 ? Math.max(...storeShippingCosts) : 0;
+
+                        initialConfigs[s_id] = { 
+                            shipping_cost: flatShippingCost, 
+                            shipping_courier: flatShippingCost > 0 ? 'Kurir Toko' : '', 
+                            shipping_service: flatShippingCost > 0 ? 'Standar' : '', 
+                            voucher_code: '', 
+                            voucher_nominal: 0, 
+                            payment_method: 'manual', 
+                            buyer_note: '' 
+                        };
                     }
                 });
                 setCheckoutConfigs(initialConfigs);
@@ -476,14 +491,26 @@ const EcommerceCheckoutSinergy = () => {
                                 })}
                             </div>
 
-                            {/* Simplified Shipping Notice */}
-                            <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100 mb-4 flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0">
-                                    <span className="material-icons text-lg">local_shipping</span>
+                            {/* Simplified Shipping Notice & Flat Store Shipping */}
+                            <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100 mb-4 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+                                        <span className="material-icons text-lg">local_shipping</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider block">Pengiriman & Logistik</span>
+                                        <p className="text-xs font-medium text-emerald-900">
+                                            {config?.shipping_cost > 0 
+                                                ? 'Pengiriman Toko (Tarif Flat Toko - Tidak Berlaku Kelipatan)' 
+                                                : 'Bebas Ongkir / Ambil Sendiri (Kesepakatan dengan Penjual)'}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider block">Pengiriman & Logistik</span>
-                                    <p className="text-xs font-medium text-emerald-900">Bebas Ongkir / Ambil Sendiri (Kesepakatan dengan Penjual)</p>
+                                <div className="text-right shrink-0">
+                                    <span className="text-[10px] font-bold text-gray-500 block">Ongkir Toko</span>
+                                    <span className={`text-xs font-black ${config?.shipping_cost > 0 ? 'text-emerald-700' : 'text-emerald-600'}`}>
+                                        {config?.shipping_cost > 0 ? `+Rp ${new Intl.NumberFormat('id-ID').format(config.shipping_cost)}` : 'GRATIS'}
+                                    </span>
                                 </div>
                             </div>
 

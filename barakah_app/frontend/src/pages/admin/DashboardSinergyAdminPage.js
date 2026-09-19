@@ -26,6 +26,8 @@ const DashboardSinergyAdminPage = () => {
     const [stock, setStock] = useState(0);
     const [weight, setWeight] = useState(1000);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
+    const [isShippingCostActive, setIsShippingCostActive] = useState(false);
+    const [shippingCost, setShippingCost] = useState(0);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [variants, setVariants] = useState([]);
     const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -109,6 +111,8 @@ const DashboardSinergyAdminPage = () => {
         setStock(product.stock || 0);
         setWeight(product.weight || 1000);
         setIsCodAvailable(product.is_cod_available || false);
+        setIsShippingCostActive(product.is_shipping_cost_active || false);
+        setShippingCost(parseCurrency(product.shipping_cost) || 0);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setVariants(product.variations && product.variations.length > 0 
             ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })) 
@@ -151,6 +155,8 @@ const DashboardSinergyAdminPage = () => {
             formData.append('stock', stock);
             formData.append('weight', weight);
             formData.append('is_cod_available', isCodAvailable);
+            formData.append('is_shipping_cost_active', isShippingCostActive);
+            formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
 
             if (thumbnailFile) {
@@ -159,7 +165,8 @@ const DashboardSinergyAdminPage = () => {
 
             const sanitizedVariants = variants.map(v => ({
                 ...v,
-                additional_price: parseCurrency(v.additional_price)
+                additional_price: parseCurrency(v.additional_price) || 0,
+                stock: parseInt(v.stock, 10) || 0
             }));
             formData.append('variations', JSON.stringify(sanitizedVariants));
 
@@ -460,27 +467,79 @@ const DashboardSinergyAdminPage = () => {
                                                     placeholder="Nama (misal: XL)" 
                                                     value={v.name} 
                                                     onChange={(e) => updateVariant(i, 'name', e.target.value)} 
-                                                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none" 
+                                                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500" 
                                                 />
                                                 <input 
                                                     type="text" 
                                                     placeholder="Harga Varian (Rp)" 
-                                                    value={formatCurrency(v.additional_price)} 
-                                                    onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} 
-                                                    className="w-32 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none" 
+                                                    value={v.additional_price !== undefined && v.additional_price !== null && v.additional_price !== '' ? formatCurrency(v.additional_price) : ''} 
+                                                    onChange={(e) => updateVariant(i, 'additional_price', parseCurrency(e.target.value))} 
+                                                    className="w-32 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500" 
                                                 />
                                                 <input 
                                                     type="number" 
                                                     placeholder="Stok" 
-                                                    value={v.stock} 
-                                                    onChange={(e) => updateVariant(i, 'stock', e.target.value)} 
-                                                    className="w-20 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none" 
+                                                    value={v.stock !== undefined && v.stock !== null ? v.stock : ''} 
+                                                    onChange={(e) => updateVariant(i, 'stock', e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)} 
+                                                    className="w-20 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500" 
                                                 />
                                                 <button type="button" onClick={() => removeVariant(i)} className="text-red-500 hover:text-red-700 p-1">
                                                     <span className="material-icons text-sm">delete</span>
                                                 </button>
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+
+                                {/* Ongkos Kirim & COD Section */}
+                                <div className="border-t border-gray-100 pt-4 space-y-3">
+                                    <div className="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
+                                                <span className="material-icons text-base">local_shipping</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">Aktifkan Harga Ongkir Toko</p>
+                                                <p className="text-[10px] text-gray-500">Tarif flat per toko, tidak berlaku kelipatan jika beli banyak barang</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsShippingCostActive(!isShippingCostActive)}
+                                            className={`w-10 h-5 rounded-full transition-all relative ${isShippingCostActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isShippingCostActive ? 'left-5.5' : 'left-0.5'}`}></div>
+                                        </button>
+                                    </div>
+
+                                    {isShippingCostActive && (
+                                        <div className="pl-1">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Nominal Ongkir Toko (Rp) *</label>
+                                            <input 
+                                                type="text" 
+                                                value={formatCurrency(shippingCost)} 
+                                                onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
+                                                placeholder="Contoh: 15.000"
+                                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" 
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="bg-emerald-50/40 p-3 rounded-xl border border-emerald-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="material-icons text-emerald-600 text-base">payments</span>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">Aktifkan COD (Bayar di Tempat)</p>
+                                                <p className="text-[10px] text-gray-500">Izinkan pembeli membayar tunai saat paket tiba</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCodAvailable(!isCodAvailable)}
+                                            className={`w-10 h-5 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-5.5' : 'left-0.5'}`}></div>
+                                        </button>
                                     </div>
                                 </div>
 

@@ -22,6 +22,8 @@ const DashboardSinergySellersPage = () => {
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
+    const [isShippingCostActive, setIsShippingCostActive] = useState(false);
+    const [shippingCost, setShippingCost] = useState(0);
     const [manualStock, setManualStock] = useState(0);
     const [manualPrice, setManualPrice] = useState(0);
     const [manualPurchasePrice, setManualPurchasePrice] = useState(0);
@@ -159,6 +161,8 @@ const DashboardSinergySellersPage = () => {
         );
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setIsCodAvailable(product.is_cod_available || false);
+        setIsShippingCostActive(product.is_shipping_cost_active || false);
+        setShippingCost(parseCurrency(product.shipping_cost) || 0);
         setManualStock(product.stock || 0);
         setManualPrice(parseCurrency(product.price) || 0);
         setManualPurchasePrice(parseCurrency(product.purchase_price) || 0);
@@ -266,6 +270,8 @@ const DashboardSinergySellersPage = () => {
             formData.append('category', e.target.category ? e.target.category.value : 'lainnya');
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('is_cod_available', isCodAvailable);
+            formData.append('is_shipping_cost_active', isShippingCostActive);
+            formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('purchase_instructions', e.target.purchase_instructions ? e.target.purchase_instructions.value : '');
 
             let targetStatus = ownBankStatus;
@@ -307,7 +313,8 @@ const DashboardSinergySellersPage = () => {
             
             const sanitizedVariants = variants.map(v => ({
                 ...v,
-                additional_price: parseCurrency(v.additional_price)
+                additional_price: parseCurrency(v.additional_price) || 0,
+                stock: parseInt(v.stock, 10) || 0
             }));
             formData.append('variations', JSON.stringify(sanitizedVariants));
 
@@ -412,6 +419,9 @@ const DashboardSinergySellersPage = () => {
                         setManualPrice(0);
                         setManualPurchasePrice(0);
                         setManualStock(0);
+                        setIsCodAvailable(false);
+                        setIsShippingCostActive(false);
+                        setShippingCost(0);
                         setThumbnailFile(null);
                         setThumbnailPreview(null);
                         setGalleryFiles([]);
@@ -464,6 +474,8 @@ const DashboardSinergySellersPage = () => {
                                     }
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setIsCodAvailable(p.is_cod_available || false);
+                                    setIsShippingCostActive(p.is_shipping_cost_active || false);
+                                    setShippingCost(parseCurrency(p.shipping_cost) || 0);
                                     setManualStock(p.stock || 0);
                                     setManualPrice(parseCurrency(p.price) || 0);
                                     setManualPurchasePrice(parseCurrency(p.purchase_price) || 0);
@@ -688,26 +700,66 @@ const DashboardSinergySellersPage = () => {
                     ></textarea>
                 </div>
 
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-200">
-                            <span className="material-icons">local_shipping</span>
+                <div className="bg-emerald-50/70 p-5 rounded-2xl border border-emerald-100 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-200 shrink-0">
+                                <span className="material-icons">local_shipping</span>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-emerald-900">Sistem Pengiriman & Ongkos Kirim</h4>
+                                <p className="text-xs text-emerald-700">Atur ongkir flat toko dan ketersediaan bayar di tempat (COD).</p>
+                            </div>
                         </div>
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-emerald-200 self-start sm:self-auto">
+                            <span className="text-[11px] font-bold text-gray-700 uppercase tracking-tight">Aktifkan COD</span>
+                            <button
+                                type="button"
+                                onClick={() => setIsCodAvailable(!isCodAvailable)}
+                                className={`w-10 h-5 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-5.5' : 'left-0.5'}`}></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Aktifkan Ongkir Flat Toko */}
+                    <div className="pt-3 border-t border-emerald-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h4 className="text-sm font-bold text-emerald-900">Sistem Pengiriman E-Commerce</h4>
-                            <p className="text-xs text-emerald-700">Pengiriman dilakukan langsung oleh Penjual / Bebas Ongkir (Kesepakatan dengan Pembeli).</p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-800">Aktifkan Harga Ongkir Toko</span>
+                                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Tarif Flat Toko</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-0.5">
+                                Jika pembeli membeli lebih dari 1 produk di toko Anda, <b>ongkir disamakan (tidak berlaku kelipatan)</b>.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsShippingCostActive(!isShippingCostActive)}
+                                className={`w-10 h-5 rounded-full transition-all relative shrink-0 ${isShippingCostActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isShippingCostActive ? 'left-5.5' : 'left-0.5'}`}></div>
+                            </button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-emerald-200">
-                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-tight">Aktifkan COD</span>
-                        <button
-                            type="button"
-                            onClick={() => setIsCodAvailable(!isCodAvailable)}
-                            className={`w-10 h-5 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                        >
-                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-5.5' : 'left-0.5'}`}></div>
-                        </button>
-                    </div>
+
+                    {isShippingCostActive && (
+                        <div className="pt-1">
+                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Nominal Ongkos Kirim Toko (Rp) *
+                            </label>
+                            <div className="max-w-xs">
+                                <CurrencyInput 
+                                    value={shippingCost !== undefined && shippingCost !== null ? shippingCost : ''} 
+                                    onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
+                                    placeholder="Contoh: 10.000" 
+                                    className="!px-3 !py-2.5 !bg-white !rounded-xl !border-emerald-300 !text-emerald-700 !font-black !text-sm"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -761,7 +813,7 @@ const DashboardSinergySellersPage = () => {
                                 <input type="text" placeholder="Nama Varian (Cth: XL / Merah)" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                                 <div className="flex-1 relative">
                                     <CurrencyInput 
-                                        value={v.additional_price || ''} 
+                                        value={v.additional_price !== undefined && v.additional_price !== null && v.additional_price !== '' ? v.additional_price : ''} 
                                         onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} 
                                         placeholder="Harga" 
                                         className="!px-2 !py-2 !rounded-lg !border-gray-200 !text-emerald-700" 
@@ -769,7 +821,13 @@ const DashboardSinergySellersPage = () => {
                                     />
                                 </div>
                                 <div className="w-20 relative">
-                                    <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-full px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
+                                    <input 
+                                        type="number" 
+                                        placeholder="Stok" 
+                                        value={v.stock !== undefined && v.stock !== null ? v.stock : ''} 
+                                        onChange={(e) => updateVariant(i, 'stock', e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)} 
+                                        className="w-full px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" 
+                                    />
                                 </div>
                                 {variants.length > 1 && (
                                     <button type="button" onClick={() => removeVariant(i)} className="w-10 flex items-center justify-center text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition"><span className="material-icons text-sm">delete</span></button>

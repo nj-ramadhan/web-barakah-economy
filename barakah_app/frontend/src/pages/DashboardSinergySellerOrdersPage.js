@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
@@ -249,8 +249,436 @@ const DashboardSinergySellerOrdersPage = () => {
         }
     };
 
+    const [storeCouriers, setStoreCouriers] = useState([]);
+    const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
+    const [courierLoading, setCourierLoading] = useState(false);
+    const [newCourierName, setNewCourierName] = useState('');
+    const [newCourierPhone, setNewCourierPhone] = useState('');
+    const [editingCourierId, setEditingCourierId] = useState(null);
+    const [editCourierName, setEditCourierName] = useState('');
+    const [editCourierPhone, setEditCourierPhone] = useState('');
+
+    // Batch WA to Courier States & Anti-Bot Queue
+    const [isBatchWaModalOpen, setIsBatchWaModalOpen] = useState(false);
+    const [batchActiveTab, setBatchActiveTab] = useState('recap'); // 'recap' | 'queue'
+    const [batchCourierMode, setBatchCourierMode] = useState('single'); // 'single' | 'assigned'
+    const [batchSelectedCourierId, setBatchSelectedCourierId] = useState('');
+    const [batchSpeedPreset, setBatchSpeedPreset] = useState('normal'); // 'fast' | 'normal' | 'safe'
+    const [queueItems, setQueueItems] = useState([]);
+    const [currentQueueIdx, setCurrentQueueIdx] = useState(0);
+    const [queueStatus, setQueueStatus] = useState('idle'); // 'idle' | 'running' | 'paused' | 'completed'
+    const [queueCountdown, setQueueCountdown] = useState(0);
+    const [previewOrderText, setPreviewOrderText] = useState(null);
+
+    const queueTimerRef = useRef(null);
+    const countdownIntervalRef = useRef(null);
+
+    const fetchStoreCouriers = async () => {
+        if (!user || !user.access) return;
+        try {
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/store-couriers/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setStoreCouriers(res.data || []);
+        } catch (err) {
+            console.error("Failed fetching store couriers", err);
+        }
+    };
+
+    const handleCreateCourier = async (e) => {
+        e.preventDefault();
+        if (!newCourierName.trim() || !newCourierPhone.trim() || !user) return;
+        try {
+            setCourierLoading(true);
+            const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/store-couriers/`, 
+                { name: newCourierName.trim(), phone: newCourierPhone.trim() },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            setStoreCouriers([res.data, ...storeCouriers]);
+            setNewCourierName('');
+            setNewCourierPhone('');
+            alert('Kurir toko berhasil ditambahkan!');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Gagal menambahkan kurir');
+        } finally {
+            setCourierLoading(false);
+        }
+    };
+
+    const handleUpdateCourier = async (e) => {
+        e.preventDefault();
+        if (!editCourierName.trim() || !editCourierPhone.trim() || !editingCourierId || !user) return;
+        try {
+            setCourierLoading(true);
+            const res = await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/orders/store-couriers/${editingCourierId}/`, 
+                { name: editCourierName.trim(), phone: editCourierPhone.trim() },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            setStoreCouriers(storeCouriers.map(c => c.id === editingCourierId ? res.data : c));
+            setEditingCourierId(null);
+            setEditCourierName('');
+            setEditCourierPhone('');
+            alert('Data kurir berhasil diperbarui!');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Gagal memperbarui kurir');
+        } finally {
+            setCourierLoading(false);
+        }
+    };
+
+    const handleDeleteCourier = async (id) => {
+        if (!window.confirm('Hapus kurir ini dari daftar tersimpan?')) return;
+        if (!user) return;
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/orders/store-couriers/${id}/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setStoreCouriers(storeCouriers.filter(c => c.id !== id));
+            alert('Kurir berhasil dihapus');
+        } catch (err) {
+            alert('Gagal menghapus kurir');
+        }
+    };
+
+    const formatPhoneForWA = (phone) => {
+        if (!phone) return '';
+        let cleaned = phone.replace(/[^0-9]/g, '');
+        if (cleaned.startsWith('0')) {
+            cleaned = '62' + cleaned.slice(1);
+        } else if (!cleaned.startsWith('62')) {
+            cleaned = '62' + cleaned;
+        }
+        return cleaned;
+    };
+
+    const generateSingleOrderCourierMessage = (order, dName) => {
+        const isCod = (order.payment_method || '').toLowerCase() === 'cod';
+        const codAmount = order.cod_amount_to_pay !== undefined && order.cod_amount_to_pay !== null 
+            ? order.cod_amount_to_pay 
+            : (isCod ? order.grand_total : 0);
+
+        const recipientName = order.recipient_name || order.buyer_details?.name_full || order.user?.username || 'Pelanggan';
+        const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
+        
+        let addressParts = [];
+        if (order.shipping_address) addressParts.push(order.shipping_address);
+        if (order.shipping_rt_rw) addressParts.push(`RT/RW: ${order.shipping_rt_rw}`);
+        if (order.shipping_village) addressParts.push(`Kel. ${order.shipping_village}`);
+        if (order.shipping_district) addressParts.push(`Kec. ${order.shipping_district}`);
+        if (order.shipping_city) addressParts.push(order.shipping_city);
+        if (order.shipping_province) addressParts.push(order.shipping_province);
+        const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (order.buyer_details?.address || 'Alamat tidak tertera');
+
+        const coordinates = order.shipping_coordinates || '';
+        let mapsLink = '';
+        if (coordinates && coordinates.includes(',')) {
+            mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordinates.trim())}`;
+        } else if (fullAddress && fullAddress !== 'Alamat tidak tertera') {
+            mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+        }
+
+        const itemsList = (order.items || []).map(item => {
+            const varText = item.variation_name ? ` (${item.variation_name})` : '';
+            return `• ${item.quantity}x ${item.product_name || item.product?.title || 'Produk'}${varText}`;
+        }).join('\n');
+
+        const delivDate = localDeliveryDate[order.id] !== undefined ? localDeliveryDate[order.id] : order.delivery_date;
+        const delivSlot = localDeliveryTimeSlot[order.id] !== undefined ? localDeliveryTimeSlot[order.id] : order.delivery_time_slot;
+        let scheduleInfo = '';
+        if (delivDate || delivSlot) {
+            scheduleInfo = `\n⏰ *Waktu Pengantaran:* ${delivDate || ''} ${delivSlot ? `(${delivSlot})` : ''}`;
+        }
+
+        return `Halo *${dName || 'Kurir'}*,
+Ada tugas pengantaran pesanan baru dari toko. Segera kirim ke pembeli ya!
+
+📦 *Detail Pesanan:*
+• No. Pesanan: *${order.order_number || ('#' + order.id)}*
+• Status Pembayaran: *${isCod ? `💵 COD (Wajib Tagih Tunai: Rp ${new Intl.NumberFormat('id-ID').format(codAmount)})` : '✅ LUNAS / Non-COD'}*${scheduleInfo}
+
+👤 *Penerima:*
+• Nama: *${recipientName}*
+• No. HP/WA: ${recipientPhone}
+
+📍 *Alamat Pengiriman:*
+${fullAddress}
+${coordinates ? `• Titik Koordinat: ${coordinates}\n` : ''}${mapsLink ? `🗺️ *Google Maps Lokasi Pembeli:* ${mapsLink}\n` : ''}${order.buyer_note ? `\n📝 *Catatan Pembeli:* "${order.buyer_note}"\n` : ''}
+📋 *Daftar Barang yang Diantar:*
+${itemsList || '• 1 Paket Pesanan'}
+
+Mohon konfirmasi jika barang sudah diantar & diterima oleh pembeli. Terima kasih!`;
+    };
+
+    const generateRouteRecapCourierMessage = (ordersList, dName) => {
+        let totalCodAmount = 0;
+        let totalCodCount = 0;
+        let totalPrepaidCount = 0;
+
+        ordersList.forEach(order => {
+            const isCod = (order.payment_method || '').toLowerCase() === 'cod';
+            if (isCod) {
+                totalCodCount++;
+                const codAmount = order.cod_amount_to_pay !== undefined && order.cod_amount_to_pay !== null 
+                    ? Number(order.cod_amount_to_pay) 
+                    : Number(order.grand_total || 0);
+                totalCodAmount += codAmount;
+            } else {
+                totalPrepaidCount++;
+            }
+        });
+
+        const stopsText = ordersList.map((order, idx) => {
+            const isCod = (order.payment_method || '').toLowerCase() === 'cod';
+            const codAmount = order.cod_amount_to_pay !== undefined && order.cod_amount_to_pay !== null 
+                ? order.cod_amount_to_pay 
+                : (isCod ? order.grand_total : 0);
+            const recipientName = order.recipient_name || order.buyer_details?.name_full || order.user?.username || 'Pelanggan';
+            const recipientPhone = order.recipient_phone || order.buyer_details?.phone || '-';
+
+            let addressParts = [];
+            if (order.shipping_address) addressParts.push(order.shipping_address);
+            if (order.shipping_rt_rw) addressParts.push(`RT/RW: ${order.shipping_rt_rw}`);
+            if (order.shipping_village) addressParts.push(`Kel. ${order.shipping_village}`);
+            if (order.shipping_district) addressParts.push(`Kec. ${order.shipping_district}`);
+            if (order.shipping_city) addressParts.push(order.shipping_city);
+            const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (order.buyer_details?.address || 'Alamat tidak tertera');
+
+            const coordinates = order.shipping_coordinates || '';
+            let mapsLink = '';
+            if (coordinates && coordinates.includes(',')) {
+                mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordinates.trim())}`;
+            } else if (fullAddress && fullAddress !== 'Alamat tidak tertera') {
+                mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+            }
+
+            const itemsSummary = (order.items || []).map(i => `${i.quantity}x ${i.product_name || i.product?.title || 'Barang'}`).join(', ');
+
+            return `📍 *STOP #${idx + 1}* [${order.order_number || ('#' + order.id)}]
+• Penerima: *${recipientName}* (${recipientPhone})
+• Pembayaran: ${isCod ? `💵 *COD Rp ${new Intl.NumberFormat('id-ID').format(codAmount)} (Tagih Tunai)*` : '✅ *LUNAS (Non-COD)*'}
+• Alamat: ${fullAddress}
+${mapsLink ? `• Maps: ${mapsLink}\n` : ''}${order.buyer_note ? `• Catatan: "${order.buyer_note}"\n` : ''}• Barang: ${itemsSummary || '1 Paket'}`;
+        }).join('\n\n-------------------------\n\n');
+
+        return `🚚 *MANIFES RUTE PENGANTARAN KURIR TOKO*
+Halo *${dName || 'Kurir'}*, berikut rekap seluruh paket pesanan toko yang perlu diantar hari ini:
+
+📊 *RINGKASAN TUGAS:*
+• Total Paket: *${ordersList.length} Pengantaran*
+• Paket Lunas (Non-COD): *${totalPrepaidCount} Paket*
+• Paket COD (Bayar di Tempat): *${totalCodCount} Paket*
+${totalCodCount > 0 ? `• *TOTAL TAGIHAN COD WAJIB SETOR:* *Rp ${new Intl.NumberFormat('id-ID').format(totalCodAmount)}*` : ''}
+
+=========================
+${stopsText}
+=========================
+
+⚠️ *PANDUAN KURIR:*
+1. Pastikan tagih tunai tepat nominal untuk semua paket COD di atas.
+2. Harap kabari toko atau pembeli jika sudah mendekati lokasi tujuan.
+3. Tetap utamakan keselamatan berkendara! Terima kasih.`;
+    };
+
+    const handleSendWhatsAppToCourier = (order) => {
+        const dName = localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || 'Kurir Toko');
+        const dPhone = localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '');
+        
+        if (!dPhone) {
+            alert('Nomor HP/WhatsApp kurir belum diisi.');
+            return;
+        }
+
+        const cleanPhone = formatPhoneForWA(dPhone);
+        const message = generateSingleOrderCourierMessage(order, dName);
+        const encoded = encodeURIComponent(message);
+        window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
+    };
+
+    const resolveTargetCourierForOrder = (order) => {
+        if (batchCourierMode === 'single' && batchSelectedCourierId) {
+            const sc = storeCouriers.find(c => String(c.id) === String(batchSelectedCourierId));
+            if (sc) return { name: sc.name, phone: sc.phone };
+        }
+        const name = localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || 'Kurir Toko');
+        const phone = localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '');
+        return { name, phone };
+    };
+
+    const getDelayDuration = (preset) => {
+        if (preset === 'fast') {
+            return Math.round((5 + Math.random() * 2) * 10) / 10;
+        }
+        if (preset === 'safe') {
+            return Math.round((12 + Math.random() * 4) * 10) / 10;
+        }
+        return Math.round((7 + Math.random() * 3) * 10) / 10;
+    };
+
+    const clearQueueTimers = () => {
+        if (queueTimerRef.current) {
+            clearTimeout(queueTimerRef.current);
+            queueTimerRef.current = null;
+        }
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            clearQueueTimers();
+        };
+    }, []);
+
+    const dispatchOrderItem = (index, itemsList = queueItems) => {
+        if (index >= itemsList.length) {
+            setQueueStatus('completed');
+            clearQueueTimers();
+            return;
+        }
+
+        const item = itemsList[index];
+        const { name, phone } = resolveTargetCourierForOrder(item.order);
+        const clean = formatPhoneForWA(phone);
+
+        if (clean) {
+            const message = generateSingleOrderCourierMessage(item.order, name);
+            window.open(`https://wa.me/${clean}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        const updated = [...itemsList];
+        updated[index] = {
+            ...item,
+            status: clean ? 'sent' : 'skipped',
+            error: clean ? null : 'Nomor HP kurir belum terisi',
+            sentAt: new Date()
+        };
+        setQueueItems(updated);
+
+        const nextIdx = index + 1;
+        setCurrentQueueIdx(nextIdx);
+
+        if (nextIdx >= updated.length) {
+            setQueueStatus('completed');
+            clearQueueTimers();
+        } else {
+            runQueueItem(nextIdx, updated);
+        }
+    };
+
+    const runQueueItem = (index, itemsList = queueItems) => {
+        clearQueueTimers();
+        if (index >= itemsList.length) {
+            setQueueStatus('completed');
+            return;
+        }
+
+        const updated = [...itemsList];
+        updated[index] = { ...updated[index], status: 'active' };
+        setQueueItems(updated);
+
+        const delay = getDelayDuration(batchSpeedPreset);
+        let remaining = Math.ceil(delay);
+        setQueueCountdown(remaining);
+
+        countdownIntervalRef.current = setInterval(() => {
+            remaining -= 1;
+            setQueueCountdown(remaining > 0 ? remaining : 0);
+            if (remaining <= 0) {
+                if (countdownIntervalRef.current) {
+                    clearInterval(countdownIntervalRef.current);
+                    countdownIntervalRef.current = null;
+                }
+            }
+        }, 1000);
+
+        queueTimerRef.current = setTimeout(() => {
+            dispatchOrderItem(index, updated);
+        }, delay * 1000);
+    };
+
+    const handleStartQueue = () => {
+        setQueueStatus('running');
+        const startIdx = queueItems.findIndex(i => i.status === 'pending' || i.status === 'active');
+        const targetIdx = startIdx !== -1 ? startIdx : 0;
+        setCurrentQueueIdx(targetIdx);
+        runQueueItem(targetIdx, queueItems);
+    };
+
+    const handlePauseQueue = () => {
+        clearQueueTimers();
+        setQueueStatus('paused');
+    };
+
+    const handleResumeQueue = () => {
+        setQueueStatus('running');
+        runQueueItem(currentQueueIdx, queueItems);
+    };
+
+    const handleSkipCurrent = (index) => {
+        clearQueueTimers();
+        const updated = [...queueItems];
+        updated[index] = { ...updated[index], status: 'skipped' };
+        setQueueItems(updated);
+        const nextIdx = index + 1;
+        setCurrentQueueIdx(nextIdx);
+        if (nextIdx >= updated.length) {
+            setQueueStatus('completed');
+        } else if (queueStatus === 'running') {
+            runQueueItem(nextIdx, updated);
+        }
+    };
+
+    const handleSendNowManual = (index) => {
+        clearQueueTimers();
+        dispatchOrderItem(index, queueItems);
+    };
+
+    const handleOpenBatchWaModal = (ordersList) => {
+        const selected = ordersList.filter(o => selectedOrderIds.has(o.id));
+        if (selected.length === 0) {
+            alert('Pilih minimal 1 pesanan untuk dikirim ke kurir.');
+            return;
+        }
+
+        const initialItems = selected.map(order => ({
+            id: order.id,
+            order,
+            status: 'pending',
+            sentAt: null,
+            error: null
+        }));
+
+        setQueueItems(initialItems);
+        setCurrentQueueIdx(0);
+        setQueueStatus('idle');
+        setQueueCountdown(0);
+        clearQueueTimers();
+
+        if (storeCouriers.length > 0 && !batchSelectedCourierId) {
+            setBatchSelectedCourierId(storeCouriers[0].id);
+        }
+        setIsBatchWaModalOpen(true);
+    };
+
+    const handleResetQueue = () => {
+        clearQueueTimers();
+        const resetItems = queueItems.map(item => ({
+            ...item,
+            status: 'pending',
+            sentAt: null,
+            error: null
+        }));
+        setQueueItems(resetItems);
+        setCurrentQueueIdx(0);
+        setQueueCountdown(0);
+        setQueueStatus('idle');
+    };
+
     useEffect(() => {
         fetchOrders();
+        fetchStoreCouriers();
     }, []);
 
     const handleExportCSV = async () => {
@@ -749,6 +1177,18 @@ const DashboardSinergySellerOrdersPage = () => {
                 cod_amount_to_pay: codAmountToSave
             } : o));
             alert('Status pesanan berhasil diperbarui!');
+            if (shippingTypeToSave === 'kurir_toko' && driverPhoneToSave) {
+                handleSendWhatsAppToCourier({
+                    ...order,
+                    status: newStatus,
+                    shipping_type: shippingTypeToSave,
+                    driver_name: driverNameToSave,
+                    driver_phone: driverPhoneToSave,
+                    delivery_date: deliveryDateToSave,
+                    delivery_time_slot: deliveryTimeSlotToSave,
+                    cod_amount_to_pay: codAmountToSave
+                });
+            }
         } catch (error) {
             alert(error.response?.data?.error || 'Gagal mengubah status pesanan');
         } finally {
@@ -869,22 +1309,68 @@ const DashboardSinergySellerOrdersPage = () => {
                             </label>
                             <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">🛵 Kurir Pribadi</span>
                         </div>
-                        <input 
-                            type="text"
-                            placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
-                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
-                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
-                            disabled={updatingId === order.id}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                        />
-                        <input 
-                            type="text"
-                            placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
-                            value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
-                            onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
-                            disabled={updatingId === order.id}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                        />
+
+                        {/* Dropdown Kurir Toko Tersimpan */}
+                        {storeCouriers.length > 0 && (
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-600 block mb-1">Pilih Kurir Toko Tersimpan:</label>
+                                <select 
+                                    onChange={(e) => {
+                                        const cId = e.target.value;
+                                        if (cId) {
+                                            const c = storeCouriers.find(item => String(item.id) === String(cId));
+                                            if (c) {
+                                                setLocalDriverName({ ...localDriverName, [order.id]: c.name });
+                                                setLocalDriverPhone({ ...localDriverPhone, [order.id]: c.phone });
+                                            }
+                                        }
+                                    }}
+                                    disabled={updatingId === order.id}
+                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none transition cursor-pointer"
+                                >
+                                    <option value="">-- Pilih dari Kurir Terdaftar --</option>
+                                    {storeCouriers.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-600 block mb-1">Nama Driver / Pengirim:</label>
+                            <input 
+                                type="text"
+                                placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
+                                value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
+                                onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
+                                disabled={updatingId === order.id}
+                                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-600 block mb-1">No. Telp / WA Pengirim:</label>
+                            <input 
+                                type="text"
+                                placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
+                                value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                                onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                disabled={updatingId === order.id}
+                                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                        </div>
+
+                        {/* Tombol Cepat Kirim Detail Tugas ke WA Kurir */}
+                        {(localDriverPhone[order.id] || order.driver_phone) && (
+                            <button
+                                type="button"
+                                onClick={() => handleSendWhatsAppToCourier(order)}
+                                className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition mt-1"
+                            >
+                                <span className="material-icons text-sm">send</span>
+                                Kirim Detail Pengantaran ke WA Kurir
+                            </button>
+                        )}
 
                         {/* Mode Jadwal Pengantaran: Slot Jam vs Estimasi Hari */}
                         <div className="pt-2 border-t border-emerald-100 space-y-2">
@@ -1100,7 +1586,15 @@ const DashboardSinergySellerOrdersPage = () => {
                             <p className="text-xs text-gray-500 mt-0.5">Khusus pesanan produk fisik yang terdaftar pada toko Anda</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button 
+                            onClick={() => setIsCourierModalOpen(true)}
+                            className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition shadow-sm"
+                            title="Kelola daftar kurir toko Anda"
+                        >
+                            <span className="material-icons text-sm text-emerald-600">delivery_dining</span>
+                            Kelola Kurir Toko {storeCouriers.length > 0 && `(${storeCouriers.length})`}
+                        </button>
                         <button 
                             onClick={fetchOrders}
                             className="flex items-center gap-1.5 bg-white border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
@@ -1206,6 +1700,19 @@ const DashboardSinergySellerOrdersPage = () => {
                             >
                                 <span className="material-icons text-sm">print</span>
                                 Cetak Resi Massal ({selectedOrderIds.size})
+                            </button>
+                            <button
+                                onClick={() => handleOpenBatchWaModal(filteredOrders)}
+                                disabled={selectedOrderIds.size === 0}
+                                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                                    selectedOrderIds.size > 0
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-emerald-200'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
+                                title="Kirim penugasan rute atau antrean per paket ke WhatsApp kurir toko"
+                            >
+                                <span className="material-icons text-sm">send</span>
+                                Kirim WA Kurir (Batch) {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}
                             </button>
                         </div>
                     </div>
@@ -1962,6 +2469,673 @@ const DashboardSinergySellerOrdersPage = () => {
                     }
                 }
             `}</style>
+
+            {/* Modal Manajemen Kurir Toko */}
+            {isCourierModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                                    <span className="material-icons text-lg">delivery_dining</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-gray-800 leading-tight">Kelola Kurir Toko Anda</h3>
+                                    <p className="text-[11px] text-gray-500">Simpan daftar kurir pribadi untuk kemudahan penugasan pesanan</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsCourierModalOpen(false);
+                                    setEditingCourierId(null);
+                                }}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+
+                        {/* Form Tambah / Edit Kurir */}
+                        <form onSubmit={editingCourierId ? handleUpdateCourier : handleCreateCourier} className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-100 space-y-3">
+                            <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1">
+                                <span className="material-icons text-sm">{editingCourierId ? 'edit' : 'person_add'}</span>
+                                {editingCourierId ? 'Edit Data Kurir' : 'Tambah Kurir Baru'}
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-600 block mb-1">Nama Kurir *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Cth: Budi Kurir"
+                                        value={editingCourierId ? editCourierName : newCourierName}
+                                        onChange={(e) => editingCourierId ? setEditCourierName(e.target.value) : setNewCourierName(e.target.value)}
+                                        required
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-600 block mb-1">No. HP / WhatsApp *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Cth: 081234567890"
+                                        value={editingCourierId ? editCourierPhone : newCourierPhone}
+                                        onChange={(e) => editingCourierId ? setEditCourierPhone(e.target.value) : setNewCourierPhone(e.target.value)}
+                                        required
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                                {editingCourierId && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEditingCourierId(null);
+                                            setEditCourierName('');
+                                            setEditCourierPhone('');
+                                        }}
+                                        className="px-3 py-1.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
+                                    >
+                                        Batal
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={courierLoading}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1"
+                                >
+                                    <span className="material-icons text-xs">{editingCourierId ? 'check' : 'add'}</span>
+                                    {courierLoading ? 'Menyimpan...' : (editingCourierId ? 'Simpan Perubahan' : 'Simpan Kurir')}
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* List of Registered Couriers */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-gray-800 uppercase tracking-wider">Kurir Tersimpan ({storeCouriers.length})</span>
+                            </div>
+
+                            {storeCouriers.length === 0 ? (
+                                <div className="p-6 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                    <span className="material-icons text-gray-400 text-3xl mb-1">moped</span>
+                                    <p className="text-xs font-bold text-gray-600">Belum ada kurir toko yang disimpan</p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">Tambahkan kurir pribadi toko Anda menggunakan formulir di atas.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                    {storeCouriers.map(c => (
+                                        <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 hover:bg-emerald-50/40 rounded-2xl border border-gray-100 transition">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-emerald-700 shadow-2xs">
+                                                    <span className="material-icons text-base">delivery_dining</span>
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-xs font-black text-gray-800">{c.name}</h5>
+                                                    <a 
+                                                        href={`https://wa.me/${formatPhoneForWA(c.phone)}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                                                    >
+                                                        <span className="material-icons text-[11px]">chat</span>
+                                                        {c.phone}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setEditingCourierId(c.id);
+                                                        setEditCourierName(c.name);
+                                                        setEditCourierPhone(c.phone);
+                                                    }}
+                                                    className="p-1.5 text-gray-500 hover:text-emerald-700 hover:bg-white rounded-lg transition"
+                                                    title="Edit Kurir"
+                                                >
+                                                    <span className="material-icons text-sm">edit</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteCourier(c.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-white rounded-lg transition"
+                                                    title="Hapus Kurir"
+                                                >
+                                                    <span className="material-icons text-sm">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Batch WA ke Kurir (Anti-Bot Queue & Rekap Rute) */}
+            {isBatchWaModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl w-full max-w-3xl my-auto shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+                        {/* Header Modal */}
+                        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50/80 via-teal-50/40 to-white">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-200">
+                                    <span className="material-icons text-xl">send</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-gray-800 leading-tight">Pengiriman Batch WA ke Kurir</h3>
+                                    <p className="text-[11px] text-gray-500">Kirim instruksi pengantaran dengan sistem antrean anti-bot atau rekap 1 rute aman</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    clearQueueTimers();
+                                    setIsBatchWaModalOpen(false);
+                                }}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition cursor-pointer"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+
+                        {/* Top Bar: Pemilihan Kurir & Ringkasan */}
+                        <div className="p-4 bg-gray-50/80 border-b border-gray-100 space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex-1">
+                                    <label className="text-[11px] font-black text-gray-700 uppercase tracking-wider block mb-1">
+                                        Kurir Tujuan Pengiriman:
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={batchCourierMode === 'single' ? batchSelectedCourierId : '__assigned__'}
+                                            onChange={(e) => {
+                                                if (e.target.value === '__assigned__') {
+                                                    setBatchCourierMode('assigned');
+                                                } else {
+                                                    setBatchCourierMode('single');
+                                                    setBatchSelectedCourierId(e.target.value);
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                        >
+                                            {storeCouriers.map(c => (
+                                                <option key={c.id} value={c.id}>🛵 {c.name} ({c.phone})</option>
+                                            ))}
+                                            <option value="__assigned__">🛵 Gunakan Kurir yang Terpasang di Tiap Pesanan</option>
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCourierModalOpen(true)}
+                                            className="px-2.5 py-2 bg-white hover:bg-gray-100 text-emerald-700 border border-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer"
+                                            title="Tambah / Kelola Kurir Toko"
+                                        >
+                                            <span className="material-icons text-xs">add</span>
+                                            Kurir
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Stats badges */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="bg-white border border-gray-200 px-3 py-1.5 rounded-xl text-center">
+                                        <div className="text-[10px] text-gray-400 font-bold">TOTAL PAKET</div>
+                                        <div className="text-xs font-black text-gray-800">{queueItems.length} Pesanan</div>
+                                    </div>
+                                    <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-center">
+                                        <div className="text-[10px] text-emerald-600 font-bold">TAGIH COD</div>
+                                        <div className="text-xs font-black text-emerald-800">
+                                            Rp {formatIDR(
+                                                queueItems.reduce((acc, item) => {
+                                                    const isCod = (item.order.payment_method || '').toLowerCase() === 'cod';
+                                                    if (isCod) {
+                                                        const amt = item.order.cod_amount_to_pay !== undefined && item.order.cod_amount_to_pay !== null 
+                                                            ? Number(item.order.cod_amount_to_pay) 
+                                                            : Number(item.order.grand_total || 0);
+                                                        return acc + amt;
+                                                    }
+                                                    return acc;
+                                                }, 0)
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Mode Tabs */}
+                            <div className="flex bg-gray-200/80 p-1 rounded-2xl gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setBatchActiveTab('recap')}
+                                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                                        batchActiveTab === 'recap'
+                                            ? 'bg-white text-emerald-800 shadow-xs'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    <span className="material-icons text-sm">map</span>
+                                    <span>Rekap 1 Rute (Aman 100%)</span>
+                                    <span className="bg-emerald-100 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded-full font-black">Zero Risk</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setBatchActiveTab('queue')}
+                                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                                        batchActiveTab === 'queue'
+                                            ? 'bg-white text-emerald-800 shadow-xs'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    <span className="material-icons text-sm">hourglass_top</span>
+                                    <span>Antrean Per Paket (Queue)</span>
+                                    <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded-full font-black">Anti-Bot</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
+                            {/* TAB 1: REKAP 1 PESAN RUTE */}
+                            {batchActiveTab === 'recap' && (
+                                <div className="space-y-4">
+                                    <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 flex items-start gap-3">
+                                        <span className="material-icons text-emerald-600 text-lg mt-0.5">verified_user</span>
+                                        <div className="text-xs text-emerald-900 leading-relaxed">
+                                            <p className="font-bold">Mode Paling Aman & Disukai Kurir!</p>
+                                            <p className="text-emerald-700 text-[11px] mt-0.5">
+                                                Menggabungkan seluruh {queueItems.length} pesanan menjadi 1 lembar instruksi rute WhatsApp. Kurir dapat langsung melihat seluruh urutan alamat, Google Maps, dan tagihan COD dalam 1 chat. <strong>100% bebas dari pemblokiran bot WhatsApp.</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="text-xs font-black text-gray-700 uppercase tracking-wider">Preview Pesan WhatsApp yang Akan Dikirim:</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const targetCourier = storeCouriers.find(c => String(c.id) === String(batchSelectedCourierId));
+                                                    const dName = targetCourier ? targetCourier.name : 'Kurir Toko';
+                                                    const msg = generateRouteRecapCourierMessage(queueItems.map(i => i.order), dName);
+                                                    navigator.clipboard.writeText(msg);
+                                                    alert('Teks rekap rute berhasil disalin ke clipboard!');
+                                                }}
+                                                className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <span className="material-icons text-xs">content_copy</span>
+                                                Salin Teks
+                                            </button>
+                                        </div>
+                                        <div className="bg-[#eef5e9] border border-emerald-200/80 rounded-2xl p-4 font-mono text-[11px] text-gray-800 whitespace-pre-wrap max-h-72 overflow-y-auto shadow-inner leading-relaxed">
+                                            {(() => {
+                                                const targetCourier = storeCouriers.find(c => String(c.id) === String(batchSelectedCourierId));
+                                                const dName = targetCourier ? targetCourier.name : 'Kurir Toko';
+                                                return generateRouteRecapCourierMessage(queueItems.map(i => i.order), dName);
+                                            })()}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100">
+                                        <div className="text-[11px] text-gray-500">
+                                            Tujuan:{' '}
+                                            <span className="font-bold text-gray-800">
+                                                {(() => {
+                                                    const targetCourier = storeCouriers.find(c => String(c.id) === String(batchSelectedCourierId));
+                                                    return targetCourier ? `${targetCourier.name} (${targetCourier.phone})` : 'Kurir belum dipilih';
+                                                })()}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const targetCourier = storeCouriers.find(c => String(c.id) === String(batchSelectedCourierId));
+                                                if (!targetCourier || !targetCourier.phone) {
+                                                    alert('Harap pilih kurir tujuan yang memiliki nomor WhatsApp.');
+                                                    return;
+                                                }
+                                                const clean = formatPhoneForWA(targetCourier.phone);
+                                                const msg = generateRouteRecapCourierMessage(queueItems.map(i => i.order), targetCourier.name);
+                                                window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+                                            }}
+                                            className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 transition cursor-pointer"
+                                        >
+                                            <span className="material-icons text-base">chat</span>
+                                            Kirim Rekap Rute ke WhatsApp Kurir
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 2: ANTREAN PER PAKET (QUEUE ANTI-BOT) */}
+                            {batchActiveTab === 'queue' && (
+                                <div className="space-y-4">
+                                    {/* Pengaturan Jeda Anti-Bot */}
+                                    <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-amber-600 text-base">security</span>
+                                                <span className="text-xs font-black text-amber-950 uppercase tracking-wider">Proteksi Anti-Bot WhatsApp</span>
+                                            </div>
+                                            <span className="text-[10px] bg-amber-200/80 text-amber-900 font-black px-2 py-0.5 rounded-full">
+                                                Random Jitter Aktif
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-amber-800 leading-normal">
+                                            Sistem memberikan variasi jeda acak (*humanized typing jitter*) antara tiap pengiriman agar ritme pesan tidak terbaca sebagai mesin spam oleh algoritma WhatsApp.
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            <span className="text-[11px] font-bold text-gray-700">Kecepatan Jeda:</span>
+                                            {[
+                                                { id: 'normal', label: '🟢 Normal (7-10 dtk)', desc: 'Disarankan' },
+                                                { id: 'safe', label: '🛡️ Super Aman (12-16 dtk)', desc: 'Ekstra Proteksi' },
+                                                { id: 'fast', label: '⚡ Cepat (5-7 dtk)', desc: 'Gunakan jika sedikit' },
+                                            ].map(preset => (
+                                                <button
+                                                    key={preset.id}
+                                                    type="button"
+                                                    disabled={queueStatus === 'running'}
+                                                    onClick={() => setBatchSpeedPreset(preset.id)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                                        batchSpeedPreset === preset.id
+                                                            ? 'bg-emerald-700 text-white shadow-xs'
+                                                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50'
+                                                    }`}
+                                                >
+                                                    <span>{preset.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Bar & Status Queue */}
+                                    <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 space-y-3">
+                                        <div className="flex items-center justify-between text-xs font-black">
+                                            <span className="text-gray-700">
+                                                Progres Antrean: {queueItems.filter(i => i.status === 'sent' || i.status === 'skipped').length} dari {queueItems.length} Paket Selesai
+                                            </span>
+                                            <span className="text-emerald-700">
+                                                {queueItems.length > 0
+                                                    ? Math.round((queueItems.filter(i => i.status === 'sent' || i.status === 'skipped').length / queueItems.length) * 100)
+                                                    : 0}%
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-300 rounded-full"
+                                                style={{
+                                                    width: `${queueItems.length > 0 ? (queueItems.filter(i => i.status === 'sent' || i.status === 'skipped').length / queueItems.length) * 100 : 0}%`
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Status Message */}
+                                        {queueStatus === 'running' && (
+                                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 animate-pulse">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-icons text-emerald-600 text-sm animate-spin">refresh</span>
+                                                    <span>
+                                                        Mengantre paket ke-{currentQueueIdx + 1} ({queueItems[currentQueueIdx]?.order?.order_number || ('#' + queueItems[currentQueueIdx]?.order?.id)})...
+                                                    </span>
+                                                </div>
+                                                <span className="font-black bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-[11px]">
+                                                    Jeda aman: {queueCountdown} dtk
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {queueStatus === 'paused' && (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-center gap-2 text-xs text-amber-900">
+                                                <span className="material-icons text-amber-600 text-sm">pause_circle</span>
+                                                <span>Antrean dijeda sementara. Tekan <strong>Lanjutkan</strong> saat Anda siap.</span>
+                                            </div>
+                                        )}
+
+                                        {queueStatus === 'completed' && (
+                                            <div className="bg-emerald-100 border border-emerald-300 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold text-emerald-900">
+                                                <span className="material-icons text-emerald-600 text-sm">check_circle</span>
+                                                <span>🎉 Seluruh antrean pesanan berhasil diproses ke WhatsApp!</span>
+                                            </div>
+                                        )}
+
+                                        {/* Queue Action Controls */}
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            {queueStatus === 'idle' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleStartQueue}
+                                                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-200 flex items-center gap-1.5 transition cursor-pointer"
+                                                >
+                                                    <span className="material-icons text-sm">play_arrow</span>
+                                                    Mulai Antrean ({queueItems.length} Paket)
+                                                </button>
+                                            )}
+
+                                            {queueStatus === 'running' && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePauseQueue}
+                                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1 transition cursor-pointer"
+                                                    >
+                                                        <span className="material-icons text-sm">pause</span>
+                                                        Jeda Antrean
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSkipCurrent(currentQueueIdx)}
+                                                        className="px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <span className="material-icons text-sm">skip_next</span>
+                                                        Lewati Paket Ini
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSendNowManual(currentQueueIdx)}
+                                                        className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                                        title="Kirim segera tanpa menunggu jeda countdown"
+                                                    >
+                                                        <span className="material-icons text-sm">bolt</span>
+                                                        Kirim Sekarang
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {queueStatus === 'paused' && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleResumeQueue}
+                                                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                                                    >
+                                                        <span className="material-icons text-sm">play_arrow</span>
+                                                        Lanjutkan Antrean
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleResetQueue}
+                                                        className="px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                                                    >
+                                                        Reset dari Awal
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {queueStatus === 'completed' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResetQueue}
+                                                    className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <span className="material-icons text-sm">replay</span>
+                                                    Ulangi Antrean
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Queue Items Scrollable List */}
+                                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                        {queueItems.map((item, idx) => {
+                                            const { name: cName, phone: cPhone } = resolveTargetCourierForOrder(item.order);
+                                            const isCod = (item.order.payment_method || '').toLowerCase() === 'cod';
+                                            const codAmount = item.order.cod_amount_to_pay !== undefined && item.order.cod_amount_to_pay !== null 
+                                                ? item.order.cod_amount_to_pay 
+                                                : (isCod ? item.order.grand_total : 0);
+                                            const recipientName = item.order.recipient_name || item.order.buyer_details?.name_full || item.order.user?.username || 'Pelanggan';
+                                            const streetAddress = item.order.shipping_address || item.order.buyer_details?.address || 'Alamat tidak tertera';
+
+                                            const isActive = item.status === 'active';
+                                            const isSent = item.status === 'sent';
+                                            const isSkipped = item.status === 'skipped';
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`p-3 rounded-2xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                                        isActive
+                                                            ? 'bg-emerald-50/90 border-emerald-400 shadow-md ring-2 ring-emerald-400/30'
+                                                            : isSent
+                                                            ? 'bg-gray-50/70 border-gray-200 opacity-80'
+                                                            : isSkipped
+                                                            ? 'bg-gray-100/60 border-gray-200 opacity-60'
+                                                            : 'bg-white border-gray-200 hover:border-emerald-200'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start gap-2.5">
+                                                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                                                            isActive
+                                                                ? 'bg-emerald-600 text-white'
+                                                                : isSent
+                                                                ? 'bg-emerald-100 text-emerald-800'
+                                                                : 'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            {idx + 1}
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-xs font-black text-gray-800">
+                                                                    {item.order.order_number || ('#' + item.order.id)}
+                                                                </span>
+                                                                <span className="text-xs font-semibold text-gray-700">• {recipientName}</span>
+                                                                {isCod ? (
+                                                                    <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.2 rounded-full">
+                                                                        COD: Rp {formatIDR(codAmount)}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.2 rounded-full">
+                                                                        LUNAS
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-500 line-clamp-1 max-w-md">
+                                                                📍 {streetAddress}
+                                                            </p>
+                                                            <p className="text-[10px] text-gray-400">
+                                                                🛵 Kurir: <strong className="text-gray-600">{cName}</strong> ({cPhone || 'Tanpa no. HP'})
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Status Badge & Actions */}
+                                                    <div className="flex items-center gap-2 justify-end shrink-0">
+                                                        {item.status === 'pending' && (
+                                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                                <span className="material-icons text-[11px]">schedule</span>
+                                                                Antrean
+                                                            </span>
+                                                        )}
+                                                        {isActive && (
+                                                            <span className="text-[10px] font-black bg-emerald-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1 animate-pulse">
+                                                                <span className="material-icons text-[11px]">hourglass_bottom</span>
+                                                                Proses ({queueCountdown}s)
+                                                            </span>
+                                                        )}
+                                                        {isSent && (
+                                                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                                <span className="material-icons text-[11px]">done_all</span>
+                                                                Terkirim
+                                                            </span>
+                                                        )}
+                                                        {isSkipped && (
+                                                            <span className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2.5 py-1 rounded-full">
+                                                                Dilewati
+                                                            </span>
+                                                        )}
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPreviewOrderText(generateSingleOrderCourierMessage(item.order, cName))}
+                                                            className="p-1.5 text-gray-400 hover:text-emerald-700 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                                                            title="Lihat Teks WA"
+                                                        >
+                                                            <span className="material-icons text-sm">visibility</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSendNowManual(idx)}
+                                                            className="p-1.5 text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition cursor-pointer"
+                                                            title="Buka / Kirim Sekarang Manual"
+                                                        >
+                                                            <span className="material-icons text-sm">send</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Preview Teks WhatsApp Satuan */}
+            {previewOrderText && (
+                <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-5 border border-gray-100 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="material-icons text-emerald-600 text-base">chat</span>
+                                Preview Pesan WhatsApp ke Kurir
+                            </h4>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewOrderText(null)}
+                                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition cursor-pointer"
+                            >
+                                <span className="material-icons text-xs">close</span>
+                            </button>
+                        </div>
+                        <div className="bg-[#eef5e9] border border-emerald-200 rounded-2xl p-4 font-mono text-[11px] text-gray-800 whitespace-pre-wrap max-h-80 overflow-y-auto shadow-inner leading-relaxed">
+                            {previewOrderText}
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(previewOrderText);
+                                    alert('Teks berhasil disalin!');
+                                }}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1 cursor-pointer"
+                            >
+                                <span className="material-icons text-xs">content_copy</span>
+                                Salin Teks
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewOrderText(null)}
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>

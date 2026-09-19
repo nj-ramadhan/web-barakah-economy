@@ -5,8 +5,8 @@
  */
 export const formatCurrency = (value) => {
     if (value === null || value === undefined || value === '') return '';
-    const number = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(number)) return '';
+    const number = typeof value === 'number' ? value : parseCurrency(value);
+    if (number === '' || isNaN(number)) return '';
     
     // Using id-ID to get dots as thousands separators (e.g. 10.000)
     return new Intl.NumberFormat('id-ID', {

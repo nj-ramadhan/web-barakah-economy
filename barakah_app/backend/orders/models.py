@@ -119,3 +119,15 @@ class OrderItem(models.Model):
     def __str__(self):
         var_str = f" ({self.variation.name})" if self.variation else ""
         return f"{self.quantity} x {self.product.title}{var_str} in Order {self.order.id}"
+
+class StoreCourier(models.Model):
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_couriers')
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.phone}) - {self.seller.username}"

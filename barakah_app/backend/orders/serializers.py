@@ -1,7 +1,12 @@
-# orders/serializers.py
 from rest_framework import serializers
-from .models import Order, OrderItem
+from .models import Order, OrderItem, StoreCourier
 from profiles.models import Profile
+
+class StoreCourierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreCourier
+        fields = ['id', 'seller', 'name', 'phone', 'created_at']
+        read_only_fields = ['id', 'seller', 'created_at']
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
