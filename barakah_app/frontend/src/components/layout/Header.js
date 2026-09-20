@@ -5,14 +5,12 @@ import '../../styles/Header.css';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import CartToastNotification from '../common/CartToastNotification';
-import MobileNavDrawer from './MobileNavDrawer';
 
 const Header = () => {
   const { i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const fetchCartCount = async () => {
     const userStr = localStorage.getItem('user');
@@ -49,29 +47,14 @@ const Header = () => {
   return (
     <header className="bg-white dark:bg-gray-950 shadow-sm dark:shadow-gray-900 border-b border-transparent dark:border-gray-800 fixed top-0 left-0 w-full z-[900] lg:hidden transition-colors duration-300" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <CartToastNotification />
-      <MobileNavDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
-      <div className="container px-3 sm:px-4 py-2 flex items-center justify-between">
+      <div className="container px-4 py-2 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="p-1.5 bg-green-50 dark:bg-green-900/30 rounded-xl group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition shadow-sm">
+            <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" />
+          </div>
+          <span className="text-xl font-black text-green-800 dark:text-green-400 tracking-tighter">Barakah App</span>
+        </Link>
         <div className="flex items-center gap-2">
-          {/* Hamburger Menu Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setIsDrawerOpen(true)}
-            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 shrink-0"
-            title="Buka Menu Lengkap"
-            aria-label="Buka Menu Lengkap"
-          >
-            <span className="material-icons text-xl sm:text-2xl">menu</span>
-          </button>
-
-          <Link to="/" className="flex items-center gap-2 group min-w-0">
-            <div className="p-1.5 bg-green-50 dark:bg-green-900/30 rounded-xl group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition shadow-sm shrink-0">
-              <img src="/logo.png" alt="Barakah Economy" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-            </div>
-            <span className="text-lg sm:text-xl font-black text-green-800 dark:text-green-400 tracking-tighter truncate">Barakah App</span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Cart Icon */}
           <Link
             to="/keranjang"

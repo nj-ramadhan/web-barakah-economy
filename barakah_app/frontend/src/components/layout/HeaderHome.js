@@ -4,12 +4,10 @@ import axios from 'axios';
 import '../../styles/Header.css'; // Import the CSS file
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
-import MobileNavDrawer from './MobileNavDrawer';
 
 const HeaderHome = ({ onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { t, i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
 
@@ -47,30 +45,15 @@ const HeaderHome = ({ onSearch }) => {
 
   return (
     <header className="bg-white dark:bg-gray-950 shadow-sm dark:shadow-gray-900 border-b border-transparent dark:border-gray-800 fixed top-0 left-0 w-full z-[900] lg:hidden transition-colors duration-300" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <MobileNavDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
-      <div className="px-3 sm:px-4 py-2.5 lg:max-w-6xl lg:mx-auto lg:px-6">
-        <div className="flex justify-between items-center gap-2 lg:justify-end">
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Hamburger Menu Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setIsDrawerOpen(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition active:scale-95 shrink-0"
-              title="Buka Menu Lengkap"
-              aria-label="Buka Menu Lengkap"
-            >
-              <span className="material-icons text-xl sm:text-2xl">menu</span>
-            </button>
-
-            <Link to="/" className="flex items-center gap-1.5 group shrink-0">
-              <div className="p-1 bg-green-50 dark:bg-green-900/30 rounded-xl group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition shadow-sm">
-                <img src="/logo.png" alt="Barakah Economy" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-              </div>
-              <span className="text-base sm:text-xl font-black text-green-800 dark:text-green-400 tracking-tighter hidden xs:inline">Barakah App</span>
-            </Link>
-          </div>
-
-          <div className="flex-1 min-w-[120px] max-w-[180px] sm:max-w-[240px] mx-1">
+      <div className="px-4 py-3 lg:max-w-6xl lg:mx-auto lg:px-6">
+        <div className="flex justify-between items-center lg:justify-end">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="p-1.5 bg-green-50 dark:bg-green-900/30 rounded-xl group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition shadow-sm">
+              <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" />
+            </div>
+            <span className="text-xl font-black text-green-800 dark:text-green-400 tracking-tighter">Barakah App</span>
+          </Link>
+          <div className="flex-1 max-w-[160px] sm:max-w-[200px] mx-2 lg:mr-0 lg:ml-auto lg:max-w-[300px]">
             <input
               type="text"
               placeholder={t('header.search')}
