@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
 from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -83,6 +84,8 @@ urlpatterns = [
     path('api/transactions/', include('transactions.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
+
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 
     path('<str:username>/', seo_seller_profile),
     path('<str:username>', seo_seller_profile),

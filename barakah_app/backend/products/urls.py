@@ -36,6 +36,7 @@ urlpatterns = [
     path('<int:pk>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like'),
     path('<int:pk>/transfer-ownership/', ProductViewSet.as_view({'post': 'transfer_ownership'}), name='product-transfer-ownership-id'),
     path('<int:pk>/og-image/', ProductOgImageView.as_view(), name='product-og-image-pk'),
+    path('<int:pk>/og-image.jpg', ProductOgImageView.as_view(), name='product-og-image-pk-jpg'),
     path('<int:pk>/add_testimoni_admin/', ProductViewSet.as_view({'post': 'add_testimoni_admin'}), name='product-testi-admin-id'),
     path('<int:pk>/add_testimoni_buyer/', ProductViewSet.as_view({'post': 'add_testimoni_buyer'}), name='product-testi-buyer-id'),
     path('<int:pk>/my_testimoni/', ProductViewSet.as_view({'get': 'my_testimoni'}), name='product-my-testi-id'),
@@ -48,6 +49,9 @@ urlpatterns = [
     # Action endpoints for Slug
     path('<slug:slug>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like-slug'),
     path('<slug:slug>/transfer-ownership/', ProductViewSet.as_view({'post': 'transfer_ownership'}), name='product-transfer-ownership-slug'),
+    path('<str:slug>/og-image.jpg', ProductOgImageView.as_view(), name='product-og-image-str-jpg'),
+    path('<str:slug>/og-image/', ProductOgImageView.as_view(), name='product-og-image-str'),
+    path('<slug:slug>/og-image.jpg', ProductOgImageView.as_view(), name='product-og-image-slug-jpg'),
     path('<slug:slug>/og-image/', ProductOgImageView.as_view(), name='product-og-image-slug'),
     path('<slug:slug>/add_testimoni_admin/', ProductViewSet.as_view({'post': 'add_testimoni_admin'}), name='product-testi-admin-slug'),
     path('<slug:slug>/add_testimoni_buyer/', ProductViewSet.as_view({'post': 'add_testimoni_buyer'}), name='product-testi-buyer-slug'),

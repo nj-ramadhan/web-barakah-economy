@@ -687,6 +687,9 @@ class ProductShareView(APIView):
     def get(self, request, slug):
         import re
         slug_clean = str(slug).strip('/')
+        # Remove extension if any accidentally passed
+        slug_clean = re.sub(r'\.(html|htm|php)$', '', slug_clean, flags=re.IGNORECASE)
+
         product = Product.objects.filter(slug__iexact=slug_clean).first()
         if not product and slug_clean.isdigit():
             product = Product.objects.filter(id=int(slug_clean)).first()
@@ -694,15 +697,26 @@ class ProductShareView(APIView):
             search_term = slug_clean.replace('-', ' ').strip()
             product = Product.objects.filter(title__icontains=search_term).first()
 
+        # Build absolute share URL for Open Graph canonical
+        share_url = request.build_absolute_uri()
+        if share_url.startswith('http://'):
+            share_url = 'https://' + share_url[7:]
+
         # Fallback to digital product if needed
         if not product:
             from digital_products.models import DigitalProduct
             dp = DigitalProduct.objects.filter(slug__iexact=slug_clean).first()
+            if not dp and slug_clean.isdigit():
+                dp = DigitalProduct.objects.filter(id=int(slug_clean)).first()
+
             if dp:
                 target_url = f"https://barakah.cloud/digital-products/{dp.slug}"
-                thumb = dp.thumbnail.url if dp.thumbnail else 'https://barakah.cloud/images/web-thumbnail.jpg'
-                if thumb and not thumb.startswith('http'):
-                    thumb = f"https://api.barakah.cloud{thumb}"
+                thumb = dp.thumbnail.url if dp.thumbnail else ''
+                if thumb:
+                    if not thumb.startswith('http'):
+                        thumb = f"https://api.barakah.cloud{thumb}"
+                else:
+                    thumb = f"https://api.barakah.cloud/api/products/{dp.slug}/og-image.jpg"
                 
                 clean_desc = re.sub(r'<[^>]*>', '', dp.description or '')[:160].strip()
                 price_str = f"Rp {int(dp.price):,}".replace(',', '.') if dp.price else ''
@@ -712,11 +726,15 @@ class ProductShareView(APIView):
                     'title': dp.title,
                     'description': desc_text or f"Beli {dp.title} di Barakah Economy.",
                     'thumbnail_url': thumb,
+                    'thumbnail_type': 'image/jpeg',
+                    'thumbnail_width': 600,
+                    'thumbnail_height': 600,
                 }
                 from django.shortcuts import render
                 return render(request, 'products/product_share.html', {
                     'product': product_data,
-                    'target_url': target_url
+                    'target_url': target_url,
+                    'share_url': share_url
                 })
 
         if product:
@@ -733,10 +751,6 @@ class ProductShareView(APIView):
 
             price_val = float(product.price or 0)
             orig_price_str = f"Rp {int(price_val):,}".replace(',', '.') if price_val > 0 else ''
-
-            # Helper for unicode strikethrough in link preview snippets (e.g. R̶p̶ ̶1̶0̶0̶.̶0̶0̶0̶)
-            def to_strikethrough(text):
-                return ''.join(c + '\u0336' for c in text)
 
             price_desc = ''
             if active_promo and price_val > 0:
@@ -756,8 +770,7 @@ class ProductShareView(APIView):
                         disc_label = f"Grosir Potongan Rp {int(disc_val):,}".replace(',', '.')
 
                 promo_price_str = f"Rp {int(discounted_price):,}".replace(',', '.')
-                strike_orig = to_strikethrough(orig_price_str)
-                price_desc = f"🔥 PROMO: {promo_price_str} ({strike_orig} | {disc_label})"
+                price_desc = f"🔥 PROMO: {promo_price_str} (Normal: {orig_price_str} | {disc_label})"
             elif orig_price_str:
                 price_desc = f"Harga: {orig_price_str}"
 
@@ -773,66 +786,102 @@ class ProductShareView(APIView):
             product_data = {
                 'title': product.title,
                 'description': " | ".join(desc_parts),
-                'thumbnail_url': f"https://api.barakah.cloud/api/products/{product.slug}/og-image/",
+                'thumbnail_url': f"https://api.barakah.cloud/api/products/{product.slug}/og-image.jpg",
                 'thumbnail_type': 'image/jpeg',
+                'thumbnail_width': 600,
+                'thumbnail_height': 600,
             }
         else:
-            target_url = f"https://barakah.cloud/store"
+            target_url = "https://barakah.cloud/store"
             product_data = {
                 'title': str(slug_clean).replace('-', ' ').title(),
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
-                'thumbnail_url': f"https://api.barakah.cloud/api/products/{slug_clean}/og-image/",
+                'thumbnail_url': f"https://api.barakah.cloud/api/products/{slug_clean}/og-image.jpg",
                 'thumbnail_type': 'image/jpeg',
+                'thumbnail_width': 600,
+                'thumbnail_height': 600,
             }
 
         from django.shortcuts import render
         return render(request, 'products/product_share.html', {
             'product': product_data,
-            'target_url': target_url
+            'target_url': target_url,
+            'share_url': share_url
         })
 
 
 class ProductOgImageView(APIView):
     """
-    Dynamically generates and serves lightweight (< 200KB) JPEG thumbnails for WhatsApp / Telegram Open Graph.
-    WhatsApp rejects thumbnails > 300KB or in non-standard formats (WebP/SVG).
+    Dynamically generates and serves lightweight (< 150KB) JPEG thumbnails for WhatsApp / Telegram Open Graph.
+    WhatsApp rejects thumbnails > 300KB or in non-standard formats (WebP/SVG/HEIC).
     """
     permission_classes = [AllowAny]
 
     def get(self, request, slug=None, pk=None):
         from django.http import HttpResponse
         from PIL import Image
-        import io, os
+        import io, os, re
         from django.conf import settings
 
-        product = None
+        # Clean slug of any extension like .jpg or .png
+        slug_clean = None
         if slug:
-            product = Product.objects.filter(slug__iexact=slug).first()
+            slug_clean = re.sub(r'\.(jpg|jpeg|png|webp)$', '', str(slug).strip('/'), flags=re.IGNORECASE)
+
+        product = None
+        if slug_clean:
+            product = Product.objects.filter(slug__iexact=slug_clean).first()
+            if not product and slug_clean.isdigit():
+                product = Product.objects.filter(pk=int(slug_clean)).first()
+            if not product:
+                search_term = slug_clean.replace('-', ' ').strip()
+                product = Product.objects.filter(title__icontains=search_term).first()
         elif pk:
             product = Product.objects.filter(pk=pk).first()
 
         # Fallback to digital product if not found
         dp = None
-        if not product and slug:
+        if not product and slug_clean:
             from digital_products.models import DigitalProduct
-            dp = DigitalProduct.objects.filter(slug__iexact=slug).first()
+            dp = DigitalProduct.objects.filter(slug__iexact=slug_clean).first()
+            if not dp and slug_clean.isdigit():
+                dp = DigitalProduct.objects.filter(pk=int(slug_clean)).first()
 
-        # Resolve image file on disk
-        img_path = None
+        # Resolve image source (path or file-like object)
+        img_source = None
         if product:
-            if product.thumbnail and hasattr(product.thumbnail, 'path') and os.path.exists(product.thumbnail.path):
-                img_path = product.thumbnail.path
-            elif hasattr(product, 'images') and product.images.exists():
+            if product.thumbnail:
+                try:
+                    if hasattr(product.thumbnail, 'path') and os.path.exists(product.thumbnail.path):
+                        img_source = product.thumbnail.path
+                    elif hasattr(product.thumbnail, 'file'):
+                        img_source = product.thumbnail.file
+                except Exception:
+                    pass
+            if not img_source and hasattr(product, 'images') and product.images.exists():
                 first_img = product.images.first()
-                if first_img and first_img.image and hasattr(first_img.image, 'path') and os.path.exists(first_img.image.path):
-                    img_path = first_img.image.path
+                if first_img and first_img.image:
+                    try:
+                        if hasattr(first_img.image, 'path') and os.path.exists(first_img.image.path):
+                            img_source = first_img.image.path
+                        elif hasattr(first_img.image, 'file'):
+                            img_source = first_img.image.file
+                    except Exception:
+                        pass
         elif dp:
-            if dp.thumbnail and hasattr(dp.thumbnail, 'path') and os.path.exists(dp.thumbnail.path):
-                img_path = dp.thumbnail.path
+            if dp.thumbnail:
+                try:
+                    if hasattr(dp.thumbnail, 'path') and os.path.exists(dp.thumbnail.path):
+                        img_source = dp.thumbnail.path
+                    elif hasattr(dp.thumbnail, 'file'):
+                        img_source = dp.thumbnail.file
+                except Exception:
+                    pass
 
-        if img_path and os.path.exists(img_path):
+        # If image found, process and compress
+        if img_source:
             try:
-                with Image.open(img_path) as img:
+                with Image.open(img_source) as img:
                     # Convert to RGB (in case of RGBA, P, WebP, etc.)
                     if img.mode in ('RGBA', 'LA', 'P'):
                         bg = Image.new('RGB', img.size, (255, 255, 255))
@@ -856,19 +905,25 @@ class ProductOgImageView(APIView):
             except Exception as e:
                 pass
 
-        # Fallback to default web-thumbnail.jpg
-        default_thumb_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'images', 'web-thumbnail.jpg')
-        if os.path.exists(default_thumb_path):
-            try:
-                with open(default_thumb_path, 'rb') as f:
-                    response = HttpResponse(f.read(), content_type='image/jpeg')
-                    response['Cache-Control'] = 'public, max-age=86400'
-                    return response
-            except:
-                pass
+        # Fallback to local static or frontend public image
+        for fallback_dir in [
+            os.path.join(settings.BASE_DIR, 'static', 'images'),
+            os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'images')
+        ]:
+            thumb_file = os.path.join(fallback_dir, 'web-thumbnail.jpg')
+            if os.path.exists(thumb_file):
+                try:
+                    with open(thumb_file, 'rb') as f:
+                        response = HttpResponse(f.read(), content_type='image/jpeg')
+                        response['Cache-Control'] = 'public, max-age=86400'
+                        return response
+                except Exception:
+                    pass
 
-        # In-memory generated placeholder
-        img = Image.new('RGB', (300, 300), color=(5, 150, 105))
+        # High-res branded placeholder with Barakah green color
+        img = Image.new('RGB', (600, 600), color=(5, 150, 105))
         buffer = io.BytesIO()
         img.save(buffer, format='JPEG', quality=80)
-        return HttpResponse(buffer.getvalue(), content_type='image/jpeg')
+        response = HttpResponse(buffer.getvalue(), content_type='image/jpeg')
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response

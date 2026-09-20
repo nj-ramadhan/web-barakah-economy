@@ -4,34 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ product.title }}</title>
+    <title>{{ product.title|escape }} - Barakah Economy</title>
 
-    <!-- Instant Meta Refresh for standard browsers -->
-    <meta http-equiv="refresh" content="0; url={{ target_url }}">
-
-    <!-- Schema.org for Google+ & WhatsApp Preview -->
-    <meta itemprop="name" content="{{ product.title }}">
-    <meta itemprop="description" content="{{ product.description }}">
-    <meta itemprop="image" content="{{ product.thumbnail_url }}">
+    <!-- Schema.org for Google & WhatsApp Preview -->
+    <meta itemprop="name" content="{{ product.title|escape }}">
+    <meta itemprop="description" content="{{ product.description|escape }}">
+    <meta itemprop="image" content="{{ product.thumbnail_url|escape }}">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:site_name" content="Barakah Economy">
-    <meta property="og:type" content="product">
-    <meta property="og:url" content="{{ target_url }}">
-    <meta property="og:title" content="{{ product.title }}">
-    <meta property="og:description" content="{{ product.description }}">
-    <meta property="og:image" content="{{ product.thumbnail_url }}">
-    <meta property="og:image:secure_url" content="{{ product.thumbnail_url }}">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="600">
-    <meta property="og:image:height" content="600">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ share_url|escape }}">
+    <meta property="og:title" content="{{ product.title|escape }}">
+    <meta property="og:description" content="{{ product.description|escape }}">
+    <meta property="og:image" content="{{ product.thumbnail_url|escape }}">
+    <meta property="og:image:secure_url" content="{{ product.thumbnail_url|escape }}">
+    <meta property="og:image:type" content="{{ product.thumbnail_type|default:'image/jpeg' }}">
+    <meta property="og:image:width" content="{{ product.thumbnail_width|default:'600' }}">
+    <meta property="og:image:height" content="{{ product.thumbnail_height|default:'600' }}">
+    <meta property="og:image:alt" content="{{ product.title|escape }}">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ target_url }}">
-    <meta name="twitter:title" content="{{ product.title }}">
-    <meta name="twitter:description" content="{{ product.description }}">
-    <meta name="twitter:image" content="{{ product.thumbnail_url }}">
+    <meta name="twitter:url" content="{{ share_url|escape }}">
+    <meta name="twitter:title" content="{{ product.title|escape }}">
+    <meta name="twitter:description" content="{{ product.description|escape }}">
+    <meta name="twitter:image" content="{{ product.thumbnail_url|escape }}">
 
     <style>
         body {
@@ -87,7 +85,9 @@
     <script>
         var targetUrl = "{{ target_url|safe }}";
         if (targetUrl) {
-            window.location.replace(targetUrl);
+            setTimeout(function() {
+                window.location.replace(targetUrl);
+            }, 60);
         }
     </script>
 </body>
