@@ -112,6 +112,7 @@ class Product(models.Model):
         ], 
         default='none'
     )
+    manual_sold_count = models.IntegerField(default=0, help_text="Jumlah terjual tambahan / penyesuaian manual oleh admin")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def sync_variations(self):
@@ -154,7 +155,7 @@ class Product(models.Model):
 
     @property
     def sold_count(self):
-        return (self.store_sold_count or 0) + (self.charity_sold_count or 0)
+        return (self.store_sold_count or 0) + (self.charity_sold_count or 0) + (self.manual_sold_count or 0)
 
     def save(self, *args, **kwargs):
         if not self.slug:

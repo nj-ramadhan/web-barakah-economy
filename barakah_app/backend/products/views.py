@@ -50,7 +50,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         if self.action in ['list', 'retrieve', 'promotion']:
             return [IsAuthenticatedOrReadOnly()]
-        if self.action in ['add_testimoni_admin']:
+        if self.action in ['add_testimoni_admin', 'update_sold_count']:
             return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly(), IsOwnerOrAdmin()]
     
@@ -114,7 +114,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
         # Dashboard Management View or Detail Actions
-        is_detail = self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'like', 'add_testimoni_buyer', 'add_testimoni_admin', 'delete_testimoni', 'promotion']
+        is_detail = self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'like', 'add_testimoni_buyer', 'add_testimoni_admin', 'delete_testimoni', 'promotion', 'update_sold_count']
         if self.request.query_params.get('manage') == 'true' or is_detail:
             if not user.is_authenticated:
                 if is_detail: # Public can still retrieve approved products
@@ -614,6 +614,31 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'name': target_name
             }
         }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post', 'patch'], permission_classes=[IsAuthenticated])
+    def update_sold_count(self, request, pk=None, slug=None):
+        user = request.user
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+            return Response({'error': 'Hanya administrator yang dapat mengubah jumlah terjual manual.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        product = self.get_object()
+        manual_count = request.data.get('manual_sold_count')
+        if manual_count is None:
+            return Response({'error': 'Field manual_sold_count diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            product.manual_sold_count = int(manual_count)
+            product.save(update_fields=['manual_sold_count'])
+            return Response({
+                'status': 'success',
+                'message': f'Jumlah terjual produk "{product.title}" berhasil diperbarui.',
+                'manual_sold_count': product.manual_sold_count,
+                'sold_count': product.sold_count,
+                'store_sold_count': product.store_sold_count,
+                'charity_sold_count': product.charity_sold_count
+            }, status=status.HTTP_200_OK)
+        except (ValueError, TypeError):
+            return Response({'error': 'Format angka tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
 
     def _compress_image(self, uploaded_file):
         """Compress uploaded review image if large to ensure fast database & storage."""

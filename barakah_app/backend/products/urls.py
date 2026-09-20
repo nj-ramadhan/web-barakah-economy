@@ -41,6 +41,7 @@ urlpatterns = [
     path('<int:pk>/my_testimoni/', ProductViewSet.as_view({'get': 'my_testimoni'}), name='product-my-testi-id'),
     path('<int:pk>/testimonies/<int:testimoni_id>/', ProductViewSet.as_view({'delete': 'delete_testimoni'}), name='product-testi-delete-id'),
     path('<int:pk>/testimonies/<int:testimoni_id>/reset_edit_access/', ProductViewSet.as_view({'post': 'reset_testimoni_edit_access'}), name='product-testi-reset-edit-id'),
+    path('<int:pk>/update_sold_count/', ProductViewSet.as_view({'post': 'update_sold_count', 'patch': 'update_sold_count'}), name='product-update-sold-count-id'),
     path('<int:pk>/promotion/', ProductViewSet.as_view({'get': 'promotion', 'post': 'promotion', 'delete': 'promotion'}), name='product-promotion-id'),
     path('<int:pk>/', product_detail, name='product-detail-id'),  # Detail berdasarkan ID
 
@@ -53,6 +54,7 @@ urlpatterns = [
     path('<slug:slug>/my_testimoni/', ProductViewSet.as_view({'get': 'my_testimoni'}), name='product-my-testi-slug'),
     path('<slug:slug>/testimonies/<int:testimoni_id>/', ProductViewSet.as_view({'delete': 'delete_testimoni'}), name='product-testi-delete-slug'),
     path('<slug:slug>/testimonies/<int:testimoni_id>/reset_edit_access/', ProductViewSet.as_view({'post': 'reset_testimoni_edit_access'}), name='product-testi-reset-edit-slug'),
+    path('<slug:slug>/update_sold_count/', ProductViewSet.as_view({'post': 'update_sold_count', 'patch': 'update_sold_count'}), name='product-update-sold-count-slug'),
     path('<slug:slug>/promotion/', ProductViewSet.as_view({'get': 'promotion', 'post': 'promotion', 'delete': 'promotion'}), name='product-promotion-slug'),
     path('share/<slug:slug>/', ProductShareView.as_view(), name='product-share-slug'),  # Share preview endpoint
     path('<slug:slug>/', ProductDetailView.as_view(), name='product-detail-slug'),  # Detail berdasarkan slug

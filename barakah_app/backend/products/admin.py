@@ -11,11 +11,15 @@ class ProductAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'is_featured', 'is_active', 'price', 'own_bank_status', 'own_bank_name')
+    list_display = ('title', 'category', 'is_featured', 'is_active', 'price', 'stock', 'sold_count_display', 'manual_sold_count')
     list_filter = ('category', 'is_featured', 'is_active', 'own_bank_status')
     search_fields = ('title', 'description', 'own_bank_holder', 'own_bank_account')
     date_hierarchy = 'created_at'  # Add a date filter for the deadline    
     form = ProductAdminForm    
+
+    def sold_count_display(self, obj):
+        return f"{obj.sold_count} (Toko: {obj.store_sold_count}, Charity: {obj.charity_sold_count}, Manual: {obj.manual_sold_count})"
+    sold_count_display.short_description = 'Total Terjual'    
 
 class TestimoniAdminForm(forms.ModelForm):
     description = forms.CharField(widget=CKEditorUploadingWidget())  # Use CKEditorWidget for the article field

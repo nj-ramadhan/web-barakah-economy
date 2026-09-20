@@ -33,12 +33,50 @@ const DashboardSinergyAdminPage = () => {
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [savingProduct, setSavingProduct] = useState(false);
+    const [manualSoldCount, setManualSoldCount] = useState(0);
+
+    // Quick Edit Sold Modal State
+    const [isQuickSoldModalOpen, setIsQuickSoldModalOpen] = useState(false);
+    const [quickSoldProduct, setQuickSoldProduct] = useState(null);
+    const [quickManualCount, setQuickManualCount] = useState(0);
+    const [savingQuickSold, setSavingQuickSold] = useState(false);
 
     // Promo & Testimoni Modal States
     const [isTestiModalOpen, setIsTestiModalOpen] = useState(false);
     const [selectedTestiProduct, setSelectedTestiProduct] = useState(null);
     const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
     const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
+
+    const handleOpenQuickSoldModal = (product) => {
+        setQuickSoldProduct(product);
+        setQuickManualCount(product.manual_sold_count || 0);
+        setIsQuickSoldModalOpen(true);
+    };
+
+    const handleSaveQuickSold = async (e) => {
+        if (e) e.preventDefault();
+        if (savingQuickSold || !quickSoldProduct) return;
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+
+        try {
+            setSavingQuickSold(true);
+            await axios.post(
+                `${process.env.REACT_APP_API_BASE_URL}/api/products/${quickSoldProduct.id}/update_sold_count/`,
+                { manual_sold_count: quickManualCount },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            alert(`Jumlah terjual untuk "${quickSoldProduct.title}" berhasil diperbarui!`);
+            setIsQuickSoldModalOpen(false);
+            fetchProducts();
+        } catch (error) {
+            console.error('Error updating sold count:', error);
+            const errMsg = error.response?.data?.error || 'Gagal memperbarui jumlah terjual';
+            alert(errMsg);
+        } finally {
+            setSavingQuickSold(false);
+        }
+    };
 
     const fetchProducts = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -114,6 +152,7 @@ const DashboardSinergyAdminPage = () => {
         setIsShippingCostActive(product.is_shipping_cost_active || false);
         setShippingCost(parseCurrency(product.shipping_cost) || 0);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
+        setManualSoldCount(product.manual_sold_count || 0);
         setVariants(product.variations && product.variations.length > 0 
             ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })) 
             : [{ name: '', additional_price: 0, stock: 0 }]
@@ -158,6 +197,7 @@ const DashboardSinergyAdminPage = () => {
             formData.append('is_shipping_cost_active', isShippingCostActive);
             formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
+            formData.append('manual_sold_count', manualSoldCount || 0);
 
             if (thumbnailFile) {
                 formData.append('thumbnail', thumbnailFile);
@@ -247,6 +287,29 @@ const DashboardSinergyAdminPage = () => {
                                     <div className="flex justify-center sm:justify-start gap-3 mt-2">
                                         <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">Beli: Rp {formatCurrency(p.purchase_price)}</span>
                                         <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">Jual: Rp {formatCurrency(p.price)} / {p.unit || 'pcs'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2 flex-wrap justify-center sm:justify-start">
+                                        <span 
+                                            className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                                            title={`Rincian: Toko (${p.store_sold_count || 0}) + Charity (${p.charity_sold_count || 0}) + Manual (${p.manual_sold_count || 0})`}
+                                        >
+                                            <span className="material-icons text-sm text-emerald-600">shopping_bag</span>
+                                            Terjual: <span className="font-black text-emerald-950">{p.sold_count || 0}</span> {p.unit || 'pcs'}
+                                            {p.manual_sold_count !== 0 && (
+                                                <span className="text-[10px] text-emerald-600 font-semibold">
+                                                    ({p.manual_sold_count > 0 ? `+${p.manual_sold_count}` : p.manual_sold_count} manual)
+                                                </span>
+                                            )}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenQuickSoldModal(p)}
+                                            className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-emerald-300 px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-xs"
+                                            title="Ubah / sesuaikan jumlah terjual produk ini"
+                                        >
+                                            <span className="material-icons text-xs">edit</span>
+                                            Edit Terjual
+                                        </button>
                                     </div>
                                 </div>
 
@@ -433,6 +496,41 @@ const DashboardSinergyAdminPage = () => {
                                             <option value="kerajinan">Kerajinan & Accessories</option>
                                             <option value="lainnya">Lainnya</option>
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="material-icons text-emerald-700 text-lg">shopping_bag</span>
+                                        <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider">Pengaturan Jumlah Terjual (Sold Count)</h4>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-800 mb-3 leading-relaxed">
+                                        Sistem menghitung pesanan laku dari Toko & donasi Waqaf/Charity secara otomatis. Admin dapat menambahkan angka penyesuaian manual di bawah ini (misal: untuk penjualan offline / langsung).
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                        <div className="bg-white p-3 rounded-xl border border-emerald-100 shadow-2xs">
+                                            <span className="text-gray-500 block text-[11px]">Otomatis dari Toko:</span>
+                                            <span className="font-extrabold text-gray-800 text-sm">{editingProduct?.store_sold_count || 0} {unit}</span>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl border border-emerald-100 shadow-2xs">
+                                            <span className="text-gray-500 block text-[11px]">Otomatis Charity / Waqaf:</span>
+                                            <span className="font-extrabold text-gray-800 text-sm">{editingProduct?.charity_sold_count || 0} {unit}</span>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs">
+                                            <label className="text-emerald-900 block font-bold text-[11px] mb-1">Tambahan / Manual Admin:</label>
+                                            <input 
+                                                type="number"
+                                                value={manualSoldCount}
+                                                onChange={(e) => setManualSoldCount(parseInt(e.target.value) || 0)}
+                                                className="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-300 rounded-lg text-xs font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 text-right">
+                                        <span className="text-xs font-bold text-emerald-900 bg-emerald-100/80 px-3 py-1 rounded-lg inline-block border border-emerald-200">
+                                            Total Terjual Tampil di Publik: <b className="text-emerald-950 text-sm">{((editingProduct?.store_sold_count || 0) + (editingProduct?.charity_sold_count || 0) + (parseInt(manualSoldCount) || 0))}</b> {unit}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -623,6 +721,107 @@ const DashboardSinergyAdminPage = () => {
                         product={selectedPromoProduct}
                         onSuccess={fetchProducts}
                     />
+                )}
+
+                {/* Quick Edit Sold Count Modal */}
+                {isQuickSoldModalOpen && quickSoldProduct && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+                            <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-icons text-emerald-600 text-xl">shopping_bag</span>
+                                    <h3 className="font-bold text-gray-900 text-base">Atur Jumlah Terjual</h3>
+                                </div>
+                                <button 
+                                    onClick={() => { setIsQuickSoldModalOpen(false); setQuickSoldProduct(null); }}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                                >
+                                    <span className="material-icons text-lg">close</span>
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100 mb-4">
+                                <img 
+                                    src={getMediaUrl(quickSoldProduct.thumbnail || quickSoldProduct.thumbnail_url) || '/placeholder-image.jpg'} 
+                                    alt={quickSoldProduct.title}
+                                    className="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0"
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="font-bold text-xs text-gray-900 truncate">{quickSoldProduct.title}</h4>
+                                    <p className="text-[11px] text-gray-500">Stok: {quickSoldProduct.stock} {quickSoldProduct.unit || 'pcs'}</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSaveQuickSold} className="space-y-4">
+                                <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-2">
+                                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                        Sistem secara otomatis menghitung pesanan dari <b>Toko</b> dan <b>Donasi Waqaf/Charity</b>. Anda dapat mengatur angka penyesuaian manual di bawah ini.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-200/60">
+                                        <div className="bg-white/80 p-2 rounded-xl border border-emerald-100">
+                                            <span className="text-gray-500 block text-[10px]">Otomatis Toko:</span>
+                                            <span className="font-bold text-gray-800">{quickSoldProduct.store_sold_count || 0} {quickSoldProduct.unit || 'pcs'}</span>
+                                        </div>
+                                        <div className="bg-white/80 p-2 rounded-xl border border-emerald-100">
+                                            <span className="text-gray-500 block text-[10px]">Otomatis Charity/Waqaf:</span>
+                                            <span className="font-bold text-gray-800">{quickSoldProduct.charity_sold_count || 0} {quickSoldProduct.unit || 'pcs'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                        Tambahan / Penyesuaian Manual Admin:
+                                    </label>
+                                    <input 
+                                        type="number"
+                                        value={quickManualCount}
+                                        onChange={(e) => setQuickManualCount(parseInt(e.target.value) || 0)}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        placeholder="0"
+                                        required
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1">
+                                        Bisa diisi angka positif (misal: pesanan langsung / offline) atau 0.
+                                    </p>
+                                </div>
+
+                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
+                                    <span className="text-xs text-gray-600 font-semibold">Total Tampil di Publik:</span>
+                                    <span className="text-sm font-black text-emerald-700">
+                                        {((quickSoldProduct.store_sold_count || 0) + (quickSoldProduct.charity_sold_count || 0) + (parseInt(quickManualCount) || 0))} {quickSoldProduct.unit || 'pcs'}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-end gap-2.5 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsQuickSoldModalOpen(false); setQuickSoldProduct(null); }}
+                                        className="px-4 py-2.5 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={savingQuickSold}
+                                        className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition flex items-center gap-1.5 disabled:opacity-60"
+                                    >
+                                        {savingQuickSold ? (
+                                            <>
+                                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                <span>Menyimpan...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-icons text-sm">save</span>
+                                                <span>Simpan Jumlah Terjual</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 )}
             </div>
             <NavigationButton />
