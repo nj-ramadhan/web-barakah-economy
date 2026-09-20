@@ -106,6 +106,9 @@ class CampaignSerializer(serializers.ModelSerializer):
                 'campaign_title': campaign_title,
                 'stock': p.stock,
                 'unit': p.unit,
+                'sold_count': p.sold_count,
+                'store_sold_count': p.store_sold_count,
+                'charity_sold_count': p.charity_sold_count,
                 'thumbnail': thumb_url,
                 'seller_name': seller_name,
             })

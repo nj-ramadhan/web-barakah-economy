@@ -235,6 +235,11 @@ const EcommerceMainPage = () => {
         return inStockB - inStockA;
       }
 
+      if (sortMode === 'terlaris') {
+        const soldDiff = Number(b.sold_count || 0) - Number(a.sold_count || 0);
+        if (soldDiff !== 0) return soldDiff;
+        return Number(b.views_count || 0) - Number(a.views_count || 0);
+      }
       if (sortMode === 'price_asc') {
         return getEffectivePrice(a) - getEffectivePrice(b);
       }
@@ -247,7 +252,11 @@ const EcommerceMainPage = () => {
       if (sortMode === 'stock') {
         return stockB - stockA;
       }
-      // Default: 'populer' (Clicks/views highest first, then likes, then newest)
+      // Default: 'populer' (Terlaris/sold, then views highest first, then likes, then newest)
+      const soldDiff = Number(b.sold_count || 0) - Number(a.sold_count || 0);
+      if (soldDiff !== 0) {
+        return soldDiff;
+      }
       const viewsA = Number(a.views_count || 0);
       const viewsB = Number(b.views_count || 0);
       if (viewsB !== viewsA) {
@@ -555,9 +564,22 @@ const EcommerceMainPage = () => {
                   } <span className="text-[10px] font-normal text-gray-400">/ {product.unit || 'pcs'}</span>
                 </p>
               )}
-              <p className="text-gray-400 text-[10px]">
-                stok: {inStock ? `${effectiveStock} ${product.unit || 'pcs'}` : 'habis'}
-              </p>
+              <div className="flex items-center justify-between text-[10px] mt-0.5">
+                <span className="text-gray-400">
+                  stok: {inStock ? `${effectiveStock} ${product.unit || 'pcs'}` : 'habis'}
+                </span>
+                <span 
+                  className={`font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                    (product.sold_count || 0) > 0 
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                      : 'text-gray-400'
+                  }`}
+                  title={`${product.store_sold_count || 0} terjual di toko, ${product.charity_sold_count || 0} lewat program charity/waqaf`}
+                >
+                  <span className="material-icons text-[11px]">shopping_bag</span>
+                  {product.sold_count || 0} terjual
+                </span>
+              </div>
             </div>
           
             <div className="flex items-center gap-2 mb-3">
@@ -844,6 +866,7 @@ const EcommerceMainPage = () => {
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { key: 'populer', label: 'Paling Populer', icon: 'trending_up', title: 'Urutan default: Stok ada & paling banyak diklik' },
+                { key: 'terlaris', label: 'Terlaris', icon: 'local_fire_department', title: 'Produk paling banyak terjual' },
                 { key: 'price_asc', label: 'Harga Terendah', icon: 'south_east', title: 'Harga termurah ke termahal' },
                 { key: 'price_desc', label: 'Harga Tertinggi', icon: 'north_east', title: 'Harga termahal ke termurah' },
                 { key: 'newest', label: 'Terbaru', icon: 'schedule', title: 'Produk yang baru ditambahkan' },

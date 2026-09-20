@@ -531,11 +531,25 @@ const EcommerceProductDetail = () => {
                   </>
                 );
               })()}
-                    <div className="flex items-center text-gray-400 text-xs gap-4 mb-4">
+                    <div className="flex items-center text-gray-400 text-xs gap-3 mb-4 flex-wrap">
                         <div className="flex items-center gap-1">
                           <span className="material-icons text-sm">visibility</span>
                           {product.views_count || 0} kali dilihat
                         </div>
+                        <span className="text-gray-300">•</span>
+                        <div 
+                          className="flex items-center gap-1 font-bold text-gray-800"
+                          title={`${product.store_sold_count || 0} terjual via Toko, ${product.charity_sold_count || 0} terjual via Charity/Waqaf`}
+                        >
+                          <span className="material-icons text-sm text-emerald-600">shopping_bag</span>
+                          <span>{product.sold_count || 0} Terjual</span>
+                          {product.charity_sold_count > 0 && (
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 ml-1">
+                              Waqaf: {product.charity_sold_count}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-gray-300">•</span>
                         <div className="flex items-center gap-1">
                           <div 
                             className="flex items-center gap-2 font-bold text-green-700 hover:bg-green-50 p-1.5 rounded-xl transition-all cursor-pointer border border-transparent hover:border-green-100"
@@ -553,9 +567,18 @@ const EcommerceProductDetail = () => {
                           </div>
                         </div>
                     </div>
-                <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200 mb-6 inline-block">
-                  Stok: <span className="font-bold text-gray-900">{selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}</span> {product.unit || 'pcs'}
-                </p>
+                <div className="flex items-center gap-2.5 mb-6 flex-wrap">
+                  <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200 inline-flex items-center gap-1.5">
+                    Stok: <span className="font-bold text-gray-900">{selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}</span> {product.unit || 'pcs'}
+                  </p>
+                  <p 
+                    className="text-sm font-medium text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 inline-flex items-center gap-1.5"
+                    title={`${product.store_sold_count || 0} terjual langsung di toko, ${product.charity_sold_count || 0} terjual lewat program charity / waqaf`}
+                  >
+                    <span className="material-icons text-emerald-600 text-sm">verified</span>
+                    Terjual: <span className="font-bold text-emerald-900">{product.sold_count || 0}</span> {product.unit || 'pcs'}
+                  </p>
+                </div>
 
                 {product?.variations && product.variations.length > 0 && (
                   <div className="mb-6">

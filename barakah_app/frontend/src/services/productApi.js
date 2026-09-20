@@ -29,6 +29,12 @@ export const addTestimoniBuyer = (idOrSlug, formData) =>
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 
+export const getMyTestimoni = (idOrSlug) =>
+    api.get(`${API_BASE}/${idOrSlug}/my_testimoni/`);
+
+export const resetTestimoniEditAccess = (idOrSlug, testimoniId) =>
+    api.post(`${API_BASE}/${idOrSlug}/testimonies/${testimoniId}/reset_edit_access/`);
+
 export const deleteTestimoni = (idOrSlug, testimoniId) =>
     api.delete(`${API_BASE}/${idOrSlug}/testimonies/${testimoniId}/`);
 

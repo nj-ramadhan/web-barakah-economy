@@ -25,10 +25,15 @@ class TestimoniAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class TestimoniAdmin(admin.ModelAdmin):
-    list_display = ('customer', 'product', 'created_at')
-    list_filter = ('product',)
+    list_display = ('customer', 'product', 'stars', 'edit_count', 'can_edit_by_admin', 'created_at', 'updated_at')
+    list_filter = ('can_edit_by_admin', 'stars', 'is_admin_entry', 'product')
     search_fields = ('customer', 'description') 
-    form = ProductAdminForm    
+    actions = ['reset_edit_permission']
+
+    @admin.action(description="Buka / Reset Akses Edit Ulasan untuk Pembeli Terpilih")
+    def reset_edit_permission(self, request, queryset):
+        count = queryset.update(can_edit_by_admin=True, edit_count=0)
+        self.message_user(request, f"Berhasil membuka akses edit untuk {count} testimoni pembeli terpilih.")
 
 
 admin.site.register(Product, ProductAdmin)

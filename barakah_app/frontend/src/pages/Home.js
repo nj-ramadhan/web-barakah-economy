@@ -1332,9 +1332,14 @@ const Home = () => {
                           )}
                           <div className="flex justify-between items-center text-[9px] text-gray-400 mt-0.5">
                             <span>Stok: <b className={effectiveStock > 0 ? 'text-gray-700' : 'text-red-500'}>{effectiveStock > 0 ? effectiveStock : '0'}</b></span>
-                            <div className="flex items-center gap-0.5">
-                              <span className="material-icons text-[10px] text-rose-500">favorite</span>
-                              <span>{product.likes_count || 0}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-emerald-700">
+                                {product.sold_count || 0} terjual
+                              </span>
+                              <div className="flex items-center gap-0.5">
+                                <span className="material-icons text-[10px] text-rose-500">favorite</span>
+                                <span>{product.likes_count || 0}</span>
+                              </div>
                             </div>
                           </div>
                         </div>

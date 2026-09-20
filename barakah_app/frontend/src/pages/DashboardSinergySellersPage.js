@@ -459,7 +459,15 @@ const DashboardSinergySellersPage = () => {
                                 <p className="text-emerald-700 font-bold text-sm mt-1">
                                     Rp {formatCurrency(p.price)}
                                 </p>
-                                <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock} {p.unit || 'pcs'}</span></p>
+                                <div className="flex justify-between items-center text-xs text-gray-400">
+                                    <span>Total Stok: <span className="font-bold text-gray-700">{p.total_stock || p.stock} {p.unit || 'pcs'}</span></span>
+                                    <span 
+                                        className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]"
+                                        title={`${p.store_sold_count || 0} via Toko, ${p.charity_sold_count || 0} via Charity/Waqaf`}
+                                    >
+                                        Terjual: {p.sold_count || 0}
+                                    </span>
+                                </div>
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                                     {(p.description || '').replace(/<[^>]*>/g, '')}
                                 </p>

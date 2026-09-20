@@ -35,6 +35,7 @@ const LoginPage = () => {
     }
 
     const [maintenance, setMaintenance] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Multi-Device Management State (Max 3 Devices)
     const [deviceKickModalOpen, setDeviceKickModalOpen] = useState(false);
@@ -112,9 +113,22 @@ const LoginPage = () => {
 
     const handleLogin = async (e, kickDeviceId = null) => {
         if (e) e.preventDefault();
+        if (isLoading) return;
+
+        const cleanUsername = (username || '').trim();
+        if (!cleanUsername) {
+            alert('Silakan masukkan nama pengguna atau email Anda.');
+            return;
+        }
+        if (!password) {
+            alert('Silakan masukkan kata sandi Anda.');
+            return;
+        }
+
+        setIsLoading(true);
         try {
             const captchaToken = await getInvisibleCaptchaToken('login-turnstile-container');
-            const response = await authService.login(username, password, kickDeviceId, captchaToken);
+            const response = await authService.login(cleanUsername, password, kickDeviceId, captchaToken);
             await processLoginSuccess(response, false);
         } catch (error) {
             if (error.response && error.response.status === 409 && error.response.data?.requires_device_kick) {
@@ -128,11 +142,15 @@ const LoginPage = () => {
             const errMsg = error.response?.data?.error || error.response?.data?.detail || 'Gagal Login. Silakan periksa kembali nama/email dan password Anda.';
             alert(errMsg);
             console.log(error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
 
     const handleGoogleLogin = async (credentialResponse, kickDeviceId = null) => {
+        if (isLoading) return;
+        setIsLoading(true);
         try {
             const cred = credentialResponse?.credential || pendingGoogleCredential;
             if (!cred) {
@@ -154,6 +172,8 @@ const LoginPage = () => {
             const errMsg = error?.response?.data?.error || error?.message || 'Gagal Login dengan akun Google';
             alert(`Gagal Login dengan Google: ${errMsg}`);
             console.error('Google login error:', error?.response?.data || error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -218,7 +238,8 @@ const LoginPage = () => {
                                 placeholder="Nama Pengguna"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full p-2 border rounded-lg mb-4"
+                                disabled={isLoading}
+                                className="w-full p-2 border rounded-lg mb-4 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
                             />
                             <div className="relative">
                                 <input
@@ -226,12 +247,14 @@ const LoginPage = () => {
                                     placeholder="Sandi"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full p-2 border rounded-lg mb-4"
+                                    disabled={isLoading}
+                                    className="w-full p-2 border rounded-lg mb-4 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
                                 />
                                 <button
                                     type="button"
+                                    disabled={isLoading}
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-2 top-2 text-gray-500"
+                                    className="absolute right-2 top-2 text-gray-500 hover:text-gray-700 disabled:opacity-40 transition"
                                 >
                                     {showPassword ? 'Sembunyikan' : 'Tampilkan'}
                                 </button>
@@ -243,9 +266,19 @@ const LoginPage = () => {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
+                                disabled={isLoading}
+                                className={`w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${
+                                    isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:shadow-lg active:scale-[0.99]'
+                                }`}
                             >
-                                Login
+                                {isLoading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Memproses Masuk...</span>
+                                    </>
+                                ) : (
+                                    <span>Login</span>
+                                )}
                             </button>
                         </form>
                         <div className="mt-4 text-center">
@@ -253,7 +286,7 @@ const LoginPage = () => {
                         </div>
                         <div className="mt-4 text-center">
                             <p className="text-gray-600">Atau login dengan:</p>
-                            <div className="flex justify-center mt-2">
+                            <div className={`flex justify-center mt-2 ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
                                 <GoogleLogin
                                     onSuccess={handleGoogleLogin}
                                     onError={() => {

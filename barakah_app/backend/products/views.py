@@ -80,6 +80,32 @@ class ProductViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Product.objects.all()
 
+        from orders.models import OrderItem
+        from donations.models import DonationWaqafItem
+        from django.db.models import Sum, OuterRef, Subquery, IntegerField, Value
+        from django.db.models.functions import Coalesce
+
+        store_sub = OrderItem.objects.filter(
+            product=OuterRef('pk')
+        ).exclude(
+            order__status__in=['Batal', 'batal', 'Cancelled', 'cancelled', 'Dibatalkan', 'dibatalkan', 'Rejected', 'rejected']
+        ).values('product').annotate(
+            total=Sum('quantity')
+        ).values('total')
+
+        charity_sub = DonationWaqafItem.objects.filter(
+            product=OuterRef('pk')
+        ).exclude(
+            donation__payment_status__in=['rejected', 'batal']
+        ).values('product').annotate(
+            total=Sum('quantity')
+        ).values('total')
+
+        queryset = queryset.annotate(
+            annotated_store_sold=Coalesce(Subquery(store_sub, output_field=IntegerField()), Value(0)),
+            annotated_charity_sold=Coalesce(Subquery(charity_sub, output_field=IntegerField()), Value(0))
+        )
+
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -328,11 +354,22 @@ class ProductViewSet(viewsets.ModelViewSet):
         from .models import Testimoni
         existing_testimoni = Testimoni.objects.filter(product=product, user=user).first()
         if existing_testimoni:
+            # Check if user is allowed to edit:
+            # Superuser / staff can always edit, OR existing_testimoni.can_edit
+            if not (user.is_superuser or user.is_staff or existing_testimoni.can_edit):
+                return Response({
+                    'error': 'Anda telah mencapai batas maksimal 1x mengedit ulasan ini. Hubungi admin jika membutuhkan perubahan ulasan lebih lanjut.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             existing_testimoni.customer = customer_name
             existing_testimoni.stars = max(1, min(5, stars))
             existing_testimoni.description = description
             if compressed_img:
                 existing_testimoni.image = compressed_img
+            
+            # Consume edit allowance
+            existing_testimoni.edit_count += 1
+            existing_testimoni.can_edit_by_admin = False
             existing_testimoni.save()
             testimoni = existing_testimoni
         else:
@@ -343,7 +380,9 @@ class ProductViewSet(viewsets.ModelViewSet):
                 stars=max(1, min(5, stars)),
                 description=description,
                 image=compressed_img,
-                is_admin_entry=False
+                is_admin_entry=False,
+                edit_count=0,
+                can_edit_by_admin=False
             )
 
         try:
@@ -365,6 +404,41 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         from .serializers import TestimoniSerializer
         return Response(TestimoniSerializer(testimoni).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_testimoni(self, request, pk=None, slug=None):
+        """Get current buyer's existing review for this product."""
+        user = request.user
+        product = self.get_object()
+        from .models import Testimoni
+        from .serializers import TestimoniSerializer
+        testi = Testimoni.objects.filter(product=product, user=user).exclude(description='').first()
+        if not testi:
+            return Response({'has_review': False, 'review': None})
+        return Response({
+            'has_review': True,
+            'review': TestimoniSerializer(testi).data
+        })
+
+    @action(detail=True, methods=['post'], url_path='testimonies/(?P<testimoni_id>[^/.]+)/reset_edit_access', permission_classes=[IsAuthenticated])
+    def reset_testimoni_edit_access(self, request, pk=None, slug=None, testimoni_id=None):
+        """Admin opens/resets edit access for a buyer's review."""
+        user = request.user
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+            return Response({'error': 'Hanya administrator yang dapat membuka akses edit ulasan.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        product = self.get_object()
+        from .models import Testimoni
+        testimoni = get_object_or_404(Testimoni, id=testimoni_id, product=product)
+        testimoni.can_edit_by_admin = True
+        testimoni.edit_count = 0
+        testimoni.save()
+
+        from .serializers import TestimoniSerializer
+        return Response({
+            'message': f'Akses edit ulasan untuk pembeli {testimoni.customer} berhasil dibuka kembali oleh admin.',
+            'testimoni': TestimoniSerializer(testimoni).data
+        })
 
     @action(detail=True, methods=['delete'], url_path='testimonies/(?P<testimoni_id>[^/.]+)', permission_classes=[IsAuthenticated])
     def delete_testimoni(self, request, pk=None, slug=None, testimoni_id=None):

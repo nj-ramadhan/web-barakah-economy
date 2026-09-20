@@ -220,7 +220,8 @@ const EcommerceOrderHistoryPage = () => {
             id: item.product,
             title: item.product_name,
             thumbnail: item.product_image,
-            slug: item.product_slug
+            slug: item.product_slug,
+            user_review: item.user_review || null
         });
         setReviewOrderNumber(orderNumber || '');
         setIsReviewModalOpen(true);

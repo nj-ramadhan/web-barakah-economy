@@ -132,6 +132,30 @@ class Product(models.Model):
                 self.price = min(prices) # Base price becomes the minimum
             self.save(update_fields=['stock', 'price'])
 
+    @property
+    def store_sold_count(self):
+        if hasattr(self, 'annotated_store_sold') and self.annotated_store_sold is not None:
+            return self.annotated_store_sold
+        from orders.models import OrderItem
+        from django.db.models import Sum
+        return OrderItem.objects.filter(product=self).exclude(
+            order__status__in=['Batal', 'batal', 'Cancelled', 'cancelled', 'Dibatalkan', 'dibatalkan', 'Rejected', 'rejected']
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+    @property
+    def charity_sold_count(self):
+        if hasattr(self, 'annotated_charity_sold') and self.annotated_charity_sold is not None:
+            return self.annotated_charity_sold
+        from donations.models import DonationWaqafItem
+        from django.db.models import Sum
+        return DonationWaqafItem.objects.filter(product=self).exclude(
+            donation__payment_status__in=['rejected', 'batal']
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+    @property
+    def sold_count(self):
+        return (self.store_sold_count or 0) + (self.charity_sold_count or 0)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(Product, self.title)
@@ -177,13 +201,22 @@ class Testimoni(models.Model):
     description = models.TextField(blank=True, default='')
     image = models.ImageField(upload_to='product_testimonies/', blank=True, null=True)
     is_admin_entry = models.BooleanField(default=False, help_text="Diinput secara manual oleh admin")
+    edit_count = models.IntegerField(default=0, help_text="Jumlah kali ulasan telah diedit oleh pembeli (maksimal 1x)")
+    can_edit_by_admin = models.BooleanField(default=False, help_text="Akses edit dibuka / direset khusus oleh admin")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
 
+    @property
+    def can_edit(self):
+        if self.can_edit_by_admin:
+            return True
+        return self.edit_count < 1
+
     def __str__(self):
-        return f"{self.customer} - {self.product.title} ({self.stars} stars)"
+        return f"{self.customer} - {self.product.title} ({self.stars} stars, edits: {self.edit_count})"
 
 
 class ProductPromotion(models.Model):

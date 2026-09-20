@@ -15,10 +15,11 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_image = serializers.SerializerMethodField(read_only=True)
     purchase_instructions = serializers.CharField(source='product.purchase_instructions', read_only=True)
     has_reviewed = serializers.SerializerMethodField(read_only=True)
+    user_review = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_slug', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions', 'has_reviewed']
+        fields = ['id', 'product', 'product_name', 'product_slug', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions', 'has_reviewed', 'user_review']
 
     def get_product_image(self, obj):
         if obj.product and obj.product.thumbnail:
@@ -36,6 +37,30 @@ class OrderItemSerializer(serializers.ModelSerializer):
             return Testimoni.objects.filter(product=obj.product, user=user).exclude(description='').exists()
         except Exception:
             return False
+
+    def get_user_review(self, obj):
+        try:
+            request = self.context.get('request')
+            user = request.user if request and request.user.is_authenticated else getattr(obj.order, 'user', None)
+            if not user or not obj.product:
+                return None
+            from products.models import Testimoni
+            testi = Testimoni.objects.filter(product=obj.product, user=user).exclude(description='').first()
+            if not testi:
+                return None
+            return {
+                'id': testi.id,
+                'stars': testi.stars,
+                'description': testi.description,
+                'image': testi.image.url if testi.image else None,
+                'edit_count': testi.edit_count,
+                'can_edit_by_admin': testi.can_edit_by_admin,
+                'can_edit': testi.can_edit,
+                'created_at': testi.created_at,
+                'updated_at': testi.updated_at
+            }
+        except Exception:
+            return None
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

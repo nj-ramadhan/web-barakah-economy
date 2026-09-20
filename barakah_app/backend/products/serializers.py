@@ -3,9 +3,11 @@ from django.utils import timezone
 from .models import Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion
 
 class TestimoniSerializer(serializers.ModelSerializer):
+    can_edit = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Testimoni
-        fields = ['id', 'customer', 'stars', 'description', 'image', 'is_admin_entry', 'created_at', 'user']   
+        fields = ['id', 'customer', 'stars', 'description', 'image', 'is_admin_entry', 'edit_count', 'can_edit_by_admin', 'can_edit', 'created_at', 'updated_at', 'user']   
 
 class ProductPromotionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,6 +46,9 @@ class ProductSerializer(serializers.ModelSerializer):
     min_price = serializers.SerializerMethodField()
     max_price = serializers.SerializerMethodField()
     total_stock = serializers.SerializerMethodField()
+    sold_count = serializers.SerializerMethodField()
+    store_sold_count = serializers.SerializerMethodField()
+    charity_sold_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -160,6 +165,15 @@ class ProductSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(id=request.user.id).exists()
         return False
+
+    def get_store_sold_count(self, obj):
+        return obj.store_sold_count
+
+    def get_charity_sold_count(self, obj):
+        return obj.charity_sold_count
+
+    def get_sold_count(self, obj):
+        return obj.sold_count
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:
