@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
@@ -53,6 +53,52 @@ const DashboardAdminCampaignManagementPage = () => {
         deadline: ''
     });
 
+    // Store Collaboration States for Edit Modal
+    const [editIsCollaboration, setEditIsCollaboration] = useState(false);
+    const [editSelectedProductIds, setEditSelectedProductIds] = useState([]);
+    const [storeProducts, setStoreProducts] = useState([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
+    const [showProductDropdown, setShowProductDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowProductDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const fetchStoreProducts = useCallback(() => {
+        setLoadingProducts(true);
+        axios.get(`${API}/api/products/`)
+            .then(res => {
+                const list = res.data.results || res.data || [];
+                setStoreProducts(list);
+            })
+            .catch(err => console.error("Error fetching store products:", err))
+            .finally(() => setLoadingProducts(false));
+    }, []);
+
+    useEffect(() => {
+        if (editModalOpen && editIsCollaboration && storeProducts.length === 0) {
+            fetchStoreProducts();
+        }
+    }, [editModalOpen, editIsCollaboration, storeProducts.length, fetchStoreProducts]);
+
+    // Filter and sort products strictly by stock descending (stok terbanyak sampai habis)
+    const filteredStoreProducts = useMemo(() => {
+        return [...storeProducts]
+            .filter(p => !productSearch || p.title.toLowerCase().includes(productSearch.toLowerCase()))
+            .sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0));
+    }, [storeProducts, productSearch]);
+
     const fetchAllCampaigns = useCallback(async () => {
         setLoading(true);
         try {
@@ -97,6 +143,29 @@ const DashboardAdminCampaignManagementPage = () => {
         });
         setEditHasUnlimitedDeadline(!c.deadline);
         setEditPreviewImage(c.thumbnail || null);
+
+        // Collaboration States Initialization
+        const hasCollab = Boolean(c.is_collaboration && c.collaboration_type === 'waqaf');
+        setEditIsCollaboration(hasCollab);
+        const prodIds = (c.collab_products && c.collab_products.length > 0)
+            ? c.collab_products
+            : (c.collab_products_details ? c.collab_products_details.map(p => p.id) : []);
+        setEditSelectedProductIds(prodIds);
+
+        if (c.collab_products_details && c.collab_products_details.length > 0) {
+            setStoreProducts(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const newProds = c.collab_products_details.filter(p => !existingIds.has(p.id));
+                return [...prev, ...newProds];
+            });
+        }
+
+        if (hasCollab && storeProducts.length === 0) {
+            fetchStoreProducts();
+        }
+
+        setProductSearch('');
+        setShowProductDropdown(false);
         setEditModalOpen(true);
     };
 
@@ -113,6 +182,10 @@ const DashboardAdminCampaignManagementPage = () => {
         });
         setEditPreviewImage(null);
         setEditHasUnlimitedDeadline(true);
+        setEditIsCollaboration(false);
+        setEditSelectedProductIds([]);
+        setProductSearch('');
+        setShowProductDropdown(false);
     };
 
     const handleEditImageChange = (e) => {
@@ -132,6 +205,12 @@ const DashboardAdminCampaignManagementPage = () => {
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         if (!editingCampaign) return;
+
+        if (editIsCollaboration && editSelectedProductIds.length === 0) {
+            alert('Silakan pilih minimal 1 produk store untuk kolaborasi waqaf atau nonaktifkan fitur kolaborasi.');
+            return;
+        }
+
         setSaving(true);
         try {
             const fd = new FormData();
@@ -141,6 +220,17 @@ const DashboardAdminCampaignManagementPage = () => {
             fd.append('target_amount', editFormData.target_amount);
             if (editFormData.thumbnail) {
                 fd.append('thumbnail', editFormData.thumbnail);
+            }
+
+            // Collaboration Fields
+            fd.append('is_collaboration', editIsCollaboration);
+            if (editIsCollaboration) {
+                fd.append('collaboration_type', 'waqaf');
+                editSelectedProductIds.forEach(pid => {
+                    fd.append('collab_products', pid);
+                });
+            } else {
+                fd.append('collaboration_type', '');
             }
 
             if (!editHasUnlimitedDeadline && editFormData.deadline) {
@@ -461,6 +551,255 @@ const DashboardAdminCampaignManagementPage = () => {
                                             onChange={e => setEditFormData(prev => ({ ...prev, deadline: e.target.value }))}
                                             className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                                         />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Kolaborasi dengan Store Section */}
+                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                            <span className="material-icons text-xl">storefront</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-900">Kolaborasi dengan Store (Waqaf Produk)</h4>
+                                            <p className="text-xs text-gray-500">
+                                                Hubungkan program charity ini dengan waqaf produk store. Donatur dapat memilih donasi uang tunai bebas atau waqaf produk.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={editIsCollaboration}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setEditIsCollaboration(checked);
+                                                if (checked && storeProducts.length === 0) {
+                                                    fetchStoreProducts();
+                                                }
+                                            }}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+
+                                {editIsCollaboration && (
+                                    <div className="pt-3 border-t border-emerald-100/60 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider block">
+                                                    Pilih Produk Store untuk Kolaborasi Waqaf
+                                                </label>
+                                                <p className="text-[11px] text-gray-500">
+                                                    Bisa pilih banyak produk. Disusun urut dari stok terbanyak sampai habis.
+                                                </p>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                                                {editSelectedProductIds.length} Produk Dipilih
+                                            </span>
+                                        </div>
+
+                                        {/* Dropdown Selector Container */}
+                                        <div ref={dropdownRef} className="relative">
+                                            <div className="flex items-center bg-white border border-gray-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 rounded-xl px-3 py-1.5 shadow-xs transition">
+                                                <span className="material-icons text-gray-400 text-sm mr-2 shrink-0">search</span>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Cari &amp; pilih produk store untuk waqaf..."
+                                                    value={productSearch}
+                                                    onChange={(e) => {
+                                                        setProductSearch(e.target.value);
+                                                        setShowProductDropdown(true);
+                                                    }}
+                                                    onFocus={() => setShowProductDropdown(true)}
+                                                    className="w-full bg-transparent text-xs outline-none text-gray-800 placeholder-gray-400 py-1"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowProductDropdown(prev => !prev)}
+                                                    className="ml-2 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold shrink-0 flex items-center gap-1 transition"
+                                                >
+                                                    <span>{showProductDropdown ? 'Tutup' : 'Buka List'}</span>
+                                                    <span className="material-icons text-sm">
+                                                        {showProductDropdown ? 'expand_less' : 'expand_more'}
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            {/* Dropdown Panel */}
+                                            {showProductDropdown && (
+                                                <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+                                                    <div className="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px]">
+                                                        <span className="font-bold text-gray-500 uppercase tracking-wider">
+                                                            PILIH PRODUK (URUT STOK TERBANYAK)
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowProductDropdown(false)}
+                                                            className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5"
+                                                        >
+                                                            <span>Tutup</span>
+                                                            <span className="material-icons text-xs">close</span>
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+                                                        {loadingProducts ? (
+                                                            <div className="text-center py-6 text-xs text-gray-500 flex items-center justify-center gap-2">
+                                                                <div className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                                                                <span>Memuat produk store...</span>
+                                                            </div>
+                                                        ) : filteredStoreProducts.length > 0 ? (
+                                                            filteredStoreProducts.map(p => {
+                                                                const isSelected = editSelectedProductIds.includes(p.id);
+                                                                const stockNum = Number(p.stock) || 0;
+                                                                const hasStock = stockNum > 0;
+                                                                return (
+                                                                    <div
+                                                                        key={p.id}
+                                                                        onClick={() => {
+                                                                            if (isSelected) {
+                                                                                setEditSelectedProductIds(prev => prev.filter(id => id !== p.id));
+                                                                            } else {
+                                                                                setEditSelectedProductIds(prev => [...prev, p.id]);
+                                                                            }
+                                                                        }}
+                                                                        className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
+                                                                            isSelected ? 'bg-emerald-50 border border-emerald-300' : 'hover:bg-gray-50 border border-transparent'
+                                                                        }`}
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isSelected}
+                                                                            readOnly
+                                                                            className="w-4 h-4 text-green-600 rounded cursor-pointer accent-green-600 shrink-0"
+                                                                        />
+                                                                        {p.thumbnail ? (
+                                                                            <img src={p.thumbnail} alt="" className="w-10 h-10 object-cover rounded-lg shrink-0 border border-gray-100" />
+                                                                        ) : (
+                                                                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                                                                                <span className="material-icons text-sm text-gray-400">image</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h5 className="text-xs font-bold text-gray-900 truncate">{p.title}</h5>
+                                                                            <div className="flex items-center gap-2 text-[10px] mt-0.5">
+                                                                                {p.discounted_price != null && Number(p.discounted_price) < Number(p.price) ? (
+                                                                                    <span className="flex items-center gap-1">
+                                                                                        <span className="font-bold text-emerald-700">Rp {Number(p.discounted_price).toLocaleString('id-ID')}</span>
+                                                                                        <span className="line-through text-gray-400 text-[9px]">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                        <span className="bg-red-50 text-red-600 font-bold px-1 rounded text-[8px] uppercase">Kampanye</span>
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="font-bold text-emerald-700">Rp {Number(p.price).toLocaleString('id-ID')}</span>
+                                                                                )}
+                                                                                <span>•</span>
+                                                                                <span className={`px-1.5 py-0.2 rounded font-bold ${
+                                                                                    hasStock ? 'bg-emerald-100 text-emerald-800' : 'bg-red-50 text-red-600'
+                                                                                }`}>
+                                                                                    {hasStock ? `Stok: ${stockNum} ${p.unit || 'pcs'}` : 'Stok: 0 (Habis)'}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        ) : (
+                                                            <div className="text-center py-6 text-xs text-gray-400">
+                                                                Tidak ada produk ditemukan
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Sticky footer with close button */}
+                                                    <div className="p-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                                                        <span className="text-[11px] text-gray-600 font-medium">
+                                                            {editSelectedProductIds.length} produk terpilih
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowProductDropdown(false)}
+                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1"
+                                                        >
+                                                            <span className="material-icons text-sm">check</span>
+                                                            <span>Selesai Memilih</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Selected Products Preview Cards */}
+                                        {editSelectedProductIds.length > 0 ? (
+                                            <div className="space-y-1.5 pt-1">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                                        Produk Waqaf Yang Terpilih ({editSelectedProductIds.length}):
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditSelectedProductIds([])}
+                                                        className="text-[10px] text-red-500 hover:underline font-medium"
+                                                    >
+                                                        Hapus Semua
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-0.5">
+                                                    {storeProducts.filter(p => editSelectedProductIds.includes(p.id)).map(p => (
+                                                        <div key={p.id} className="flex items-center justify-between p-2.5 bg-white border border-emerald-200 rounded-xl shadow-xs">
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                {p.thumbnail ? (
+                                                                    <img src={p.thumbnail} alt="" className="w-9 h-9 object-cover rounded-lg shrink-0 border border-gray-100" />
+                                                                ) : (
+                                                                    <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                                                                        <span className="material-icons text-sm text-gray-400">inventory_2</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-gray-900 truncate">{p.title}</p>
+                                                                    <div className="text-[10px] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                                        {p.discounted_price != null && Number(p.discounted_price) < Number(p.price) ? (
+                                                                            <>
+                                                                                <span className="text-emerald-700 font-black">
+                                                                                    Rp {Number(p.discounted_price).toLocaleString('id-ID')}
+                                                                                </span>
+                                                                                <span className="line-through text-gray-400 text-[9px]">
+                                                                                    Rp {Number(p.price).toLocaleString('id-ID')}
+                                                                                </span>
+                                                                                <span className="bg-red-50 text-red-600 text-[8px] font-bold px-1 rounded">
+                                                                                    Harga Kampanye
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className="text-emerald-700 font-black">
+                                                                                Rp {Number(p.price).toLocaleString('id-ID')}
+                                                                            </span>
+                                                                        )}
+                                                                        <span className="text-gray-400">• Stok {p.stock} {p.unit || 'pcs'}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditSelectedProductIds(prev => prev.filter(id => id !== p.id))}
+                                                                className="text-gray-400 hover:text-red-600 p-1 transition"
+                                                                title="Hapus dari daftar waqaf"
+                                                            >
+                                                                <span className="material-icons text-sm">close</span>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
+                                                <span className="material-icons text-amber-600 text-sm">warning</span>
+                                                <span>Anda belum memilih produk. Buka list di atas untuk memilih minimal 1 produk waqaf.</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
