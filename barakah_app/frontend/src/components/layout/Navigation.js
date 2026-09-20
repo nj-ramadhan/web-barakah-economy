@@ -3,36 +3,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getUnreadChatCount } from '../../services/chatApi';
 import PWAInstallGuideModal from '../common/PWAInstallGuideModal';
+import MobileNavDrawer from './MobileNavDrawer';
 import '../../styles/Navigation.css';
-
-const getLayananItems = (t, unreadCount = 0, onOpenPwaModal) => [
-  { to: '/', icon: 'home', label: t('nav.home', 'Home'), color: 'text-green-600' },
-  { to: '/chat', icon: 'chat', label: t('nav.chat', 'Chat / Pesan'), color: 'text-green-600', badge: unreadCount },
-  { to: '/whats-new', icon: 'auto_awesome', label: "What's New", color: 'text-amber-500' },
-  { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
-  { to: '/kegiatan', icon: 'event_note', label: t('nav.activities', 'Kegiatan'), color: 'text-green-700' },
-  { to: '/store', icon: 'storefront', label: t('nav.ecommerce', 'Toko'), color: 'text-blue-600' },
-
-  { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
-  { to: '/articles', icon: 'article', label: t('nav.articles', 'Artikel'), color: 'text-orange-500' },
-  { to: '/digital-products', icon: 'storefront', label: t('nav.digital_products', 'Produk Digital'), color: 'text-emerald-600' },
-  { to: '/event', icon: 'celebration', label: 'Event', color: 'text-indigo-600' },
-  { to: '/forum', icon: 'forum', label: 'Forum', color: 'text-blue-500' },
-  { onClick: onOpenPwaModal, icon: 'install_mobile', label: 'Pasang App', color: 'text-emerald-700' },
-  { to: '/about', icon: 'info', label: t('nav.about', 'About'), color: 'text-teal-600' },
-  { to: '/profile', icon: 'person', label: t('nav.profile', 'Profile'), color: 'text-gray-600' },
-];
-
 
 const NavigationButton = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const [isLayananOpen, setIsLayananOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [showPwaModal, setShowPwaModal] = useState(false);
-  const layananRef = useRef(null);
-
 
   useEffect(() => {
     const logged = !!localStorage.getItem('user');
@@ -43,29 +23,6 @@ const NavigationButton = () => {
       }).catch(() => {});
     }
   }, [location]);
-
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    const interval = setInterval(() => {
-      getUnreadChatCount().then(res => {
-        setUnreadChatCount(res.data?.total_unread || 0);
-      }).catch(() => {});
-    }, 12000);
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
-
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (layananRef.current && !layananRef.current.contains(event.target)) {
-        setIsLayananOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [layananRef]);
 
   const isActive = (path) => {
     return location.pathname.includes(path) || (path === '/login' && location.pathname === '/login');
@@ -102,60 +59,13 @@ const NavigationButton = () => {
               <span className="material-icons text-gray-400 dark:text-gray-500 text-xs">keyboard_arrow_down</span>
             </button>
 
-            {/* LAYANAN (Kiri - 3 cols) */}
-            <div className="col-span-3 flex flex-col items-center justify-center relative" ref={layananRef}>
-              {isLayananOpen && (
-                <div className="absolute bottom-full mb-3 left-0 w-56 bg-white dark:bg-gray-900 shadow-2xl dark:shadow-gray-950 rounded-2xl border border-gray-100 dark:border-gray-700 z-50 p-3 animate-scale-up">
-                  <div
-                    className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
-                    style={{ scrollbarWidth: 'thin' }}
-                  >
-                    {getLayananItems(t, unreadChatCount, () => {
-                      setIsLayananOpen(false);
-                      setShowPwaModal(true);
-                    }).map((item, idx) => (
-                      item.to ? (
-                        <Link
-                          key={item.to || idx}
-                          to={item.to}
-                          className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative"
-                          onClick={() => setIsLayananOpen(false)}
-                        >
-                          <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
-                            <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
-                            {item.badge > 0 && (
-                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
-                                {item.badge > 99 ? '99+' : item.badge}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
-                        </Link>
-                      ) : (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={item.onClick}
-                          className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative text-left w-full"
-                        >
-                          <div className={`w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 relative`}>
-                            <span className={`material-icons text-lg ${item.color}`}>{item.icon}</span>
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
-                        </button>
-                      )
-                    ))}
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute -bottom-1.5 left-8 w-3.5 h-3.5 bg-white dark:bg-gray-900 rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
-                </div>
-              )}
-
-
+            {/* LAYANAN / MENU LENGKAP (Kiri - 3 cols) */}
+            <div className="col-span-3 flex flex-col items-center justify-center relative">
               <button
-                onClick={() => setIsLayananOpen(!isLayananOpen)}
-                className={`flex flex-col items-center justify-center focus:outline-none transition-colors relative ${isLayananOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-                  }`}
+                type="button"
+                onClick={() => setIsDrawerOpen(true)}
+                className="flex flex-col items-center justify-center focus:outline-none transition-colors relative text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400"
+                title="Buka Semua Menu"
               >
                 <div className="relative">
                   <span className="material-icons text-2xl">grid_view</span>
@@ -165,7 +75,7 @@ const NavigationButton = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] font-medium mt-0.5">{t('nav.services', 'Layanan')}</span>
+                <span className="text-[11px] font-medium mt-0.5">{t('nav.services', 'Menu')}</span>
               </button>
             </div>
 
@@ -217,6 +127,7 @@ const NavigationButton = () => {
       )}
 
       <PWAInstallGuideModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
+      <MobileNavDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </>
   );
 };

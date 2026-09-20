@@ -395,20 +395,21 @@ const DashboardSinergySellersPage = () => {
 
     const renderList = () => (
         <div className="space-y-4 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                 <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
-                <div className="flex gap-2">
-                    <Link to="/dashboard/sinergy/seller/orders" className="relative bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
+                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                    <Link to="/dashboard/sinergy/seller/orders" className="relative flex-1 sm:flex-initial bg-blue-100 hover:bg-blue-200 text-blue-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap">
                         <span className="material-icons text-sm">shopping_basket</span> 
                         <span>Pesanan Masuk</span>
                         {pendingOrdersCount > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse shadow">
+                            <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse shadow">
                                 {pendingOrdersCount}
                             </span>
                         )}
                     </Link>
-                    <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
-                        <span className="material-icons text-sm">local_activity</span> Buat Voucher
+                    <button onClick={() => setActiveTab('voucher')} className="flex-1 sm:flex-initial bg-orange-100 hover:bg-orange-200 text-orange-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap">
+                        <span className="material-icons text-sm">local_activity</span> 
+                        <span>Buat Voucher</span>
                     </button>
                     <button onClick={() => { 
                         setActiveTab('add'); 
@@ -427,8 +428,9 @@ const DashboardSinergySellersPage = () => {
                         setGalleryFiles([]);
                         setGalleryPreviews([]);
                         resetBankStates();
-                    }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
-                        <span className="material-icons text-sm">add</span> Tambah Produk
+                    }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap">
+                        <span className="material-icons text-sm">add</span> 
+                        <span>Tambah Produk</span>
                     </button>
                 </div>
             </div>
@@ -974,7 +976,7 @@ const DashboardSinergySellersPage = () => {
         <div className="body bg-gray-100 min-h-screen">
             <Helmet><title>Pembuatan E-commerce - Barakah Economy</title></Helmet>
             <Header />
-            <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+            <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-20 sm:pt-24 lg:pt-8 pb-24">
                 {activeTab === 'list' ? renderList() : activeTab === 'voucher' ? renderVouchers() : renderForm()}
             </div>
 

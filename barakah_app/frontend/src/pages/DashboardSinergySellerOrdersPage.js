@@ -1634,47 +1634,47 @@ ${stopsText}
             <Helmet><title>Kelola Pesanan Toko - Barakah Economy</title></Helmet>
             <Header />
             
-            <div className="max-w-5xl mx-auto px-4 py-8 pb-24">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-20 sm:pt-24 lg:pt-8 pb-24">
                 {/* Header Title */}
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                        <Link to="/dashboard/sinergy/seller" className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-500 hover:text-emerald-600 transition">
-                            <span className="material-icons">arrow_back</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <Link to="/dashboard/sinergy/seller" className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-500 hover:text-emerald-600 transition">
+                            <span className="material-icons text-xl sm:text-2xl">arrow_back</span>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Toko Anda</h1>
-                            <p className="text-xs text-gray-500 mt-0.5">Khusus pesanan produk fisik yang terdaftar pada toko Anda</p>
+                            <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Toko</h1>
+                            <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">Khusus pesanan produk fisik yang terdaftar pada toko Anda</p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         <button 
                             onClick={() => setIsCourierModalOpen(true)}
-                            className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition shadow-sm"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition shadow-sm whitespace-nowrap"
                             title="Kelola daftar kurir toko Anda"
                         >
                             <span className="material-icons text-sm text-emerald-600">delivery_dining</span>
-                            Kelola Kurir Toko {storeCouriers.length > 0 && `(${storeCouriers.length})`}
+                            <span>Kurir Toko {storeCouriers.length > 0 && `(${storeCouriers.length})`}</span>
                         </button>
                         <button 
                             onClick={fetchOrders}
-                            className="flex items-center gap-1.5 bg-white border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                            className="flex items-center justify-center gap-1 bg-white border border-gray-200 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
                         >
                             <span className="material-icons text-sm">refresh</span>
-                            Segarkan
+                            <span className="hidden xs:inline">Segarkan</span>
                         </button>
                         <button 
                             onClick={handleExportCSV}
-                            className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm"
+                            className="flex items-center justify-center gap-1.5 bg-emerald-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm"
                         >
                             <span className="material-icons text-sm">file_download</span>
-                            Ekspor CSV
+                            <span>Ekspor CSV</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Filter Tabs & Search */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 space-y-3">
-                    <div className="flex flex-wrap gap-2 pb-1 overflow-x-auto">
+                <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 mb-6 space-y-3">
+                    <div className="flex gap-2 pb-1 overflow-x-auto scrollbar-none">
                         {filterTabs.map(tab => {
                             const count = orders.filter(o => {
                                 const st = (o.status || '').toUpperCase();
@@ -1740,7 +1740,7 @@ ${stopsText}
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             {selectedOrderIds.size > 0 && (
                                 <button
                                     onClick={() => setSelectedOrderIds(new Set())}
@@ -1752,19 +1752,19 @@ ${stopsText}
                             <button
                                 onClick={() => handlePrintSelected(filteredOrders)}
                                 disabled={selectedOrderIds.size === 0}
-                                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
                                     selectedOrderIds.size > 0
                                         ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white cursor-pointer'
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 }`}
                             >
                                 <span className="material-icons text-sm">print</span>
-                                Cetak Resi Massal ({selectedOrderIds.size})
+                                <span>Cetak Resi ({selectedOrderIds.size})</span>
                             </button>
                             <button
                                 onClick={() => handleOpenBatchWaModal(filteredOrders)}
                                 disabled={selectedOrderIds.size === 0}
-                                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
                                     selectedOrderIds.size > 0
                                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-emerald-200'
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -1772,7 +1772,7 @@ ${stopsText}
                                 title="Kirim penugasan rute atau antrean per paket ke WhatsApp kurir toko"
                             >
                                 <span className="material-icons text-sm">send</span>
-                                Kirim WA Kurir (Batch) {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}
+                                <span>Kirim WA Kurir {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}</span>
                             </button>
                         </div>
                     </div>
@@ -1814,7 +1814,7 @@ ${stopsText}
                             return (
                                 <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
                                     {/* Order Header */}
-                                    <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap justify-between items-center gap-4 bg-gray-50/40">
+                                    <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-50 flex flex-wrap justify-between items-center gap-3 sm:gap-4 bg-gray-50/40">
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
@@ -1952,7 +1952,7 @@ ${stopsText}
                                         </div>
                                     </div>
 
-                                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
                                         {/* Buyer Info */}
                                         <div className="space-y-4">
                                             <h4 className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">

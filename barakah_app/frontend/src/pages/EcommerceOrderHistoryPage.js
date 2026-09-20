@@ -310,7 +310,7 @@ const EcommerceOrderHistoryPage = () => {
         <div className="body bg-gray-50 min-h-screen">
             <Header />
             
-            <main className="max-w-4xl mx-auto px-4 py-8 pb-24">
+            <main className="max-w-4xl mx-auto px-3 sm:px-4 pt-20 sm:pt-24 lg:pt-8 pb-24">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
@@ -578,7 +578,7 @@ const EcommerceOrderHistoryPage = () => {
                                                 {['pending', 'menunggu', 'waiting_payment', 'unpaid'].includes(statusLower) && (
                                                     <button
                                                         onClick={() => navigate(`/pembayaran/${order.order_number}`, { state: { orderId: order.id, orderNumber: order.order_number, amount: totalCalculatedAmount, isRepayment: true, addUniqueCode: false, bank: 'qris' } })}
-                                                        className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
+                                                        className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
                                                     >
                                                         <span className="material-icons text-sm">payment</span>
                                                         Bayar
@@ -589,13 +589,13 @@ const EcommerceOrderHistoryPage = () => {
                                                     <>
                                                         <button 
                                                             onClick={() => handleCompleteOrder(order.id, order)} 
-                                                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
+                                                            className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md shadow-emerald-200 flex items-center gap-1.5"
                                                             title="Konfirmasi bahwa pesanan sudah sampai dan diterima"
                                                         >
                                                             <span className="material-icons text-sm">check_circle</span>
-                                                            Pesanan Diterima &amp; Selesai
+                                                            <span>Pesanan Diterima &amp; Selesai</span>
                                                         </button>
-                                                        <button onClick={() => handleComplaintOrder(order.id)} className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition flex items-center gap-1"><span className="material-icons text-sm">report_problem</span>Komplain</button>
+                                                        <button onClick={() => handleComplaintOrder(order.id)} className="px-3 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"><span className="material-icons text-sm">report_problem</span>Komplain</button>
                                                     </>
                                                 )}
 
@@ -607,10 +607,10 @@ const EcommerceOrderHistoryPage = () => {
                                                             return (
                                                                 <button 
                                                                     onClick={() => handleOpenReviewModal(firstUnreviewed, order.order_number)} 
-                                                                    className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center gap-1.5 ${hasUnreviewed ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-amber-200 animate-pulse' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'}`}
+                                                                    className={`flex-1 sm:flex-none justify-center px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center gap-1.5 ${hasUnreviewed ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-amber-200 animate-pulse' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'}`}
                                                                 >
                                                                     <span className="material-icons text-sm">{hasUnreviewed ? 'star' : 'rate_review'}</span>
-                                                                    {hasUnreviewed ? '⭐ Beri Testimoni / Ulasan' : 'Lihat / Ubah Ulasan'}
+                                                                    <span>{hasUnreviewed ? '⭐ Beri Testimoni / Ulasan' : 'Lihat / Ubah Ulasan'}</span>
                                                                 </button>
                                                             );
                                                         })()}
@@ -618,7 +618,7 @@ const EcommerceOrderHistoryPage = () => {
                                                 )}
 
                                                 {!['selesai', 'batal', 'completed', 'cancelled'].includes(statusLower) && (
-                                                    <button onClick={() => handleOpenCancelModal(order)} className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition flex items-center gap-1"><span className="material-icons text-sm">cancel</span>Batal</button>
+                                                    <button onClick={() => handleOpenCancelModal(order)} className="px-3 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"><span className="material-icons text-sm">cancel</span>Batal</button>
                                                 )}
                                             </div>
                                         </div>
