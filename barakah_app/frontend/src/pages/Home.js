@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
@@ -71,12 +71,12 @@ const getEventStatus = (startStr, endStr) => {
 };
 
 
-const getButtonLabel = (title = '') => {
-  const lowerTitle = title.toLowerCase();
-  if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
-  if (lowerTitle.includes('sedekah')) return 'SEDEKAH SEKARANG';
-  if (lowerTitle.includes('zakat')) return 'ZAKAT SEKARANG';
-  return 'DONASI SEKARANG';
+const getButtonLabel = (title = '', isShort = false) => {
+  const lowerTitle = (title || '').toLowerCase();
+  if (lowerTitle.includes('infak')) return isShort ? 'Infak' : 'Infak Sekarang';
+  if (lowerTitle.includes('sedekah')) return isShort ? 'Sedekah' : 'Sedekah Sekarang';
+  if (lowerTitle.includes('zakat')) return isShort ? 'Zakat' : 'Zakat Sekarang';
+  return isShort ? 'Donasi' : 'Donasi Sekarang';
 };
 
 const getProductStock = (product) => {
@@ -145,6 +145,7 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [highlightMode, setHighlightMode] = useState('all'); // 'all', 'popular', 'latest'
   const [activeSlideCampaign, setActiveSlideCampaign] = useState(0);
   const [activeSlideProduct, setActiveSlideProduct] = useState(0);
   const [activeSlideCourse, setActiveSlideCourse] = useState(0);
@@ -446,15 +447,60 @@ const Home = () => {
     };
   }, []);
 
+  // Dynamic highlight campaigns based on highlightMode: 'all' (rekomendasi/pilihan), 'popular' (terpopuler), 'latest' (terbaru)
+  const highlightCampaigns = useMemo(() => {
+    const list = campaigns && campaigns.length > 0 ? campaigns : featuredCampaigns;
+    if (!list || list.length === 0) return [];
+
+    if (highlightMode === 'popular') {
+      return [...list].sort((a, b) => {
+        const isAExpired = isCampaignExpired(a.deadline) ? 1 : 0;
+        const isBExpired = isCampaignExpired(b.deadline) ? 1 : 0;
+        if (isAExpired !== isBExpired) return isAExpired - isBExpired;
+
+        const popA = Number(a.current_amount || 0) + (Number(a.likes_count || 0) * 10000) + (Number(a.view_count || 0) * 500);
+        const popB = Number(b.current_amount || 0) + (Number(b.likes_count || 0) * 10000) + (Number(b.view_count || 0) * 500);
+        return popB - popA;
+      }).slice(0, 6);
+    }
+
+    if (highlightMode === 'latest') {
+      return [...list].sort((a, b) => {
+        const isAExpired = isCampaignExpired(a.deadline) ? 1 : 0;
+        const isBExpired = isCampaignExpired(b.deadline) ? 1 : 0;
+        if (isAExpired !== isBExpired) return isAExpired - isBExpired;
+
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      }).slice(0, 6);
+    }
+
+    // Default 'all' (Rekomendasi): kombinasi featured, terpopuler, dan terbaru
+    const featured = list.filter(c => c.is_featured && !isCampaignExpired(c.deadline));
+    const popular = [...list].sort((a, b) => {
+      const popA = Number(a.current_amount || 0) + (Number(a.likes_count || 0) * 10000);
+      const popB = Number(b.current_amount || 0) + (Number(b.likes_count || 0) * 10000);
+      return popB - popA;
+    }).slice(0, 3);
+    const latest = [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 3);
+
+    const map = new Map();
+    featured.forEach(c => map.set(c.id, c));
+    popular.forEach(c => { if (!map.has(c.id)) map.set(c.id, c); });
+    latest.forEach(c => { if (!map.has(c.id)) map.set(c.id, c); });
+
+    const result = Array.from(map.values()).slice(0, 6);
+    return result.length > 0 ? result : list.slice(0, 4);
+  }, [campaigns, featuredCampaigns, highlightMode]);
+
   // Set up automatic sliders
   useEffect(() => {
-    if (featuredCampaigns.length > 0) {
+    if (highlightCampaigns.length > 0) {
       sliderIntervalCampaign.current = setInterval(() => {
-        setActiveSlideCampaign(prev => (prev + 1) % featuredCampaigns.length);
+        setActiveSlideCampaign(prev => (prev + 1) % highlightCampaigns.length);
       }, 5000);
     }
     return () => { if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current); };
-  }, [featuredCampaigns]);
+  }, [highlightCampaigns]);
 
   useEffect(() => {
     if (featuredProducts.length > 0) {
@@ -487,7 +533,7 @@ const Home = () => {
     setActiveSlideCampaign(index);
     if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current);
     sliderIntervalCampaign.current = setInterval(() => {
-      setActiveSlideCampaign(prev => (prev + 1) % featuredCampaigns.length);
+      setActiveSlideCampaign(prev => (prev + 1) % (highlightCampaigns.length || 1));
     }, 5000);
   };
 
@@ -781,54 +827,162 @@ const Home = () => {
       </section>
 
 
-      {/* Charity Slider */}
+      {/* Charity Slider & Highlight */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h1 className="text-lg font-medium mb-2 line-clamp-2">Bantu saudaramu, Allah bantu kamu</h1>
-        <h2 className="text-sm font-medium mb-2 line-clamp-2">Sisihkan sebagian harta untuk program charity dan untuk saudara kita yang membutuhkan</h2>
-        {featuredCampaigns.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden h-56">
+        {/* Section Title & Subtitle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+          <div>
+            <h1 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
+              Bantu Saudaramu, Allah Bantu Kamu
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Sisihkan sebagian harta untuk program charity dan saudara yang membutuhkan
+            </p>
+          </div>
+          <Link
+            to="/charity"
+            className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline self-start sm:self-auto flex items-center gap-0.5 mt-1 sm:mt-0"
+          >
+            <span>Lihat Semua</span>
+            <span className="material-icons text-sm">arrow_forward</span>
+          </Link>
+        </div>
+
+        {/* Highlight Filter Tabs: Rekomendasi, Terpopuler, Terbaru */}
+        <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => { setHighlightMode('all'); setActiveSlideCampaign(0); }}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
+              highlightMode === 'all'
+                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <span>⭐ Rekomendasi</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setHighlightMode('popular'); setActiveSlideCampaign(0); }}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
+              highlightMode === 'popular'
+                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <span>🔥 Terpopuler</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setHighlightMode('latest'); setActiveSlideCampaign(0); }}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
+              highlightMode === 'latest'
+                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <span>✨ Terbaru</span>
+          </button>
+        </div>
+
+        {/* Highlight Card Banner */}
+        {highlightCampaigns.length > 0 && (
+          <div className="relative rounded-2xl overflow-hidden h-60 sm:h-64 shadow-md border border-gray-100 dark:border-gray-800 group">
             {/* Slides */}
-            <div className="h-full">
-              {featuredCampaigns.map((campaign, index) => {
+            <div className="h-full relative">
+              {highlightCampaigns.map((campaign, index) => {
                 const isExpired = isCampaignExpired(campaign.deadline);
+                const percent = campaign.current_amount && campaign.target_amount
+                  ? Math.min(Math.round((campaign.current_amount / campaign.target_amount) * 100), 100)
+                  : 0;
 
                 return (
                   <div
                     key={campaign.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlideCampaign ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                      }`}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+                      index === activeSlideCampaign ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+                    }`}
                   >
                     <img
                       src={getMediaUrl(campaign.thumbnail) || '/images/peduli-dhuafa-banner.jpg'}
                       alt={campaign.title}
-                      className="w-full h-56 object-cover"
+                      className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {
                         e.target.src = '/images/peduli-dhuafa-banner.jpg';
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <h2 className="text-white font-bold text-lg">{campaign.title}</h2>
 
-                      {/* Donate Button */}
+                    {/* Badges on Top */}
+                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">
+                      <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+                        {highlightMode === 'popular'
+                          ? '🔥 Terpopuler'
+                          : highlightMode === 'latest'
+                          ? '✨ Terbaru'
+                          : campaign.is_featured
+                          ? '⭐ Highlight'
+                          : 'Charity'}
+                      </span>
+                      {campaign.deadline && (
+                        <span className="px-2.5 py-1 bg-emerald-950/70 backdrop-blur-md text-emerald-200 text-[10px] font-bold rounded-lg shadow-sm flex items-center gap-1">
+                          <span className="material-icons text-[12px]">schedule</span>
+                          {formatDeadline(campaign.deadline)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Bottom Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-4 z-20">
+                      <Link to={`/kampanye/${campaign.slug || campaign.id}`} className="hover:underline">
+                        <h2 className="text-white font-extrabold text-base sm:text-lg leading-tight line-clamp-2 mb-1.5 drop-shadow-md">
+                          {campaign.title}
+                        </h2>
+                      </Link>
+
+                      {/* Mini progress bar on highlight */}
+                      <div className="w-full bg-white/20 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div
+                          className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+
+                      {/* Amount info */}
+                      <div className="flex items-center justify-between text-[11px] text-white/90 font-medium mb-3">
+                        <span>
+                          Terkumpul: <strong className="text-emerald-300 font-bold">{formatIDR(campaign.current_amount)}</strong>
+                        </span>
+                        <span>
+                          {campaign.target_amount > 0
+                            ? `${percent}% dari ${formatIDRTarget(campaign.target_amount)}`
+                            : 'Target ∞'}
+                        </span>
+                      </div>
+
+                      {/* Donate Button & Share */}
                       <div className="flex gap-2 items-center w-full">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           {isExpired ? (
                             <button
-                              className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                              className="w-full bg-gray-500/80 text-white py-2.5 px-4 rounded-xl text-xs font-bold cursor-not-allowed"
                               disabled
                             >
-                              {getButtonLabel(campaign.title)}
+                              Waktu Donasi Selesai
                             </button>
                           ) : (
                             <Link
                               to={`/bayar-donasi/${campaign.slug || campaign.id}`}
-                              className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                              className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 active:scale-95 text-white py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider text-center block transition shadow-md shadow-emerald-950/40 truncate"
                             >
                               {getButtonLabel(campaign.title)}
                             </Link>
                           )}
                         </div>
-                        <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                        <ShareButton
+                          slug={campaign.slug || campaign.id}
+                          title={campaign.title}
+                          className="!w-10 !h-10 !rounded-xl !bg-white/90 !text-emerald-800 hover:!bg-white shrink-0 shadow-md"
+                        />
                       </div>
                     </div>
                   </div>
@@ -837,14 +991,16 @@ const Home = () => {
             </div>
 
             {/* Indicators */}
-            {featuredCampaigns.length > 0 && (
-              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
-                {featuredCampaigns.map((_, index) => (
+            {highlightCampaigns.length > 1 && (
+              <div className="absolute bottom-2 right-2 flex space-x-1.5 z-30 bg-black/40 backdrop-blur-xs px-2 py-1 rounded-full">
+                {highlightCampaigns.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => goToSlideCampaign(index)}
-                    className={`w-2 h-2 rounded-full ${index === activeSlideCampaign ? 'bg-white' : 'bg-white/50'
-                      }`}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      index === activeSlideCampaign ? 'w-5 bg-emerald-400' : 'w-1.5 bg-white/60 hover:bg-white'
+                    }`}
+                    aria-label={`Slide ${index + 1}`}
                   />
                 ))}
               </div>
@@ -853,115 +1009,139 @@ const Home = () => {
         )}
       </div>
 
-      {/* Charity Swiper */}
-      <div className="px-4 py-4">
+      {/* Charity Swiper (List Kampanye) */}
+      <div className="px-4 py-3">
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
           </div>
         ) : (
-          <div className="swiper-container">
+          <div className="charity-swiper-custom relative pb-7">
+            <style>{`
+              .charity-swiper-custom .swiper-pagination {
+                bottom: 0px !important;
+              }
+              .charity-swiper-custom .swiper-pagination-bullet {
+                width: 6px;
+                height: 6px;
+                background: #cbd5e1;
+                opacity: 0.8;
+                margin: 0 3px !important;
+                transition: all 0.3s ease;
+              }
+              .charity-swiper-custom .swiper-pagination-bullet-active {
+                width: 18px;
+                border-radius: 9999px;
+                background: #059669;
+                opacity: 1;
+              }
+              .charity-swiper-custom .swiper-button-next,
+              .charity-swiper-custom .swiper-button-prev {
+                display: none !important;
+              }
+            `}</style>
             <Swiper
-              spaceBetween={16}
+              spaceBetween={12}
               slidesPerView={2}
-              navigation
-              pagination={{ clickable: true }}
-              scrollbar={{ draggable: true }}
-              modules={[Navigation, Pagination, Scrollbar]}
+              pagination={{ clickable: true, dynamicBullets: true }}
+              modules={[Pagination]}
             >
               {sortedCampaigns.map((campaign) => {
                 const isExpired = isCampaignExpired(campaign.deadline);
                 const deadlineText = formatDeadline(campaign.deadline);
+                const percent = campaign.current_amount && campaign.target_amount
+                  ? Math.min(Math.round((campaign.current_amount / campaign.target_amount) * 100), 100)
+                  : 0;
 
                 return (
-                  <SwiperSlide key={campaign.id}>
-                    <div className="bg-white rounded-lg overflow-hidden shadow">
-                      <Link to={`/kampanye/${campaign.slug || campaign.id}`}>
+                  <SwiperSlide key={campaign.id} className="h-auto">
+                    <div className="h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                      {/* Image & Category */}
+                      <Link to={`/kampanye/${campaign.slug || campaign.id}`} className="relative block h-28 sm:h-32 w-full overflow-hidden bg-gray-100 dark:bg-gray-800 group">
                         <img
                           src={getMediaUrl(campaign.thumbnail) || '/placeholder-image.jpg'}
                           alt={campaign.title}
-                          className="w-full h-28 object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             e.target.src = '/placeholder-image.jpg';
                           }}
                         />
-                      </Link>
-                      <div className="p-2">
-                        <h3 className="text-sm font-medium mb-2 line-clamp-2">
-                          {campaign.title}
-                        </h3>
-
-                        {isExpired ? (
-                          <p className="text-xs text-red-500">Waktu habis</p>
-                        ) : (
-                          <p className="text-xs text-gray-500">
-                            Batas waktu: {deadlineText}
-                          </p>
+                        {campaign.category && (
+                          <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold rounded-md uppercase tracking-wider">
+                            {campaign.category}
+                          </span>
                         )}
+                      </Link>
 
-                        {/* Progress bar */}
-                        <div className="mt-1 mb-1">
-                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      {/* Content Body */}
+                      <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between">
+                        <div>
+                          <Link to={`/kampanye/${campaign.slug || campaign.id}`}>
+                            <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-2 h-8 leading-snug mb-1 hover:text-emerald-600 transition-colors">
+                              {campaign.title}
+                            </h3>
+                          </Link>
+
+                          <p className={`text-[10px] flex items-center gap-1 mb-1.5 ${isExpired ? 'text-red-500' : 'text-gray-400'}`}>
+                            <span className="material-icons text-[11px]">{isExpired ? 'event_busy' : 'schedule'}</span>
+                            <span className="truncate">{isExpired ? 'Waktu habis' : `Batas: ${deadlineText}`}</span>
+                          </p>
+
+                          {/* Progress Bar */}
+                          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1.5 overflow-hidden">
                             <div
-                              className="bg-green-600 h-2.5 rounded-full"
-                              style={{
-                                width: `${campaign.current_amount && campaign.target_amount
-                                  ? Math.min(
-                                    (campaign.current_amount / campaign.target_amount) * 100,
-                                    100
-                                  )
-                                  : 0
-                                  }%`,
-                              }}
-                            ></div>
+                              className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                              style={{ width: `${percent}%` }}
+                            />
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500 mt-1">
-                              {campaign.current_amount
-                                ? formatIDR(campaign.current_amount)
-                                : 'Rp 0'}
+
+                          {/* Progress Amount & Target */}
+                          <div className="flex justify-between items-baseline gap-1 text-[11px] leading-tight mb-0.5">
+                            <span className="font-extrabold text-emerald-700 dark:text-emerald-400 truncate">
+                              {formatIDR(campaign.current_amount)}
                             </span>
-                            <div className="flex items-center gap-1.5 opacity-60">
-                              <span className="material-icons text-[10px] text-red-500">favorite</span>
-                              <span className="text-[10px] font-bold">{campaign.likes_count || 0}</span>
-                            </div>
-                            <span className="text-xs text-gray-500 mt-1">
-                              dari{' '}
-                              {campaign.target_amount
-                                ? formatIDRTarget(campaign.target_amount)
-                                : 'Rp 0'}
+                            <span className="text-[10px] text-gray-400 shrink-0">
+                              {campaign.target_amount > 0 ? formatIDRTarget(campaign.target_amount) : '∞'}
                             </span>
                           </div>
-                          <div className="text-right text-xs text-gray-500 mt-1">
-                            {campaign.target_amount > 0
-                              ? Math.round(
-                                (campaign.current_amount / campaign.target_amount) * 100
-                              )
-                              : 0}{' '}
-                            % tercapai
+
+                          {/* Percent & Likes */}
+                          <div className="flex justify-between items-center text-[10px] text-gray-500 mb-2">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-500">
+                              {percent}% tercapai
+                            </span>
+                            <span className="flex items-center gap-0.5 text-red-500 font-bold">
+                              <span className="material-icons text-[11px]">favorite</span>
+                              {campaign.likes_count || 0}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Donate Button */}
-                        <div className="flex gap-2 items-center w-full mt-2">
-                          <div className="flex-1">
+                        {/* Action Buttons Row */}
+                        <div className="flex gap-1.5 items-center w-full mt-auto pt-1">
+                          <div className="flex-1 min-w-0">
                             {isExpired ? (
                               <button
-                                className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
                                 disabled
+                                className="w-full bg-gray-200 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[11px] font-bold cursor-not-allowed text-center truncate"
                               >
-                                {getButtonLabel(campaign.title)}
+                                Selesai
                               </button>
                             ) : (
                               <Link
                                 to={`/bayar-donasi/${campaign.slug || campaign.id}`}
-                                className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                                className="w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 active:scale-95 text-white py-1.5 px-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-center block truncate transition shadow-xs"
+                                title={getButtonLabel(campaign.title, false)}
                               >
-                                {getButtonLabel(campaign.title)}
+                                {getButtonLabel(campaign.title, false)}
                               </Link>
                             )}
                           </div>
-                          <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                          <ShareButton
+                            slug={campaign.slug || campaign.id}
+                            title={campaign.title}
+                            className="!w-7 !h-7 !p-1 !rounded-xl !border-gray-200 text-gray-500 hover:text-emerald-600 shrink-0"
+                          />
                         </div>
                       </div>
                     </div>
