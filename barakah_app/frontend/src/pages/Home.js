@@ -1692,12 +1692,12 @@ const Home = () => {
               <SwiperSlide key={partner.id}>
                 <div
                   onClick={() => setSelectedPartner(partner)}
-                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
+                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group text-center"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-full object-contain" title={partner.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest">{partner.name}</span>
+                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest text-center w-full block">{partner.name}</span>
                 </div>
               </SwiperSlide>
             ))}
@@ -1730,12 +1730,12 @@ const Home = () => {
               <SwiperSlide key={mitra.id}>
                 <div
                   onClick={() => setSelectedPartner(mitra)}
-                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
+                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group text-center"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <img src={getMediaUrl(mitra.logo)} alt={mitra.name} className="h-full object-contain" title={mitra.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest">{mitra.name}</span>
+                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest text-center w-full block">{mitra.name}</span>
                 </div>
               </SwiperSlide>
             ))}
