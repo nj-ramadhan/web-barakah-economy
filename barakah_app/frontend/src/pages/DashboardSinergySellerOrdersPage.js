@@ -1253,36 +1253,58 @@ ${stopsText}
 
                         <div className="space-y-2">
                             <div>
-                                <label className="text-[10px] font-bold text-gray-600 block mb-1">Nama Ekspedisi / Kurir:</label>
-                                <input 
-                                    type="text"
-                                    list={`couriers-list-${order.id}`}
-                                    placeholder="Pilih atau ketik nama ekspedisi (cth: JNE, J&T, SiCepat)..."
-                                    value={localShippingCourier[order.id] !== undefined ? localShippingCourier[order.id] : (order.shipping_courier || '')}
-                                    onChange={(e) => setLocalShippingCourier({ ...localShippingCourier, [order.id]: e.target.value })}
-                                    disabled={updatingId === order.id}
-                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                                />
-                                <datalist id={`couriers-list-${order.id}`}>
-                                    <option value="JNE" />
-                                    <option value="J&T Express" />
-                                    <option value="SiCepat" />
-                                    <option value="Anteraja" />
-                                    <option value="Pos Indonesia" />
-                                    <option value="Ninja Xpress" />
-                                    <option value="Lion Parcel" />
-                                    <option value="ID Express" />
-                                    <option value="TIKI" />
-                                    <option value="Wahana" />
-                                    <option value="Shopee Xpress (SPX)" />
-                                </datalist>
+                                <label className="text-[10px] font-bold text-gray-700 block mb-1">
+                                    🚚 Nama Ekspedisi / Kurir:
+                                </label>
+                                <div className="space-y-1.5">
+                                    <select 
+                                        value={
+                                            ['JNE', 'J&T Express', 'SiCepat', 'Anteraja', 'Pos Indonesia', 'Ninja Xpress', 'Lion Parcel', 'ID Express', 'TIKI', 'Wahana', 'Shopee Xpress (SPX)'].includes(localShippingCourier[order.id] !== undefined ? localShippingCourier[order.id] : (order.shipping_courier || ''))
+                                                ? (localShippingCourier[order.id] !== undefined ? localShippingCourier[order.id] : (order.shipping_courier || ''))
+                                                : ((localShippingCourier[order.id] || order.shipping_courier) ? 'OTHER' : '')
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === 'OTHER') {
+                                                setLocalShippingCourier({ ...localShippingCourier, [order.id]: '' });
+                                            } else {
+                                                setLocalShippingCourier({ ...localShippingCourier, [order.id]: val });
+                                            }
+                                        }}
+                                        disabled={updatingId === order.id}
+                                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition cursor-pointer"
+                                    >
+                                        <option value="">-- Pilih Ekspedisi --</option>
+                                        <option value="JNE">JNE</option>
+                                        <option value="J&T Express">J&T Express</option>
+                                        <option value="SiCepat">SiCepat</option>
+                                        <option value="Anteraja">Anteraja</option>
+                                        <option value="Pos Indonesia">Pos Indonesia</option>
+                                        <option value="Ninja Xpress">Ninja Xpress</option>
+                                        <option value="Lion Parcel">Lion Parcel</option>
+                                        <option value="ID Express">ID Express</option>
+                                        <option value="TIKI">TIKI</option>
+                                        <option value="Wahana">Wahana</option>
+                                        <option value="Shopee Xpress (SPX)">Shopee Xpress (SPX)</option>
+                                        <option value="OTHER">Lainnya / Ketik Manual...</option>
+                                    </select>
+
+                                    <input 
+                                        type="text"
+                                        placeholder="Ketik / sesuaikan nama ekspedisi (cth: JNE, J&T, SiCepat)..."
+                                        value={localShippingCourier[order.id] !== undefined ? localShippingCourier[order.id] : (order.shipping_courier || '')}
+                                        onChange={(e) => setLocalShippingCourier({ ...localShippingCourier, [order.id]: e.target.value })}
+                                        disabled={updatingId === order.id}
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                    />
+                                </div>
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold text-gray-600 block mb-1">Nomor Resi Pelacakan:</label>
+                                <label className="text-[10px] font-bold text-gray-700 block mb-1">📦 Nomor Resi Pengiriman:</label>
                                 <input 
                                     type="text"
-                                    placeholder="Masukkan No. Resi Pengiriman..."
+                                    placeholder="Masukkan No. Resi Ekspedisi..."
                                     value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
                                     onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
                                     disabled={updatingId === order.id}
