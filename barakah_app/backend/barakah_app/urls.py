@@ -15,6 +15,7 @@ from barakah_app.seo_views import (
 )
 from streaming.views import seo_streaming_detail
 from products.views import ProductShareView
+from campaigns.views import CampaignShareView, CampaignOgImageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,8 +32,14 @@ urlpatterns = [
     path('sinergy/<str:slug>', ProductShareView.as_view()),
     path('ecommerce/<str:slug>/', ProductShareView.as_view()),
     path('ecommerce/<str:slug>', ProductShareView.as_view()),
-    path('kampanye/<str:slug>/', seo_campaign_detail),
-    path('kampanye/<str:slug>', seo_campaign_detail),
+    path('kampanye/<str:slug>/og-image.jpg', CampaignOgImageView.as_view()),
+    path('kampanye/<str:slug>/og-image', CampaignOgImageView.as_view()),
+    path('kampanye/<str:slug>/', CampaignShareView.as_view()),
+    path('kampanye/<str:slug>', CampaignShareView.as_view()),
+    path('charity/<str:slug>/', CampaignShareView.as_view()),
+    path('charity/<str:slug>', CampaignShareView.as_view()),
+    path('charity/', CampaignShareView.as_view()),
+    path('charity', CampaignShareView.as_view()),
     path('articles/<str:id_or_slug>/', seo_article_detail),
     path('articles/<str:id_or_slug>', seo_article_detail),
     path('academy/articles/<str:id_or_slug>/', seo_article_detail),

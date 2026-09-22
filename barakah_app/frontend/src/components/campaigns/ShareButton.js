@@ -43,7 +43,7 @@ const ShareButton = ({
     } else if (type === 'seller') {
         shareUrl = `${shareBaseUrl}/${slug}`;
     } else if (type === 'charity_page') {
-        shareUrl = `https://barakah.cloud/charity`;
+        shareUrl = `${shareBaseUrl}/charity`;
     } else {
         // default campaign
         shareUrl = `${shareBaseUrl}/kampanye/${slug}`;
@@ -56,8 +56,9 @@ const ShareButton = ({
         return plain.length > 120 ? plain.substring(0, 117) + '...' : plain;
     };
 
-    // Determine WhatsApp text based on type
-    const getWhatsAppText = () => {
+    // Determine share text based on type.
+    // When includeUrl is false (for navigator.share), omit url so the OS share sheet / WhatsApp doesn't duplicate the link.
+    const getShareMessage = (includeUrl = true) => {
         const cleanDesc = getCleanDescription();
         let priceStr = '';
         if (price) {
@@ -69,35 +70,36 @@ const ShareButton = ({
             }
         }
         const descStr = cleanDesc ? `📝 ${cleanDesc}\n` : '';
+        const linkSuffix = includeUrl ? `\n${shareUrl}` : '';
 
         if (type === 'product' || type === 'sinergy' || type === 'store') {
-            return `*Beli ${title} di Barakah Economy*\n${priceStr}${descStr}\nLihat detail & pesan sekarang:\n${shareUrl}`;
+            return `*Beli ${title} di Barakah Economy*\n${priceStr}${descStr}Lihat detail & pesan sekarang:${linkSuffix}`;
         }
         if (type === 'article') {
-            return `*${title}*\n${descStr}\nBaca selengkapnya di Barakah Economy:\n${shareUrl}`;
+            return `*${title}*\n${descStr}Baca selengkapnya di Barakah Economy:${linkSuffix}`;
         }
         if (type === 'event') {
-            return `*Event: ${title}*\n${descStr}\nLihat info & daftar di sini:\n${shareUrl}`;
+            return `*Event: ${title}*\n${descStr}Lihat info & daftar di sini:${linkSuffix}`;
         }
         if (type === 'course') {
-            return `*E-Course: ${title}*\n${priceStr}${descStr}\nLihat info & ikuti kelas di sini:\n${shareUrl}`;
+            return `*E-Course: ${title}*\n${priceStr}${descStr}Lihat info & ikuti kelas di sini:${linkSuffix}`;
         }
         if (type === 'digital_product') {
-            return `*Produk Digital: ${title}*\n${priceStr}${descStr}\nLihat & unduh di sini:\n${shareUrl}`;
+            return `*Produk Digital: ${title}*\n${priceStr}${descStr}Lihat & unduh di sini:${linkSuffix}`;
         }
         if (type === 'forum') {
-            return `*Diskusi Forum: ${title}*\n${descStr}\nBaca & ikut berdiskusi di sini:\n${shareUrl}`;
+            return `*Diskusi Forum: ${title}*\n${descStr}Baca & ikut berdiskusi di sini:${linkSuffix}`;
         }
         if (type === 'activity') {
-            return `*Kegiatan: ${title}*\n${descStr}\nLihat dokumentasi selengkapnya:\n${shareUrl}`;
+            return `*Kegiatan: ${title}*\n${descStr}Lihat dokumentasi selengkapnya:${linkSuffix}`;
         }
         if (type === 'seller') {
-            return `*Kunjungi Toko @${slug} di Barakah Economy*\n\nLihat semua produk dan profil toko di sini:\n${shareUrl}`;
+            return `*Kunjungi Toko @${slug} di Barakah Economy*\n\nLihat semua produk dan profil toko di sini:${linkSuffix}`;
         }
         if (type === 'charity_page') {
-            return `*Mari Berbagi Kebaikan Bersama Barakah Charity*\n\nSalurkan donasi terbaik Anda melalui program-program kebaikan:\n${shareUrl}`;
+            return `*Mari Berbagi Kebaikan Bersama Barakah Charity*\n\nSalurkan donasi terbaik Anda melalui program-program kebaikan:${linkSuffix}`;
         }
-        return `*Program Donasi: ${title}*\n${descStr}\nSalurkan kebaikan & donasi sekarang:\n${shareUrl}`;
+        return `*Program Donasi: ${title}*\n${descStr}Salurkan kebaikan & donasi sekarang:${linkSuffix}`;
     };
 
     // Close dropdown when clicking outside
@@ -118,7 +120,7 @@ const ShareButton = ({
             e.preventDefault();
             e.stopPropagation();
         }
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(getWhatsAppText())}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(getShareMessage(true))}`;
         window.open(whatsappUrl, '_blank');
         setIsOpen(false);
     };
@@ -146,7 +148,7 @@ const ShareButton = ({
             try {
                 await navigator.share({
                     title: title,
-                    text: getWhatsAppText(),
+                    text: getShareMessage(false),
                     url: shareUrl
                 });
                 return;

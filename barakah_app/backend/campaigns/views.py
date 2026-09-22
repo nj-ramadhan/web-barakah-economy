@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -313,32 +313,175 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 
 class CampaignShareView(APIView):
-    def get(self, request, slug):
-        campaign = get_object_or_404(Campaign, slug=slug)
+    """
+    View for rendering server-side HTML with Open Graph tags for social media sharing.
+    When accessed by scrapers (WhatsApp, FB, Twitter), renders rich Open Graph preview with thumbnail.
+    When accessed by human users, immediately redirects to the frontend campaign/charity page.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug=None):
+        import re
         from django.shortcuts import render
-        from django.conf import settings
-        
-        if settings.DEBUG:
-            frontend_url = 'http://localhost:3000'
-        else:
-            # frontend_url = 'https://barakah-economy.com'
-            frontend_url = 'https://barakah-economy.com'
-        
-        thumbnail_url = None
-        if campaign.thumbnail:
-            img_url = campaign.thumbnail.url
-            if img_url.startswith('http'):
-                thumbnail_url = img_url
+
+        slug_clean = str(slug).strip('/') if slug else ''
+        slug_clean = re.sub(r'\.(html|htm|php)$', '', slug_clean, flags=re.IGNORECASE)
+
+        # Build absolute share URL for Open Graph canonical
+        share_url = request.build_absolute_uri()
+        if share_url.startswith('http://'):
+            share_url = 'https://' + share_url[7:]
+
+        if not slug_clean or slug_clean.lower() == 'charity':
+            target_url = "https://barakah.cloud/charity"
+            campaign_data = {
+                'title': 'Barakah Charity - Program Kebaikan & Donasi',
+                'description': 'Salurkan kepedulian dan donasi terbaik Anda melalui program kebaikan Barakah Charity.',
+                'thumbnail_url': 'https://api.barakah.cloud/api/campaigns/charity/og-image.jpg',
+                'thumbnail_type': 'image/jpeg',
+                'thumbnail_width': 600,
+                'thumbnail_height': 600,
+            }
+            return render(request, 'campaigns/campaign_share.html', {
+                'campaign': campaign_data,
+                'target_url': target_url,
+                'share_url': share_url
+            })
+
+        campaign = Campaign.objects.filter(slug__iexact=slug_clean).first()
+        if not campaign and slug_clean.isdigit():
+            campaign = Campaign.objects.filter(id=int(slug_clean)).first()
+        if not campaign:
+            search_term = slug_clean.replace('-', ' ').strip()
+            campaign = Campaign.objects.filter(title__icontains=search_term).first()
+
+        if campaign:
+            target_url = f"https://barakah.cloud/kampanye/{campaign.slug}"
+
+            clean_desc = re.sub(r'<[^>]*>', '', campaign.description or '')[:160].strip()
+            progress_parts = []
+            if campaign.target_amount:
+                progress_parts.append(f"Target: Rp {int(campaign.target_amount):,}".replace(',', '.'))
+            if campaign.current_amount:
+                progress_parts.append(f"Terkumpul: Rp {int(campaign.current_amount):,}".replace(',', '.'))
+
+            desc_parts = []
+            if progress_parts:
+                desc_parts.append(" | ".join(progress_parts))
+            if clean_desc:
+                desc_parts.append(clean_desc)
             else:
-                import urllib.parse
-                encoded_path = urllib.parse.quote(img_url, safe='/:')
-                if encoded_path.startswith('/'):
-                    thumbnail_url = f"{frontend_url}{encoded_path}"
-                else:
-                    thumbnail_url = f"{frontend_url}/{encoded_path}"
-            
+                desc_parts.append(f"Salurkan donasi & sedekah terbaik untuk {campaign.title} di Barakah Charity.")
+
+            campaign_data = {
+                'title': campaign.title,
+                'description': " | ".join(desc_parts),
+                'thumbnail_url': f"https://api.barakah.cloud/api/campaigns/{campaign.slug}/og-image.jpg",
+                'thumbnail_type': 'image/jpeg',
+                'thumbnail_width': 600,
+                'thumbnail_height': 600,
+            }
+        else:
+            target_url = "https://barakah.cloud/charity"
+            campaign_data = {
+                'title': str(slug_clean).replace('-', ' ').title(),
+                'description': 'Salurkan kepedulian dan donasi terbaik Anda melalui program kebaikan Barakah Charity.',
+                'thumbnail_url': f"https://api.barakah.cloud/api/campaigns/{slug_clean}/og-image.jpg",
+                'thumbnail_type': 'image/jpeg',
+                'thumbnail_width': 600,
+                'thumbnail_height': 600,
+            }
+
         return render(request, 'campaigns/campaign_share.html', {
-            'campaign': campaign,
-            'frontend_url': frontend_url,
-            'thumbnail_url': thumbnail_url,
+            'campaign': campaign_data,
+            'target_url': target_url,
+            'share_url': share_url
         })
+
+
+class CampaignOgImageView(APIView):
+    """
+    Dynamically generates and serves lightweight (< 150KB) JPEG thumbnails for WhatsApp / Telegram Open Graph.
+    WhatsApp rejects thumbnails > 300KB or in non-standard formats (WebP/SVG/HEIC).
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug=None, pk=None):
+        from django.http import HttpResponse
+        from PIL import Image
+        import io, os, re
+        from django.conf import settings
+
+        # Clean slug of any extension like .jpg or .png
+        slug_clean = None
+        if slug:
+            slug_clean = re.sub(r'\.(jpg|jpeg|png|webp)$', '', str(slug).strip('/'), flags=re.IGNORECASE)
+
+        campaign = None
+        if slug_clean and slug_clean.lower() != 'charity':
+            campaign = Campaign.objects.filter(slug__iexact=slug_clean).first()
+            if not campaign and slug_clean.isdigit():
+                campaign = Campaign.objects.filter(pk=int(slug_clean)).first()
+            if not campaign:
+                search_term = slug_clean.replace('-', ' ').strip()
+                campaign = Campaign.objects.filter(title__icontains=search_term).first()
+        elif pk:
+            campaign = Campaign.objects.filter(pk=pk).first()
+
+        img_source = None
+        if campaign and campaign.thumbnail:
+            try:
+                if hasattr(campaign.thumbnail, 'path') and os.path.exists(campaign.thumbnail.path):
+                    img_source = campaign.thumbnail.path
+                elif hasattr(campaign.thumbnail, 'file'):
+                    img_source = campaign.thumbnail.file
+            except Exception:
+                pass
+
+        # If image found, process and compress
+        if img_source:
+            try:
+                with Image.open(img_source) as img:
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        bg = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        bg.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                        img = bg
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+
+                    img.thumbnail((600, 600), Image.Resampling.LANCZOS)
+
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='JPEG', quality=82, optimize=True)
+                    img_bytes = buffer.getvalue()
+
+                    response = HttpResponse(img_bytes, content_type='image/jpeg')
+                    response['Cache-Control'] = 'public, max-age=86400'
+                    return response
+            except Exception:
+                pass
+
+        # Fallback to local static or frontend public image
+        for fallback_dir in [
+            os.path.join(settings.BASE_DIR, 'static', 'images'),
+            os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'images')
+        ]:
+            thumb_file = os.path.join(fallback_dir, 'web-thumbnail.jpg')
+            if os.path.exists(thumb_file):
+                try:
+                    with open(thumb_file, 'rb') as f:
+                        response = HttpResponse(f.read(), content_type='image/jpeg')
+                        response['Cache-Control'] = 'public, max-age=86400'
+                        return response
+                except Exception:
+                    pass
+
+        # High-res branded placeholder with Barakah green color
+        img = Image.new('RGB', (600, 600), color=(5, 150, 105))
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=80)
+        response = HttpResponse(buffer.getvalue(), content_type='image/jpeg')
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response

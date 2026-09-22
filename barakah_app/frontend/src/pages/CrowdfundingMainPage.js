@@ -216,7 +216,12 @@ const CrowdfundingMainPage = () => {
                             </Link>
                           )}
                         </div>
-                        <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                        <ShareButton 
+                          slug={campaign.slug || campaign.id} 
+                          title={campaign.title} 
+                          type="campaign"
+                          description={campaign.description}
+                        />
                       </div>
                     </div>
                   </div>
@@ -347,7 +352,12 @@ const CrowdfundingMainPage = () => {
                           </Link>
                         )}
                       </div>
-                      <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                      <ShareButton 
+                        slug={campaign.slug || campaign.id} 
+                        title={campaign.title} 
+                        type="campaign"
+                        description={campaign.description}
+                      />
                     </div>
                   </div>
                 </div>

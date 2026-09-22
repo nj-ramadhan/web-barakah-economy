@@ -4,29 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klik untuk donasi - {{ campaign.title }}</title>
+    <title>{{ campaign.title|escape }} - Barakah Charity</title>
 
-    <!-- Open Graph / Facebook -->
+    <!-- Schema.org for Google & WhatsApp Preview -->
+    <meta itemprop="name" content="{{ campaign.title|escape }}">
+    <meta itemprop="description" content="{{ campaign.description|escape }}">
+    <meta itemprop="image" content="{{ campaign.thumbnail_url|escape }}">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:site_name" content="Barakah Economy">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:title" content="Klik untuk donasi - {{ campaign.title }}">
-    <meta property="og:description" content="{{ campaign.description|striptags|truncatewords:20 }}">
-    {% if thumbnail_url %}
-    <meta property="og:image" content="{{ thumbnail_url }}">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    {% endif %}
+    <meta property="og:url" content="{{ share_url|escape }}">
+    <meta property="og:title" content="{{ campaign.title|escape }}">
+    <meta property="og:description" content="{{ campaign.description|escape }}">
+    <meta property="og:image" content="{{ campaign.thumbnail_url|escape }}">
+    <meta property="og:image:secure_url" content="{{ campaign.thumbnail_url|escape }}">
+    <meta property="og:image:type" content="{{ campaign.thumbnail_type|default:'image/jpeg' }}">
+    <meta property="og:image:width" content="{{ campaign.thumbnail_width|default:'600' }}">
+    <meta property="og:image:height" content="{{ campaign.thumbnail_height|default:'600' }}">
+    <meta property="og:image:alt" content="{{ campaign.title|escape }}">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
-    <meta property="twitter:title" content="Klik untuk donasi - {{ campaign.title }}">
-    <meta property="twitter:description" content="{{ campaign.description|striptags|truncatewords:20 }}">
-    {% if thumbnail_url %}
-    <meta property="twitter:image" content="{{ thumbnail_url }}">
-    {% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ share_url|escape }}">
+    <meta name="twitter:title" content="{{ campaign.title|escape }}">
+    <meta name="twitter:description" content="{{ campaign.description|escape }}">
+    <meta name="twitter:image" content="{{ campaign.thumbnail_url|escape }}">
 
     <style>
         body {
@@ -36,56 +39,57 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #ffffff;
-            color: #333;
+            background-color: #f9fafb;
+            color: #111827;
             flex-direction: column;
             text-align: center;
         }
 
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #10b981;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #059669;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
         }
 
         .redirect-text {
             font-size: 14px;
-            color: #666;
+            font-weight: 600;
+            color: #374151;
+            max-width: 90%;
+        }
+
+        .btn-link {
+            margin-top: 12px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #059669;
+            text-decoration: none;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 
 <body>
     <div class="loader"></div>
-    <div class="redirect-text">Membuka kampanye...</div>
+    <div class="redirect-text">Membuka program donasi {{ campaign.title }}...</div>
+    <a href="{{ target_url }}" class="btn-link">Klik di sini jika tidak otomatis dialihkan</a>
 
     <script>
-        // Redirect logic
-        var frontendUrl = "{{ frontend_url }}";
-        var slug = "{{ campaign.slug }}";
-
-        if (frontendUrl.endsWith('/')) {
-            frontendUrl = frontendUrl.slice(0, -1);
+        var targetUrl = "{{ target_url|safe }}";
+        if (targetUrl) {
+            setTimeout(function() {
+                window.location.replace(targetUrl);
+            }, 60);
         }
-
-        // Close redundant tabs if possible or just redirect
-        setTimeout(function () {
-            window.location.replace(frontendUrl + "/kampanye/" + slug);
-        }, 50);
     </script>
 </body>
 

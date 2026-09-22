@@ -981,6 +981,8 @@ const Home = () => {
                         <ShareButton
                           slug={campaign.slug || campaign.id}
                           title={campaign.title}
+                          type="campaign"
+                          description={campaign.description}
                           className="!w-10 !h-10 !rounded-xl !bg-white/90 !text-emerald-800 hover:!bg-white shrink-0 shadow-md"
                         />
                       </div>
@@ -1140,6 +1142,8 @@ const Home = () => {
                           <ShareButton
                             slug={campaign.slug || campaign.id}
                             title={campaign.title}
+                            type="campaign"
+                            description={campaign.description}
                             className="!w-7 !h-7 !p-1 !rounded-xl !border-gray-200 text-gray-500 hover:text-emerald-600 shrink-0"
                           />
                         </div>

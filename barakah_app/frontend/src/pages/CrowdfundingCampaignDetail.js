@@ -400,7 +400,12 @@ const CrowdfundingCampaignDetail = () => {
                 </span>
                 <span className="text-sm font-bold">{likesCount}</span>
               </button>
-              <ShareButton slug={campaign.slug} title={campaign.title} />
+              <ShareButton 
+                slug={campaign.slug} 
+                title={campaign.title} 
+                type="campaign"
+                description={campaign.description}
+              />
             </div>
           </div>
         </div>
