@@ -152,6 +152,7 @@ const Home = () => {
   const sliderIntervalProduct = useRef(null);
   const sliderIntervalCourse = useRef(null);
   const sliderIntervalDigital = useRef(null);
+  const searchTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const [testimonials, setTestimonials] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -416,18 +417,16 @@ const Home = () => {
   const handleSearch = (query) => {
     setSearchQuery(query);
 
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    const newTimeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       fetchCampaigns(query);
       fetchProducts(query);
       fetchCourses(query);
       fetchDigitalProducts(query);
     }, 500);
-
-    setSearchTimeout(newTimeout);
   };
 
   useEffect(() => {
@@ -438,6 +437,7 @@ const Home = () => {
 
     // Clean up function
     return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
       if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current);
       if (sliderIntervalProduct.current) clearInterval(sliderIntervalProduct.current);
       if (sliderIntervalCourse.current) clearInterval(sliderIntervalCourse.current);
