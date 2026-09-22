@@ -144,8 +144,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchTimeout, setSearchTimeout] = useState(null);
-  const [highlightMode, setHighlightMode] = useState('all'); // 'all', 'popular', 'latest'
   const [activeSlideCampaign, setActiveSlideCampaign] = useState(0);
   const [activeSlideProduct, setActiveSlideProduct] = useState(0);
   const [activeSlideCourse, setActiveSlideCourse] = useState(0);
@@ -447,34 +445,11 @@ const Home = () => {
     };
   }, []);
 
-  // Dynamic highlight campaigns based on highlightMode: 'all' (rekomendasi/pilihan), 'popular' (terpopuler), 'latest' (terbaru)
+  // Highlight campaigns: kombinasi featured, terpopuler, dan terbaru
   const highlightCampaigns = useMemo(() => {
     const list = campaigns && campaigns.length > 0 ? campaigns : featuredCampaigns;
     if (!list || list.length === 0) return [];
 
-    if (highlightMode === 'popular') {
-      return [...list].sort((a, b) => {
-        const isAExpired = isCampaignExpired(a.deadline) ? 1 : 0;
-        const isBExpired = isCampaignExpired(b.deadline) ? 1 : 0;
-        if (isAExpired !== isBExpired) return isAExpired - isBExpired;
-
-        const popA = Number(a.current_amount || 0) + (Number(a.likes_count || 0) * 10000) + (Number(a.view_count || 0) * 500);
-        const popB = Number(b.current_amount || 0) + (Number(b.likes_count || 0) * 10000) + (Number(b.view_count || 0) * 500);
-        return popB - popA;
-      }).slice(0, 6);
-    }
-
-    if (highlightMode === 'latest') {
-      return [...list].sort((a, b) => {
-        const isAExpired = isCampaignExpired(a.deadline) ? 1 : 0;
-        const isBExpired = isCampaignExpired(b.deadline) ? 1 : 0;
-        if (isAExpired !== isBExpired) return isAExpired - isBExpired;
-
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-      }).slice(0, 6);
-    }
-
-    // Default 'all' (Rekomendasi): kombinasi featured, terpopuler, dan terbaru
     const featured = list.filter(c => c.is_featured && !isCampaignExpired(c.deadline));
     const popular = [...list].sort((a, b) => {
       const popA = Number(a.current_amount || 0) + (Number(a.likes_count || 0) * 10000);
@@ -490,7 +465,7 @@ const Home = () => {
 
     const result = Array.from(map.values()).slice(0, 6);
     return result.length > 0 ? result : list.slice(0, 4);
-  }, [campaigns, featuredCampaigns, highlightMode]);
+  }, [campaigns, featuredCampaigns]);
 
   // Set up automatic sliders
   useEffect(() => {
@@ -848,42 +823,7 @@ const Home = () => {
           </Link>
         </div>
 
-        {/* Highlight Filter Tabs: Rekomendasi, Terpopuler, Terbaru */}
-        <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => { setHighlightMode('all'); setActiveSlideCampaign(0); }}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
-              highlightMode === 'all'
-                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span>⭐ Rekomendasi</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setHighlightMode('popular'); setActiveSlideCampaign(0); }}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
-              highlightMode === 'popular'
-                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span>🔥 Terpopuler</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setHighlightMode('latest'); setActiveSlideCampaign(0); }}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
-              highlightMode === 'latest'
-                ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-200 dark:shadow-none'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span>✨ Terbaru</span>
-          </button>
-        </div>
+
 
         {/* Highlight Card Banner */}
         {highlightCampaigns.length > 0 && (
@@ -915,13 +855,7 @@ const Home = () => {
                     {/* Badges on Top */}
                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">
                       <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
-                        {highlightMode === 'popular'
-                          ? '🔥 Terpopuler'
-                          : highlightMode === 'latest'
-                          ? '✨ Terbaru'
-                          : campaign.is_featured
-                          ? '⭐ Highlight'
-                          : 'Charity'}
+                        {campaign.is_featured ? '⭐ Highlight' : 'Charity'}
                       </span>
                       {campaign.deadline && (
                         <span className="px-2.5 py-1 bg-emerald-950/70 backdrop-blur-md text-emerald-200 text-[10px] font-bold rounded-lg shadow-sm flex items-center gap-1">

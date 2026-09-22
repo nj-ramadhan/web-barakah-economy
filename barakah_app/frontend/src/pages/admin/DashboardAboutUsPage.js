@@ -21,6 +21,12 @@ const DashboardAboutUsPage = () => {
         contact_email: '',
         contact_phone: '',
         whatsapp_number: '',
+        footer_tagline: '',
+        instagram_url: '',
+        youtube_url: '',
+        tiktok_url: '',
+        linkedin_url: '',
+        facebook_url: '',
         hero_image: null,
         organization_structure_image: null
     });
@@ -47,6 +53,12 @@ const DashboardAboutUsPage = () => {
                     contact_email: data.contact_email || '',
                     contact_phone: data.contact_phone || '',
                     whatsapp_number: data.whatsapp_number || '',
+                    footer_tagline: data.footer_tagline || '',
+                    instagram_url: data.instagram_url || '',
+                    youtube_url: data.youtube_url || '',
+                    tiktok_url: data.tiktok_url || '',
+                    linkedin_url: data.linkedin_url || '',
+                    facebook_url: data.facebook_url || '',
                     hero_image: null,
                     organization_structure_image: null
                 });
@@ -117,6 +129,12 @@ const DashboardAboutUsPage = () => {
         fd.append('contact_email', formData.contact_email || '');
         fd.append('contact_phone', formData.contact_phone || '');
         fd.append('whatsapp_number', formData.whatsapp_number || '');
+        fd.append('footer_tagline', formData.footer_tagline || '');
+        fd.append('instagram_url', formData.instagram_url || '');
+        fd.append('youtube_url', formData.youtube_url || '');
+        fd.append('tiktok_url', formData.tiktok_url || '');
+        fd.append('linkedin_url', formData.linkedin_url || '');
+        fd.append('facebook_url', formData.facebook_url || '');
         if (formData.hero_image) {
             if (formData.hero_image instanceof File) {
                 fd.append('hero_image', formData.hero_image);
@@ -300,6 +318,105 @@ const DashboardAboutUsPage = () => {
                                         value={formData.whatsapp_number}
                                         onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })}
                                         placeholder="628..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Media Sosial & Footer */}
+                        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-6">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <span className="material-icons text-xl">share</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-gray-900">Media Sosial & Footer</h2>
+                                        <p className="text-gray-400 text-xs font-medium">Atur tautan akun resmi media sosial dan deskripsi singkat di bagian bawah website (Footer)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Deskripsi Singkat Footer (Tagline)</label>
+                                <textarea
+                                    rows="3"
+                                    className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                    value={formData.footer_tagline}
+                                    onChange={e => setFormData({ ...formData, footer_tagline: e.target.value })}
+                                    placeholder="Contoh: Wadah kolaborasi pemuda dan mahasiswa membangun ekosistem ekonomi Islam yang adil, mandiri, dan berkeberkahan bagi masyarakat."
+                                />
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                                        <span>Instagram</span>
+                                        <span className="text-emerald-600 font-bold">(contoh: bae.community_)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <span className="text-xs font-bold text-gray-400">@</span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            className="w-full pl-9 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                            value={formData.instagram_url}
+                                            onChange={e => setFormData({ ...formData, instagram_url: e.target.value })}
+                                            placeholder="bae.community_ atau https://instagram.com/bae.community_"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                                        <span>YouTube Channel</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.youtube_url}
+                                        onChange={e => setFormData({ ...formData, youtube_url: e.target.value })}
+                                        placeholder="https://youtube.com/@barakaheconomy"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                                        <span>TikTok</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.tiktok_url}
+                                        onChange={e => setFormData({ ...formData, tiktok_url: e.target.value })}
+                                        placeholder="https://tiktok.com/@barakaheconomy atau @barakaheconomy"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                                        <span>LinkedIn</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.linkedin_url}
+                                        onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
+                                        placeholder="https://linkedin.com/company/barakah-economy"
+                                    />
+                                </div>
+
+                                <div className="space-y-2 col-span-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                                        <span>Facebook</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.facebook_url}
+                                        onChange={e => setFormData({ ...formData, facebook_url: e.target.value })}
+                                        placeholder="https://facebook.com/barakaheconomy"
                                     />
                                 </div>
                             </div>
