@@ -8,6 +8,7 @@ import CKEditorComponent from '../../components/common/CKEditor';
 import AdminTestimonyModal from '../../components/modals/AdminTestimonyModal';
 import ProductPromoModal from '../../components/modals/ProductPromoModal';
 import { formatCurrency, parseCurrency } from '../../utils/formatters';
+import CurrencyInput from '../../components/common/CurrencyInput';
 
 const DashboardSinergyAdminPage = () => {
     const [products, setProducts] = useState([]);
