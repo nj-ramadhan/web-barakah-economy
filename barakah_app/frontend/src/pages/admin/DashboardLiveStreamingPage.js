@@ -934,7 +934,7 @@ const DashboardLiveStreamingPage = () => {
                                                         />
                                                     </label>
                                                     <p className="text-[8px] text-gray-400 mt-1 truncate">
-                                                        {thumbnailFile ? thumbnailFile.name : 'Format JPEG/PNG. Opsional.'}
+                                                        {thumbnailFile ? thumbnailFile.name : 'Format JPEG/PNG/WebP. Opsional.'}
                                                     </p>
                                                 </div>
                                             </div>

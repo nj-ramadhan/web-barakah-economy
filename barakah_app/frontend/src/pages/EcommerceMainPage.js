@@ -500,6 +500,11 @@ const EcommerceMainPage = () => {
               {product.promo_discount_percentage ? `-${product.promo_discount_percentage}%` : 'PROMO'}
             </div>
           )}
+          {product.is_preorder && (
+            <div className={`absolute ${product.active_promotion ? 'top-8' : 'top-2'} left-2 z-10 bg-amber-500/95 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow uppercase tracking-wider flex items-center gap-0.5`}>
+              <span className="material-icons text-[10px]">hourglass_top</span> PO
+            </div>
+          )}
           {!inStock && (
             <div className="absolute top-2 right-12 z-10 bg-gray-900/80 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase tracking-wider">
               Habis

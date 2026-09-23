@@ -1515,7 +1515,7 @@ const EventSubmissionPage = () => {
                                                                 label: 'Foto Peserta',
                                                                 field_type: 'file',
                                                                 required: true,
-                                                                placeholder: 'Upload foto format JPG/PNG'
+                                                                placeholder: 'Upload foto format JPG/PNG/WebP'
                                                             };
                                                             setFormFields([...formFields, newField]);
                                                         }
@@ -1580,7 +1580,7 @@ const EventSubmissionPage = () => {
                                                             label: 'Foto Peserta',
                                                             field_type: 'file',
                                                             required: true,
-                                                            placeholder: 'Upload foto format JPG/PNG',
+                                                            placeholder: 'Upload foto format JPG/PNG/WebP',
                                                             order: formFields.length
                                                         };
                                                         setFormFields([...formFields, newField]);
@@ -2018,7 +2018,7 @@ const EventSubmissionPage = () => {
                                 )}
 
                                 <div className="space-y-2 mb-6">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG) Opsional</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG/WebP) Opsional</label>
                                     <div className="flex gap-4 items-end">
                                         <div className="w-24 h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center shrink-0">
                                             {files.documentation_frame_1_1 || formData.documentation_frame_1_1 ? (
@@ -2026,9 +2026,9 @@ const EventSubmissionPage = () => {
                                             ) : <span className="material-icons text-gray-300 text-3xl">filter_frames</span>}
                                         </div>
                                         <div className="flex-1">
-                                            <input type="file" accept="image/png" id="frame-upload" className="hidden" onChange={e => setFiles(p => ({ ...p, documentation_frame_1_1: e.target.files[0] }))} />
+                                            <input type="file" accept="image/png,image/webp" id="frame-upload" className="hidden" onChange={e => setFiles(p => ({ ...p, documentation_frame_1_1: e.target.files[0] }))} />
                                             <label htmlFor="frame-upload" className="text-xs bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold cursor-pointer inline-block border border-purple-100">Pilih File Bingkai</label>
-                                            <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Pilih PNG transparan rasio 4:5. Bingkai ini akan otomatis ditempel ketika admin upload foto dokumentasi.</p>
+                                            <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Pilih PNG atau WebP transparan rasio 4:5. Bingkai ini akan otomatis ditempel ketika admin upload foto dokumentasi.</p>
                                         </div>
                                     </div>
                                 </div>

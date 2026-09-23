@@ -27,8 +27,8 @@ const AdminPhotoFramerPage = () => {
     const handleFrameSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.type !== 'image/png') {
-                alert('Silakan pilih file PNG transparan untuk bingkai.');
+            if (file.type !== 'image/png' && file.type !== 'image/webp') {
+                alert('Silakan pilih file PNG atau WebP transparan untuk bingkai.');
                 return;
             }
             setFrame(file);
@@ -149,7 +149,7 @@ const AdminPhotoFramerPage = () => {
                     {/* Left Side: Frame Selection */}
                     <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col items-center">
                         <div className="w-full mb-4">
-                            <h3 className="text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">1. Pilih Bingkai (PNG)</h3>
+                            <h3 className="text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">1. Pilih Bingkai (PNG / WebP)</h3>
                             <p className="text-[10px] text-gray-400 leading-relaxed">Pilih bingkai transparan. Ukuran output akan mengikuti ukuran bingkai ini.</p>
                         </div>
 
@@ -169,7 +169,7 @@ const AdminPhotoFramerPage = () => {
                                 type="file" 
                                 ref={frameInputRef} 
                                 className="hidden" 
-                                accept="image/png" 
+                                accept="image/png,image/webp" 
                                 onChange={handleFrameSelect} 
                             />
                         </div>

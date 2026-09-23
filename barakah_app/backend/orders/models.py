@@ -38,6 +38,13 @@ class Order(models.Model):
     delivery_date = models.DateField(null=True, blank=True, help_text="Tanggal rencana pengiriman kurir toko")
     delivery_time_slot = models.CharField(max_length=50, blank=True, null=True, help_text="Slot jam pengantaran: 08:00 - 12:00, 12:00 - 15:00, 15:00 - 18:00, 18:00 - 21:00")
     shipping_schedule_type = models.CharField(max_length=20, default='days', blank=True, null=True, help_text="Mode jadwal pengantaran: days / slot / instant")
+    delivery_timing_choice = models.CharField(
+        max_length=50, 
+        default='current_schedule', 
+        blank=True, 
+        null=True, 
+        help_text="Pilihan jadwal pengiriman: current_schedule (Ikut Jadwal Saat Ini/Minggu Ini) atau next_week (Kirim Minggu Depan)"
+    )
     cod_amount_to_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Total nominal uang tunai yang harus disiapkan pembeli (COD produk / ongkir ekspedisi COD)")
     shipped_at = models.DateTimeField(null=True, blank=True)
     estimated_delivery_days = models.IntegerField(default=3)

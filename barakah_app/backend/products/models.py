@@ -87,6 +87,36 @@ class Product(models.Model):
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim produk")
     purchase_instructions = models.TextField(blank=True, null=True, help_text="Informasi khusus pengambilan atau teknis setelah pembelian")
 
+    # Jam Operasional Toko
+    is_operational_hours_active = models.BooleanField(default=False, help_text="Aktifkan jam operasional toko untuk produk ini")
+    operational_hours = models.CharField(max_length=255, blank=True, null=True, help_text="Contoh: Senin - Sabtu, 08:00 - 17:00 WIB")
+
+    # Waktu Pre-Order (PO)
+    is_preorder = models.BooleanField(default=False, help_text="Aktifkan sistem Pre-Order (PO)")
+    preorder_days_min = models.PositiveIntegerField(blank=True, null=True, help_text="Minimal hari PO")
+    preorder_days_max = models.PositiveIntegerField(blank=True, null=True, help_text="Maksimal hari PO")
+    preorder_duration = models.CharField(max_length=100, blank=True, null=True, help_text="Label rentang hari PO, contoh: 3 - 7 Hari")
+
+    # Tanggal / Jadwal Pengantaran
+    is_delivery_schedule_active = models.BooleanField(default=False, help_text="Aktifkan jadwal / tanggal pengantaran")
+    delivery_schedule_type = models.CharField(
+        max_length=20,
+        choices=[('range', 'Rentang Hari'), ('days', 'Hari Tertentu'), ('date', 'Tanggal Spesifik')],
+        default='range',
+        blank=True,
+        null=True
+    )
+    delivery_range_min = models.PositiveIntegerField(blank=True, null=True, help_text="Estimasi pengantaran min hari")
+    delivery_range_max = models.PositiveIntegerField(blank=True, null=True, help_text="Estimasi pengantaran max hari")
+    delivery_days = models.CharField(max_length=255, blank=True, null=True, help_text="Hari pengantaran, misal: 'Senin, Rabu, Jumat'")
+    delivery_date = models.DateField(blank=True, null=True, help_text="Tanggal pengantaran spesifik")
+    delivery_note = models.CharField(max_length=255, blank=True, null=True, help_text="Catatan pengantaran, misal: 'Pengiriman mulai pukul 10:00 WIB'")
+
+    # Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
+    out_of_po_shipping_active = models.BooleanField(default=False, help_text="Aktifkan ongkir flat seller / luar jam PO (tetap flat walau beli banyak produk)")
+    out_of_po_shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim flat di luar jam PO")
+    allow_delivery_timing_choice = models.BooleanField(default=True, help_text="Izinkan pembeli memilih pengiriman minggu ini atau minggu depannya")
+
 
     purchase_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Harga Beli")
     price = models.DecimalField(max_digits=12, decimal_places=2, help_text="Harga Jual") # selling_price

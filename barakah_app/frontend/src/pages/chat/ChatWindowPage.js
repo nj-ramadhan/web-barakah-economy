@@ -655,7 +655,7 @@ const ChatWindowPage = () => {
                                     }`}>
                                     {msg.attachment && (
                                         <div className="mb-2">
-                                            {msg.attachment.match(/\.(jpeg|jpg|gif|png)$/) ? (
+                                            {msg.attachment.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
                                                 <img
                                                     src={msg.attachment}
                                                     alt="attachment"

@@ -35,6 +35,26 @@ const DashboardSinergyAdminPage = () => {
     const [savingProduct, setSavingProduct] = useState(false);
     const [manualSoldCount, setManualSoldCount] = useState(0);
 
+    // Jam Operasional, Pre-Order & Pengantaran
+    const [isOperationalHoursActive, setIsOperationalHoursActive] = useState(false);
+    const [operationalHours, setOperationalHours] = useState('');
+    const [isPreorder, setIsPreorder] = useState(false);
+    const [preorderDaysMin, setPreorderDaysMin] = useState('');
+    const [preorderDaysMax, setPreorderDaysMax] = useState('');
+    const [preorderDuration, setPreorderDuration] = useState('');
+    const [isDeliveryScheduleActive, setIsDeliveryScheduleActive] = useState(false);
+    const [deliveryScheduleType, setDeliveryScheduleType] = useState('range');
+    const [deliveryRangeMin, setDeliveryRangeMin] = useState('');
+    const [deliveryRangeMax, setDeliveryRangeMax] = useState('');
+    const [deliveryDays, setDeliveryDays] = useState([]);
+    const [deliveryDate, setDeliveryDate] = useState('');
+    const [deliveryNote, setDeliveryNote] = useState('');
+
+    // Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
+    const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
+    const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
+    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
+
     // Quick Edit Sold Modal State
     const [isQuickSoldModalOpen, setIsQuickSoldModalOpen] = useState(false);
     const [quickSoldProduct, setQuickSoldProduct] = useState(null);
@@ -153,6 +173,24 @@ const DashboardSinergyAdminPage = () => {
         setShippingCost(parseCurrency(product.shipping_cost) || 0);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setManualSoldCount(product.manual_sold_count || 0);
+
+        setIsOperationalHoursActive(product.is_operational_hours_active || false);
+        setOperationalHours(product.operational_hours || '');
+        setIsPreorder(product.is_preorder || false);
+        setPreorderDaysMin(product.preorder_days_min !== null && product.preorder_days_min !== undefined ? product.preorder_days_min : '');
+        setPreorderDaysMax(product.preorder_days_max !== null && product.preorder_days_max !== undefined ? product.preorder_days_max : '');
+        setPreorderDuration(product.preorder_duration || '');
+        setIsDeliveryScheduleActive(product.is_delivery_schedule_active || false);
+        setDeliveryScheduleType(product.delivery_schedule_type || 'range');
+        setDeliveryRangeMin(product.delivery_range_min !== null && product.delivery_range_min !== undefined ? product.delivery_range_min : '');
+        setDeliveryRangeMax(product.delivery_range_max !== null && product.delivery_range_max !== undefined ? product.delivery_range_max : '');
+        setDeliveryDays(product.delivery_days ? product.delivery_days.split(',').map(s => s.trim()).filter(Boolean) : []);
+        setDeliveryDate(product.delivery_date || '');
+        setDeliveryNote(product.delivery_note || '');
+        setOutOfPoShippingActive(product.out_of_po_shipping_active || false);
+        setOutOfPoShippingCost(parseCurrency(product.out_of_po_shipping_cost) || 0);
+        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? product.allow_delivery_timing_choice : true);
+
         setVariants(product.variations && product.variations.length > 0 
             ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })) 
             : [{ name: '', additional_price: 0, stock: 0 }]
@@ -198,6 +236,44 @@ const DashboardSinergyAdminPage = () => {
             formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('manual_sold_count', manualSoldCount || 0);
+
+            formData.append('is_operational_hours_active', isOperationalHoursActive);
+            formData.append('operational_hours', isOperationalHoursActive ? operationalHours : '');
+
+            formData.append('is_preorder', isPreorder);
+            if (isPreorder) {
+                if (preorderDaysMin !== '') formData.append('preorder_days_min', preorderDaysMin);
+                if (preorderDaysMax !== '') formData.append('preorder_days_max', preorderDaysMax);
+                let durationLabel = preorderDuration;
+                if (!durationLabel && (preorderDaysMin || preorderDaysMax)) {
+                    if (preorderDaysMin && preorderDaysMax) {
+                        durationLabel = `${preorderDaysMin} - ${preorderDaysMax} Hari`;
+                    } else {
+                        durationLabel = `${preorderDaysMin || preorderDaysMax} Hari`;
+                    }
+                }
+                formData.append('preorder_duration', durationLabel || '');
+            } else {
+                formData.append('preorder_duration', '');
+            }
+
+            formData.append('is_delivery_schedule_active', isDeliveryScheduleActive);
+            if (isDeliveryScheduleActive) {
+                formData.append('delivery_schedule_type', deliveryScheduleType);
+                if (deliveryScheduleType === 'range') {
+                    if (deliveryRangeMin !== '') formData.append('delivery_range_min', deliveryRangeMin);
+                    if (deliveryRangeMax !== '') formData.append('delivery_range_max', deliveryRangeMax);
+                } else if (deliveryScheduleType === 'days') {
+                    formData.append('delivery_days', Array.isArray(deliveryDays) ? deliveryDays.join(', ') : deliveryDays);
+                } else if (deliveryScheduleType === 'date') {
+                    if (deliveryDate) formData.append('delivery_date', deliveryDate);
+                }
+                formData.append('delivery_note', deliveryNote || '');
+            }
+
+            formData.append('out_of_po_shipping_active', outOfPoShippingActive);
+            formData.append('out_of_po_shipping_cost', outOfPoShippingActive ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
+            formData.append('allow_delivery_timing_choice', allowDeliveryTimingChoice);
 
             if (thumbnailFile) {
                 formData.append('thumbnail', thumbnailFile);
@@ -641,16 +717,262 @@ const DashboardSinergyAdminPage = () => {
                                     </div>
                                 </div>
 
+                                {/* Pengaturan Jam Operasional, Pre-Order & Pengantaran */}
+                                <div className="border-t border-gray-100 pt-4 space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-icons text-emerald-600 text-sm">tune</span>
+                                        <h4 className="font-bold text-gray-800 text-xs uppercase tracking-wider">Jadwal & Pengantaran</h4>
+                                    </div>
+
+                                    {/* 1. Jam Operasional */}
+                                    <div className="bg-gray-50/60 p-3.5 rounded-xl border border-gray-200/60 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-emerald-700 text-base">storefront</span>
+                                                <p className="text-xs font-bold text-gray-800">Jam Operasional Toko</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsOperationalHoursActive(!isOperationalHoursActive)}
+                                                className={`w-10 h-5 rounded-full transition-all relative ${isOperationalHoursActive ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isOperationalHoursActive ? 'left-5.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                        {isOperationalHoursActive && (
+                                            <div className="pt-2 border-t border-gray-200/50">
+                                                <input
+                                                    type="text"
+                                                    value={operationalHours}
+                                                    onChange={(e) => setOperationalHours(e.target.value)}
+                                                    placeholder="Contoh: Senin - Sabtu, 08:00 - 17:00 WIB"
+                                                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 2. Sistem Pre-Order (PO) */}
+                                    <div className="bg-gray-50/60 p-3.5 rounded-xl border border-gray-200/60 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-blue-600 text-base">hourglass_top</span>
+                                                <p className="text-xs font-bold text-gray-800">Sistem Pre-Order (PO)</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPreorder(!isPreorder)}
+                                                className={`w-10 h-5 rounded-full transition-all relative ${isPreorder ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isPreorder ? 'left-5.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                        {isPreorder && (
+                                            <div className="pt-2 border-t border-gray-200/50 space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex-1 relative">
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={preorderDaysMin}
+                                                            onChange={(e) => setPreorderDaysMin(e.target.value)}
+                                                            placeholder="Min"
+                                                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                        <span className="absolute right-2 top-1.5 text-[10px] text-gray-400">Hari</span>
+                                                    </div>
+                                                    <span className="text-xs text-gray-400">s/d</span>
+                                                    <div className="flex-1 relative">
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={preorderDaysMax}
+                                                            onChange={(e) => setPreorderDaysMax(e.target.value)}
+                                                            placeholder="Maks"
+                                                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                        <span className="absolute right-2 top-1.5 text-[10px] text-gray-400">Hari</span>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={preorderDuration}
+                                                    onChange={(e) => setPreorderDuration(e.target.value)}
+                                                    placeholder="Keterangan PO (Opsional, Cth: 3 - 7 Hari)"
+                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 3. Jadwal & Tanggal Pengantaran */}
+                                    <div className="bg-gray-50/60 p-3.5 rounded-xl border border-gray-200/60 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-amber-600 text-base">local_shipping</span>
+                                                <p className="text-xs font-bold text-gray-800">Jadwal & Pengantaran</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsDeliveryScheduleActive(!isDeliveryScheduleActive)}
+                                                className={`w-10 h-5 rounded-full transition-all relative ${isDeliveryScheduleActive ? 'bg-amber-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isDeliveryScheduleActive ? 'left-5.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                        {isDeliveryScheduleActive && (
+                                            <div className="pt-2 border-t border-gray-200/50 space-y-2.5">
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                    {[
+                                                        { id: 'range', label: 'Rentang Hari' },
+                                                        { id: 'days', label: 'Pilih Hari' },
+                                                        { id: 'date', label: 'Tanggal' }
+                                                    ].map((t) => (
+                                                        <button
+                                                            key={t.id}
+                                                            type="button"
+                                                            onClick={() => setDeliveryScheduleType(t.id)}
+                                                            className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold text-center transition ${deliveryScheduleType === t.id ? 'bg-amber-100 border-amber-400 text-amber-900' : 'bg-white border-gray-200 text-gray-600'}`}
+                                                        >
+                                                            {t.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {deliveryScheduleType === 'range' && (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={deliveryRangeMin}
+                                                                onChange={(e) => setDeliveryRangeMin(e.target.value)}
+                                                                placeholder="Min"
+                                                                className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                                                            />
+                                                            <span className="absolute right-2 top-1.5 text-[10px] text-gray-400">Hari</span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400">s/d</span>
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={deliveryRangeMax}
+                                                                onChange={(e) => setDeliveryRangeMax(e.target.value)}
+                                                                placeholder="Maks"
+                                                                className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                                                            />
+                                                            <span className="absolute right-2 top-1.5 text-[10px] text-gray-400">Hari</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {deliveryScheduleType === 'days' && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => {
+                                                            const isSelected = deliveryDays.includes(day);
+                                                            return (
+                                                                <button
+                                                                    key={day}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (isSelected) {
+                                                                            setDeliveryDays(deliveryDays.filter(d => d !== day));
+                                                                        } else {
+                                                                            setDeliveryDays([...deliveryDays, day]);
+                                                                        }
+                                                                    }}
+                                                                    className={`px-2 py-1 rounded text-[11px] font-bold border transition ${isSelected ? 'bg-amber-500 border-amber-600 text-white' : 'bg-white border-gray-200 text-gray-700'}`}
+                                                                >
+                                                                    {day}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+
+                                                {deliveryScheduleType === 'date' && (
+                                                    <input
+                                                        type="date"
+                                                        value={deliveryDate}
+                                                        onChange={(e) => setDeliveryDate(e.target.value)}
+                                                        className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                                                    />
+                                                )}
+
+                                                <input
+                                                    type="text"
+                                                    value={deliveryNote}
+                                                    onChange={(e) => setDeliveryNote(e.target.value)}
+                                                    placeholder="Catatan Pengantaran (Opsional)"
+                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 4. Ongkir Flat Luar Jam PO (Sesuai Seller) */}
+                                    <div className="bg-gradient-to-br from-gray-50 to-purple-50/20 p-3 rounded-xl border border-gray-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-purple-600 text-sm">local_atm</span>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-800">Ongkir Flat Seller / Luar Jam PO</p>
+                                                    <p className="text-[10px] text-gray-500">Berlaku flat walau pembeli beli banyak produk</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOutOfPoShippingActive(!outOfPoShippingActive)}
+                                                className={`w-9 h-5 rounded-full transition-all relative ${outOfPoShippingActive ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${outOfPoShippingActive ? 'left-4.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                        {outOfPoShippingActive && (
+                                            <div className="mt-2.5 pt-2.5 border-t border-gray-200 space-y-1">
+                                                <label className="block text-[11px] font-semibold text-gray-700">Nominal Ongkir Flat (Rp)</label>
+                                                <CurrencyInput
+                                                    value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''}
+                                                    onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))}
+                                                    placeholder="Contoh: 15.000"
+                                                    className="!px-3 !py-1.5 !bg-white !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500 rounded-lg"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 5. Fleksibilitas Pengiriman (Minggu Ini vs Minggu Depan) */}
+                                    <div className="bg-gradient-to-br from-gray-50 to-teal-50/20 p-3 rounded-xl border border-gray-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-teal-600 text-sm">calendar_month</span>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-800">Opsi Pilihan Waktu Kirim Pembeli</p>
+                                                    <p className="text-[10px] text-gray-500">Bisa pilih jadwal minggu ini atau minggu depan</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setAllowDeliveryTimingChoice(!allowDeliveryTimingChoice)}
+                                                className={`w-9 h-5 rounded-full transition-all relative ${allowDeliveryTimingChoice ? 'bg-teal-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${allowDeliveryTimingChoice ? 'left-4.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Thumbnail Upload */}
                                 <div className="border-t border-gray-100 pt-4">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto / Thumbnail Produk (.jpg / .jpeg)</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto / Thumbnail Produk (.jpg, .jpeg, .png, .webp)</label>
                                     <div className="flex items-center gap-4">
                                         {thumbnailPreview && (
                                             <img src={thumbnailPreview} alt="Preview" className="w-16 h-16 object-cover rounded-xl border border-gray-200 shrink-0" />
                                         )}
                                         <input 
                                             type="file" 
-                                            accept=".jpg,.jpeg,image/jpeg" 
+                                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,image/*" 
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
@@ -660,8 +982,10 @@ const DashboardSinergyAdminPage = () => {
                                                         return;
                                                     }
                                                     const ext = file.name.split('.').pop().toLowerCase();
-                                                    if (!['jpg', 'jpeg'].includes(ext) && file.type !== 'image/jpeg') {
-                                                        alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat .jpg atau .jpeg agar thumbnail optimal saat dishare.`);
+                                                    const validExts = ['jpg', 'jpeg', 'png', 'webp'];
+                                                    const validMimes = ['image/jpeg', 'image/png', 'image/webp'];
+                                                    if (!validExts.includes(ext) && !validMimes.includes(file.type)) {
+                                                        alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat JPG, JPEG, PNG, atau WebP.`);
                                                         e.target.value = '';
                                                         return;
                                                     }

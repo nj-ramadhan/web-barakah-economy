@@ -54,6 +54,32 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
 
+    def to_internal_value(self, data):
+        # Convert QueryDict to mutable dict if necessary
+        if hasattr(data, '_mutable') and not data._mutable:
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = data.copy()
+            
+        nullable_ints = ['preorder_days_min', 'preorder_days_max', 'delivery_range_min', 'delivery_range_max']
+        for field in nullable_ints:
+            if field in data and data[field] in ('', 'null', 'undefined', None):
+                data[field] = None
+                
+        if 'delivery_date' in data and data['delivery_date'] in ('', 'null', 'undefined', None):
+            data['delivery_date'] = None
+
+        if 'out_of_po_shipping_cost' in data and data['out_of_po_shipping_cost'] in ('', 'null', 'undefined', None):
+            data['out_of_po_shipping_cost'] = 0
+            
+        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
+            if bool_field in data:
+                val = data[bool_field]
+                if isinstance(val, str):
+                    data[bool_field] = val.lower() in ('true', '1', 't')
+                    
+        return super().to_internal_value(data)
+
     def get_seller_phone(self, obj):
         if obj.seller:
             profile = getattr(obj.seller, 'profile', None)

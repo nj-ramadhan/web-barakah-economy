@@ -452,6 +452,24 @@ const EcommerceOrderHistoryPage = () => {
                                                 ))}
                                             </div>
 
+                                            {order.delivery_timing_choice && (
+                                                <div className={`p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                                                    order.delivery_timing_choice === 'next_week'
+                                                        ? 'bg-purple-50/80 border-purple-200 text-purple-800'
+                                                        : 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                                                }`}>
+                                                    <span className="flex items-center gap-1.5">
+                                                        <span className="material-icons text-sm">
+                                                            {order.delivery_timing_choice === 'next_week' ? 'next_plan' : 'event_available'}
+                                                        </span>
+                                                        <span>Waktu Kirim:</span>
+                                                    </span>
+                                                    <span className="font-extrabold">
+                                                        {order.delivery_timing_choice === 'next_week' ? 'Kirim ke Minggu Depan' : 'Ikut Jadwal Minggu Ini'}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             {order.shipping_type === 'kurir_toko' || order.driver_name ? (
                                                 <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-xs space-y-2">
                                                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -701,6 +719,19 @@ const EcommerceOrderHistoryPage = () => {
                                     </span>
                                     Informasi Pengiriman
                                 </h4>
+                                {selectedDetailOrder.delivery_timing_choice && (
+                                    <div className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                                        selectedDetailOrder.delivery_timing_choice === 'next_week'
+                                            ? 'bg-purple-50 border-purple-200 text-purple-800'
+                                            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                    }`}>
+                                        <span className="text-gray-600 font-semibold flex items-center gap-1">
+                                            <span className="material-icons text-sm">calendar_month</span>
+                                            Jadwal Dipilih:
+                                        </span>
+                                        <span>{selectedDetailOrder.delivery_timing_choice === 'next_week' ? 'Kirim ke Minggu Depan' : 'Ikut Jadwal Minggu Ini'}</span>
+                                    </div>
+                                )}
                                 {selectedDetailOrder.shipping_type === 'kurir_toko' || selectedDetailOrder.driver_name ? (
                                     <div className="text-xs space-y-1.5 text-gray-700">
                                         <div className="flex justify-between">

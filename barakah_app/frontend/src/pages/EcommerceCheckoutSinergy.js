@@ -83,14 +83,22 @@ const EcommerceCheckoutSinergy = () => {
                         // Calculate flat store shipping cost: unified per store (tidak berlaku kelipatan kuantitas)
                         const itemsFromSeller = items.filter(it => (it.product?.seller_id || "0") === s_id);
                         const storeShippingCosts = itemsFromSeller
-                            .filter(it => it.product?.is_shipping_cost_active && Number(it.product?.shipping_cost || 0) > 0)
-                            .map(it => Number(it.product.shipping_cost));
+                            .filter(it => 
+                                (it.product?.is_shipping_cost_active && Number(it.product?.shipping_cost || 0) > 0) ||
+                                (it.product?.out_of_po_shipping_active && Number(it.product?.out_of_po_shipping_cost || 0) > 0)
+                            )
+                            .map(it => Number(
+                                it.product?.out_of_po_shipping_active && Number(it.product?.out_of_po_shipping_cost || 0) > 0 
+                                    ? it.product.out_of_po_shipping_cost 
+                                    : it.product.shipping_cost
+                            ));
                         const flatShippingCost = storeShippingCosts.length > 0 ? Math.max(...storeShippingCosts) : 0;
 
                         initialConfigs[s_id] = { 
                             shipping_cost: flatShippingCost, 
                             shipping_courier: flatShippingCost > 0 ? 'Kurir Toko' : '', 
                             shipping_service: flatShippingCost > 0 ? 'Standar' : '', 
+                            delivery_timing_choice: 'current_schedule',
                             voucher_code: '', 
                             voucher_nominal: 0, 
                             payment_method: 'manual', 
@@ -511,6 +519,66 @@ const EcommerceCheckoutSinergy = () => {
                                     <span className={`text-xs font-black ${config?.shipping_cost > 0 ? 'text-emerald-700' : 'text-emerald-600'}`}>
                                         {config?.shipping_cost > 0 ? `+Rp ${new Intl.NumberFormat('id-ID').format(config.shipping_cost)}` : 'GRATIS'}
                                     </span>
+                                </div>
+                            </div>
+
+                            {/* Pilihan Waktu Pengiriman (Fleksibel: Jadwal Saat Ini / Minggu Ini vs Minggu Depan) */}
+                            <div className="bg-white p-3.5 rounded-2xl border border-gray-200/90 mb-4 shadow-2xs space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="material-icons text-emerald-600 text-base">calendar_month</span>
+                                        <label className="text-xs font-black text-gray-800 uppercase tracking-wider">
+                                            Pilihan Waktu Pengiriman
+                                        </label>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+                                        Fleksibel
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleConfigChange(s_id, 'delivery_timing_choice', 'current_schedule')}
+                                        className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                                            (config?.delivery_timing_choice || 'current_schedule') === 'current_schedule'
+                                                ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-400/40 shadow-xs'
+                                                : 'border-gray-200 bg-gray-50/70 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                            (config?.delivery_timing_choice || 'current_schedule') === 'current_schedule'
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-gray-200 text-gray-500'
+                                        }`}>
+                                            <span className="material-icons text-sm">event_available</span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-gray-800 leading-tight">Ikut Jadwal Minggu Ini</p>
+                                            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Dikirim sesuai jadwal operasional / PO terdekat</p>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleConfigChange(s_id, 'delivery_timing_choice', 'next_week')}
+                                        className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                                            config?.delivery_timing_choice === 'next_week'
+                                                ? 'border-purple-600 bg-purple-50/70 ring-2 ring-purple-400/40 shadow-xs'
+                                                : 'border-gray-200 bg-gray-50/70 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                            config?.delivery_timing_choice === 'next_week'
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-gray-200 text-gray-500'
+                                        }`}>
+                                            <span className="material-icons text-sm">next_plan</span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-gray-800 leading-tight">Kirim ke Minggu Depan</p>
+                                            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Pesanan dikirim pada jadwal batch minggu berikutnya</p>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
 

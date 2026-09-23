@@ -32,6 +32,26 @@ const DashboardSinergySellersPage = () => {
     const [galleryFiles, setGalleryFiles] = useState([]);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
 
+    // Jam Operasional, Pre-Order & Pengantaran
+    const [isOperationalHoursActive, setIsOperationalHoursActive] = useState(false);
+    const [operationalHours, setOperationalHours] = useState('');
+    const [isPreorder, setIsPreorder] = useState(false);
+    const [preorderDaysMin, setPreorderDaysMin] = useState('');
+    const [preorderDaysMax, setPreorderDaysMax] = useState('');
+    const [preorderDuration, setPreorderDuration] = useState('');
+    const [isDeliveryScheduleActive, setIsDeliveryScheduleActive] = useState(false);
+    const [deliveryScheduleType, setDeliveryScheduleType] = useState('range');
+    const [deliveryRangeMin, setDeliveryRangeMin] = useState('');
+    const [deliveryRangeMax, setDeliveryRangeMax] = useState('');
+    const [deliveryDays, setDeliveryDays] = useState([]);
+    const [deliveryDate, setDeliveryDate] = useState('');
+    const [deliveryNote, setDeliveryNote] = useState('');
+
+    // Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
+    const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
+    const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
+    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
+
 
     // Custom bank account state
     const [ownBankStatus, setOwnBankStatus] = useState('none');
@@ -167,6 +187,23 @@ const DashboardSinergySellersPage = () => {
         setManualPrice(parseCurrency(product.price) || 0);
         setManualPurchasePrice(parseCurrency(product.purchase_price) || 0);
 
+        setIsOperationalHoursActive(product.is_operational_hours_active || false);
+        setOperationalHours(product.operational_hours || '');
+        setIsPreorder(product.is_preorder || false);
+        setPreorderDaysMin(product.preorder_days_min !== null && product.preorder_days_min !== undefined ? product.preorder_days_min : '');
+        setPreorderDaysMax(product.preorder_days_max !== null && product.preorder_days_max !== undefined ? product.preorder_days_max : '');
+        setPreorderDuration(product.preorder_duration || '');
+        setIsDeliveryScheduleActive(product.is_delivery_schedule_active || false);
+        setDeliveryScheduleType(product.delivery_schedule_type || 'range');
+        setDeliveryRangeMin(product.delivery_range_min !== null && product.delivery_range_min !== undefined ? product.delivery_range_min : '');
+        setDeliveryRangeMax(product.delivery_range_max !== null && product.delivery_range_max !== undefined ? product.delivery_range_max : '');
+        setDeliveryDays(product.delivery_days ? product.delivery_days.split(',').map(s => s.trim()).filter(Boolean) : []);
+        setDeliveryDate(product.delivery_date || '');
+        setDeliveryNote(product.delivery_note || '');
+        setOutOfPoShippingActive(product.out_of_po_shipping_active || false);
+        setOutOfPoShippingCost(parseCurrency(product.out_of_po_shipping_cost) || 0);
+        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? product.allow_delivery_timing_choice : true);
+
         const detailsObj = {
             own_bank_status: product.own_bank_status || 'none',
             own_bank_name: product.own_bank_name || '',
@@ -209,9 +246,10 @@ const DashboardSinergySellersPage = () => {
             return false;
         }
         const ext = file.name.split('.').pop().toLowerCase();
-        const validExts = ['jpg', 'jpeg'];
-        if (!validExts.includes(ext) && file.type !== 'image/jpeg') {
-            alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat .jpg atau .jpeg agar thumbnail muncul optimal saat dibagikan ke media sosial.`);
+        const validExts = ['jpg', 'jpeg', 'png', 'webp'];
+        const validMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validExts.includes(ext) && !validMimes.includes(file.type)) {
+            alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat JPG, JPEG, PNG, atau WebP.`);
             return false;
         }
         return true;
@@ -273,6 +311,44 @@ const DashboardSinergySellersPage = () => {
             formData.append('is_shipping_cost_active', isShippingCostActive);
             formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('purchase_instructions', e.target.purchase_instructions ? e.target.purchase_instructions.value : '');
+
+            formData.append('is_operational_hours_active', isOperationalHoursActive);
+            formData.append('operational_hours', isOperationalHoursActive ? operationalHours : '');
+
+            formData.append('is_preorder', isPreorder);
+            if (isPreorder) {
+                if (preorderDaysMin !== '') formData.append('preorder_days_min', preorderDaysMin);
+                if (preorderDaysMax !== '') formData.append('preorder_days_max', preorderDaysMax);
+                let durationLabel = preorderDuration;
+                if (!durationLabel && (preorderDaysMin || preorderDaysMax)) {
+                    if (preorderDaysMin && preorderDaysMax) {
+                        durationLabel = `${preorderDaysMin} - ${preorderDaysMax} Hari`;
+                    } else {
+                        durationLabel = `${preorderDaysMin || preorderDaysMax} Hari`;
+                    }
+                }
+                formData.append('preorder_duration', durationLabel || '');
+            } else {
+                formData.append('preorder_duration', '');
+            }
+
+            formData.append('is_delivery_schedule_active', isDeliveryScheduleActive);
+            if (isDeliveryScheduleActive) {
+                formData.append('delivery_schedule_type', deliveryScheduleType);
+                if (deliveryScheduleType === 'range') {
+                    if (deliveryRangeMin !== '') formData.append('delivery_range_min', deliveryRangeMin);
+                    if (deliveryRangeMax !== '') formData.append('delivery_range_max', deliveryRangeMax);
+                } else if (deliveryScheduleType === 'days') {
+                    formData.append('delivery_days', Array.isArray(deliveryDays) ? deliveryDays.join(', ') : deliveryDays);
+                } else if (deliveryScheduleType === 'date') {
+                    if (deliveryDate) formData.append('delivery_date', deliveryDate);
+                }
+                formData.append('delivery_note', deliveryNote || '');
+            }
+
+            formData.append('out_of_po_shipping_active', outOfPoShippingActive);
+            formData.append('out_of_po_shipping_cost', outOfPoShippingActive ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
+            formData.append('allow_delivery_timing_choice', allowDeliveryTimingChoice);
 
             let targetStatus = ownBankStatus;
             if (!useOwnBank) {
@@ -337,6 +413,22 @@ const DashboardSinergySellersPage = () => {
             setThumbnailPreview(null);
             setGalleryFiles([]);
             setGalleryPreviews([]);
+            setIsOperationalHoursActive(false);
+            setOperationalHours('');
+            setIsPreorder(false);
+            setPreorderDaysMin('');
+            setPreorderDaysMax('');
+            setPreorderDuration('');
+            setIsDeliveryScheduleActive(false);
+            setDeliveryScheduleType('range');
+            setDeliveryRangeMin('');
+            setDeliveryRangeMax('');
+            setDeliveryDays([]);
+            setDeliveryDate('');
+            setDeliveryNote('');
+            setOutOfPoShippingActive(false);
+            setOutOfPoShippingCost(0);
+            setAllowDeliveryTimingChoice(true);
         } catch (error) {
             console.error('Error saving product detail:', error.response?.data || error);
             const detailMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Gagal menyimpan produk';
@@ -427,6 +519,19 @@ const DashboardSinergySellersPage = () => {
                         setThumbnailPreview(null);
                         setGalleryFiles([]);
                         setGalleryPreviews([]);
+                        setIsOperationalHoursActive(false);
+                        setOperationalHours('');
+                        setIsPreorder(false);
+                        setPreorderDaysMin('');
+                        setPreorderDaysMax('');
+                        setPreorderDuration('');
+                        setIsDeliveryScheduleActive(false);
+                        setDeliveryScheduleType('range');
+                        setDeliveryRangeMin('');
+                        setDeliveryRangeMax('');
+                        setDeliveryDays([]);
+                        setDeliveryDate('');
+                        setDeliveryNote('');
                         resetBankStates();
                     }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap">
                         <span className="material-icons text-sm">add</span> 
@@ -787,7 +892,7 @@ const DashboardSinergySellersPage = () => {
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Foto Utama</p>
                                 </>
                             )}
-                            <input id="thumbnail-input" type="file" accept=".jpg,.jpeg,image/jpeg" className="hidden" onChange={handleThumbnailChange} />
+                            <input id="thumbnail-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,image/*" className="hidden" onChange={handleThumbnailChange} />
                         </div>
                     </div>
 
@@ -798,8 +903,8 @@ const DashboardSinergySellersPage = () => {
                             className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-emerald-500 hover:bg-emerald-50/30 cursor-pointer transition-all h-40 flex flex-col items-center justify-center bg-gray-50/50"
                         >
                             <span className="material-icons text-gray-400 text-3xl mb-2">collections</span>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Hingga 5 Foto (.jpg)</p>
-                            <input id="gallery-input" type="file" accept=".jpg,.jpeg,image/jpeg" multiple className="hidden" onChange={handleGalleryChange} />
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Hingga 5 Foto (JPG, PNG, WebP)</p>
+                            <input id="gallery-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,image/*" multiple className="hidden" onChange={handleGalleryChange} />
                         </div>
                         {galleryPreviews.length > 0 && (
                             <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
@@ -846,6 +951,337 @@ const DashboardSinergySellersPage = () => {
                         ))}
                     </div>
                     <p className="text-[10px] text-gray-500 mt-3 pt-2 border-t border-emerald-200/50">Harga varian adalah <b>Harga Total</b> yang akan dibayar pembeli (menggantikan harga produk utama).</p>
+                </div>
+
+                {/* Pengaturan Tambahan: Jam Operasional, Pre-Order & Pengantaran */}
+                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm space-y-5">
+                    <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                        <span className="material-icons text-emerald-600">tune</span>
+                        <div>
+                            <h4 className="font-bold text-gray-800 text-sm">Pengaturan Jam Operasional, Pre-Order & Pengantaran</h4>
+                            <p className="text-[11px] text-gray-400">Atur fitur tambahan ini jika berlaku pada produk Anda (tidak wajib)</p>
+                        </div>
+                    </div>
+
+                    {/* 1. Jam Operasional */}
+                    <div className="bg-gradient-to-br from-gray-50 to-emerald-50/20 p-4 rounded-xl border border-gray-200/70">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isOperationalHoursActive ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-200 text-gray-500'}`}>
+                                    <span className="material-icons text-lg">storefront</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-800">Jam Operasional Toko</p>
+                                    <p className="text-[10px] text-gray-500">Tampilkan hari & jam buka toko pada halaman detail produk</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsOperationalHoursActive(!isOperationalHoursActive)}
+                                className={`w-11 h-6 rounded-full transition-all relative ${isOperationalHoursActive ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isOperationalHoursActive ? 'left-6' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        {isOperationalHoursActive && (
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-2">
+                                <label className="block text-xs font-semibold text-gray-700">Jam / Hari Buka Toko</label>
+                                <input
+                                    type="text"
+                                    value={operationalHours}
+                                    onChange={(e) => setOperationalHours(e.target.value)}
+                                    placeholder="Contoh: Senin - Sabtu, 08:00 - 17:00 WIB"
+                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                                />
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    <span className="text-[10px] text-gray-400 self-center mr-1">Pilihan Cepat:</span>
+                                    {['Setiap Hari (08:00 - 21:00 WIB)', 'Senin - Sabtu (08:00 - 17:00 WIB)', 'Senin - Jumat (09:00 - 17:00 WIB)'].map((preset) => (
+                                        <button
+                                            key={preset}
+                                            type="button"
+                                            onClick={() => setOperationalHours(preset)}
+                                            className="text-[10px] bg-white border border-gray-200 hover:border-emerald-500 hover:text-emerald-700 px-2.5 py-1 rounded-lg text-gray-600 transition"
+                                        >
+                                            {preset}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 2. Sistem Pre-Order (PO) */}
+                    <div className="bg-gradient-to-br from-gray-50 to-blue-50/20 p-4 rounded-xl border border-gray-200/70">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isPreorder ? 'bg-blue-600 text-white shadow-sm shadow-blue-200' : 'bg-gray-200 text-gray-500'}`}>
+                                    <span className="material-icons text-lg">hourglass_top</span>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs font-bold text-gray-800">Sistem Pre-Order (PO)</p>
+                                        {isPreorder && (
+                                            <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Aktif</span>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">Tandai produk butuh waktu proses PO sebelum dikirimkan</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsPreorder(!isPreorder)}
+                                className={`w-11 h-6 rounded-full transition-all relative ${isPreorder ? 'bg-blue-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isPreorder ? 'left-6' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        {isPreorder && (
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3">
+                                <label className="block text-xs font-semibold text-gray-700">Waktu / Lama PO (Rentang Hari)</label>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="flex-1 relative">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={preorderDaysMin}
+                                            onChange={(e) => setPreorderDaysMin(e.target.value)}
+                                            placeholder="Min (Cth: 3)"
+                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        />
+                                        <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                    </div>
+                                    <span className="text-xs text-gray-400 font-bold">s/d</span>
+                                    <div className="flex-1 relative">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={preorderDaysMax}
+                                            onChange={(e) => setPreorderDaysMax(e.target.value)}
+                                            placeholder="Maks (Cth: 7)"
+                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        />
+                                        <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] text-gray-500 mb-1">Keterangan Label PO (Opsional)</label>
+                                    <input
+                                        type="text"
+                                        value={preorderDuration}
+                                        onChange={(e) => setPreorderDuration(e.target.value)}
+                                        placeholder="Contoh: 3 - 7 Hari (Dibuat sesuai pesanan)"
+                                        className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 transition"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 3. Jadwal & Tanggal Pengantaran */}
+                    <div className="bg-gradient-to-br from-gray-50 to-amber-50/20 p-4 rounded-xl border border-gray-200/70">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isDeliveryScheduleActive ? 'bg-amber-600 text-white shadow-sm shadow-amber-200' : 'bg-gray-200 text-gray-500'}`}>
+                                    <span className="material-icons text-lg">local_shipping</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-800">Jadwal & Tanggal Pengantaran</p>
+                                    <p className="text-[10px] text-gray-500">Bebas pilih rentang hari pengiriman atau tentukan hari/tanggal tertentu</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsDeliveryScheduleActive(!isDeliveryScheduleActive)}
+                                className={`w-11 h-6 rounded-full transition-all relative ${isDeliveryScheduleActive ? 'bg-amber-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isDeliveryScheduleActive ? 'left-6' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        {isDeliveryScheduleActive && (
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3.5">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Jadwal Pengantaran</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { id: 'range', label: 'Rentang Hari', icon: 'date_range' },
+                                            { id: 'days', label: 'Pilih Hari Tertentu', icon: 'view_week' },
+                                            { id: 'date', label: 'Tanggal Spesifik', icon: 'event' }
+                                        ].map((t) => (
+                                            <button
+                                                key={t.id}
+                                                type="button"
+                                                onClick={() => setDeliveryScheduleType(t.id)}
+                                                className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition ${deliveryScheduleType === t.id ? 'bg-amber-100 border-amber-400 text-amber-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                            >
+                                                <span className="material-icons text-sm">{t.icon}</span>
+                                                <span>{t.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {deliveryScheduleType === 'range' && (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-gray-700">Estimasi Pengantaran (Rentang Hari)</label>
+                                        <div className="flex items-center gap-2 sm:gap-3">
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={deliveryRangeMin}
+                                                    onChange={(e) => setDeliveryRangeMin(e.target.value)}
+                                                    placeholder="Min (Cth: 1)"
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                />
+                                                <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                            </div>
+                                            <span className="text-xs text-gray-400 font-bold">s/d</span>
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={deliveryRangeMax}
+                                                    onChange={(e) => setDeliveryRangeMax(e.target.value)}
+                                                    placeholder="Maks (Cth: 3)"
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                />
+                                                <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {deliveryScheduleType === 'days' && (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-gray-700">Pilih Hari Pengantaran dalam Seminggu</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => {
+                                                const isSelected = deliveryDays.includes(day);
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setDeliveryDays(deliveryDays.filter(d => d !== day));
+                                                            } else {
+                                                                setDeliveryDays([...deliveryDays, day]);
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${isSelected ? 'bg-amber-500 border-amber-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:border-amber-300'}`}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        {deliveryDays.length > 0 && (
+                                            <p className="text-[11px] text-amber-800 font-medium mt-1">
+                                                Dipilih: <span className="font-bold">{deliveryDays.join(', ')}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {deliveryScheduleType === 'date' && (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-gray-700">Tanggal Pengantaran Spesifik</label>
+                                        <input
+                                            type="date"
+                                            value={deliveryDate}
+                                            onChange={(e) => setDeliveryDate(e.target.value)}
+                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-[11px] text-gray-500 mb-1">Catatan / Waktu Pengantaran (Opsional)</label>
+                                    <input
+                                        type="text"
+                                        value={deliveryNote}
+                                        onChange={(e) => setDeliveryNote(e.target.value)}
+                                        placeholder="Contoh: Pengiriman dimulai pukul 13:00 - 16:00 WIB"
+                                        className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:ring-2 focus:ring-amber-400 transition"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 4. Tarif Ongkir Flat Luar Jam PO (Sesuai Seller - Flat Beli Banyak) */}
+                    <div className="bg-gradient-to-br from-gray-50 to-purple-50/20 p-4 rounded-xl border border-gray-200/70">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${outOfPoShippingActive ? 'bg-purple-600 text-white shadow-sm shadow-purple-200' : 'bg-gray-200 text-gray-500'}`}>
+                                    <span className="material-icons text-lg">local_atm</span>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs font-bold text-gray-800">Ongkir Flat Seller / Luar Jam PO</p>
+                                        {outOfPoShippingActive && (
+                                            <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Aktif</span>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">Tetapkan tarif ongkir flat dari seller (berlaku flat walau beli banyak produk)</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setOutOfPoShippingActive(!outOfPoShippingActive)}
+                                className={`w-11 h-6 rounded-full transition-all relative ${outOfPoShippingActive ? 'bg-purple-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${outOfPoShippingActive ? 'left-6' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        {outOfPoShippingActive && (
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-2">
+                                <label className="block text-xs font-semibold text-gray-700">Nominal Tarif Ongkir Flat (Rp) *</label>
+                                <div className="max-w-xs">
+                                    <CurrencyInput 
+                                        value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''} 
+                                        onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))} 
+                                        placeholder="Contoh: 15.000" 
+                                        className="!px-3.5 !py-2.5 !bg-white !rounded-xl !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-purple-700 font-medium">
+                                    💡 Tarif ini diterapkan flat per pesanan toko Anda (tidak berlipat ganda meskipun pembeli memesan banyak produk/jumlah banyak).
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 5. Fleksibilitas Pengiriman (Minggu Ini vs Minggu Depan) */}
+                    <div className="bg-gradient-to-br from-gray-50 to-teal-50/20 p-4 rounded-xl border border-gray-200/70">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${allowDeliveryTimingChoice ? 'bg-teal-600 text-white shadow-sm shadow-teal-200' : 'bg-gray-200 text-gray-500'}`}>
+                                    <span className="material-icons text-lg">calendar_month</span>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs font-bold text-gray-800">Opsi Pilihan Waktu Kirim Pembeli</p>
+                                        {allowDeliveryTimingChoice && (
+                                            <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Aktif</span>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">Beri pembeli opsi: Ikut jadwal saat ini/minggu ini ATAU kirim ke minggu depannya</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setAllowDeliveryTimingChoice(!allowDeliveryTimingChoice)}
+                                className={`w-11 h-6 rounded-full transition-all relative ${allowDeliveryTimingChoice ? 'bg-teal-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${allowDeliveryTimingChoice ? 'left-6' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Rekening Sendiri Section */}

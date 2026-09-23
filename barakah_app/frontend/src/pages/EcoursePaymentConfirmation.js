@@ -149,8 +149,8 @@ const EcoursePaymentConfirmation = () => {
         alert('Ukuran file terlalu besar. Maksimal 5MB.');
         return;
       }
-      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-        alert('Format file tidak didukung. Hanya JPG, PNG, dan JPEG yang diperbolehkan.');
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+        alert('Format file tidak didukung. Hanya JPG, PNG, JPEG, dan WebP yang diperbolehkan.');
         return;
       }
       setSelectedFile(file);

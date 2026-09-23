@@ -1152,7 +1152,7 @@ const ProfileEditPage = () => {
                     <span className="material-icons text-sm">upload</span> Ganti Foto
                     <input type="file" onChange={handleFileChange} accept="image/*" className="hidden" />
                   </label>
-                  <p className="text-[10px] text-gray-400 mt-1">Maks 5MB. JPG/PNG</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Maks 5MB. JPG/PNG/WebP</p>
                 </div>
               </div>
 

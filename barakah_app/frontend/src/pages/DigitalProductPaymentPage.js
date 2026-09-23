@@ -106,8 +106,8 @@ const DigitalProductPaymentPage = () => {
                 alert('Ukuran file terlalu besar. Maksimal 5MB.');
                 return;
             }
-            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-                alert('Format file tidak didukung. Hanya JPG, PNG, dan JPEG yang diperbolehkan.');
+            if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+                alert('Format file tidak didukung. Hanya JPG, PNG, JPEG, dan WebP yang diperbolehkan.');
                 return;
             }
             setProofFile(file);
@@ -436,7 +436,7 @@ const DigitalProductPaymentPage = () => {
                                     <>
                                         <span className="material-icons text-gray-400 text-4xl mb-2">cloud_upload</span>
                                         <p className="text-sm text-gray-500">Klik untuk memilih gambar</p>
-                                        <p className="text-xs text-gray-400 mt-1">JPG, PNG maksimal 5MB</p>
+                                        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP maksimal 5MB</p>
                                     </>
                                 )}
                             </div>

@@ -1972,6 +1972,21 @@ ${stopsText}
                                                         {order.shipping_postal_code || order.buyer_details?.address_postal_code}
                                                     </p>
                                                 </div>
+                                                {order.delivery_timing_choice && (
+                                                    <div className={`mt-3 p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold ${
+                                                        order.delivery_timing_choice === 'next_week'
+                                                            ? 'bg-purple-50 border-purple-200 text-purple-800'
+                                                            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                                    }`}>
+                                                        <span className="material-icons text-base">
+                                                            {order.delivery_timing_choice === 'next_week' ? 'next_plan' : 'event_available'}
+                                                        </span>
+                                                        <div>
+                                                            <span className="text-[10px] text-gray-500 block uppercase font-semibold">Jadwal Kirim Pembeli</span>
+                                                            <span>{order.delivery_timing_choice === 'next_week' ? 'Kirim ke Minggu Depan' : 'Ikut Jadwal Saat Ini / Minggu Ini'}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 {order.buyer_note && (
                                                     <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
                                                         <p className="text-[10px] font-bold text-orange-800 uppercase mb-1">Catatan Pembeli</p>

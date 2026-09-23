@@ -38,7 +38,7 @@ class Event(models.Model):
 
     # Documentation
     documentation_link = models.URLField(blank=True, null=True)
-    documentation_frame_1_1 = models.ImageField(upload_to='events/frames/', blank=True, null=True, help_text="Bingkai 1:1 format transparan (PNG) untuk otomatis overlay dokumentasi.")
+    documentation_frame_1_1 = models.ImageField(upload_to='events/frames/', blank=True, null=True, help_text="Bingkai 1:1 format transparan (PNG/WebP) untuk otomatis overlay dokumentasi.")
 
     # Details
     capacity = models.IntegerField(blank=True, null=True, default=0, help_text="Kapasitas terbatas jika > 0, tak terbatas jika 0.")
