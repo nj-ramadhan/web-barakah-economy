@@ -275,21 +275,29 @@ def seo_activity_detail(request, id_or_slug):
     })
 
 def seo_seller_profile(request, username):
-    user = User.objects.filter(username=username).first()
-    if user:
-        name = user.profile.name_full if (hasattr(user, 'profile') and user.profile.name_full) else user.username
-        desc = f"Lihat produk unggulan dari {name} di Barakah Economy."
-        img = user.profile.photo.url if (hasattr(user, 'profile') and user.profile.photo and hasattr(user.profile.photo, 'url')) else ''
+    return seo_shop_profile(request, username)
+
+def seo_shop_profile(request, identifier):
+    from django.db.models import Q
+    from profiles.models import Profile
+    clean_id = str(identifier).strip('/')
+    profile = Profile.objects.filter(Q(shop_name__iexact=clean_id) | Q(user__username__iexact=clean_id)).first()
+    if profile:
+        name = profile.shop_name or profile.name_full or profile.user.username
+        desc = profile.shop_description or f"Lihat koleksi produk dan layanan dari Toko {name} di Barakah Economy."
+        img = profile.picture.url if profile.picture else (profile.shop_thumbnail.url if profile.shop_thumbnail else '')
+        if img and not img.startswith('http'):
+            img = request.build_absolute_uri(img)
     else:
-        name = username
+        name = clean_id
         desc = "Profil Toko Barakah Economy."
         img = ''
 
     return get_seo_response(request, {
-        'title': f"Toko {name}",
+        'title': f"Toko {name} | Barakah Economy",
         'description': desc,
         'image_url': img,
-        'type': 'profile'
+        'type': 'website'
     })
 
 # --- DISCOVERY ---

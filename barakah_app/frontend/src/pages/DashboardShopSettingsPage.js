@@ -7,6 +7,9 @@ import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
 import ShopDecoration from '../components/profile/ShopDecoration';
 import StoreTemplates from '../components/profile/StoreTemplates';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { parseCurrency } from '../utils/formatters';
+import { getNextDateFromDays } from '../utils/dateUtils';
 import authService from '../services/auth';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { safeStorage } from '../utils/storageUtils';
@@ -16,6 +19,7 @@ const DashboardShopSettingsPage = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState({
         username: '',
+        shop_name: '',
         picture: null,
         shop_thumbnail: null,
         shop_description: '',
@@ -24,10 +28,31 @@ const DashboardShopSettingsPage = () => {
         shop_font: 'sans',
         shop_decoration: 'none',
         shop_template: 'none',
+        // Global Operational Hours, PO & Delivery settings
+        is_operational_hours_active: false,
+        operational_hours: '',
+        is_preorder: false,
+        preorder_type: 'days',
+        preorder_days: '',
+        preorder_days_min: '',
+        preorder_days_max: '',
+        preorder_duration: '',
+        is_delivery_schedule_active: false,
+        delivery_schedule_type: 'range',
+        delivery_range_min: '',
+        delivery_range_max: '',
+        delivery_days: '',
+        delivery_date: '',
+        delivery_note: '',
+        out_of_po_shipping_active: false,
+        out_of_po_shipping_type: 'flat',
+        out_of_po_shipping_cost: 0,
+        allow_delivery_timing_choice: true,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [cropper, setCropper] = useState({ active: false, image: null });
+    const [copySuccess, setCopySuccess] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -37,6 +62,7 @@ const DashboardShopSettingsPage = () => {
                     const profileData = await authService.getProfile(user.id);
                     setProfile({
                         username: profileData.username || '',
+                        shop_name: profileData.shop_name || '',
                         picture: profileData.picture || null,
                         shop_thumbnail: profileData.shop_thumbnail || null,
                         shop_description: profileData.shop_description || '',
@@ -45,6 +71,25 @@ const DashboardShopSettingsPage = () => {
                         shop_font: profileData.shop_font || 'sans',
                         shop_decoration: profileData.shop_decoration || 'none',
                         shop_template: profileData.shop_template || 'none',
+                        is_operational_hours_active: Boolean(profileData.is_operational_hours_active),
+                        operational_hours: profileData.operational_hours || '',
+                        is_preorder: Boolean(profileData.is_preorder),
+                        preorder_type: profileData.preorder_type || 'days',
+                        preorder_days: profileData.preorder_days || '',
+                        preorder_days_min: profileData.preorder_days_min !== null && profileData.preorder_days_min !== undefined ? profileData.preorder_days_min : '',
+                        preorder_days_max: profileData.preorder_days_max !== null && profileData.preorder_days_max !== undefined ? profileData.preorder_days_max : '',
+                        preorder_duration: profileData.preorder_duration || '',
+                        is_delivery_schedule_active: Boolean(profileData.is_delivery_schedule_active),
+                        delivery_schedule_type: profileData.delivery_schedule_type || 'range',
+                        delivery_range_min: profileData.delivery_range_min !== null && profileData.delivery_range_min !== undefined ? profileData.delivery_range_min : '',
+                        delivery_range_max: profileData.delivery_range_max !== null && profileData.delivery_range_max !== undefined ? profileData.delivery_range_max : '',
+                        delivery_days: profileData.delivery_days || '',
+                        delivery_date: profileData.delivery_date || '',
+                        delivery_note: profileData.delivery_note || '',
+                        out_of_po_shipping_active: Boolean(profileData.out_of_po_shipping_active),
+                        out_of_po_shipping_type: profileData.out_of_po_shipping_type || 'flat',
+                        out_of_po_shipping_cost: profileData.out_of_po_shipping_cost || 0,
+                        allow_delivery_timing_choice: profileData.allow_delivery_timing_choice !== undefined && profileData.allow_delivery_timing_choice !== null ? Boolean(profileData.allow_delivery_timing_choice) : true,
                     });
                 } else {
                     navigate('/login');
@@ -67,6 +112,46 @@ const DashboardShopSettingsPage = () => {
         }));
     };
 
+    const handleCopyStoreLink = () => {
+        const url = `https://barakah.cloud/toko/${profile.shop_name || profile.username}`;
+        navigator.clipboard.writeText(url).then(() => {
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2500);
+        });
+    };
+
+    const togglePreorderDay = (day) => {
+        const currentDays = typeof profile.preorder_days === 'string'
+            ? profile.preorder_days.split(',').map(s => s.trim()).filter(Boolean)
+            : (Array.isArray(profile.preorder_days) ? profile.preorder_days : []);
+        let updated;
+        if (currentDays.includes(day)) {
+            updated = currentDays.filter(d => d !== day);
+        } else {
+            updated = [...currentDays, day];
+        }
+        setProfile(prev => ({
+            ...prev,
+            preorder_days: updated.join(', ')
+        }));
+    };
+
+    const toggleDeliveryDay = (day) => {
+        const currentDays = typeof profile.delivery_days === 'string'
+            ? profile.delivery_days.split(',').map(s => s.trim()).filter(Boolean)
+            : (Array.isArray(profile.delivery_days) ? profile.delivery_days : []);
+        let updated;
+        if (currentDays.includes(day)) {
+            updated = currentDays.filter(d => d !== day);
+        } else {
+            updated = [...currentDays, day];
+        }
+        setProfile(prev => ({
+            ...prev,
+            delivery_days: updated.join(', ')
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (profile.shop_thumbnail instanceof File && profile.shop_thumbnail.size > 5 * 1024 * 1024) {
@@ -81,8 +166,12 @@ const DashboardShopSettingsPage = () => {
                 const formData = new FormData();
 
                 const fields = [
-                    'shop_description', 'shop_layout', 'shop_theme_color', 
-                    'shop_font', 'shop_decoration', 'shop_template'
+                    'shop_name', 'shop_description', 'shop_layout', 'shop_theme_color', 
+                    'shop_font', 'shop_decoration', 'shop_template',
+                    'is_operational_hours_active', 'operational_hours',
+                    'is_preorder', 'preorder_type', 'preorder_days', 'preorder_days_min', 'preorder_days_max', 'preorder_duration',
+                    'is_delivery_schedule_active', 'delivery_schedule_type', 'delivery_range_min', 'delivery_range_max', 'delivery_days', 'delivery_date', 'delivery_note',
+                    'out_of_po_shipping_active', 'out_of_po_shipping_type', 'allow_delivery_timing_choice'
                 ];
 
                 fields.forEach(f => {
@@ -90,6 +179,8 @@ const DashboardShopSettingsPage = () => {
                         formData.append(f, profile[f]);
                     }
                 });
+
+                formData.append('out_of_po_shipping_cost', profile.out_of_po_shipping_active && profile.out_of_po_shipping_type === 'flat' ? (parseCurrency(profile.out_of_po_shipping_cost) || 0) : 0);
 
                 if (profile.shop_thumbnail instanceof File) {
                     formData.append('shop_thumbnail', profile.shop_thumbnail);
@@ -140,15 +231,71 @@ const DashboardShopSettingsPage = () => {
                     <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
                         {/* Settings Form */}
                         <div className="flex-1 space-y-5">
+                            {/* Live Store URL Banner Card */}
+                            <div className="p-4 bg-gradient-to-r from-emerald-700 via-teal-700 to-green-800 rounded-2xl text-white shadow-md">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full mb-1">
+                                            <span className="material-icons text-xs">storefront</span>
+                                            Alamat Resmi Toko Anda
+                                        </div>
+                                        <p className="text-xs sm:text-sm font-mono font-bold truncate text-emerald-100">
+                                            https://barakah.cloud/toko/{profile.shop_name || profile.username || 'nama_toko'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyStoreLink}
+                                            className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition flex items-center gap-1"
+                                            title="Salin Tautan Toko"
+                                        >
+                                            <span className="material-icons text-sm">{copySuccess ? 'check' : 'content_copy'}</span>
+                                            <span>{copySuccess ? 'Tersalin!' : 'Salin'}</span>
+                                        </button>
+                                        <a
+                                            href={`/toko/${profile.shop_name || profile.username}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-4 py-2 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow transition flex items-center gap-1 active:scale-95"
+                                        >
+                                            <span>Lihat Toko</span>
+                                            <span className="material-icons text-sm">open_in_new</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="mb-4">
                                 <p className="text-xs text-green-700 bg-green-50 p-3 rounded-lg border border-green-100">
-                                    <span className="font-bold">Info:</span> Perubahan di bawah ini akan langsung tampil di halaman publik profil penjual Anda.
+                                    <span className="font-bold">Info:</span> Semua produk fisik, digital, dan e-course Anda otomatis tampil terpadu di halaman toko ini.
+                                </p>
+                            </div>
+
+                            {/* Nama Toko / Slug */}
+                            <div>
+                                <label className="block font-bold text-gray-700 mb-1 text-sm">
+                                    Nama Toko (Custom URL / Slug)
+                                </label>
+                                <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200 transition">
+                                    <span className="text-xs font-mono text-gray-400 select-none">barakah.cloud/toko/</span>
+                                    <input
+                                        type="text"
+                                        name="shop_name"
+                                        placeholder={profile.username || 'nama-toko-anda'}
+                                        value={profile.shop_name || ''}
+                                        onChange={handleChange}
+                                        className="flex-1 bg-transparent py-2.5 text-sm font-bold text-gray-800 outline-none"
+                                    />
+                                </div>
+                                <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+                                    Jika diisi, toko Anda akan langsung beralamat di <strong>https://barakah.cloud/toko/{profile.shop_name || profile.username}</strong>. Jika dikosongkan, alamat toko otomatis memakai username Anda (<strong>@{profile.username}</strong>).
                                 </p>
                             </div>
 
                             {/* Shop Thumbnail */}
                             <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Thumbnail Toko</label>
+                                <label className="block font-bold text-gray-700 mb-2 text-sm">Thumbnail / Banner Toko</label>
                                 <div className="flex flex-col space-y-3">
                                     {profile.shop_thumbnail && (
                                         <div className="w-full h-40 rounded-xl overflow-hidden border bg-gray-50">
@@ -300,6 +447,453 @@ const DashboardShopSettingsPage = () => {
                                 <p className="text-[10px] text-gray-400 mt-2 italic">* Memilih template khusus akan menimpa pengaturan Layout & Warna di bawah ini.</p>
                             </div>
 
+                            {/* PENGATURAN GLOBAL: JAM OPERASIONAL, PRE-ORDER & PENGANTARAN */}
+                            <div className="bg-white rounded-2xl p-5 border-2 border-emerald-500/40 shadow-sm space-y-5 mt-6">
+                                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                                        <span className="material-icons text-lg">tune</span>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-gray-900 text-sm">Pengaturan Jam Operasional, Pre-Order & Pengantaran Toko</h4>
+                                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                                Global Toko
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500">
+                                            Pengaturan ini otomatis diterapkan ke <b>semua produk fisik</b> di toko Anda (cukup diatur sekali tanpa repot per produk).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* 1. Jam Operasional Toko */}
+                                <div className="bg-gradient-to-br from-gray-50 to-emerald-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.is_operational_hours_active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">storefront</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">Jam Operasional Toko</p>
+                                                <p className="text-[10px] text-gray-500">Tampilkan hari & jam buka toko pada halaman profil toko dan produk</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, is_operational_hours_active: !prev.is_operational_hours_active }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.is_operational_hours_active ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.is_operational_hours_active ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+
+                                    {profile.is_operational_hours_active && (
+                                        <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-2">
+                                            <label className="block text-xs font-semibold text-gray-700">Jam / Hari Buka Toko</label>
+                                            <input
+                                                type="text"
+                                                name="operational_hours"
+                                                value={profile.operational_hours || ''}
+                                                onChange={handleChange}
+                                                placeholder="Contoh: Senin - Sabtu, 08:00 - 17:00 WIB"
+                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                                            />
+                                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                                <span className="text-[10px] text-gray-400 self-center mr-1">Pilihan Cepat:</span>
+                                                {['Setiap Hari (08:00 - 21:00 WIB)', 'Senin - Sabtu (08:00 - 17:00 WIB)', 'Senin - Jumat (09:00 - 17:00 WIB)'].map((preset) => (
+                                                    <button
+                                                        key={preset}
+                                                        type="button"
+                                                        onClick={() => setProfile(prev => ({ ...prev, operational_hours: preset }))}
+                                                        className="text-[10px] bg-white border border-gray-200 hover:border-emerald-500 hover:text-emerald-700 px-2.5 py-1 rounded-lg text-gray-600 transition"
+                                                    >
+                                                        {preset}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 2. Sistem Pre-Order (PO) */}
+                                <div className="bg-gradient-to-br from-gray-50 to-blue-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.is_preorder ? 'bg-blue-600 text-white shadow-sm shadow-blue-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">hourglass_top</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-bold text-gray-800">Sistem Pre-Order (PO) Global</p>
+                                                    {profile.is_preorder && (
+                                                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Aktif</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">Tandai default semua produk butuh waktu proses PO sebelum dikirimkan</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, is_preorder: !prev.is_preorder }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.is_preorder ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.is_preorder ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+
+                                    {profile.is_preorder && (
+                                        <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3.5">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Jadwal Pre-Order</label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {[
+                                                        { id: 'days', label: 'Pilih Hari Tertentu', icon: 'view_week' },
+                                                        { id: 'range', label: 'Rentang Hari', icon: 'date_range' },
+                                                    ].map((t) => (
+                                                        <button
+                                                            key={t.id}
+                                                            type="button"
+                                                            onClick={() => setProfile(prev => ({ ...prev, preorder_type: t.id }))}
+                                                            className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${profile.preorder_type === t.id ? 'bg-blue-100 border-blue-400 text-blue-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                        >
+                                                            <span className="material-icons text-sm">{t.icon}</span>
+                                                            <span>{t.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {profile.preorder_type === 'days' && (
+                                                <div className="space-y-2">
+                                                    <label className="block text-xs font-semibold text-gray-700">Pilih Hari PO dalam Seminggu</label>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => {
+                                                            const currentDays = typeof profile.preorder_days === 'string'
+                                                                ? profile.preorder_days.split(',').map(s => s.trim()).filter(Boolean)
+                                                                : (Array.isArray(profile.preorder_days) ? profile.preorder_days : []);
+                                                            const isSelected = currentDays.includes(day);
+                                                            return (
+                                                                <button
+                                                                    key={day}
+                                                                    type="button"
+                                                                    onClick={() => togglePreorderDay(day)}
+                                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${isSelected ? 'bg-blue-600 border-blue-700 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'}`}
+                                                                >
+                                                                    {day}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {Boolean(profile.preorder_days) && (
+                                                        <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 space-y-1">
+                                                            <p className="text-[11px] text-blue-900 font-medium">
+                                                                Dipilih: <span className="font-bold">{profile.preorder_days}</span>
+                                                            </p>
+                                                            {(() => {
+                                                                const daysArr = typeof profile.preorder_days === 'string' ? profile.preorder_days.split(',').map(s=>s.trim()).filter(Boolean) : profile.preorder_days;
+                                                                const nextInfo = getNextDateFromDays(daysArr);
+                                                                return nextInfo ? (
+                                                                    <p className="text-[11px] text-blue-800 font-semibold flex items-center gap-1.5">
+                                                                        <span className="material-icons text-[14px] text-blue-600">event</span>
+                                                                        <span>Jadwal PO Terdekat: <strong className="text-blue-950 underline">{nextInfo.display}</strong></span>
+                                                                    </p>
+                                                                ) : null;
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {profile.preorder_type === 'range' && (
+                                                <div className="space-y-1.5">
+                                                    <label className="block text-xs font-semibold text-gray-700">Waktu / Lama PO (Rentang Hari)</label>
+                                                    <div className="flex items-center gap-2 sm:gap-3">
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                name="preorder_days_min"
+                                                                value={profile.preorder_days_min}
+                                                                onChange={handleChange}
+                                                                placeholder="Min (Cth: 3)"
+                                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                            />
+                                                            <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400 font-bold">s/d</span>
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                name="preorder_days_max"
+                                                                value={profile.preorder_days_max}
+                                                                onChange={handleChange}
+                                                                placeholder="Maks (Cth: 7)"
+                                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                            />
+                                                            <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <label className="block text-[11px] text-gray-500 mb-1">Keterangan Label PO (Opsional)</label>
+                                                <input
+                                                    type="text"
+                                                    name="preorder_duration"
+                                                    value={profile.preorder_duration || ''}
+                                                    onChange={handleChange}
+                                                    placeholder="Contoh: 3 - 7 Hari (Dibuat sesuai pesanan)"
+                                                    className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 transition"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 3. Jadwal & Tanggal Pengantaran */}
+                                <div className="bg-gradient-to-br from-gray-50 to-amber-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.is_delivery_schedule_active ? 'bg-amber-600 text-white shadow-sm shadow-amber-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">local_shipping</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">Jadwal & Tanggal Pengantaran Toko</p>
+                                                <p className="text-[10px] text-gray-500">Bebas pilih rentang hari pengiriman atau tentukan hari/tanggal tertentu</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, is_delivery_schedule_active: !prev.is_delivery_schedule_active }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.is_delivery_schedule_active ? 'bg-amber-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.is_delivery_schedule_active ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+
+                                    {profile.is_delivery_schedule_active && (
+                                        <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3.5">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Jadwal Pengantaran</label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {[
+                                                        { id: 'range', label: 'Rentang Hari', icon: 'date_range' },
+                                                        { id: 'days', label: 'Pilih Hari Tertentu', icon: 'view_week' },
+                                                        { id: 'date', label: 'Tanggal Spesifik', icon: 'event' }
+                                                    ].map((t) => (
+                                                        <button
+                                                            key={t.id}
+                                                            type="button"
+                                                            onClick={() => setProfile(prev => ({ ...prev, delivery_schedule_type: t.id }))}
+                                                            className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition ${profile.delivery_schedule_type === t.id ? 'bg-amber-100 border-amber-400 text-amber-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                        >
+                                                            <span className="material-icons text-sm">{t.icon}</span>
+                                                            <span>{t.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {profile.delivery_schedule_type === 'range' && (
+                                                <div className="space-y-1.5">
+                                                    <label className="block text-xs font-semibold text-gray-700">Estimasi Pengantaran (Rentang Hari)</label>
+                                                    <div className="flex items-center gap-2 sm:gap-3">
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                name="delivery_range_min"
+                                                                value={profile.delivery_range_min}
+                                                                onChange={handleChange}
+                                                                placeholder="Min (Cth: 1)"
+                                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                            />
+                                                            <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400 font-bold">s/d</span>
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                name="delivery_range_max"
+                                                                value={profile.delivery_range_max}
+                                                                onChange={handleChange}
+                                                                placeholder="Maks (Cth: 3)"
+                                                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                            />
+                                                            <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {profile.delivery_schedule_type === 'days' && (
+                                                <div className="space-y-1.5">
+                                                    <label className="block text-xs font-semibold text-gray-700">Pilih Hari Pengantaran dalam Seminggu</label>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => {
+                                                            const currentDays = typeof profile.delivery_days === 'string'
+                                                                ? profile.delivery_days.split(',').map(s => s.trim()).filter(Boolean)
+                                                                : (Array.isArray(profile.delivery_days) ? profile.delivery_days : []);
+                                                            const isSelected = currentDays.includes(day);
+                                                            return (
+                                                                <button
+                                                                    key={day}
+                                                                    type="button"
+                                                                    onClick={() => toggleDeliveryDay(day)}
+                                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${isSelected ? 'bg-amber-500 border-amber-600 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:border-amber-300'}`}
+                                                                >
+                                                                    {day}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {Boolean(profile.delivery_days) && (
+                                                        <p className="text-[11px] text-amber-800 font-medium mt-1">
+                                                            Dipilih: <span className="font-bold">{profile.delivery_days}</span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {profile.delivery_schedule_type === 'date' && (
+                                                <div className="space-y-1.5">
+                                                    <label className="block text-xs font-semibold text-gray-700">Tanggal Pengantaran Spesifik</label>
+                                                    <input
+                                                        type="date"
+                                                        name="delivery_date"
+                                                        value={profile.delivery_date}
+                                                        onChange={handleChange}
+                                                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <label className="block text-[11px] text-gray-500 mb-1">Catatan / Waktu Pengantaran (Opsional)</label>
+                                                <input
+                                                    type="text"
+                                                    name="delivery_note"
+                                                    value={profile.delivery_note || ''}
+                                                    onChange={handleChange}
+                                                    placeholder="Contoh: Pengiriman dimulai pukul 13:00 - 16:00 WIB"
+                                                    className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:ring-2 focus:ring-amber-400 transition"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 4. Tarif Ongkir Flat Luar Jam PO */}
+                                <div className="bg-gradient-to-br from-gray-50 to-purple-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.out_of_po_shipping_active ? 'bg-purple-600 text-white shadow-sm shadow-purple-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">local_atm</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-bold text-gray-800">Ongkir Flat Seller / Luar Jam PO</p>
+                                                    {profile.out_of_po_shipping_active && (
+                                                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Aktif</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">Tetapkan tarif ongkir flat toko (berlaku flat walau beli banyak produk)</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, out_of_po_shipping_active: !prev.out_of_po_shipping_active }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.out_of_po_shipping_active ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.out_of_po_shipping_active ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+
+                                    {profile.out_of_po_shipping_active && (
+                                        <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Tarif Luar Jam PO</label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setProfile(prev => ({ ...prev, out_of_po_shipping_type: 'flat' }))}
+                                                        className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${profile.out_of_po_shipping_type === 'flat' ? 'bg-purple-100 border-purple-400 text-purple-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                    >
+                                                        <span className="material-icons text-sm">local_atm</span>
+                                                        <span>Flat Ongkir</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setProfile(prev => ({ ...prev, out_of_po_shipping_type: 'distance' }))}
+                                                        className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${profile.out_of_po_shipping_type === 'distance' ? 'bg-purple-100 border-purple-400 text-purple-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                    >
+                                                        <span className="material-icons text-sm">straighten</span>
+                                                        <span>Sesuai Jarak</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {profile.out_of_po_shipping_type === 'flat' ? (
+                                                <div className="space-y-1.5">
+                                                    <label className="block text-xs font-semibold text-gray-700">Nominal Tarif Ongkir Flat Luar Jam PO (Rp) *</label>
+                                                    <div className="max-w-xs">
+                                                        <CurrencyInput 
+                                                            value={profile.out_of_po_shipping_cost !== undefined && profile.out_of_po_shipping_cost !== null ? profile.out_of_po_shipping_cost : ''} 
+                                                            onChange={(e) => setProfile(prev => ({ ...prev, out_of_po_shipping_cost: parseCurrency(e.target.value) }))} 
+                                                            placeholder="Contoh: 15.000" 
+                                                            className="!px-3.5 !py-2.5 !bg-white !rounded-xl !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    <p className="text-[10px] text-purple-700 font-medium">
+                                                        💡 Tarif ini diterapkan flat per pesanan toko Anda (tidak berlipat ganda meskipun pembeli memesan banyak produk/jumlah banyak).
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-purple-900 text-xs space-y-1">
+                                                    <div className="flex items-center gap-1.5 font-bold">
+                                                        <span className="material-icons text-purple-600 text-sm">info</span>
+                                                        <span>Ongkir Luar Jam PO Dihitung Sesuai Jarak</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-purple-800 leading-relaxed">
+                                                        Pengiriman di luar jam PO akan dihitung tarifnya sesuai jarak oleh penjual / kurir dan akan dikonfirmasikan langsung kepada pembeli setelah checkout.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 5. Fleksibilitas Pengiriman */}
+                                <div className="bg-gradient-to-br from-gray-50 to-teal-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.allow_delivery_timing_choice ? 'bg-teal-600 text-white shadow-sm shadow-teal-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">calendar_month</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-bold text-gray-800">Opsi Pilihan Waktu Kirim Pembeli</p>
+                                                    {profile.allow_delivery_timing_choice && (
+                                                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Aktif</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">Beri pembeli opsi: Ikut jadwal saat ini/minggu ini ATAU kirim ke minggu depannya</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, allow_delivery_timing_choice: !prev.allow_delivery_timing_choice }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.allow_delivery_timing_choice ? 'bg-teal-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.allow_delivery_timing_choice ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={saving}
@@ -363,8 +957,18 @@ const DashboardShopSettingsPage = () => {
                                         </div>
 
                                         <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
-                                            <p className="font-bold text-lg">@{profile.username || 'username'}</p>
-                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
+                                            <p className="font-black text-lg">{profile.shop_name ? profile.shop_name : `@${profile.username || 'username'}`}</p>
+                                            {profile.shop_name && <p className="text-[11px] text-gray-400 font-bold -mt-0.5">@{profile.username}</p>}
+                                            <p className="text-[10px] font-mono text-emerald-600 font-bold mt-1 bg-emerald-50 py-0.5 px-2 rounded-full inline-block">
+                                                barakah.cloud/toko/{profile.shop_name || profile.username || 'toko'}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko Anda akan ditampilkan di sini.'}</p>
+                                            {profile.is_operational_hours_active && profile.operational_hours && (
+                                                <div className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
+                                                    <span className="material-icons text-[12px] text-emerald-600">schedule</span>
+                                                    <span>{profile.operational_hours}</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Fake Content Area based on Layout */}

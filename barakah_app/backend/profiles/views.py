@@ -58,11 +58,72 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='public', permission_classes=[AllowAny])
     def public_profile(self, request, user_id=None):
         try:
-            profile = Profile.objects.get(user_id=user_id)
+            if str(user_id).isdigit():
+                profile = Profile.objects.filter(user_id=int(user_id)).first()
+            else:
+                profile = Profile.objects.filter(Q(shop_name__iexact=user_id) | Q(user__username__iexact=user_id)).first()
+            if not profile:
+                return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
             serializer = PublicProfileSerializer(profile, context={'request': request})
             return Response(serializer.data)
-        except Profile.DoesNotExist:
-            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], url_path='toggle-follow', permission_classes=[IsAuthenticated])
+    def toggle_follow(self, request, user_id=None):
+        from accounts.models import User
+        from .models import UserFollow
+        target_user = None
+        if str(user_id).isdigit():
+            target_user = User.objects.filter(id=int(user_id)).first()
+        if not target_user:
+            target_user = User.objects.filter(Q(username__iexact=user_id) | Q(profile__shop_name__iexact=user_id)).first()
+
+        if not target_user:
+            return Response({'error': 'Pengguna tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user == request.user:
+            return Response({'error': 'Anda tidak dapat mengikuti akun Anda sendiri.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow_rel = UserFollow.objects.filter(follower=request.user, following=target_user)
+        if follow_rel.exists():
+            follow_rel.delete()
+            is_following = False
+        else:
+            UserFollow.objects.create(follower=request.user, following=target_user)
+            is_following = True
+
+        return Response({
+            'is_following': is_following,
+            'followers_count': target_user.follower_relations.count(),
+            'following_count': target_user.following_relations.count(),
+        })
+
+    @action(detail=True, methods=['post'], url_path='toggle-like-shop', permission_classes=[IsAuthenticated])
+    def toggle_like_shop(self, request, user_id=None):
+        from accounts.models import User
+        from .models import ShopLike
+        seller = None
+        if str(user_id).isdigit():
+            seller = User.objects.filter(id=int(user_id)).first()
+        if not seller:
+            seller = User.objects.filter(Q(username__iexact=user_id) | Q(profile__shop_name__iexact=user_id)).first()
+
+        if not seller:
+            return Response({'error': 'Penjual tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+        like_rel = ShopLike.objects.filter(user=request.user, seller=seller)
+        if like_rel.exists():
+            like_rel.delete()
+            is_liked = False
+        else:
+            ShopLike.objects.create(user=request.user, seller=seller)
+            is_liked = True
+
+        return Response({
+            'is_shop_liked': is_liked,
+            'shop_likes_count': seller.shop_likes.count()
+        })
 
     @action(detail=False, methods=['get'])
     def me(self, request):

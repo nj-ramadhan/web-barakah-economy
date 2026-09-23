@@ -630,13 +630,13 @@ const EcommerceMainPage = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (product.seller_name) {
-                    navigate(`/toko/${product.seller_name}`);
+                    navigate(`/toko/${product.seller_shop_name || product.seller_name}`);
                   } else {
                     setSelectedUserId(product.seller);
                     setIsProfileModalOpen(true);
                   }
                 }}
-                title={`Kunjungi Toko @${product.seller_name}`}
+                title={`Kunjungi Toko ${product.seller_shop_name || `@${product.seller_name}`}`}
               >
                 <img 
                   src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 

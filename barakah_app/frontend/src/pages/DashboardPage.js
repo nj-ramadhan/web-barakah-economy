@@ -501,7 +501,7 @@ const DashboardPage = () => {
 
                                 {hasAccess('view_shop') && (
                                     <Link
-                                        to={`/digital-produk/${username}`}
+                                        to={`/toko/${userProfile?.shop_name || username}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
@@ -511,7 +511,7 @@ const DashboardPage = () => {
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="font-bold text-gray-800 text-sm">Lihat Toko</h3>
-                                            <p className="text-[11px] text-gray-500">Pratinjau toko digital Anda</p>
+                                            <p className="text-[11px] text-gray-500">Pratinjau toko Anda</p>
                                         </div>
                                         <span className="material-icons text-gray-400">open_in_new</span>
                                     </Link>

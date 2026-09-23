@@ -34,6 +34,8 @@ class ProductSerializer(serializers.ModelSerializer):
     promo_discount_percentage = serializers.SerializerMethodField()
 
     seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_shop_name = serializers.CharField(source='seller.profile.shop_name', read_only=True, default='')
+    seller_followers_count = serializers.SerializerMethodField()
     seller_phone = serializers.SerializerMethodField()
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
@@ -75,13 +77,41 @@ class ProductSerializer(serializers.ModelSerializer):
         if 'out_of_po_shipping_cost' in data and data['out_of_po_shipping_cost'] in ('', 'null', 'undefined', None):
             data['out_of_po_shipping_cost'] = 0
             
-        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'is_shipping_cost_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
+        for bool_field in ['use_store_operational_settings', 'is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'is_shipping_cost_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
             if bool_field in data:
                 val = data[bool_field]
                 if isinstance(val, str):
                     data[bool_field] = val.lower() in ('true', '1', 't')
                     
         return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # If product is set to follow global store operational settings (default True)
+        if getattr(instance, 'use_store_operational_settings', True):
+            seller = getattr(instance, 'seller', None)
+            profile = getattr(seller, 'profile', None) if seller else None
+            if profile:
+                ret['is_operational_hours_active'] = profile.is_operational_hours_active
+                ret['operational_hours'] = profile.operational_hours
+                ret['is_preorder'] = profile.is_preorder
+                ret['preorder_type'] = profile.preorder_type
+                ret['preorder_days'] = profile.preorder_days
+                ret['preorder_days_min'] = profile.preorder_days_min
+                ret['preorder_days_max'] = profile.preorder_days_max
+                ret['preorder_duration'] = profile.preorder_duration
+                ret['is_delivery_schedule_active'] = profile.is_delivery_schedule_active
+                ret['delivery_schedule_type'] = profile.delivery_schedule_type
+                ret['delivery_range_min'] = profile.delivery_range_min
+                ret['delivery_range_max'] = profile.delivery_range_max
+                ret['delivery_days'] = profile.delivery_days
+                ret['delivery_date'] = profile.delivery_date.isoformat() if profile.delivery_date else None
+                ret['delivery_note'] = profile.delivery_note
+                ret['out_of_po_shipping_active'] = profile.out_of_po_shipping_active
+                ret['out_of_po_shipping_type'] = profile.out_of_po_shipping_type
+                ret['out_of_po_shipping_cost'] = str(profile.out_of_po_shipping_cost)
+                ret['allow_delivery_timing_choice'] = profile.allow_delivery_timing_choice
+        return ret
 
     def get_seller_phone(self, obj):
         if obj.seller:
@@ -156,6 +186,14 @@ class ProductSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return None
+
+    def get_seller_followers_count(self, obj):
+        try:
+            if obj.seller:
+                return obj.seller.follower_relations.count()
+        except Exception:
+            pass
+        return 0
 
     def get_seller_avatar(self, obj):
         if obj.seller and hasattr(obj.seller, 'profile'):

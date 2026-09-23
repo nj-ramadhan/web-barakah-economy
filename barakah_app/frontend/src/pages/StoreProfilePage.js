@@ -6,6 +6,8 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getPublicDigitalProfile } from '../services/digitalProductApi';
 import { createStoreChat } from '../services/chatApi';
+import api from '../services/api';
+import { safeStorage } from '../utils/storageUtils';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
@@ -22,11 +24,22 @@ const StoreProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'digital' | 'about'
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [selectedCategories, setSelectedCategories] = useState(['Semua']);
   const [sortBy, setSortBy] = useState('populer'); // 'populer' | 'terlaris' | 'price_asc' | 'price_desc' | 'newest'
   const [shareToast, setShareToast] = useState('');
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Follow & Like System
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isShopLiked, setIsShopLiked] = useState(false);
+  const [shopLikesCount, setShopLikesCount] = useState(0);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  const currentUser = safeStorage.getUser();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -34,6 +47,12 @@ const StoreProfilePage = () => {
         setLoading(true);
         const res = await getPublicDigitalProfile(username);
         setProfileData(res.data);
+        const p = res.data?.profile || {};
+        setIsFollowing(Boolean(p.is_following));
+        setFollowersCount(p.followers_count || 0);
+        setFollowingCount(p.following_count || 0);
+        setIsShopLiked(Boolean(p.is_shop_liked));
+        setShopLikesCount(p.shop_likes_count || 0);
       } catch (err) {
         console.error('Error fetching store profile:', err);
       } finally {
@@ -49,6 +68,17 @@ const StoreProfilePage = () => {
   const physicalProducts = useMemo(() => profileData?.ecommerce_products || [], [profileData]);
   const digitalProducts = useMemo(() => profileData?.products || [], [profileData]);
   const courses = useMemo(() => profileData?.courses || [], [profileData]);
+
+  const storeSlug = profile.shop_name || username;
+  const storeDisplayName = profile.shop_name || profile.name_full || username;
+  const isOwnStore = Boolean(
+    profile.is_owner || 
+    (currentUser && (
+      (profile.user_id && String(currentUser.id) === String(profile.user_id)) ||
+      (profile.username && String(currentUser.username).toLowerCase() === String(profile.username).toLowerCase()) ||
+      (profile.shop_name && String(currentUser.username).toLowerCase() === String(profile.shop_name).toLowerCase())
+    ))
+  );
 
   // Total sales across all physical products
   const totalSold = useMemo(() => {
@@ -70,6 +100,25 @@ const StoreProfilePage = () => {
     return [{ key: 'Semua', label: 'Semua', count: physicalProducts.length }, ...list];
   }, [physicalProducts]);
 
+  // Handle Multi-Select Category
+  const handleCategoryClick = (catKey) => {
+    if (catKey === 'Semua') {
+      setSelectedCategories(['Semua']);
+      return;
+    }
+
+    let updated = selectedCategories.filter(c => c !== 'Semua');
+    if (updated.includes(catKey)) {
+      updated = updated.filter(c => c !== catKey);
+      if (updated.length === 0) {
+        updated = ['Semua'];
+      }
+    } else {
+      updated.push(catKey);
+    }
+    setSelectedCategories(updated);
+  };
+
   // Filtered & sorted products
   const filteredProducts = useMemo(() => {
     let list = [...physicalProducts];
@@ -84,12 +133,13 @@ const StoreProfilePage = () => {
       );
     }
 
-    if (selectedCategory && selectedCategory !== 'Semua') {
-      const target = selectedCategory.toLowerCase().trim();
+    if (!selectedCategories.includes('Semua') && selectedCategories.length > 0) {
+      const targets = selectedCategories.map(c => c.toLowerCase().trim());
       list = list.filter(p => {
         const catKey = (p.category || 'lainnya').toLowerCase().trim();
         const catDisplay = (p.category_display || p.category_name || '').toLowerCase().trim();
-        return catKey === target || catDisplay === target || catKey.replace(/[-_]/g, ' ') === target.replace(/[-_]/g, ' ');
+        const catKeyNorm = catKey.replace(/[-_]/g, ' ');
+        return targets.some(target => catKey === target || catDisplay === target || catKeyNorm === target);
       });
     }
 
@@ -118,10 +168,10 @@ const StoreProfilePage = () => {
       if (soldDiff !== 0) return soldDiff;
       return (Number(b.views_count) || 0) - (Number(a.views_count) || 0);
     });
-  }, [physicalProducts, searchQuery, selectedCategory, sortBy]);
+  }, [physicalProducts, searchQuery, selectedCategories, sortBy]);
 
   const handleCopyLink = () => {
-    const storeUrl = `${window.location.origin}/toko/${username}`;
+    const storeUrl = `https://barakah.cloud/toko/${storeSlug}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(storeUrl).then(() => {
         setShareToast('Tautan toko berhasil disalin!');
@@ -134,9 +184,9 @@ const StoreProfilePage = () => {
   };
 
   const handleShareStore = () => {
-    const storeUrl = `${window.location.origin}/toko/${username}`;
-    const shareTitle = `Toko ${profile.name_full || username} di Barakah Economy`;
-    const shareText = `Yuk cek berbagai produk terbaik dari Toko @${username} di Barakah Economy!`;
+    const storeUrl = `https://barakah.cloud/toko/${storeSlug}`;
+    const shareTitle = `Toko ${storeDisplayName} di Barakah Economy`;
+    const shareText = `Yuk cek berbagai produk terbaik dari Toko ${storeDisplayName} di Barakah Economy: ${storeUrl}`;
 
     if (navigator.share) {
       navigator.share({
@@ -148,6 +198,48 @@ const StoreProfilePage = () => {
       });
     } else {
       setShowShareModal(true);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!currentUser) {
+      alert('Silakan login terlebih dahulu untuk mengikuti toko.');
+      return;
+    }
+    setFollowLoading(true);
+    try {
+      const targetId = profile.user_id || username;
+      const res = await api.post(`/profiles/${targetId}/toggle-follow/`);
+      setIsFollowing(res.data.is_following);
+      setFollowersCount(res.data.followers_count);
+      setShareToast(res.data.is_following ? 'Berhasil mengikuti toko!' : 'Berhenti mengikuti toko.');
+      setTimeout(() => setShareToast(''), 2500);
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Gagal mengubah status mengikuti.';
+      alert(msg);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!currentUser) {
+      alert('Silakan login terlebih dahulu untuk menyukai toko.');
+      return;
+    }
+    setLikeLoading(true);
+    try {
+      const targetId = profile.user_id || username;
+      const res = await api.post(`/profiles/${targetId}/toggle-like-shop/`);
+      setIsShopLiked(res.data.is_shop_liked);
+      setShopLikesCount(res.data.shop_likes_count);
+      setShareToast(res.data.is_shop_liked ? 'Anda menyukai toko ini!' : 'Batal menyukai toko.');
+      setTimeout(() => setShareToast(''), 2500);
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Gagal menyukai toko.';
+      alert(msg);
+    } finally {
+      setLikeLoading(false);
     }
   };
 
@@ -236,11 +328,20 @@ const StoreProfilePage = () => {
   return (
     <div className="body min-h-screen bg-slate-50 text-slate-900 pb-24">
       <Helmet>
-        <title>{`Toko ${profile.name_full || username} (@${username}) | Barakah Economy`}</title>
-        <meta name="description" content={profile.shop_description || `Koleksi produk terlengkap dari Toko @${username} di Barakah Economy.`} />
-        <meta property="og:title" content={`Toko ${profile.name_full || username} - Barakah Economy`} />
-        <meta property="og:description" content={profile.shop_description || `Beli aneka produk berkualitas langsung dari Toko @${username}`} />
-        {profile.picture && <meta property="og:image" content={getMediaUrl(profile.picture)} />}
+        <title>{`Toko ${storeDisplayName} | Barakah Economy`}</title>
+        <meta name="description" content={profile.shop_description || `Koleksi produk fisik, digital, dan e-course terlengkap dari Toko ${storeDisplayName} di Barakah Economy.`} />
+        <meta property="og:title" content={`Toko ${storeDisplayName} - Barakah Economy`} />
+        <meta property="og:description" content={profile.shop_description || `Koleksi produk fisik, digital, dan e-course terlengkap dari Toko ${storeDisplayName}`} />
+        <meta property="og:url" content={`https://barakah.cloud/toko/${storeSlug}`} />
+        {(profile.picture || profile.shop_thumbnail) && (
+          <meta property="og:image" content={getMediaUrl(profile.picture || profile.shop_thumbnail)} />
+        )}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Toko ${storeDisplayName} - Barakah Economy`} />
+        <meta name="twitter:description" content={profile.shop_description || `Koleksi produk dari Toko ${storeDisplayName}`} />
+        {(profile.picture || profile.shop_thumbnail) && (
+          <meta name="twitter:image" content={getMediaUrl(profile.picture || profile.shop_thumbnail)} />
+        )}
       </Helmet>
 
       <Header />
@@ -265,8 +366,44 @@ const StoreProfilePage = () => {
           <span className="material-icons text-[12px] text-slate-400">chevron_right</span>
           <span className="text-slate-400">Toko</span>
           <span className="material-icons text-[12px] text-slate-400">chevron_right</span>
-          <span className="text-slate-800 font-bold">@{username}</span>
+          <span className="text-slate-800 font-bold">{storeDisplayName}</span>
         </div>
+
+        {/* Owner Store Notice & Quick Edit (Only shown to the store owner) */}
+        {isOwnStore && (
+          <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in border border-emerald-600/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-xs">
+                <span className="material-icons text-xl text-white">storefront</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs sm:text-sm font-bold text-white">Tampilan Toko Anda Sendiri</p>
+                  <span className="text-[10px] bg-emerald-500/60 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Pemilik Toko</span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-emerald-100 mt-0.5">
+                  Anda sedang melihat etalase toko Anda. Pelanggan melihat toko Anda seperti tampilan di bawah ini.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-1 sm:pt-0">
+              <Link
+                to="/dashboard/shop-settings"
+                className="px-4 py-2 bg-white text-emerald-800 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 transition active:scale-95"
+              >
+                <span className="material-icons text-sm text-emerald-700">settings</span>
+                <span>Edit Pengaturan Toko</span>
+              </Link>
+              <Link
+                to="/dashboard/sinergy/seller"
+                className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold backdrop-blur-xs flex items-center gap-1.5 transition active:scale-95"
+              >
+                <span className="material-icons text-sm">inventory_2</span>
+                <span className="hidden sm:inline">Kelola Produk</span>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* MARKETPLACE STORE HEADER CARD */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden mb-6 relative">
@@ -285,8 +422,18 @@ const StoreProfilePage = () => {
               </div>
             )}
             
-            {/* Quick Share Pill on Banner (Top Right) */}
+            {/* Quick Actions Pill on Banner (Top Right) */}
             <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+              {isOwnStore && (
+                <Link
+                  to="/dashboard/shop-settings"
+                  className="px-3.5 py-1.5 bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-md rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95 border border-emerald-400/40"
+                  title="Edit Pengaturan Toko"
+                >
+                  <span className="material-icons text-sm">edit</span>
+                  <span>Edit Toko</span>
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleShareStore}
@@ -329,7 +476,7 @@ const StoreProfilePage = () => {
                 <div className="min-w-0">
                   <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                      {profile.name_full || username}
+                      {storeDisplayName}
                     </h1>
                     <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
                       <span className="material-icons text-[13px]">storefront</span>
@@ -338,67 +485,157 @@ const StoreProfilePage = () => {
                   </div>
 
                   <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-0.5">
-                    @{username}
+                    @{profile.username || username}
                   </p>
 
-                  <div className="flex items-center justify-center sm:justify-start gap-3 mt-2 text-xs text-slate-500 flex-wrap">
+                  <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-2 text-xs text-slate-500 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
+                      <strong className="text-slate-800 font-bold">{followersCount}</strong> Pengikut
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
+                      <strong className="text-slate-800 font-bold">{followingCount}</strong> Mengikuti
+                    </span>
                     {profile.city_name && (
-                      <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
-                        <span className="material-icons text-sm text-rose-500">location_on</span>
-                        {profile.city_name}
-                      </span>
+                      <>
+                        <span className="text-slate-300">•</span>
+                        <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
+                          <span className="material-icons text-sm text-rose-500">location_on</span>
+                          {profile.city_name}
+                        </span>
+                      </>
                     )}
                     {profile.joined_date && (
-                      <span className="inline-flex items-center gap-1 text-slate-500">
-                        <span className="material-icons text-sm text-slate-400">calendar_month</span>
-                        Bergabung {new Date(profile.joined_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                      </span>
+                      <>
+                        <span className="text-slate-300 hidden sm:inline">•</span>
+                        <span className="inline-flex items-center gap-1 text-slate-500">
+                          <span className="material-icons text-sm text-slate-400">calendar_month</span>
+                          Bergabung {new Date(profile.joined_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                        </span>
+                      </>
                     )}
                   </div>
+
+                  {/* Store Operational & PO Badges */}
+                  {(profile.is_operational_hours_active || profile.is_preorder || profile.is_delivery_schedule_active) && (
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-3 flex-wrap">
+                      {profile.is_operational_hours_active && profile.operational_hours && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold shadow-2xs">
+                          <span className="material-icons text-sm text-emerald-600">schedule</span>
+                          <span>Jam Buka: <strong className="font-bold">{profile.operational_hours}</strong></span>
+                        </span>
+                      )}
+                      {profile.is_preorder && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold shadow-2xs">
+                          <span className="material-icons text-sm text-blue-600">hourglass_top</span>
+                          <span>PO Toko: <strong className="font-bold">{profile.preorder_duration || (profile.preorder_days ? `Hari ${profile.preorder_days}` : 'Aktif')}</strong></span>
+                        </span>
+                      )}
+                      {profile.is_delivery_schedule_active && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold shadow-2xs">
+                          <span className="material-icons text-sm text-amber-600">local_shipping</span>
+                          <span>Pengantaran: <strong className="font-bold">{profile.delivery_days ? `Hari ${profile.delivery_days}` : (profile.delivery_range_min ? `${profile.delivery_range_min}-${profile.delivery_range_max} Hari` : (profile.delivery_note || 'Jadwal Rutin'))}</strong></span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Action Buttons: Chat, WhatsApp & Lihat Laman Digital */}
+              {/* Action Buttons: Owner controls vs Customer controls */}
               <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap pt-2 sm:pt-0">
-                <button
-                  type="button"
-                  onClick={handleChatSeller}
-                  disabled={isStartingChat}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-200 flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50"
-                >
-                  {isStartingChat ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <span className="material-icons text-base">chat</span>
-                      <span>Chat Penjual</span>
-                    </>
-                  )}
-                </button>
+                {isOwnStore ? (
+                  <>
+                    <Link
+                      to="/dashboard/shop-settings"
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-200 flex items-center gap-1.5 transition active:scale-95"
+                    >
+                      <span className="material-icons text-base">edit</span>
+                      <span>Edit Toko</span>
+                    </Link>
+                    <Link
+                      to="/dashboard/sinergy/seller"
+                      className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
+                    >
+                      <span className="material-icons text-base">inventory_2</span>
+                      <span className="hidden sm:inline">Kelola Produk</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleChatSeller}
+                      disabled={isStartingChat}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-200 flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50"
+                    >
+                      {isStartingChat ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <span className="material-icons text-base">chat</span>
+                          <span>Chat</span>
+                        </>
+                      )}
+                    </button>
 
-                {(profile.phone || physicalProducts[0]?.seller_phone) && (
-                  <button
-                    type="button"
-                    onClick={handleWhatsApp}
-                    className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
-                    title="Hubungi via WhatsApp"
-                  >
-                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.888-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
-                    </svg>
-                    <span className="hidden sm:inline">WhatsApp</span>
-                  </button>
+                    {(profile.phone || physicalProducts[0]?.seller_phone) && (
+                      <button
+                        type="button"
+                        onClick={handleWhatsApp}
+                        className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
+                        title="Hubungi via WhatsApp"
+                      >
+                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.888-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                        </svg>
+                        <span className="hidden sm:inline">WhatsApp</span>
+                      </button>
+                    )}
+
+                    {currentUser && (
+                      <button
+                        type="button"
+                        onClick={handleToggleFollow}
+                        disabled={followLoading}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm ${
+                          isFollowing
+                            ? 'bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-700 border border-slate-200'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                        }`}
+                      >
+                        <span className="material-icons text-base">{isFollowing ? 'check' : 'person_add'}</span>
+                        <span>{isFollowing ? 'Mengikuti' : 'Ikuti'}</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleToggleLike}
+                      disabled={likeLoading}
+                      className={`px-3.5 py-2.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition active:scale-95 ${
+                        isShopLiked
+                          ? 'bg-rose-50 text-rose-600 border-rose-200 shadow-xs'
+                          : 'bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border-slate-200'
+                      }`}
+                      title="Sukai Toko Ini"
+                    >
+                      <span className={`material-icons text-base ${isShopLiked ? 'text-rose-500' : 'text-slate-400'}`}>
+                        {isShopLiked ? 'favorite' : 'favorite_border'}
+                      </span>
+                      <span>{shopLikesCount}</span>
+                    </button>
+                  </>
                 )}
 
-                {/* Button untuk Melihat ke Laman Produk Digital */}
-                <Link
-                  to={`/digital-produk/${username}`}
-                  className="px-3.5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-blue-200 flex items-center gap-1.5 transition active:scale-95"
-                  title="Lihat Halaman Produk Digital & E-Course Seller"
+                <button
+                  type="button"
+                  onClick={handleShareStore}
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95"
+                  title="Bagikan Toko"
                 >
-                  <span className="material-icons text-base">devices</span>
-                  <span>Produk Digital</span>
-                </Link>
+                  <span className="material-icons text-base">share</span>
+                </button>
 
                 <button
                   type="button"
@@ -421,7 +658,7 @@ const StoreProfilePage = () => {
             )}
 
             {/* Store Stats Counters */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-4 mt-4 pt-4 border-t border-slate-100">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4 mt-4 pt-4 border-t border-slate-100">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Produk Fisik</span>
                 <span className="text-base sm:text-lg font-black text-slate-900">{physicalProducts.length}</span>
@@ -431,15 +668,16 @@ const StoreProfilePage = () => {
                 <span className="text-base sm:text-lg font-black text-emerald-700">{totalSold}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Produk Digital</span>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Digital & Kelas</span>
                 <span className="text-base sm:text-lg font-black text-blue-700">{digitalProducts.length + courses.length}</span>
               </div>
-              <div className="hidden sm:block p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Status Toko</span>
-                <span className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1 mt-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Aktif Melayani
-                </span>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Pengikut</span>
+                <span className="text-base sm:text-lg font-black text-slate-900">{followersCount}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Suka Toko</span>
+                <span className="text-base sm:text-lg font-black text-rose-600">{shopLikesCount}</span>
               </div>
             </div>
 
@@ -532,28 +770,34 @@ const StoreProfilePage = () => {
               </div>
             </div>
 
-            {/* Category Filter Chips */}
+            {/* Category Filter Chips (Multi-Select) */}
             {storeCategories.length > 2 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
-                {storeCategories.map(cat => (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.key)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                      selectedCategory === cat.key
-                        ? 'bg-emerald-600 text-white shadow-xs scale-105'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                    }`}
-                  >
-                    <span>{cat.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      selectedCategory === cat.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {cat.count}
-                    </span>
-                  </button>
-                ))}
+                {storeCategories.map(cat => {
+                  const isSelected = selectedCategories.includes(cat.key);
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => handleCategoryClick(cat.key)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white shadow-xs scale-105'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                      }`}
+                    >
+                      {isSelected && cat.key !== 'Semua' && (
+                        <span className="material-icons text-[13px]">check</span>
+                      )}
+                      <span>{cat.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -567,10 +811,10 @@ const StoreProfilePage = () => {
                 <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
                   {searchQuery ? `Tidak ada produk yang cocok dengan kata kunci "${searchQuery}".` : 'Belum ada produk yang tersedia pada kategori ini.'}
                 </p>
-                {(searchQuery || selectedCategory !== 'Semua') && (
+                {(searchQuery || !selectedCategories.includes('Semua')) && (
                   <button
                     type="button"
-                    onClick={() => { setSearchQuery(''); setSelectedCategory('Semua'); }}
+                    onClick={() => { setSearchQuery(''); setSelectedCategories(['Semua']); }}
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
                   >
                     Reset Filter Pencarian
@@ -682,27 +926,6 @@ const StoreProfilePage = () => {
         {/* TAB 2: PRODUK DIGITAL & E-COURSE */}
         {activeTab === 'digital' && (
           <div className="space-y-6">
-            
-            {/* Promo Card to Digital Storefront */}
-            <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold mb-2 backdrop-blur-xs">
-                  <span className="material-icons text-sm">devices</span>
-                  Koleksi Digital Penjual
-                </div>
-                <h3 className="text-lg sm:text-xl font-black">Laman Produk Digital & E-Course</h3>
-                <p className="text-xs sm:text-sm text-blue-100 mt-1 max-w-xl">
-                  Dapatkan e-book, source code, desain template, dan materi video pembelajaran langsung dari @{username}.
-                </p>
-              </div>
-              <Link
-                to={`/digital-produk/${username}`}
-                className="px-5 py-3 bg-white hover:bg-blue-50 text-blue-900 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg shrink-0 flex items-center gap-2 transition active:scale-95"
-              >
-                <span>Buka Laman Digital Lengkap</span>
-                <span className="material-icons text-sm">open_in_new</span>
-              </Link>
-            </div>
 
             {/* Courses / E-Courses */}
             {courses.length > 0 && (
@@ -890,14 +1113,14 @@ const StoreProfilePage = () => {
             </div>
 
             <p className="text-xs text-slate-500 mb-4">
-              Bagikan link etalase Toko @{username} kepada calon pembeli dan relasi Anda:
+              Bagikan link etalase Toko {storeDisplayName} kepada calon pembeli dan relasi Anda:
             </p>
 
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 mb-5">
               <input
                 type="text"
                 readOnly
-                value={`${window.location.origin}/toko/${username}`}
+                value={`https://barakah.cloud/toko/${storeSlug}`}
                 className="text-xs text-slate-700 bg-transparent flex-1 outline-none font-mono"
               />
               <button
@@ -911,7 +1134,7 @@ const StoreProfilePage = () => {
 
             <div className="grid grid-cols-3 gap-2">
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Yuk belanja di Toko @${username} Barakah Economy: ${window.location.origin}/toko/${username}`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Yuk belanja di Toko ${storeDisplayName} Barakah Economy: https://barakah.cloud/toko/${storeSlug}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
@@ -920,7 +1143,7 @@ const StoreProfilePage = () => {
                 <span>WhatsApp</span>
               </a>
               <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/toko/${username}`)}&text=${encodeURIComponent(`Toko @${username} di Barakah Economy`)}`}
+                href={`https://t.me/share/url?url=${encodeURIComponent(`https://barakah.cloud/toko/${storeSlug}`)}&text=${encodeURIComponent(`Toko ${storeDisplayName} di Barakah Economy`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"

@@ -11,7 +11,7 @@ from barakah_app.seo_views import (
     robots_txt, sitemap_xml, seo_product_detail, 
     seo_campaign_detail, seo_article_detail, 
     seo_course_detail, seo_event_detail, seo_digital_product_detail,
-    seo_forum_detail, seo_activity_detail, seo_seller_profile
+    seo_forum_detail, seo_activity_detail, seo_seller_profile, seo_shop_profile
 )
 from streaming.views import seo_streaming_detail
 from products.views import ProductShareView
@@ -24,6 +24,8 @@ urlpatterns = [
     
     # --- SEO Crawler Traps & Share Views (Served by Django with OG tags & instant redirect) ---
     path('streaming/', seo_streaming_detail),
+    path('toko/<str:identifier>/', seo_shop_profile),
+    path('toko/<str:identifier>', seo_shop_profile),
     path('store/<str:slug>/', ProductShareView.as_view()),
     path('store/<str:slug>', ProductShareView.as_view()),
     path('produk/<str:slug>/', ProductShareView.as_view()),

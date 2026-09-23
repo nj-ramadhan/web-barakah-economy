@@ -199,7 +199,8 @@ class Profile(models.Model):
     is_google_user = models.BooleanField(default=False)
     username_change_count = models.IntegerField(default=0)
     
-    # Shop fields for digital product sellers
+    # Shop fields for digital product & ecommerce sellers
+    shop_name = models.CharField(max_length=150, blank=True, null=True, unique=True, db_index=True, help_text="Nama toko unik untuk URL /toko/{nama_toko}")
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)
     shop_description = models.TextField(blank=True, null=True)
     shop_layout = models.CharField(max_length=50, default='default', blank=True)
@@ -210,6 +211,48 @@ class Profile(models.Model):
     shop_header_style = models.CharField(max_length=50, default='theme', blank=True) # Options: 'theme', 'transparent'
     shop_text_color = models.CharField(max_length=50, default='#ffffff', blank=True)
     shop_supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes")
+
+    # Global Shop Operating Hours & Pre-Order / Delivery Settings
+    is_operational_hours_active = models.BooleanField(default=False, help_text="Aktifkan jam operasional toko secara global")
+    operational_hours = models.CharField(max_length=255, blank=True, null=True, help_text="Contoh: Setiap Hari (08:00 - 21:00 WIB)")
+
+    is_preorder = models.BooleanField(default=False, help_text="Aktifkan default Pre-Order (PO) toko")
+    preorder_type = models.CharField(
+        max_length=20,
+        choices=[('days', 'Hari Tertentu'), ('range', 'Rentang Hari')],
+        default='days',
+        blank=True,
+        null=True
+    )
+    preorder_days = models.CharField(max_length=255, blank=True, null=True, help_text="Hari PO default, misal: 'Senin, Rabu, Jumat'")
+    preorder_days_min = models.PositiveIntegerField(blank=True, null=True)
+    preorder_days_max = models.PositiveIntegerField(blank=True, null=True)
+    preorder_duration = models.CharField(max_length=100, blank=True, null=True)
+
+    is_delivery_schedule_active = models.BooleanField(default=False)
+    delivery_schedule_type = models.CharField(
+        max_length=20,
+        choices=[('range', 'Rentang Hari'), ('days', 'Hari Tertentu'), ('date', 'Tanggal Spesifik')],
+        default='range',
+        blank=True,
+        null=True
+    )
+    delivery_range_min = models.PositiveIntegerField(blank=True, null=True)
+    delivery_range_max = models.PositiveIntegerField(blank=True, null=True)
+    delivery_days = models.CharField(max_length=255, blank=True, null=True)
+    delivery_date = models.DateField(blank=True, null=True)
+    delivery_note = models.CharField(max_length=255, blank=True, null=True)
+
+    out_of_po_shipping_active = models.BooleanField(default=False)
+    out_of_po_shipping_type = models.CharField(
+        max_length=20,
+        choices=[('flat', 'Flat Ongkir'), ('distance', 'Sesuai Jarak')],
+        default='flat',
+        blank=True,
+        null=True
+    )
+    out_of_po_shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    allow_delivery_timing_choice = models.BooleanField(default=True)
 
 
     @property
@@ -354,4 +397,35 @@ class BusinessProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.brand_name} ({self.user.username})"
+        return f"{self.brand_name} ({self.user.username})"
+
+
+class UserFollow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_relations')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower_relations')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')
+        indexes = [
+            models.Index(fields=['follower', 'following']),
+        ]
+
+    def __str__(self):
+        return f"{self.follower.username} -> {self.following.username}"
+
+
+class ShopLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_shops')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shop_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'seller')
+        indexes = [
+            models.Index(fields=['user', 'seller']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} likes {self.seller.username}'s shop"
+

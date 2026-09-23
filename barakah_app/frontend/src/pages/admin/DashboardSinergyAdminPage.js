@@ -60,6 +60,7 @@ const DashboardSinergyAdminPage = () => {
     const [outOfPoShippingType, setOutOfPoShippingType] = useState('flat'); // 'flat' | 'distance'
     const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
     const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
+    const [useStoreOperationalSettings, setUseStoreOperationalSettings] = useState(true);
 
     // Quick Edit Sold Modal State
     const [isQuickSoldModalOpen, setIsQuickSoldModalOpen] = useState(false);
@@ -181,6 +182,7 @@ const DashboardSinergyAdminPage = () => {
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setManualSoldCount(product.manual_sold_count || 0);
 
+        setUseStoreOperationalSettings(product.use_store_operational_settings !== undefined && product.use_store_operational_settings !== null ? Boolean(product.use_store_operational_settings) : true);
         setIsOperationalHoursActive(product.is_operational_hours_active || false);
         setOperationalHours(product.operational_hours || '');
         setIsPreorder(product.is_preorder || false);
@@ -248,6 +250,7 @@ const DashboardSinergyAdminPage = () => {
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('manual_sold_count', manualSoldCount || 0);
 
+            formData.append('use_store_operational_settings', useStoreOperationalSettings);
             formData.append('is_operational_hours_active', isOperationalHoursActive);
             formData.append('operational_hours', isOperationalHoursActive ? operationalHours : '');
 
@@ -772,9 +775,47 @@ const DashboardSinergyAdminPage = () => {
                                         <h4 className="font-bold text-gray-800 text-xs uppercase tracking-wider">Jadwal & Pengantaran</h4>
                                     </div>
 
-                                    {/* 1. Jam Operasional */}
-                                    <div className="bg-gray-50/60 p-3.5 rounded-xl border border-gray-200/60 space-y-2.5">
-                                        <div className="flex items-center justify-between">
+                                    {/* Mode Selector: Ikuti Toko vs Kustomisasi Khusus */}
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+                                        <div>
+                                            <span className="text-xs font-bold text-gray-800 block">Sumber Pengaturan</span>
+                                            <span className="text-[10px] text-gray-500">Gunakan pengaturan toko seller atau atur khusus untuk produk ini</span>
+                                        </div>
+                                        <div className="inline-flex p-0.5 bg-white rounded-lg border border-gray-200 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => setUseStoreOperationalSettings(true)}
+                                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${useStoreOperationalSettings ? 'bg-emerald-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                            >
+                                                <span className="material-icons text-xs">storefront</span>
+                                                <span>Ikuti Toko</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setUseStoreOperationalSettings(false)}
+                                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition flex items-center gap-1 ${!useStoreOperationalSettings ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                                            >
+                                                <span className="material-icons text-xs">tune</span>
+                                                <span>Kustomisasi</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {useStoreOperationalSettings ? (
+                                        <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 text-xs space-y-1.5 animate-fade-in">
+                                            <div className="flex items-center gap-2 text-emerald-950 font-bold">
+                                                <span className="material-icons text-emerald-600 text-sm">check_circle</span>
+                                                <span>Mengikuti Pengaturan Toko Seller</span>
+                                            </div>
+                                            <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                                Produk ini otomatis mewarisi jam buka, PO, pengantaran, dan tarif ongkir toko dari profil toko seller ({editingProduct?.seller?.username ? `@${editingProduct.seller.username}` : 'penjual'}).
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3 pt-1 animate-fade-in">
+                                            {/* 1. Jam Operasional */}
+                                            <div className="bg-gray-50/60 p-3.5 rounded-xl border border-gray-200/60 space-y-2.5">
+                                                <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <span className="material-icons text-emerald-700 text-base">storefront</span>
                                                 <p className="text-xs font-bold text-gray-800">Jam Operasional Toko</p>
@@ -1096,6 +1137,8 @@ const DashboardSinergyAdminPage = () => {
                                         </div>
                                     </div>
                                 </div>
+                            )}
+                        </div>
 
                                 {/* Thumbnail Upload */}
                                 <div className="border-t border-gray-100 pt-4">

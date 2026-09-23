@@ -9,6 +9,7 @@ import ShareButton from '../components/campaigns/ShareButton';
 import ShopDecoration from '../components/profile/ShopDecoration';
 import StoreTemplates from '../components/profile/StoreTemplates';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { safeStorage } from '../utils/storageUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -86,6 +87,16 @@ const SellerProfilePage = () => {
     const products = profileData?.products || [];
     const courses = profileData?.courses || [];
     const ecommerceProducts = profileData?.ecommerce_products || [];
+
+    const currentUser = safeStorage.getUser();
+    const isOwnStore = Boolean(
+        profile.is_owner || 
+        (currentUser && (
+            (profile.user_id && String(currentUser.id) === String(profile.user_id)) ||
+            (profile.username && String(currentUser.username).toLowerCase() === String(profile.username).toLowerCase()) ||
+            (profile.shop_name && String(currentUser.username).toLowerCase() === String(profile.shop_name).toLowerCase())
+        ))
+    );
 
     const themeColor = profile.shop_theme_color || 'green';
     const layoutStyle = profile.shop_layout || 'default';
@@ -210,6 +221,24 @@ const SellerProfilePage = () => {
                         <h1 className="text-xl font-bold">@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
+                    {isOwnStore && (
+                        <div className="mt-3 flex items-center justify-center gap-2">
+                            <Link
+                                to="/dashboard/shop-settings"
+                                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95"
+                            >
+                                <span className="material-icons text-sm">edit</span>
+                                <span>Edit Toko</span>
+                            </Link>
+                            <Link
+                                to="/dashboard/sinergy/seller"
+                                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
+                            >
+                                <span className="material-icons text-sm">inventory_2</span>
+                                <span>Kelola Produk</span>
+                            </Link>
+                        </div>
+                    )}
                     {profile && (
                         <>
                             <p className="text-sm mt-1 opacity-80">{profile.name_full}</p>

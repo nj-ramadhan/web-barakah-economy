@@ -886,7 +886,7 @@ const EcommerceProductDetail = () => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-gray-900 leading-tight">
-                  Toko @{product.seller_name}
+                  Toko {product.seller_shop_name || `@${product.seller_name}`}
                 </h2>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Official Toko
@@ -903,26 +903,23 @@ const EcommerceProductDetail = () => {
                   <span className="material-icons text-sm">verified</span>
                   {product.sold_count || 0} Terjual
                 </span>
+                {product.seller_followers_count !== undefined && (
+                  <span className="flex items-center gap-1 text-gray-500 font-semibold">
+                    <span className="material-icons text-sm text-gray-400">group</span>
+                    {product.seller_followers_count} Pengikut
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap self-end md:self-auto w-full md:w-auto">
             <Link
-              to={`/toko/${product.seller_name}`}
-              className="flex-1 md:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 shadow-sm shadow-emerald-200"
+              to={`/toko/${product.seller_shop_name || product.seller_name}`}
+              className="flex-1 md:flex-none px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 shadow-sm shadow-emerald-200"
             >
               <span className="material-icons text-base">storefront</span>
               <span>Kunjungi Toko</span>
-            </Link>
-
-            <Link
-              to={`/digital-produk/${product.seller_name}`}
-              className="px-3.5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95"
-              title="Lihat Laman Produk Digital Penjual"
-            >
-              <span className="material-icons text-base">devices</span>
-              <span className="hidden sm:inline">Produk Digital</span>
             </Link>
 
             <button

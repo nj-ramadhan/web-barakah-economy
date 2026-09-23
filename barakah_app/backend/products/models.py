@@ -95,6 +95,9 @@ class Product(models.Model):
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim produk")
     purchase_instructions = models.TextField(blank=True, null=True, help_text="Informasi khusus pengambilan atau teknis setelah pembelian")
 
+    # Pengaturan Operasional & PO (Toko vs Custom Produk)
+    use_store_operational_settings = models.BooleanField(default=True, help_text="Jika True, mengikuti pengaturan global toko. Jika False, menggunakan pengaturan custom di bawah.")
+
     # Jam Operasional Toko
     is_operational_hours_active = models.BooleanField(default=False, help_text="Aktifkan jam operasional toko untuk produk ini")
     operational_hours = models.CharField(max_length=255, blank=True, null=True, help_text="Contoh: Senin - Sabtu, 08:00 - 17:00 WIB")

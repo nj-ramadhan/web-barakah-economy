@@ -1439,6 +1439,24 @@ const ProfilePage = () => {
                                         </span>
                                     ))}
                                 </div>
+
+                                {/* Follower, Following & Like Stats */}
+                                <div className="flex items-center justify-center gap-6 mt-4 py-2.5 px-6 bg-gray-50 rounded-2xl max-w-sm mx-auto border border-gray-100 shadow-2xs">
+                                    <div className="text-center">
+                                        <span className="block text-lg font-black text-gray-900">{profile.followers_count || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pengikut</span>
+                                    </div>
+                                    <div className="h-6 w-[1px] bg-gray-200"></div>
+                                    <div className="text-center">
+                                        <span className="block text-lg font-black text-gray-900">{profile.following_count || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mengikuti</span>
+                                    </div>
+                                    <div className="h-6 w-[1px] bg-gray-200"></div>
+                                    <div className="text-center">
+                                        <span className="block text-lg font-black text-rose-600">{profile.shop_likes_count || 0}</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Suka Toko</span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Quick Stats/Links */}
@@ -1594,12 +1612,14 @@ const ProfilePage = () => {
                                 {activeTab === 'shop' && (
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
-                                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pengaturan Toko Digital</h4>
-                                            <Link to={`/digital-produk/${profile.username || ''}`} className="text-[10px] font-black text-purple-600 uppercase flex items-center gap-1 hover:underline">
+                                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Informasi Toko</h4>
+                                            <Link to={`/toko/${profile.shop_name || profile.username || ''}`} className="text-[10px] font-black text-emerald-700 uppercase flex items-center gap-1 hover:underline">
                                                 Kunjungi Toko <span className="material-icons text-xs">open_in_new</span>
                                             </Link>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Nama Toko" value={profile.shop_name ? profile.shop_name : `Belum diatur (@${profile.username})`} icon="storefront" />
+                                            <ProfileInfoItem label="Alamat Toko (URL)" value={`https://barakah.cloud/toko/${profile.shop_name || profile.username}`} icon="link" />
                                             <ProfileInfoItem label="Deskripsi Toko" value={profile.shop_description} icon="description" fullWidth />
                                             <ProfileInfoItem label="Tema Warna" value={profile.shop_theme_color} icon="palette" />
                                             <ProfileInfoItem label="Gaya Font" value={profile.shop_font} icon="font_download" />

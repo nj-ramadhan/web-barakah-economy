@@ -283,7 +283,10 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             from products.models import Product
             from products.serializers import ProductSerializer
             
-            user = User.objects.get(username=username)
+            from django.db.models import Q
+            user = User.objects.filter(Q(profile__shop_name__iexact=username) | Q(username__iexact=username)).first()
+            if not user:
+                return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
             profile = Profile.objects.get(user=user)
             
             # Show all active products for the specific user (including exclusive)
@@ -299,6 +302,7 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             profile_data = {
                 'user_id': user.id,
                 'username': user.username,
+                'shop_name': profile.shop_name or '',
                 'name_full': profile.name_full or user.username,
                 'picture': profile.picture.url if profile.picture else (profile.google_picture_url if profile.google_picture_url else None),
                 'shop_thumbnail': profile.shop_thumbnail.url if profile.shop_thumbnail else None,
@@ -312,6 +316,12 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'province_name': profile.address_province or '',
                 'joined_date': user.date_joined.strftime('%Y-%m-%d') if hasattr(user, 'date_joined') and user.date_joined else None,
                 'phone': getattr(user, 'phone', None) or getattr(profile, 'phone', None) or '',
+                'followers_count': user.follower_relations.count(),
+                'following_count': user.following_relations.count(),
+                'shop_likes_count': user.shop_likes.count(),
+                'is_following': user.follower_relations.filter(follower=request.user).exists() if request.user.is_authenticated else False,
+                'is_shop_liked': user.shop_likes.filter(user=request.user).exists() if request.user.is_authenticated else False,
+                'is_owner': bool(request.user.is_authenticated and request.user.id == user.id),
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)

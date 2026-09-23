@@ -43,10 +43,52 @@ class ProfileSerializer(serializers.ModelSerializer):
     info_source_display = serializers.CharField(source='get_info_source_display', read_only=True)
     has_usable_password = serializers.SerializerMethodField(read_only=True)
 
+    followers_count = serializers.SerializerMethodField(read_only=True)
+    following_count = serializers.SerializerMethodField(read_only=True)
+    shop_likes_count = serializers.SerializerMethodField(read_only=True)
+    is_following = serializers.SerializerMethodField(read_only=True)
+    is_shop_liked = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Profile
         fields = '__all__'
         read_only_fields = ('user',)
+
+    def to_internal_value(self, data):
+        mutable_data = data.copy() if hasattr(data, 'copy') else data
+        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
+            if bool_field in mutable_data:
+                val = mutable_data[bool_field]
+                if isinstance(val, str):
+                    mutable_data[bool_field] = val.lower() in ('true', '1', 't')
+        for null_field in ['delivery_date', 'preorder_days_min', 'preorder_days_max', 'delivery_range_min', 'delivery_range_max', 'out_of_po_shipping_cost']:
+            if null_field in mutable_data and mutable_data[null_field] in ('', 'null', 'undefined', None):
+                if null_field == 'out_of_po_shipping_cost':
+                    mutable_data[null_field] = 0
+                else:
+                    mutable_data[null_field] = None
+        return super().to_internal_value(mutable_data)
+
+    def get_followers_count(self, obj):
+        return obj.user.follower_relations.count()
+
+    def get_following_count(self, obj):
+        return obj.user.following_relations.count()
+
+    def get_shop_likes_count(self, obj):
+        return obj.user.shop_likes.count()
+
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user.follower_relations.filter(follower=request.user).exists()
+        return False
+
+    def get_is_shop_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user.shop_likes.filter(user=request.user).exists()
+        return False
 
     def get_accessible_menus(self, obj):
         return obj.user.get_all_accessible_menus()
@@ -117,6 +159,11 @@ class PublicProfileSerializer(serializers.ModelSerializer):
     province_name = serializers.SerializerMethodField()
     city_name = serializers.SerializerMethodField()
     labels = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    shop_likes_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    is_shop_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -125,8 +172,36 @@ class PublicProfileSerializer(serializers.ModelSerializer):
             'google_picture_url', 'address_province', 'province_name',
             'address_city_name', 'city_name',
             'has_digital_products', 'has_courses', 'has_physical_products',
-            'labels'
+            'labels', 'shop_name', 'shop_thumbnail', 'shop_description',
+            'followers_count', 'following_count', 'shop_likes_count',
+            'is_following', 'is_shop_liked',
+            'shop_header_style', 'shop_text_color', 'shop_supported_couriers',
+            'is_operational_hours_active', 'operational_hours',
+            'is_preorder', 'preorder_type', 'preorder_days', 'preorder_days_min', 'preorder_days_max', 'preorder_duration',
+            'is_delivery_schedule_active', 'delivery_schedule_type', 'delivery_range_min', 'delivery_range_max', 'delivery_days', 'delivery_date', 'delivery_note',
+            'out_of_po_shipping_active', 'out_of_po_shipping_type', 'out_of_po_shipping_cost', 'allow_delivery_timing_choice'
         ]
+
+    def get_followers_count(self, obj):
+        return obj.user.follower_relations.count()
+
+    def get_following_count(self, obj):
+        return obj.user.following_relations.count()
+
+    def get_shop_likes_count(self, obj):
+        return obj.user.shop_likes.count()
+
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user.follower_relations.filter(follower=request.user).exists()
+        return False
+
+    def get_is_shop_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user.shop_likes.filter(user=request.user).exists()
+        return False
 
     def get_has_digital_products(self, obj):
         return obj.user.digital_products.filter(is_active=True).exists()
