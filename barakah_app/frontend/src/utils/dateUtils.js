@@ -131,3 +131,71 @@ export const toDateInputString = (dateInput) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+export const INDO_DAYS = {
+  'minggu': 0,
+  'ahad': 0,
+  'senin': 1,
+  'selasa': 2,
+  'rabu': 3,
+  'kamis': 4,
+  'jumat': 5,
+  "jum'at": 5,
+  'sabtu': 6
+};
+
+/**
+ * Automatically calculates the closest upcoming date matching any of the selected days.
+ * @param {string[]|string} daysInput Array of day names e.g. ['Senin', 'Kamis'] or string 'Senin, Kamis'
+ * @param {Date} fromDate Reference date, defaults to current time
+ * @returns {object|null}
+ */
+export const getNextDateFromDays = (daysInput, fromDate = new Date()) => {
+  if (!daysInput) return null;
+  const daysArray = Array.isArray(daysInput)
+    ? daysInput
+    : String(daysInput).split(',').map(s => s.trim()).filter(Boolean);
+
+  if (!daysArray.length) return null;
+
+  const currentDay = fromDate.getDay();
+  let minDiff = 8;
+  let chosenDayName = '';
+
+  for (const day of daysArray) {
+    const cleanDay = day.toLowerCase().trim();
+    if (INDO_DAYS[cleanDay] !== undefined) {
+      const targetDay = INDO_DAYS[cleanDay];
+      const diff = (targetDay - currentDay + 7) % 7;
+      if (diff < minDiff) {
+        minDiff = diff;
+        chosenDayName = day;
+      }
+    }
+  }
+
+  if (minDiff > 7) return null;
+
+  const targetDate = new Date(fromDate);
+  targetDate.setDate(targetDate.getDate() + minDiff);
+
+  const formattedDate = targetDate.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  let relativeLabel = '';
+  if (minDiff === 0) relativeLabel = 'Hari Ini';
+  else if (minDiff === 1) relativeLabel = 'Besok';
+
+  return {
+    date: targetDate,
+    diffDays: minDiff,
+    dayName: chosenDayName,
+    formatted: formattedDate,
+    relativeLabel,
+    display: relativeLabel ? `${relativeLabel} (${formattedDate})` : formattedDate
+  };
+};

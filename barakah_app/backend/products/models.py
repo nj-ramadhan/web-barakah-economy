@@ -93,6 +93,15 @@ class Product(models.Model):
 
     # Waktu Pre-Order (PO)
     is_preorder = models.BooleanField(default=False, help_text="Aktifkan sistem Pre-Order (PO)")
+    preorder_type = models.CharField(
+        max_length=20,
+        choices=[('days', 'Hari Tertentu'), ('range', 'Rentang Hari')],
+        default='days',
+        blank=True,
+        null=True,
+        help_text="Tipe PO: days (hari tertentu) atau range (rentang hari)"
+    )
+    preorder_days = models.CharField(max_length=255, blank=True, null=True, help_text="Hari PO, misal: 'Senin, Rabu, Jumat'")
     preorder_days_min = models.PositiveIntegerField(blank=True, null=True, help_text="Minimal hari PO")
     preorder_days_max = models.PositiveIntegerField(blank=True, null=True, help_text="Maksimal hari PO")
     preorder_duration = models.CharField(max_length=100, blank=True, null=True, help_text="Label rentang hari PO, contoh: 3 - 7 Hari")

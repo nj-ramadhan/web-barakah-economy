@@ -8,6 +8,7 @@ import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency, parseCurrency } from '../utils/formatters';
 import CKEditorComponent from '../components/common/CKEditor';
 import ProductPromoModal from '../components/modals/ProductPromoModal';
+import { getNextDateFromDays } from '../utils/dateUtils';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
@@ -36,6 +37,8 @@ const DashboardSinergySellersPage = () => {
     const [isOperationalHoursActive, setIsOperationalHoursActive] = useState(false);
     const [operationalHours, setOperationalHours] = useState('');
     const [isPreorder, setIsPreorder] = useState(false);
+    const [preorderType, setPreorderType] = useState('days'); // 'days' | 'range'
+    const [preorderDays, setPreorderDays] = useState([]);
     const [preorderDaysMin, setPreorderDaysMin] = useState('');
     const [preorderDaysMax, setPreorderDaysMax] = useState('');
     const [preorderDuration, setPreorderDuration] = useState('');
@@ -317,18 +320,30 @@ const DashboardSinergySellersPage = () => {
 
             formData.append('is_preorder', isPreorder);
             if (isPreorder) {
-                if (preorderDaysMin !== '') formData.append('preorder_days_min', preorderDaysMin);
-                if (preorderDaysMax !== '') formData.append('preorder_days_max', preorderDaysMax);
-                let durationLabel = preorderDuration;
-                if (!durationLabel && (preorderDaysMin || preorderDaysMax)) {
-                    if (preorderDaysMin && preorderDaysMax) {
-                        durationLabel = `${preorderDaysMin} - ${preorderDaysMax} Hari`;
-                    } else {
-                        durationLabel = `${preorderDaysMin || preorderDaysMax} Hari`;
+                formData.append('preorder_type', preorderType);
+                if (preorderType === 'days') {
+                    formData.append('preorder_days', Array.isArray(preorderDays) ? preorderDays.join(', ') : preorderDays);
+                    let durationLabel = preorderDuration;
+                    if (!durationLabel && preorderDays.length > 0) {
+                        durationLabel = `Setiap ${preorderDays.join(', ')}`;
                     }
+                    formData.append('preorder_duration', durationLabel || '');
+                } else if (preorderType === 'range') {
+                    if (preorderDaysMin !== '') formData.append('preorder_days_min', preorderDaysMin);
+                    if (preorderDaysMax !== '') formData.append('preorder_days_max', preorderDaysMax);
+                    let durationLabel = preorderDuration;
+                    if (!durationLabel && (preorderDaysMin || preorderDaysMax)) {
+                        if (preorderDaysMin && preorderDaysMax) {
+                            durationLabel = `${preorderDaysMin} - ${preorderDaysMax} Hari`;
+                        } else {
+                            durationLabel = `${preorderDaysMin || preorderDaysMax} Hari`;
+                        }
+                    }
+                    formData.append('preorder_duration', durationLabel || '');
                 }
-                formData.append('preorder_duration', durationLabel || '');
             } else {
+                formData.append('preorder_type', 'days');
+                formData.append('preorder_days', '');
                 formData.append('preorder_duration', '');
             }
 
@@ -416,6 +431,8 @@ const DashboardSinergySellersPage = () => {
             setIsOperationalHoursActive(false);
             setOperationalHours('');
             setIsPreorder(false);
+            setPreorderType('days');
+            setPreorderDays([]);
             setPreorderDaysMin('');
             setPreorderDaysMax('');
             setPreorderDuration('');
@@ -522,6 +539,8 @@ const DashboardSinergySellersPage = () => {
                         setIsOperationalHoursActive(false);
                         setOperationalHours('');
                         setIsPreorder(false);
+                        setPreorderType('days');
+                        setPreorderDays([]);
                         setPreorderDaysMin('');
                         setPreorderDaysMax('');
                         setPreorderDuration('');
@@ -598,6 +617,24 @@ const DashboardSinergySellersPage = () => {
                                     setThumbnailPreview(p.thumbnail || p.thumbnail_url);
                                     setGalleryFiles([]);
                                     setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
+                                    setIsOperationalHoursActive(p.is_operational_hours_active || false);
+                                    setOperationalHours(p.operational_hours || '');
+                                    setIsPreorder(p.is_preorder || false);
+                                    setPreorderType(p.preorder_type || (p.preorder_days ? 'days' : (p.preorder_days_min ? 'range' : 'days')));
+                                    setPreorderDays(p.preorder_days ? p.preorder_days.split(',').map(d => d.trim()).filter(Boolean) : []);
+                                    setPreorderDaysMin(p.preorder_days_min !== null && p.preorder_days_min !== undefined ? p.preorder_days_min : '');
+                                    setPreorderDaysMax(p.preorder_days_max !== null && p.preorder_days_max !== undefined ? p.preorder_days_max : '');
+                                    setPreorderDuration(p.preorder_duration || '');
+                                    setIsDeliveryScheduleActive(p.is_delivery_schedule_active || false);
+                                    setDeliveryScheduleType(p.delivery_schedule_type || 'range');
+                                    setDeliveryRangeMin(p.delivery_range_min !== null && p.delivery_range_min !== undefined ? p.delivery_range_min : '');
+                                    setDeliveryRangeMax(p.delivery_range_max !== null && p.delivery_range_max !== undefined ? p.delivery_range_max : '');
+                                    setDeliveryDays(p.delivery_days ? p.delivery_days.split(',').map(d => d.trim()).filter(Boolean) : []);
+                                    setDeliveryDate(p.delivery_date || '');
+                                    setDeliveryNote(p.delivery_note || '');
+                                    setOutOfPoShippingActive(p.out_of_po_shipping_active || false);
+                                    setOutOfPoShippingCost(parseCurrency(p.out_of_po_shipping_cost) || 0);
+                                    setAllowDeliveryTimingChoice(p.allow_delivery_timing_choice !== false);
                                     setActiveTab('edit');
                                 }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit</button>
                                 <button
@@ -1038,40 +1075,108 @@ const DashboardSinergySellersPage = () => {
                         </div>
 
                         {isPreorder && (
-                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3">
-                                <label className="block text-xs font-semibold text-gray-700">Waktu / Lama PO (Rentang Hari)</label>
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className="flex-1 relative">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={preorderDaysMin}
-                                            onChange={(e) => setPreorderDaysMin(e.target.value)}
-                                            placeholder="Min (Cth: 3)"
-                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                        />
-                                        <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
-                                    </div>
-                                    <span className="text-xs text-gray-400 font-bold">s/d</span>
-                                    <div className="flex-1 relative">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={preorderDaysMax}
-                                            onChange={(e) => setPreorderDaysMax(e.target.value)}
-                                            placeholder="Maks (Cth: 7)"
-                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                        />
-                                        <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3.5">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Jadwal Pre-Order</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { id: 'days', label: 'Pilih Hari Tertentu', icon: 'view_week' },
+                                            { id: 'range', label: 'Rentang Hari', icon: 'date_range' },
+                                        ].map((t) => (
+                                            <button
+                                                key={t.id}
+                                                type="button"
+                                                onClick={() => setPreorderType(t.id)}
+                                                className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${preorderType === t.id ? 'bg-blue-100 border-blue-400 text-blue-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                            >
+                                                <span className="material-icons text-sm">{t.icon}</span>
+                                                <span>{t.label}</span>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
+
+                                {preorderType === 'days' && (
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-semibold text-gray-700">Pilih Hari PO dalam Seminggu</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => {
+                                                const isSelected = preorderDays.includes(day);
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setPreorderDays(preorderDays.filter(d => d !== day));
+                                                            } else {
+                                                                setPreorderDays([...preorderDays, day]);
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${isSelected ? 'bg-blue-600 border-blue-700 text-white shadow-sm' : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'}`}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        {preorderDays.length > 0 && (
+                                            <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 space-y-1">
+                                                <p className="text-[11px] text-blue-900 font-medium">
+                                                    Dipilih: <span className="font-bold">{preorderDays.join(', ')}</span>
+                                                </p>
+                                                {(() => {
+                                                    const nextInfo = getNextDateFromDays(preorderDays);
+                                                    return nextInfo ? (
+                                                        <p className="text-[11px] text-blue-800 font-semibold flex items-center gap-1.5">
+                                                            <span className="material-icons text-[14px] text-blue-600">event</span>
+                                                            <span>Jadwal PO Terdekat: <strong className="text-blue-950 underline">{nextInfo.display}</strong></span>
+                                                        </p>
+                                                    ) : null;
+                                                })()}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {preorderType === 'range' && (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-gray-700">Waktu / Lama PO (Rentang Hari)</label>
+                                        <div className="flex items-center gap-2 sm:gap-3">
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={preorderDaysMin}
+                                                    onChange={(e) => setPreorderDaysMin(e.target.value)}
+                                                    placeholder="Min (Cth: 3)"
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                />
+                                                <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                            </div>
+                                            <span className="text-xs text-gray-400 font-bold">s/d</span>
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={preorderDaysMax}
+                                                    onChange={(e) => setPreorderDaysMax(e.target.value)}
+                                                    placeholder="Maks (Cth: 7)"
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                />
+                                                <span className="absolute right-3 top-2.5 text-[11px] text-gray-400">Hari</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-[11px] text-gray-500 mb-1">Keterangan Label PO (Opsional)</label>
                                     <input
                                         type="text"
                                         value={preorderDuration}
                                         onChange={(e) => setPreorderDuration(e.target.value)}
-                                        placeholder="Contoh: 3 - 7 Hari (Dibuat sesuai pesanan)"
+                                        placeholder={preorderType === 'days' && preorderDays.length > 0 ? `Contoh: Setiap ${preorderDays.join(', ')}` : "Contoh: 3 - 7 Hari (Dibuat sesuai pesanan)"}
                                         className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 transition"
                                     />
                                 </div>

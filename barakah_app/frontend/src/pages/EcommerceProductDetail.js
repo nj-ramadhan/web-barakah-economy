@@ -11,6 +11,7 @@ import { getMediaUrl } from '../utils/mediaUtils';
 import { toggleLikeProduct } from '../services/productApi';
 import { createStoreChat } from '../services/chatApi';
 import ShareButton from '../components/campaigns/ShareButton';
+import { getNextDateFromDays } from '../utils/dateUtils';
 import '../styles/Body.css';
 
 
@@ -581,7 +582,7 @@ const EcommerceProductDetail = () => {
                   {product?.is_preorder && (
                     <p className="text-sm font-semibold text-amber-800 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-200 inline-flex items-center gap-1.5 shadow-2xs">
                       <span className="material-icons text-amber-600 text-sm">hourglass_top</span>
-                      Pre-Order ({product.preorder_duration || (product.preorder_days_min && product.preorder_days_max ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari` : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`)})
+                      Pre-Order ({product.preorder_type === 'days' || product.preorder_days ? (product.preorder_duration || `Hari ${product.preorder_days}`) : (product.preorder_duration || (product.preorder_days_min && product.preorder_days_max ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari` : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`))})
                     </p>
                   )}
                 </div>
@@ -633,24 +634,37 @@ const EcommerceProductDetail = () => {
                       )}
 
                       {/* Waktu Pre-Order */}
-                      {product?.is_preorder && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200/80 shadow-2xs">
-                          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                            <span className="material-icons text-lg">hourglass_top</span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-semibold text-amber-600/90 leading-tight">Waktu Pre-Order (PO)</p>
-                            <p className="text-xs font-bold text-slate-800 mt-0.5">
-                              {product.preorder_duration || (
-                                product.preorder_days_min && product.preorder_days_max
-                                  ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari`
-                                  : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`
+                      {product?.is_preorder && (() => {
+                        const poDateInfo = product.preorder_days ? getNextDateFromDays(product.preorder_days) : null;
+                        return (
+                          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200/80 shadow-2xs">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                              <span className="material-icons text-lg">hourglass_top</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-semibold text-amber-600/90 leading-tight">Waktu Pre-Order (PO)</p>
+                              <p className="text-xs font-bold text-slate-800 mt-0.5">
+                                {product.preorder_type === 'days' || product.preorder_days ? (
+                                  <span>Setiap hari: <strong className="text-amber-800">{product.preorder_days}</strong></span>
+                                ) : (
+                                  product.preorder_duration || (
+                                    product.preorder_days_min && product.preorder_days_max
+                                      ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari`
+                                      : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`
+                                  )
+                                )}
+                              </p>
+                              {poDateInfo && (
+                                <p className="text-[11px] text-amber-900 font-semibold mt-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 inline-flex items-center gap-1">
+                                  <span className="material-icons text-[13px] text-amber-600">event</span>
+                                  <span>Jadwal PO Terdekat: <strong className="underline">{poDateInfo.display}</strong></span>
+                                </p>
                               )}
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Pesanan disiapkan sesuai estimasi PO</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Pesanan diproses sesuai jadwal PO</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Ongkir Flat Toko / Luar Jam PO */}
                       {(product?.out_of_po_shipping_active || product?.is_shipping_cost_active) && (
@@ -685,9 +699,19 @@ const EcommerceProductDetail = () => {
                               {product.delivery_schedule_type === 'range' && (
                                 <span>Estimasi Rentang {product.delivery_range_min || 1} - {product.delivery_range_max || 3} Hari Kerja</span>
                               )}
-                              {product.delivery_schedule_type === 'days' && (
-                                <span>Pengiriman pada hari: <strong className="text-emerald-800">{product.delivery_days || 'Setiap Hari'}</strong></span>
-                              )}
+                              {product.delivery_schedule_type === 'days' && (() => {
+                                const delDateInfo = product.delivery_days ? getNextDateFromDays(product.delivery_days) : null;
+                                return (
+                                  <div>
+                                    <span>Pengiriman pada hari: <strong className="text-emerald-800">{product.delivery_days || 'Setiap Hari'}</strong></span>
+                                    {delDateInfo && (
+                                      <span className="block text-[11px] text-emerald-800 font-semibold mt-0.5">
+                                        Pengantaran Terdekat: <strong className="underline">{delDateInfo.display}</strong>
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {product.delivery_schedule_type === 'date' && (
                                 <span>Tanggal Pengiriman: <strong className="text-emerald-800">{product.delivery_date ? new Date(product.delivery_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong></span>
                               )}
