@@ -1901,6 +1901,12 @@ ${stopsText}
                                                     Transfer Bank / QRIS Manual
                                                 </span>
                                             )}
+                                            {order.is_distance_based_shipping && (
+                                                <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full text-[11px]">
+                                                    <span className="material-icons text-sm">near_me</span>
+                                                    Ongkir Sesuai Jarak
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Proof Button or Auto indicator */}
@@ -1972,7 +1978,7 @@ ${stopsText}
                                                         {order.shipping_postal_code || order.buyer_details?.address_postal_code}
                                                     </p>
                                                 </div>
-                                                {order.delivery_timing_choice && (
+                                                {['current_schedule', 'next_week'].includes(order.delivery_timing_choice) && (
                                                     <div className={`mt-3 p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold ${
                                                         order.delivery_timing_choice === 'next_week'
                                                             ? 'bg-purple-50 border-purple-200 text-purple-800'
@@ -2017,7 +2023,14 @@ ${stopsText}
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
+                                                                {item.is_preorder && (
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 uppercase tracking-wide">
+                                                                        PO
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             {item.variation_name && <p className="text-[10px] text-emerald-600 font-medium">Varian: {item.variation_name}</p>}
                                                             <p className="text-[10px] text-gray-500">{item.quantity} x {formatIDR(item.price)}</p>
                                                             {item.purchase_instructions && (
@@ -2033,10 +2046,23 @@ ${stopsText}
                                                         <span className="text-gray-500">Subtotal Produk</span>
                                                         <span className="font-bold text-gray-800">{formatIDR(order.total_price)}</span>
                                                     </div>
-                                                    {Number(order.shipping_cost) > 0 && (
+                                                    {order.is_distance_based_shipping ? (
+                                                        <div className="flex justify-between items-center text-xs p-1.5 bg-blue-50/80 border border-blue-100 rounded-lg text-blue-900">
+                                                            <span className="font-semibold flex items-center gap-1">
+                                                                <span className="material-icons text-sm text-blue-600">near_me</span>
+                                                                Ongkir Sesuai Jarak
+                                                            </span>
+                                                            <span className="font-bold text-blue-700">Dikonfirmasi Kurir / Seller</span>
+                                                        </div>
+                                                    ) : Number(order.shipping_cost) > 0 ? (
                                                         <div className="flex justify-between items-center text-xs">
                                                             <span className="text-gray-500">Ongkir ({order.shipping_courier || 'Kurir'})</span>
                                                             <span className="font-bold text-gray-800">+{formatIDR(order.shipping_cost)}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex justify-between items-center text-xs text-emerald-700">
+                                                            <span className="text-gray-500">Ongkir Toko</span>
+                                                            <span className="font-bold">GRATIS / Ambil Sendiri</span>
                                                         </div>
                                                     )}
                                                     {Number(order.voucher_nominal) > 0 && (

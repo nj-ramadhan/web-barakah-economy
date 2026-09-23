@@ -827,8 +827,44 @@ const StoreProfilePage = () => {
                   const stock = Number(product.total_stock ?? product.stock ?? 0);
                   const isOutOfStock = stock <= 0;
                   const price = Number(product.price || 0);
+
+                  // Deteksi variasi & rentang harga
+                  const activeVariations = Array.isArray(product.variations)
+                    ? product.variations.filter(v => v && (v.is_active === undefined || v.is_active === true) && (v.name || Number(v.additional_price) > 0))
+                    : [];
+
+                  let minPrice = product.min_price !== undefined && product.min_price !== null ? Number(product.min_price) : null;
+                  let maxPrice = product.max_price !== undefined && product.max_price !== null ? Number(product.max_price) : null;
+
+                  if (activeVariations.length > 0) {
+                    const varPrices = activeVariations
+                      .map(v => Number(v.additional_price) > 0 ? Number(v.additional_price) : price)
+                      .filter(p => !isNaN(p) && p > 0);
+                    if (varPrices.length > 0) {
+                      const calculatedMin = Math.min(...varPrices);
+                      const calculatedMax = Math.max(...varPrices);
+                      minPrice = minPrice !== null ? Math.min(minPrice, calculatedMin) : calculatedMin;
+                      maxPrice = maxPrice !== null ? Math.max(maxPrice, calculatedMax) : calculatedMax;
+                    }
+                  }
+
+                  if (minPrice === null) minPrice = price;
+                  if (maxPrice === null) maxPrice = price;
+
+                  const hasPriceRange = minPrice < maxPrice;
+
+                  // Perhitungan diskon
                   const finalPrice = product.discounted_price ? Number(product.discounted_price) : price;
-                  const hasDiscount = product.discounted_price && finalPrice < price;
+                  const hasDiscount = Boolean(product.discounted_price && finalPrice < price);
+                  const discountPct = Number(product.promo_discount_percentage || 0);
+
+                  const finalMinPrice = hasDiscount
+                    ? (discountPct > 0 ? Math.round(minPrice * (1 - discountPct / 100)) : Math.max(0, minPrice - (price - finalPrice)))
+                    : minPrice;
+
+                  const finalMaxPrice = hasDiscount
+                    ? (discountPct > 0 ? Math.round(maxPrice * (1 - discountPct / 100)) : Math.max(0, maxPrice - (price - finalPrice)))
+                    : maxPrice;
 
                   return (
                     <div
@@ -877,12 +913,18 @@ const StoreProfilePage = () => {
 
                           {/* Price */}
                           <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-sm sm:text-base font-black text-emerald-700">
-                              {formatIDR(finalPrice)}
-                            </span>
+                            {hasPriceRange ? (
+                              <span className="text-xs sm:text-sm font-black text-emerald-700 leading-snug">
+                                {formatIDR(finalMinPrice)} - {formatIDR(finalMaxPrice)}
+                              </span>
+                            ) : (
+                              <span className="text-sm sm:text-base font-black text-emerald-700">
+                                {formatIDR(finalMinPrice)}
+                              </span>
+                            )}
                             {hasDiscount && (
                               <span className="text-[10px] text-slate-400 line-through">
-                                {formatIDR(price)}
+                                {hasPriceRange ? `${formatIDR(minPrice)} - ${formatIDR(maxPrice)}` : formatIDR(price)}
                               </span>
                             )}
                           </div>

@@ -1389,7 +1389,29 @@ const Home = () => {
             {sortedProducts.map((product) => {
               const effectiveStock = getProductStock(product);
               const basePrice = Number(product.price || 0);
+
+              // Variations & Price Range
+              let minP = product.min_price !== undefined && product.min_price !== null ? Number(product.min_price) : null;
+              let maxP = product.max_price !== undefined && product.max_price !== null ? Number(product.max_price) : null;
+              if (product.variations && Array.isArray(product.variations) && product.variations.length > 0) {
+                const varPrices = product.variations
+                  .filter(v => v && (v.is_active === undefined || v.is_active === true) && (v.name || Number(v.additional_price) > 0))
+                  .map(v => Number(v.additional_price) > 0 ? Number(v.additional_price) : basePrice)
+                  .filter(p => !isNaN(p) && p > 0);
+                if (varPrices.length > 0) {
+                  const calculatedMin = Math.min(...varPrices);
+                  const calculatedMax = Math.max(...varPrices);
+                  minP = minP !== null ? Math.min(minP, calculatedMin) : calculatedMin;
+                  maxP = maxP !== null ? Math.max(maxP, calculatedMax) : calculatedMax;
+                }
+              }
+              if (minP === null) minP = basePrice;
+              if (maxP === null) maxP = basePrice;
+              const hasRange = minP < maxP;
+
               let finalPrice = basePrice;
+              let finalMinP = minP;
+              let finalMaxP = maxP;
               let hasPromo = false;
               let promoDiscountPct = 0;
 
@@ -1398,10 +1420,14 @@ const Home = () => {
                 if (promo.discount_type === 'percentage') {
                   promoDiscountPct = Math.min(100, Math.max(1, Math.round(Number(promo.discount_value || 0))));
                   finalPrice = Math.max(0, basePrice - (basePrice * (promoDiscountPct / 100)));
+                  finalMinP = Math.max(0, Math.round(minP * (1 - promoDiscountPct / 100)));
+                  finalMaxP = Math.max(0, Math.round(maxP * (1 - promoDiscountPct / 100)));
                   hasPromo = true;
                 } else if (promo.discount_type === 'nominal') {
                   const discVal = Number(promo.discount_value || 0);
                   finalPrice = Math.max(0, basePrice - discVal);
+                  finalMinP = Math.max(0, minP - discVal);
+                  finalMaxP = Math.max(0, maxP - discVal);
                   promoDiscountPct = basePrice > 0 ? Math.min(100, Math.max(1, Math.round((discVal / basePrice) * 100))) : 0;
                   hasPromo = true;
                 }
@@ -1437,15 +1463,15 @@ const Home = () => {
                           {hasPromo ? (
                             <div className="flex flex-col">
                               <span className="text-xs font-extrabold text-emerald-700">
-                                {formatIDR(finalPrice)}
+                                {hasRange ? `${formatIDR(finalMinP)} - ${formatIDR(finalMaxP)}` : formatIDR(finalPrice)}
                               </span>
                               <span className="text-[9px] text-gray-400 line-through">
-                                {formatIDR(basePrice)}
+                                {hasRange ? `${formatIDR(minP)} - ${formatIDR(maxP)}` : formatIDR(basePrice)}
                               </span>
                             </div>
                           ) : (
                             <span className="text-xs font-extrabold text-emerald-700">
-                              {formatIDR(basePrice)}
+                              {hasRange ? `${formatIDR(finalMinP)} - ${formatIDR(finalMaxP)}` : formatIDR(basePrice)}
                             </span>
                           )}
                           <div className="flex justify-between items-center text-[9px] text-gray-400 mt-0.5">

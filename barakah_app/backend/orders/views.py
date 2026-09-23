@@ -314,7 +314,8 @@ class CreateOrderView(APIView):
                 shipping_address_detail = config.get('shipping_address_detail') or request.data.get('shipping_address_detail')
                 shipping_coordinates = config.get('shipping_coordinates') or request.data.get('shipping_coordinates')
                 buyer_note = config.get('buyer_note') or request.data.get('buyer_note') or ''
-                delivery_timing_choice = config.get('delivery_timing_choice') or request.data.get('delivery_timing_choice') or 'current_schedule'
+                raw_timing = config.get('delivery_timing_choice') or request.data.get('delivery_timing_choice')
+                delivery_timing_choice = raw_timing if raw_timing in ['current_schedule', 'next_week'] else None
 
                 seller_user = None
                 if s_id != "0":

@@ -443,7 +443,14 @@ const EcommerceOrderHistoryPage = () => {
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="text-xs font-black text-gray-900 truncate">{item.product_name}</h4>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <h4 className="text-xs font-black text-gray-900 truncate">{item.product_name}</h4>
+                                                                {item.is_preorder && (
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 uppercase tracking-wide">
+                                                                        PO
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
                                                                 {order.items.length} Barang • Rp {formatIDR(totalCalculatedAmount)}
                                                             </p>
@@ -452,7 +459,7 @@ const EcommerceOrderHistoryPage = () => {
                                                 ))}
                                             </div>
 
-                                            {order.delivery_timing_choice && (
+                                            {['current_schedule', 'next_week'].includes(order.delivery_timing_choice) && (
                                                 <div className={`p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold ${
                                                     order.delivery_timing_choice === 'next_week'
                                                         ? 'bg-purple-50/80 border-purple-200 text-purple-800'
@@ -684,7 +691,15 @@ const EcommerceOrderHistoryPage = () => {
                                                 {it.product_image || it.product_thumbnail ? <img src={getMediaUrl(it.product_image || it.product_thumbnail)} alt={it.product_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-emerald-600"><span className="material-icons text-base">inventory_2</span></div>}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-gray-900 truncate">{it.product_name}</p>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <p className="text-xs font-bold text-gray-900 truncate">{it.product_name}</p>
+                                                    {it.is_preorder && (
+                                                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 uppercase tracking-wide">
+                                                            PO
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {it.variation_name && <p className="text-[10px] text-emerald-600 font-medium">Varian: {it.variation_name}</p>}
                                                 <p className="text-[11px] text-gray-500 font-medium">{it.quantity} x Rp {formatIDR(it.price)}</p>
                                             </div>
                                             <div className="text-right flex flex-col items-end gap-1 shrink-0">
@@ -719,7 +734,7 @@ const EcommerceOrderHistoryPage = () => {
                                     </span>
                                     Informasi Pengiriman
                                 </h4>
-                                {selectedDetailOrder.delivery_timing_choice && (
+                                {['current_schedule', 'next_week'].includes(selectedDetailOrder.delivery_timing_choice) && (
                                     <div className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold ${
                                         selectedDetailOrder.delivery_timing_choice === 'next_week'
                                             ? 'bg-purple-50 border-purple-200 text-purple-800'
@@ -730,6 +745,15 @@ const EcommerceOrderHistoryPage = () => {
                                             Jadwal Dipilih:
                                         </span>
                                         <span>{selectedDetailOrder.delivery_timing_choice === 'next_week' ? 'Kirim ke Minggu Depan' : 'Ikut Jadwal Minggu Ini'}</span>
+                                    </div>
+                                )}
+                                {selectedDetailOrder.is_distance_based_shipping && (
+                                    <div className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center gap-2">
+                                        <span className="material-icons text-sm text-blue-600">near_me</span>
+                                        <div>
+                                            <span className="font-bold block">Pengiriman Sesuai Jarak</span>
+                                            <span className="text-[11px] text-blue-700">Biaya ongkir dikonfirmasi oleh pihak penjual/kurir setelah pesanan dibuat.</span>
+                                        </div>
                                     </div>
                                 )}
                                 {selectedDetailOrder.shipping_type === 'kurir_toko' || selectedDetailOrder.driver_name ? (
@@ -819,8 +843,18 @@ const EcommerceOrderHistoryPage = () => {
                         <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/60 space-y-2">
                             <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5 pb-1 border-b border-emerald-100"><span className="material-icons text-emerald-600 text-sm">receipt_long</span> Rincian Pembayaran</h4>
                             <div className="flex justify-between text-xs text-gray-600"><span>Total Harga Barang:</span><span className="font-semibold text-gray-800">Rp {formatIDR(selectedDetailOrder.total_price)}</span></div>
-                            {Number(selectedDetailOrder.shipping_cost) > 0 && (
+                            {selectedDetailOrder.is_distance_based_shipping ? (
+                                <div className="flex justify-between items-center text-xs p-1.5 bg-blue-50/80 border border-blue-100 rounded-lg text-blue-900">
+                                    <span className="font-semibold flex items-center gap-1">
+                                        <span className="material-icons text-sm text-blue-600">near_me</span>
+                                        Ongkos Kirim:
+                                    </span>
+                                    <span className="font-bold text-blue-700">Sesuai Jarak (Dikonfirmasi Seller/Kurir)</span>
+                                </div>
+                            ) : Number(selectedDetailOrder.shipping_cost) > 0 ? (
                                 <div className="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim:</span><span className="font-semibold text-gray-800">+ Rp {formatIDR(selectedDetailOrder.shipping_cost)}</span></div>
+                            ) : (
+                                <div className="flex justify-between text-xs text-emerald-700"><span>Ongkos Kirim:</span><span className="font-bold">GRATIS / Ambil Sendiri</span></div>
                             )}
                             {Number(selectedDetailOrder.voucher_nominal) > 0 && (
                                 <div className="flex justify-between text-xs text-emerald-700 font-bold"><span>Diskon Voucher ({selectedDetailOrder.voucher_code || ''}):</span><span>- Rp {formatIDR(selectedDetailOrder.voucher_nominal)}</span></div>

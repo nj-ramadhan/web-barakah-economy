@@ -12,6 +12,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
     product_slug = serializers.CharField(source='product.slug', read_only=True)
     variation_name = serializers.CharField(source='variation.name', read_only=True)
+    is_preorder = serializers.BooleanField(source='product.is_preorder', read_only=True, default=False)
     product_image = serializers.SerializerMethodField(read_only=True)
     purchase_instructions = serializers.CharField(source='product.purchase_instructions', read_only=True)
     has_reviewed = serializers.SerializerMethodField(read_only=True)
@@ -19,7 +20,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_slug', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions', 'has_reviewed', 'user_review']
+        fields = ['id', 'product', 'product_name', 'product_slug', 'product_image', 'variation', 'variation_name', 'is_preorder', 'quantity', 'price', 'purchase_instructions', 'has_reviewed', 'user_review']
 
     def get_product_image(self, obj):
         if obj.product and obj.product.thumbnail:
