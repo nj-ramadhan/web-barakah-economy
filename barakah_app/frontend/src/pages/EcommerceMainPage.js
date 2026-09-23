@@ -571,7 +571,7 @@ const EcommerceMainPage = () => {
               )}
               <div className="flex items-center justify-between text-[10px] mt-0.5">
                 <span className="text-gray-400">
-                  stok: {inStock ? `${effectiveStock} ${product.unit || 'pcs'}` : 'habis'}
+                  stok: {inStock ? effectiveStock : 'habis'}
                 </span>
                 <span 
                   className={`font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
