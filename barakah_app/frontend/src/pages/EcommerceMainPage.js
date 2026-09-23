@@ -63,8 +63,10 @@ const EcommerceMainPage = () => {
   const [searchQuery, setSearchQuery] = useState(() => {
     return searchParams.get('search') ?? searchParams.get('seller') ?? searchParams.get('q') ?? '';
   });
-  const [selectedCategory, setSelectedCategory] = useState(() => {
-    return searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || 'Semua';
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    const raw = searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || '';
+    if (!raw || raw === 'Semua') return [];
+    return raw.split(',').map(c => c.trim()).filter(Boolean);
   });
   const [sortBy, setSortBy] = useState(() => {
     return searchParams.get('sort') || searchParams.get('urutkan') || searchParams.get('order') || 'populer';
@@ -86,8 +88,12 @@ const EcommerceMainPage = () => {
     const q = searchParams.get('search') ?? searchParams.get('seller') ?? searchParams.get('q') ?? '';
     setSearchQuery(q);
 
-    const cat = searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || 'Semua';
-    setSelectedCategory(cat);
+    const rawCat = searchParams.get('category') || searchParams.get('kategori') || searchParams.get('cat') || '';
+    if (!rawCat || rawCat === 'Semua') {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories(rawCat.split(',').map(c => c.trim()).filter(Boolean));
+    }
 
     const sort = searchParams.get('sort') || searchParams.get('urutkan') || searchParams.get('order') || 'populer';
     setSortBy(sort);
@@ -99,11 +105,22 @@ const EcommerceMainPage = () => {
   }, [searchParams]);
 
   // Handlers that update state and URL query arguments synchronously
-  const handleCategoryChange = (newCat) => {
-    setSelectedCategory(newCat);
+  const handleCategoryToggle = (newCat) => {
+    let updated = [];
+    if (!newCat || newCat === 'Semua') {
+      updated = [];
+    } else {
+      const exists = selectedCategories.some(c => c.toLowerCase() === newCat.toLowerCase());
+      if (exists) {
+        updated = selectedCategories.filter(c => c.toLowerCase() !== newCat.toLowerCase());
+      } else {
+        updated = [...selectedCategories, newCat];
+      }
+    }
+    setSelectedCategories(updated);
     const newParams = new URLSearchParams(searchParams);
-    if (newCat && newCat !== 'Semua') {
-      newParams.set('category', newCat);
+    if (updated.length > 0) {
+      newParams.set('category', updated.join(','));
       newParams.delete('kategori');
       newParams.delete('cat');
     } else {
@@ -156,7 +173,7 @@ const EcommerceMainPage = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedCategory('Semua');
+    setSelectedCategories([]);
     setSearchQuery('');
     setSortBy('populer');
     setViewMode('grid');
@@ -165,8 +182,9 @@ const EcommerceMainPage = () => {
 
   const handleShareStoreFilter = async () => {
     const currentUrl = window.location.href;
-    const shareTitle = `Barakah Store - ${selectedCategory !== 'Semua' ? `Kategori ${selectedCategory}` : 'Katalog UMKM'}${searchQuery ? ` (Cari: ${searchQuery})` : ''}`;
-    const shareText = `Yuk cek produk di Barakah Store${selectedCategory !== 'Semua' ? ` untuk kategori ${selectedCategory}` : ''}${searchQuery ? ` dengan kata kunci "${searchQuery}"` : ''}!`;
+    const catLabel = selectedCategories.length > 0 ? `Kategori (${selectedCategories.join(', ')})` : 'Katalog UMKM';
+    const shareTitle = `Barakah Store - ${catLabel}${searchQuery ? ` (Cari: ${searchQuery})` : ''}`;
+    const shareText = `Yuk cek produk di Barakah Store${selectedCategories.length > 0 ? ` untuk ${catLabel}` : ''}${searchQuery ? ` dengan kata kunci "${searchQuery}"` : ''}!`;
 
     if (navigator.share) {
       try {
@@ -191,15 +209,23 @@ const EcommerceMainPage = () => {
   };
 
   const isCategorySelected = (catKey, catLabel = '') => {
-    if (!selectedCategory || selectedCategory === 'Semua') {
+    if (selectedCategories.length === 0) {
       return catKey === 'Semua';
     }
-    const sel = selectedCategory.toLowerCase().trim();
-    return (
-      catKey.toLowerCase() === sel ||
-      catLabel.toLowerCase() === sel ||
-      catKey.toLowerCase().replace(/[-_]/g, ' ') === sel.replace(/[-_]/g, ' ')
-    );
+    if (catKey === 'Semua') {
+      return false;
+    }
+    const keyLower = catKey.toLowerCase().trim();
+    const labelLower = catLabel.toLowerCase().trim();
+    return selectedCategories.some(sel => {
+      const s = sel.toLowerCase().trim();
+      return (
+        keyLower === s ||
+        labelLower === s ||
+        keyLower.replace(/[-_]/g, ' ') === s.replace(/[-_]/g, ' ') ||
+        labelLower.replace(/[-_&]/g, ' ') === s.replace(/[-_&]/g, ' ')
+      );
+    });
   };
 
   const CATEGORY_LIMIT = 8; // Number of category chips shown initially
@@ -376,22 +402,24 @@ const EcommerceMainPage = () => {
       );
     }
 
-    if (selectedCategory && selectedCategory !== 'Semua') {
-      const target = selectedCategory.toLowerCase().trim();
+    if (selectedCategories.length > 0) {
       result = result.filter(p => {
         const catKey = (p.category || 'lainnya').toLowerCase().trim();
         const catDisplay = (p.category_display || p.category_name || '').toLowerCase().trim();
-        return (
-          catKey === target ||
-          catDisplay === target ||
-          catKey.replace(/[-_]/g, ' ') === target.replace(/[-_]/g, ' ') ||
-          catDisplay.replace(/[-_&]/g, ' ') === target.replace(/[-_&]/g, ' ')
-        );
+        return selectedCategories.some(sel => {
+          const target = sel.toLowerCase().trim();
+          return (
+            catKey === target ||
+            catDisplay === target ||
+            catKey.replace(/[-_]/g, ' ') === target.replace(/[-_]/g, ' ') ||
+            catDisplay.replace(/[-_&]/g, ' ') === target.replace(/[-_&]/g, ' ')
+          );
+        });
       });
     }
 
     return result;
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategories]);
 
   // Sorted and filtered product list
   const sortedFilteredProducts = useMemo(() => {
@@ -601,10 +629,14 @@ const EcommerceMainPage = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setSelectedUserId(product.seller);
-                  setIsProfileModalOpen(true);
+                  if (product.seller_name) {
+                    navigate(`/toko/${product.seller_name}`);
+                  } else {
+                    setSelectedUserId(product.seller);
+                    setIsProfileModalOpen(true);
+                  }
                 }}
-                title={`Toko @${product.seller_name}`}
+                title={`Kunjungi Toko @${product.seller_name}`}
               >
                 <img 
                   src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
@@ -762,18 +794,41 @@ const EcommerceMainPage = () => {
         {/* Category Filter Chips */}
         {categoriesList.length > 1 && (
           <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-icons text-sm text-emerald-600">category</span>
+                <span>Kategori Produk</span>
+                {selectedCategories.length > 0 && (
+                  <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-black">
+                    {selectedCategories.length} Dipilih (Bisa multi-pilih)
+                  </span>
+                )}
+              </span>
+              {selectedCategories.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleCategoryToggle('Semua')}
+                  className="text-xs text-rose-600 hover:text-rose-700 font-bold transition flex items-center gap-1"
+                >
+                  <span className="material-icons text-sm">restart_alt</span>
+                  <span>Reset Kategori</span>
+                </button>
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-2 transition-all duration-500 mb-3">
               {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => {
                 const isSelected = isCategorySelected(cat.key, cat.label);
                 return (
                   <button
                     key={cat.key}
-                    onClick={() => handleCategoryChange(cat.key)}
+                    type="button"
+                    onClick={() => handleCategoryToggle(cat.key)}
                     className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                    } uppercase tracking-wider`}
+                    } uppercase tracking-wider cursor-pointer`}
                   >
                     <span className="material-icons text-sm">{getCategoryIcon(cat.key)}</span>
                     <span>{cat.label}</span>
@@ -782,6 +837,9 @@ const EcommerceMainPage = () => {
                     }`}>
                       {cat.count}
                     </span>
+                    {isSelected && cat.key !== 'Semua' && (
+                      <span className="material-icons text-xs ml-0.5">check</span>
+                    )}
                   </button>
                 );
               })}
@@ -809,25 +867,26 @@ const EcommerceMainPage = () => {
         )}
 
         {/* Active Filter Indicators Bar */}
-        {(selectedCategory !== 'Semua' || searchQuery.trim()) && (
+        {(selectedCategories.length > 0 || searchQuery.trim()) && (
           <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 mb-6 flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
             <div className="flex items-center gap-2 flex-wrap text-xs">
               <span className="font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1 text-[11px]">
                 <span className="material-icons text-sm text-emerald-700">filter_alt</span>
                 Filter Aktif:
               </span>
-              {selectedCategory !== 'Semua' && (
-                <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
-                  <span>Kategori: {selectedCategory}</span>
+              {selectedCategories.map((catKey) => (
+                <span key={catKey} className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
+                  <span>Kategori: {catKey}</span>
                   <button
-                    onClick={() => handleCategoryChange('Semua')}
+                    type="button"
+                    onClick={() => handleCategoryToggle(catKey)}
                     className="text-gray-400 hover:text-red-500 flex items-center"
-                    title="Hapus filter kategori"
+                    title={`Hapus filter kategori ${catKey}`}
                   >
                     <span className="material-icons text-sm">close</span>
                   </button>
                 </span>
-              )}
+              ))}
               {searchQuery.trim() && (
                 <span className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
                   <span>Cari: "{searchQuery}"</span>
@@ -899,8 +958,8 @@ const EcommerceMainPage = () => {
               {sortedFilteredProducts.length} Produk
             </span>
 
-            {/* View Mode Toggle when category is 'Semua' */}
-            {selectedCategory === 'Semua' && (
+            {/* View Mode Toggle when no specific category is selected */}
+            {selectedCategories.length === 0 && (
               <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
                 <button
                   onClick={() => handleViewModeChange('grid')}
@@ -941,7 +1000,7 @@ const EcommerceMainPage = () => {
             <p className="text-xs mt-1 text-gray-400 max-w-sm mx-auto">
               Coba cari dengan kata kunci lain atau pilih kategori yang berbeda
             </p>
-            {(searchQuery || selectedCategory !== 'Semua') && (
+            {(searchQuery || selectedCategories.length > 0) && (
               <button
                 onClick={handleResetFilters}
                 className="mt-4 px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200 transition"
@@ -950,7 +1009,7 @@ const EcommerceMainPage = () => {
               </button>
             )}
           </div>
-        ) : selectedCategory === 'Semua' && viewMode === 'blocks' ? (
+        ) : selectedCategories.length === 0 && viewMode === 'blocks' ? (
           /* Category-Grouped Blocks View */
           <div className="space-y-12">
             {categoryBlocks.map((block) => (
@@ -970,7 +1029,7 @@ const EcommerceMainPage = () => {
                   </div>
 
                   <button
-                    onClick={() => handleCategoryChange(block.key)}
+                    onClick={() => handleCategoryToggle(block.key)}
                     className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
                   >
                     <span>Filter Kategori Ini</span>
@@ -988,18 +1047,18 @@ const EcommerceMainPage = () => {
         ) : (
           /* Direct Full Grid View (Sorted from Top-Left to Bottom-Right) */
           <div>
-            {selectedCategory !== 'Semua' && (
+            {selectedCategories.length > 0 && (
               <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm">
-                    <span className="material-icons text-lg">{getCategoryIcon(selectedCategory)}</span>
+                    <span className="material-icons text-lg">filter_alt</span>
                   </div>
-                  <h2 className="text-base md:text-lg font-black text-gray-900 tracking-tight uppercase">
-                    Kategori: {categoriesList.find(c => c.key === selectedCategory)?.label || selectedCategory}
+                  <h2 className="text-base md:text-lg font-black text-gray-900 tracking-tight">
+                    Filter Kategori ({selectedCategories.length}): {selectedCategories.join(', ')}
                   </h2>
                 </div>
                 <button
-                  onClick={() => setSelectedCategory('Semua')}
+                  onClick={() => handleCategoryToggle('Semua')}
                   className="text-xs font-bold text-emerald-700 hover:underline"
                 >
                   Tampilkan Semua Kategori

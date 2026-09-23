@@ -384,6 +384,8 @@ class CreateOrderView(APIView):
                     payment_method = 'hybrid'
                     order_initial_status = 'Paid' if used_balance_for_this_order >= grand_total else 'Pending'
 
+                is_distance_shipping = bool(config.get('is_distance_based_shipping') or any(getattr(it.product, 'shipping_cost_type', 'flat') == 'distance' or getattr(it.product, 'out_of_po_shipping_type', 'flat') == 'distance' for it in items))
+
                 # Create Order
                 order = Order.objects.create(
                     user=user,
@@ -402,6 +404,7 @@ class CreateOrderView(APIView):
                     payment_proof=payment_proof,
                     buyer_note=buyer_note,
                     delivery_timing_choice=delivery_timing_choice,
+                    is_distance_based_shipping=is_distance_shipping,
                     paid_to_seller_directly=paid_directly,
                     seller_bank_name=product.own_bank_name if paid_directly else None,
                     seller_bank_account=product.own_bank_account if paid_directly else None,

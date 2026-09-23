@@ -45,6 +45,7 @@ class Order(models.Model):
         null=True, 
         help_text="Pilihan jadwal pengiriman: current_schedule (Ikut Jadwal Saat Ini/Minggu Ini) atau next_week (Kirim Minggu Depan)"
     )
+    is_distance_based_shipping = models.BooleanField(default=False, help_text="Apakah ongkir pesanan ini dihitung sesuai jarak (dikonfirmasi seller/kurir kemudian)")
     cod_amount_to_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Total nominal uang tunai yang harus disiapkan pembeli (COD produk / ongkir ekspedisi COD)")
     shipped_at = models.DateTimeField(null=True, blank=True)
     estimated_delivery_days = models.IntegerField(default=3)

@@ -297,8 +297,10 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             
             # Fallback if ProfileSerializer is not handy, we can use a basic dict or specific fields
             profile_data = {
-                'name_full': profile.name_full,
-                'picture': profile.picture.url if profile.picture else None,
+                'user_id': user.id,
+                'username': user.username,
+                'name_full': profile.name_full or user.username,
+                'picture': profile.picture.url if profile.picture else (profile.google_picture_url if profile.google_picture_url else None),
                 'shop_thumbnail': profile.shop_thumbnail.url if profile.shop_thumbnail else None,
                 'shop_description': profile.shop_description,
                 'shop_layout': profile.shop_layout,
@@ -306,6 +308,10 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'shop_font': profile.shop_font,
                 'shop_decoration': profile.shop_decoration,
                 'shop_template': profile.shop_template,
+                'city_name': profile.address_city_name or (f"Kec. {profile.address_subdistrict_name}" if profile.address_subdistrict_name else (profile.address_province or '')),
+                'province_name': profile.address_province or '',
+                'joined_date': user.date_joined.strftime('%Y-%m-%d') if hasattr(user, 'date_joined') and user.date_joined else None,
+                'phone': getattr(user, 'phone', None) or getattr(profile, 'phone', None) or '',
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)

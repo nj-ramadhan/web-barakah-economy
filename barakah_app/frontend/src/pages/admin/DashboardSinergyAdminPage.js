@@ -29,6 +29,7 @@ const DashboardSinergyAdminPage = () => {
     const [weight, setWeight] = useState(1000);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
     const [isShippingCostActive, setIsShippingCostActive] = useState(false);
+    const [shippingCostType, setShippingCostType] = useState('flat'); // 'flat' | 'distance'
     const [shippingCost, setShippingCost] = useState(0);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [variants, setVariants] = useState([]);
@@ -56,6 +57,7 @@ const DashboardSinergyAdminPage = () => {
 
     // Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
     const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
+    const [outOfPoShippingType, setOutOfPoShippingType] = useState('flat'); // 'flat' | 'distance'
     const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
     const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
 
@@ -174,6 +176,7 @@ const DashboardSinergyAdminPage = () => {
         setWeight(product.weight || 1000);
         setIsCodAvailable(product.is_cod_available || false);
         setIsShippingCostActive(product.is_shipping_cost_active || false);
+        setShippingCostType(product.shipping_cost_type || 'flat');
         setShippingCost(parseCurrency(product.shipping_cost) || 0);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setManualSoldCount(product.manual_sold_count || 0);
@@ -194,6 +197,7 @@ const DashboardSinergyAdminPage = () => {
         setDeliveryDate(product.delivery_date || '');
         setDeliveryNote(product.delivery_note || '');
         setOutOfPoShippingActive(product.out_of_po_shipping_active || false);
+        setOutOfPoShippingType(product.out_of_po_shipping_type || 'flat');
         setOutOfPoShippingCost(parseCurrency(product.out_of_po_shipping_cost) || 0);
         setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? product.allow_delivery_timing_choice : true);
 
@@ -239,7 +243,8 @@ const DashboardSinergyAdminPage = () => {
             formData.append('weight', weight);
             formData.append('is_cod_available', isCodAvailable);
             formData.append('is_shipping_cost_active', isShippingCostActive);
-            formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
+            formData.append('shipping_cost_type', isShippingCostActive ? shippingCostType : 'flat');
+            formData.append('shipping_cost', isShippingCostActive && shippingCostType === 'flat' ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('manual_sold_count', manualSoldCount || 0);
 
@@ -290,7 +295,8 @@ const DashboardSinergyAdminPage = () => {
             }
 
             formData.append('out_of_po_shipping_active', outOfPoShippingActive);
-            formData.append('out_of_po_shipping_cost', outOfPoShippingActive ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
+            formData.append('out_of_po_shipping_type', outOfPoShippingActive ? outOfPoShippingType : 'flat');
+            formData.append('out_of_po_shipping_cost', outOfPoShippingActive && outOfPoShippingType === 'flat' ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
             formData.append('allow_delivery_timing_choice', allowDeliveryTimingChoice);
 
             if (thumbnailFile) {
@@ -705,15 +711,39 @@ const DashboardSinergyAdminPage = () => {
                                     </div>
 
                                     {isShippingCostActive && (
-                                        <div className="pl-1">
-                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Nominal Ongkir Toko (Rp) *</label>
-                                            <input 
-                                                type="text" 
-                                                value={formatCurrency(shippingCost)} 
-                                                onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
-                                                placeholder="Contoh: 15.000"
-                                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" 
-                                            />
+                                        <div className="pt-1.5 space-y-2 border-t border-gray-100">
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShippingCostType('flat')}
+                                                    className={`py-1 px-2 rounded-lg border text-[11px] font-bold text-center transition ${shippingCostType === 'flat' ? 'bg-emerald-100 border-emerald-400 text-emerald-900' : 'bg-white border-gray-200 text-gray-600'}`}
+                                                >
+                                                    Flat Ongkir
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShippingCostType('distance')}
+                                                    className={`py-1 px-2 rounded-lg border text-[11px] font-bold text-center transition ${shippingCostType === 'distance' ? 'bg-emerald-100 border-emerald-400 text-emerald-900' : 'bg-white border-gray-200 text-gray-600'}`}
+                                                >
+                                                    Sesuai Jarak
+                                                </button>
+                                            </div>
+                                            {shippingCostType === 'flat' ? (
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nominal Ongkir Toko (Rp) *</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={formatCurrency(shippingCost)} 
+                                                        onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
+                                                        placeholder="Contoh: 15.000"
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" 
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <p className="text-[10px] text-emerald-800 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                                                    📍 Ongkir akan dihitung sesuai jarak pengiriman dan dikabari ke pembeli setelah pesanan masuk.
+                                                </p>
+                                            )}
                                         </div>
                                     )}
 
@@ -1010,14 +1040,38 @@ const DashboardSinergyAdminPage = () => {
                                             </button>
                                         </div>
                                         {outOfPoShippingActive && (
-                                            <div className="mt-2.5 pt-2.5 border-t border-gray-200 space-y-1">
-                                                <label className="block text-[11px] font-semibold text-gray-700">Nominal Ongkir Flat (Rp)</label>
-                                                <CurrencyInput
-                                                    value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''}
-                                                    onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))}
-                                                    placeholder="Contoh: 15.000"
-                                                    className="!px-3 !py-1.5 !bg-white !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500 rounded-lg"
-                                                />
+                                            <div className="mt-2.5 pt-2.5 border-t border-gray-200 space-y-2">
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOutOfPoShippingType('flat')}
+                                                        className={`py-1 px-2 rounded-lg border text-[11px] font-bold text-center transition ${outOfPoShippingType === 'flat' ? 'bg-purple-100 border-purple-400 text-purple-900' : 'bg-white border-gray-200 text-gray-600'}`}
+                                                    >
+                                                        Flat
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOutOfPoShippingType('distance')}
+                                                        className={`py-1 px-2 rounded-lg border text-[11px] font-bold text-center transition ${outOfPoShippingType === 'distance' ? 'bg-purple-100 border-purple-400 text-purple-900' : 'bg-white border-gray-200 text-gray-600'}`}
+                                                    >
+                                                        Sesuai Jarak
+                                                    </button>
+                                                </div>
+                                                {outOfPoShippingType === 'flat' ? (
+                                                    <div>
+                                                        <label className="block text-[11px] font-semibold text-gray-700 mb-1">Nominal Ongkir Flat Luar PO (Rp)</label>
+                                                        <CurrencyInput
+                                                            value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''}
+                                                            onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))}
+                                                            placeholder="Contoh: 15.000"
+                                                            className="!px-3 !py-1.5 !bg-white !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500 rounded-lg"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-[10px] text-purple-800 bg-purple-50 p-2 rounded-lg border border-purple-200">
+                                                        📍 Pengiriman luar jam PO dihitung sesuai jarak tujuan.
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>

@@ -82,6 +82,11 @@ const EcommerceCheckoutSinergy = () => {
                     if (!initialConfigs[s_id]) {
                         // Calculate flat store shipping cost: unified per store (tidak berlaku kelipatan kuantitas)
                         const itemsFromSeller = items.filter(it => (it.product?.seller_id || "0") === s_id);
+                        const isDistanceShipping = itemsFromSeller.some(it =>
+                            (it.product?.shipping_cost_type === 'distance' && it.product?.is_shipping_cost_active) ||
+                            (it.product?.out_of_po_shipping_type === 'distance' && it.product?.out_of_po_shipping_active)
+                        );
+
                         const storeShippingCosts = itemsFromSeller
                             .filter(it => 
                                 (it.product?.is_shipping_cost_active && Number(it.product?.shipping_cost || 0) > 0) ||
@@ -92,12 +97,13 @@ const EcommerceCheckoutSinergy = () => {
                                     ? it.product.out_of_po_shipping_cost 
                                     : it.product.shipping_cost
                             ));
-                        const flatShippingCost = storeShippingCosts.length > 0 ? Math.max(...storeShippingCosts) : 0;
+                        const flatShippingCost = (!isDistanceShipping && storeShippingCosts.length > 0) ? Math.max(...storeShippingCosts) : 0;
 
                         initialConfigs[s_id] = { 
                             shipping_cost: flatShippingCost, 
-                            shipping_courier: flatShippingCost > 0 ? 'Kurir Toko' : '', 
-                            shipping_service: flatShippingCost > 0 ? 'Standar' : '', 
+                            is_distance_based_shipping: isDistanceShipping,
+                            shipping_courier: isDistanceShipping ? 'Kurir Toko (Sesuai Jarak)' : (flatShippingCost > 0 ? 'Kurir Toko' : ''), 
+                            shipping_service: isDistanceShipping ? 'Dikonfirmasi Seller/Kurir' : (flatShippingCost > 0 ? 'Standar' : ''), 
                             delivery_timing_choice: 'current_schedule',
                             voucher_code: '', 
                             voucher_nominal: 0, 
@@ -499,28 +505,53 @@ const EcommerceCheckoutSinergy = () => {
                                 })}
                             </div>
 
-                            {/* Simplified Shipping Notice & Flat Store Shipping */}
-                            <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100 mb-4 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0">
-                                        <span className="material-icons text-lg">local_shipping</span>
+                            {/* Simplified Shipping Notice & Flat / Distance Store Shipping */}
+                            {config?.is_distance_based_shipping ? (
+                                <div className="bg-blue-50/80 p-3.5 rounded-2xl border border-blue-200/90 mb-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+                                            <span className="material-icons text-lg">near_me</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider block">Pengiriman Sesuai Jarak</span>
+                                                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-200 text-blue-800">Dikonfirmasi Kurir</span>
+                                            </div>
+                                            <p className="text-xs font-medium text-blue-950 mt-0.5">
+                                                Biaya ongkir dihitung sesuai jarak alamat dan akan dikonfirmasi oleh pihak Admin / Seller / Kurir.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider block">Pengiriman & Logistik</span>
-                                        <p className="text-xs font-medium text-emerald-900">
-                                            {config?.shipping_cost > 0 
-                                                ? 'Pengiriman Toko (Tarif Flat Toko - Tidak Berlaku Kelipatan)' 
-                                                : 'Bebas Ongkir / Ambil Sendiri (Kesepakatan dengan Penjual)'}
-                                        </p>
+                                    <div className="text-right shrink-0">
+                                        <span className="text-[10px] font-bold text-slate-500 block">Ongkir Toko</span>
+                                        <span className="text-xs font-black text-blue-700 bg-blue-100/90 px-2 py-0.5 rounded-md">
+                                            Sesuai Jarak
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="text-right shrink-0">
-                                    <span className="text-[10px] font-bold text-gray-500 block">Ongkir Toko</span>
-                                    <span className={`text-xs font-black ${config?.shipping_cost > 0 ? 'text-emerald-700' : 'text-emerald-600'}`}>
-                                        {config?.shipping_cost > 0 ? `+Rp ${new Intl.NumberFormat('id-ID').format(config.shipping_cost)}` : 'GRATIS'}
-                                    </span>
+                            ) : (
+                                <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100 mb-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+                                            <span className="material-icons text-lg">local_shipping</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider block">Pengiriman & Logistik</span>
+                                            <p className="text-xs font-medium text-emerald-900">
+                                                {config?.shipping_cost > 0 
+                                                    ? 'Pengiriman Toko (Tarif Flat Toko - Tidak Berlaku Kelipatan)' 
+                                                    : 'Bebas Ongkir / Ambil Sendiri (Kesepakatan dengan Penjual)'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <span className="text-[10px] font-bold text-gray-500 block">Ongkir Toko</span>
+                                        <span className={`text-xs font-black ${config?.shipping_cost > 0 ? 'text-emerald-700' : 'text-emerald-600'}`}>
+                                            {config?.shipping_cost > 0 ? `+Rp ${new Intl.NumberFormat('id-ID').format(config.shipping_cost)}` : 'GRATIS'}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Pilihan Waktu Pengiriman (Fleksibel: Jadwal Saat Ini / Minggu Ini vs Minggu Depan) */}
                             <div className="bg-white p-3.5 rounded-2xl border border-gray-200/90 mb-4 shadow-2xs space-y-2.5">

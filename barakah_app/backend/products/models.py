@@ -83,7 +83,15 @@ class Product(models.Model):
     weight = models.PositiveIntegerField(default=1000, help_text="Berat dalam gram")
     supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes for this product")
     is_cod_available = models.BooleanField(default=False, help_text="Apakah produk ini mendukung COD")
-    is_shipping_cost_active = models.BooleanField(default=False, help_text="Aktifkan ongkos kirim flat untuk produk ini")
+    is_shipping_cost_active = models.BooleanField(default=False, help_text="Aktifkan ongkos kirim toko untuk produk ini")
+    shipping_cost_type = models.CharField(
+        max_length=20,
+        choices=[('flat', 'Flat Ongkir'), ('distance', 'Sesuai Jarak')],
+        default='flat',
+        blank=True,
+        null=True,
+        help_text="Tipe ongkos kirim: flat atau distance (sesuai jarak)"
+    )
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim produk")
     purchase_instructions = models.TextField(blank=True, null=True, help_text="Informasi khusus pengambilan atau teknis setelah pembelian")
 
@@ -122,7 +130,15 @@ class Product(models.Model):
     delivery_note = models.CharField(max_length=255, blank=True, null=True, help_text="Catatan pengantaran, misal: 'Pengiriman mulai pukul 10:00 WIB'")
 
     # Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
-    out_of_po_shipping_active = models.BooleanField(default=False, help_text="Aktifkan ongkir flat seller / luar jam PO (tetap flat walau beli banyak produk)")
+    out_of_po_shipping_active = models.BooleanField(default=False, help_text="Aktifkan ongkir seller / luar jam PO")
+    out_of_po_shipping_type = models.CharField(
+        max_length=20,
+        choices=[('flat', 'Flat Ongkir'), ('distance', 'Sesuai Jarak')],
+        default='flat',
+        blank=True,
+        null=True,
+        help_text="Tipe ongkir luar jam PO: flat atau distance (sesuai jarak)"
+    )
     out_of_po_shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim flat di luar jam PO")
     allow_delivery_timing_choice = models.BooleanField(default=True, help_text="Izinkan pembeli memilih pengiriman minggu ini atau minggu depannya")
 

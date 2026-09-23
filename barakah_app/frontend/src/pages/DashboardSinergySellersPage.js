@@ -24,6 +24,7 @@ const DashboardSinergySellersPage = () => {
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
     const [isShippingCostActive, setIsShippingCostActive] = useState(false);
+    const [shippingCostType, setShippingCostType] = useState('flat'); // 'flat' | 'distance'
     const [shippingCost, setShippingCost] = useState(0);
     const [manualStock, setManualStock] = useState(0);
     const [manualPrice, setManualPrice] = useState(0);
@@ -52,6 +53,7 @@ const DashboardSinergySellersPage = () => {
 
     // Ongkir Khusus Luar Jam PO & Fleksibilitas Pengiriman
     const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
+    const [outOfPoShippingType, setOutOfPoShippingType] = useState('flat'); // 'flat' | 'distance'
     const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
     const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
 
@@ -312,7 +314,8 @@ const DashboardSinergySellersPage = () => {
             formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('is_cod_available', isCodAvailable);
             formData.append('is_shipping_cost_active', isShippingCostActive);
-            formData.append('shipping_cost', isShippingCostActive ? (parseCurrency(shippingCost) || 0) : 0);
+            formData.append('shipping_cost_type', isShippingCostActive ? shippingCostType : 'flat');
+            formData.append('shipping_cost', isShippingCostActive && shippingCostType === 'flat' ? (parseCurrency(shippingCost) || 0) : 0);
             formData.append('purchase_instructions', e.target.purchase_instructions ? e.target.purchase_instructions.value : '');
 
             formData.append('is_operational_hours_active', isOperationalHoursActive);
@@ -362,7 +365,8 @@ const DashboardSinergySellersPage = () => {
             }
 
             formData.append('out_of_po_shipping_active', outOfPoShippingActive);
-            formData.append('out_of_po_shipping_cost', outOfPoShippingActive ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
+            formData.append('out_of_po_shipping_type', outOfPoShippingActive ? outOfPoShippingType : 'flat');
+            formData.append('out_of_po_shipping_cost', outOfPoShippingActive && outOfPoShippingType === 'flat' ? (parseCurrency(outOfPoShippingCost) || 0) : 0);
             formData.append('allow_delivery_timing_choice', allowDeliveryTimingChoice);
 
             let targetStatus = ownBankStatus;
@@ -428,6 +432,9 @@ const DashboardSinergySellersPage = () => {
             setThumbnailPreview(null);
             setGalleryFiles([]);
             setGalleryPreviews([]);
+            setIsShippingCostActive(false);
+            setShippingCostType('flat');
+            setShippingCost(0);
             setIsOperationalHoursActive(false);
             setOperationalHours('');
             setIsPreorder(false);
@@ -444,6 +451,7 @@ const DashboardSinergySellersPage = () => {
             setDeliveryDate('');
             setDeliveryNote('');
             setOutOfPoShippingActive(false);
+            setOutOfPoShippingType('flat');
             setOutOfPoShippingCost(0);
             setAllowDeliveryTimingChoice(true);
         } catch (error) {
@@ -531,6 +539,7 @@ const DashboardSinergySellersPage = () => {
                         setManualStock(0);
                         setIsCodAvailable(false);
                         setIsShippingCostActive(false);
+                        setShippingCostType('flat');
                         setShippingCost(0);
                         setThumbnailFile(null);
                         setThumbnailPreview(null);
@@ -551,6 +560,10 @@ const DashboardSinergySellersPage = () => {
                         setDeliveryDays([]);
                         setDeliveryDate('');
                         setDeliveryNote('');
+                        setOutOfPoShippingActive(false);
+                        setOutOfPoShippingType('flat');
+                        setOutOfPoShippingCost(0);
+                        setAllowDeliveryTimingChoice(true);
                         resetBankStates();
                     }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap">
                         <span className="material-icons text-sm">add</span> 
@@ -609,6 +622,7 @@ const DashboardSinergySellersPage = () => {
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setIsCodAvailable(p.is_cod_available || false);
                                     setIsShippingCostActive(p.is_shipping_cost_active || false);
+                                    setShippingCostType(p.shipping_cost_type || 'flat');
                                     setShippingCost(parseCurrency(p.shipping_cost) || 0);
                                     setManualStock(p.stock || 0);
                                     setManualPrice(parseCurrency(p.price) || 0);
@@ -633,6 +647,7 @@ const DashboardSinergySellersPage = () => {
                                     setDeliveryDate(p.delivery_date || '');
                                     setDeliveryNote(p.delivery_note || '');
                                     setOutOfPoShippingActive(p.out_of_po_shipping_active || false);
+                                    setOutOfPoShippingType(p.out_of_po_shipping_type || 'flat');
                                     setOutOfPoShippingCost(parseCurrency(p.out_of_po_shipping_cost) || 0);
                                     setAllowDeliveryTimingChoice(p.allow_delivery_timing_choice !== false);
                                     setActiveTab('edit');
@@ -898,18 +913,55 @@ const DashboardSinergySellersPage = () => {
                     </div>
 
                     {isShippingCostActive && (
-                        <div className="pt-1">
-                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Nominal Ongkos Kirim Toko (Rp) *
-                            </label>
-                            <div className="max-w-xs">
-                                <CurrencyInput 
-                                    value={shippingCost !== undefined && shippingCost !== null ? shippingCost : ''} 
-                                    onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
-                                    placeholder="Contoh: 10.000" 
-                                    className="!px-3 !py-2.5 !bg-white !rounded-xl !border-emerald-300 !text-emerald-700 !font-black !text-sm"
-                                />
+                        <div className="pt-2 border-t border-gray-100 space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Tarif Ongkir Toko</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShippingCostType('flat')}
+                                        className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${shippingCostType === 'flat' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        <span className="material-icons text-sm">local_shipping</span>
+                                        <span>Flat Ongkir</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShippingCostType('distance')}
+                                        className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${shippingCostType === 'distance' ? 'bg-emerald-100 border-emerald-400 text-emerald-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        <span className="material-icons text-sm">straighten</span>
+                                        <span>Sesuai Jarak</span>
+                                    </button>
+                                </div>
                             </div>
+
+                            {shippingCostType === 'flat' ? (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                        Nominal Ongkos Kirim Flat (Rp) *
+                                    </label>
+                                    <div className="max-w-xs">
+                                        <CurrencyInput 
+                                            value={shippingCost !== undefined && shippingCost !== null ? shippingCost : ''} 
+                                            onChange={(e) => setShippingCost(parseCurrency(e.target.value))} 
+                                            placeholder="Contoh: 10.000" 
+                                            className="!px-3 !py-2.5 !bg-white !rounded-xl !border-emerald-300 !text-emerald-700 !font-black !text-sm"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-1">Tarif tetap satu harga flat walau membeli banyak barang di toko Anda.</p>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs space-y-1">
+                                    <div className="flex items-center gap-1.5 font-bold">
+                                        <span className="material-icons text-emerald-600 text-sm">info</span>
+                                        <span>Ongkos Kirim Dihitung Sesuai Jarak</span>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                        Biaya pengiriman akan dihitung sesuai jarak pengantaran. Pihak penjual, admin, atau kurir akan mengabari pembeli mengenai total ongkir setelah pesanan masuk. Keterangan ini akan otomatis ditampilkan kepada pembeli di halaman detail dan saat checkout.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -1344,19 +1396,55 @@ const DashboardSinergySellersPage = () => {
                         </div>
 
                         {outOfPoShippingActive && (
-                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-2">
-                                <label className="block text-xs font-semibold text-gray-700">Nominal Tarif Ongkir Flat (Rp) *</label>
-                                <div className="max-w-xs">
-                                    <CurrencyInput 
-                                        value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''} 
-                                        onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))} 
-                                        placeholder="Contoh: 15.000" 
-                                        className="!px-3.5 !py-2.5 !bg-white !rounded-xl !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
+                            <div className="mt-3.5 pt-3.5 border-t border-gray-200/60 space-y-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Tipe Tarif Luar Jam PO</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setOutOfPoShippingType('flat')}
+                                            className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${outOfPoShippingType === 'flat' ? 'bg-purple-100 border-purple-400 text-purple-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                        >
+                                            <span className="material-icons text-sm">local_atm</span>
+                                            <span>Flat Ongkir</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setOutOfPoShippingType('distance')}
+                                            className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${outOfPoShippingType === 'distance' ? 'bg-purple-100 border-purple-400 text-purple-900 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                        >
+                                            <span className="material-icons text-sm">straighten</span>
+                                            <span>Sesuai Jarak</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p className="text-[10px] text-purple-700 font-medium">
-                                    💡 Tarif ini diterapkan flat per pesanan toko Anda (tidak berlipat ganda meskipun pembeli memesan banyak produk/jumlah banyak).
-                                </p>
+
+                                {outOfPoShippingType === 'flat' ? (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-gray-700">Nominal Tarif Ongkir Flat Luar Jam PO (Rp) *</label>
+                                        <div className="max-w-xs">
+                                            <CurrencyInput 
+                                                value={outOfPoShippingCost !== undefined && outOfPoShippingCost !== null ? outOfPoShippingCost : ''} 
+                                                onChange={(e) => setOutOfPoShippingCost(parseCurrency(e.target.value))} 
+                                                placeholder="Contoh: 15.000" 
+                                                className="!px-3.5 !py-2.5 !bg-white !rounded-xl !border-purple-300 !text-purple-800 !font-bold !text-xs !w-full outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-purple-700 font-medium">
+                                            💡 Tarif ini diterapkan flat per pesanan toko Anda (tidak berlipat ganda meskipun pembeli memesan banyak produk/jumlah banyak).
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-purple-900 text-xs space-y-1">
+                                        <div className="flex items-center gap-1.5 font-bold">
+                                            <span className="material-icons text-purple-600 text-sm">info</span>
+                                            <span>Ongkir Luar Jam PO Dihitung Sesuai Jarak</span>
+                                        </div>
+                                        <p className="text-[11px] text-purple-800 leading-relaxed">
+                                            Pengiriman di luar jam PO akan dihitung tarifnya sesuai jarak oleh penjual / kurir dan akan dikonfirmasikan langsung kepada pembeli setelah checkout.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

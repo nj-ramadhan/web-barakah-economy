@@ -1,6 +1,6 @@
 // pages/EcommerceProductDetail.js
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
@@ -666,26 +666,39 @@ const EcommerceProductDetail = () => {
                         );
                       })()}
 
-                      {/* Ongkir Flat Toko / Luar Jam PO */}
-                      {(product?.out_of_po_shipping_active || product?.is_shipping_cost_active) && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-purple-200/80 shadow-2xs">
-                          <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                            <span className="material-icons text-lg">local_atm</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <p className="text-[11px] font-semibold text-purple-700 leading-tight">Ongkir Flat Toko</p>
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">Flat Beli Banyak</span>
+                      {/* Ongkir Toko: Flat vs Sesuai Jarak */}
+                      {(product?.out_of_po_shipping_active || product?.is_shipping_cost_active || product?.shipping_cost_type === 'distance') && (() => {
+                        const isDistance = product?.shipping_cost_type === 'distance' || (product?.out_of_po_shipping_active && product?.out_of_po_shipping_type === 'distance');
+                        return (
+                          <div className={`flex items-start gap-2.5 p-3 rounded-xl bg-white shadow-2xs ${isDistance ? 'border border-blue-200/90' : 'border border-purple-200/80'}`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDistance ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                              <span className="material-icons text-lg">{isDistance ? 'near_me' : 'local_atm'}</span>
                             </div>
-                            <p className="text-xs font-bold text-slate-800 mt-0.5">
-                              {Number(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost) > 0
-                                ? `Rp ${new Intl.NumberFormat('id-ID').format(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost)}`
-                                : 'Bebas Ongkir'}
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Tarif tetap satu harga walau membeli banyak produk dari toko ini</p>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className={`text-[11px] font-semibold leading-tight ${isDistance ? 'text-blue-700' : 'text-purple-700'}`}>
+                                  {isDistance ? 'Ongkir Sesuai Jarak' : 'Ongkir Flat Toko'}
+                                </p>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${isDistance ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                                  {isDistance ? 'Dikonfirmasi Kurir/Admin' : 'Flat Beli Banyak'}
+                                </span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-800 mt-0.5">
+                                {isDistance
+                                  ? 'Dikonfirmasi Penjual / Kurir'
+                                  : (Number(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost) > 0
+                                      ? `Rp ${new Intl.NumberFormat('id-ID').format(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost)}`
+                                      : 'Bebas Ongkir')}
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                {isDistance
+                                  ? 'Biaya ongkir dihitung sesuai jarak alamat dan akan dikabari langsung oleh pihak Admin / Seller / Kurir'
+                                  : 'Tarif tetap satu harga walau membeli banyak produk dari toko ini'}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Jadwal / Tanggal Pengantaran */}
                       {product?.is_delivery_schedule_active && (
@@ -852,6 +865,74 @@ const EcommerceProductDetail = () => {
                 </div>
               );
             })()}
+          </div>
+        </div>
+      </div>
+
+      {/* Toko / Seller Profile Card (Marketplace Style) */}
+      <div className="px-4 max-w-6xl mx-auto mt-6 mb-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="relative shrink-0">
+              <img 
+                src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
+                alt={product.seller_name} 
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-100 shadow-sm" 
+              />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center text-white shadow-xs" title="Official Toko">
+                <span className="material-icons text-[10px]">check</span>
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-gray-900 leading-tight">
+                  Toko @{product.seller_name}
+                </h2>
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Official Toko
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500 flex-wrap">
+                {product.seller_city_name && (
+                  <span className="flex items-center gap-1 text-gray-600 font-medium">
+                    <span className="material-icons text-sm text-rose-500">location_on</span>
+                    {product.seller_city_name}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                  <span className="material-icons text-sm">verified</span>
+                  {product.sold_count || 0} Terjual
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap self-end md:self-auto w-full md:w-auto">
+            <Link
+              to={`/toko/${product.seller_name}`}
+              className="flex-1 md:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 shadow-sm shadow-emerald-200"
+            >
+              <span className="material-icons text-base">storefront</span>
+              <span>Kunjungi Toko</span>
+            </Link>
+
+            <Link
+              to={`/digital-produk/${product.seller_name}`}
+              className="px-3.5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95"
+              title="Lihat Laman Produk Digital Penjual"
+            >
+              <span className="material-icons text-base">devices</span>
+              <span className="hidden sm:inline">Produk Digital</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleChatSeller}
+              className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold flex items-center justify-center transition active:scale-95"
+              title="Chat Penjual"
+            >
+              <span className="material-icons text-base">chat</span>
+            </button>
           </div>
         </div>
       </div>

@@ -76,6 +76,7 @@ import DashboardEcourseFormPage from './pages/DashboardEcourseFormPage';
 import DashboardEcourseMaterialsPage from './pages/DashboardEcourseMaterialsPage';
 import DashboardEcourseProgressPage from './pages/DashboardEcourseProgressPage';
 import SellerProfilePage from './pages/SellerProfilePage';
+import StoreProfilePage from './pages/StoreProfilePage';
 import DashboardShopSettingsPage from './pages/DashboardShopSettingsPage';
 import DashboardAdminWithdrawalsPage from './pages/DashboardAdminWithdrawalsPage';
 import DashboardRealizationPage from './pages/admin/DashboardRealizationPage';
@@ -397,6 +398,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/ecommerce" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/ecommerce/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
+        <Route path="/toko/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
+        <Route path="/store/toko/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
+        <Route path="/store/seller/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/incaran" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceWishlistPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/keranjang" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/ecommerce/cart" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />

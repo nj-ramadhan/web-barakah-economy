@@ -69,10 +69,13 @@ class ProductSerializer(serializers.ModelSerializer):
         if 'delivery_date' in data and data['delivery_date'] in ('', 'null', 'undefined', None):
             data['delivery_date'] = None
 
+        if 'shipping_cost' in data and data['shipping_cost'] in ('', 'null', 'undefined', None):
+            data['shipping_cost'] = 0
+
         if 'out_of_po_shipping_cost' in data and data['out_of_po_shipping_cost'] in ('', 'null', 'undefined', None):
             data['out_of_po_shipping_cost'] = 0
             
-        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
+        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'is_shipping_cost_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
             if bool_field in data:
                 val = data[bool_field]
                 if isinstance(val, str):
