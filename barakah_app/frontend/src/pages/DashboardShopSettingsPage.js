@@ -904,123 +904,257 @@ const DashboardShopSettingsPage = () => {
                         </div>
 
                         {/* Live Preview Box */}
-                        <div className="w-full lg:w-[350px] flex-shrink-0 bg-gray-50 rounded-2xl p-4 border flex flex-col items-center">
-                            <h4 className="text-xs font-bold text-gray-400 mb-4 w-full text-center tracking-widest uppercase">Live Preview (Mobile)</h4>
+                        <div className="w-full lg:w-[350px] flex-shrink-0 bg-gray-50 rounded-2xl p-4 border border-gray-200 flex flex-col items-center">
+                            <div className="w-full flex items-center justify-between mb-3 px-1">
+                                <h4 className="text-xs font-bold text-gray-500 tracking-wider uppercase flex items-center gap-1.5">
+                                    <span className="material-icons text-sm text-emerald-600">smartphone</span>
+                                    <span>Live Preview Toko</span>
+                                </h4>
+                                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                                    Real-time
+                                </span>
+                            </div>
 
-                            <div className={`w-full bg-white rounded-[2.5rem] shadow-sm border-[6px] border-gray-200 overflow-hidden relative h-[650px] flex flex-col ${profile.shop_font === 'serif' ? 'font-serif' : profile.shop_font === 'mono' ? 'font-mono' : profile.shop_font === 'poppins' ? 'font-[Poppins]' : 'font-sans'}`}>
-                                {profile.shop_template !== 'none' ? (
-                                    <StoreTemplates
-                                        templateName={profile.shop_template}
-                                        profile={profile}
-                                        username={profile.username}
-                                        isPreview={true}
-                                        themeColor={profile.shop_theme_color}
-                                        font={profile.shop_font}
-                                        decoration={profile.shop_decoration}
-                                        layout={profile.shop_layout || 'default'}
-                                        products={[
-                                            { title: 'Produk Digital 1', price: 50000, thumbnail: 'https://barakah.cloud/media/products/course_social_media.jpg', category: 'Marketing' },
-                                            { title: 'Produk Digital 2', price: 75000, thumbnail: 'https://barakah.cloud/media/products/design_bundle.jpg', category: 'Design' }
-                                        ]}
-                                        courses={[
-                                            { title: 'E-Course Premium', price: 150000, thumbnail: 'https://barakah.cloud/media/courses/digital_marketing.jpg', student_count: 120 }
-                                        ]}
-                                    />
-                                ) : (
-                                    <>
-                                        {/* Decoration Overlay */}
-                                        <ShopDecoration decoration={profile.shop_decoration} themeColor={profile.shop_theme_color} isPreview={true} />
+                            {/* Phone Device Mockup Frame */}
+                            <div className="w-full bg-slate-900 rounded-[2.5rem] p-2.5 shadow-2xl border-4 border-slate-800">
+                                {/* Top Speaker / Dynamic Island */}
+                                <div className="w-24 h-3 bg-slate-800 rounded-b-xl mx-auto -mt-1 mb-1 z-30"></div>
 
-                                        {/* Header bg / Shop Thumbnail */}
-                                        <div
-                                            className={`h-32 w-full relative z-10 overflow-hidden ${!profile.shop_thumbnail && (profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800')}`}
-                                            style={{ backgroundColor: (!profile.shop_thumbnail && (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb'))) ? profile.shop_theme_color : undefined }}
-                                        >
-                                            {profile.shop_thumbnail && (
-                                                <img
-                                                    src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : getMediaUrl(profile.shop_thumbnail)}
-                                                    alt="Thumbnail Preview"
-                                                    className="w-full h-full object-cover opacity-100"
-                                                />
-                                            )}
+                                {/* Phone Inner Screen */}
+                                <div className="w-full bg-slate-50 rounded-[2rem] overflow-hidden relative h-[610px] flex flex-col text-slate-800 text-left">
+                                    
+                                    {/* Mobile Store Navbar */}
+                                    <div className="bg-white/95 px-3 py-2 border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-20 backdrop-blur-xs">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-5 h-5 rounded-md bg-emerald-600 flex items-center justify-center text-white">
+                                                <span className="material-icons text-[12px]">storefront</span>
+                                            </div>
+                                            <span className="text-[11px] font-black text-slate-900 truncate max-w-[140px]">
+                                                {profile.shop_name || profile.username || 'Barakah Store'}
+                                            </span>
                                         </div>
+                                        <div className="flex items-center gap-1 text-slate-500">
+                                            <span className="material-icons text-xs">search</span>
+                                            <span className="material-icons text-xs">shopping_bag</span>
+                                        </div>
+                                    </div>
 
-                                        {/* Fake Profile img */}
-                                        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
-                                            <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
-                                                {profile.picture ? (
-                                                    <img src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : profile.picture} alt="Preview" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-white shadow-inner">Foto Profil</div>
-                                                )}
+                                    {/* Scrollable Store Content */}
+                                    <div className="flex-1 overflow-y-auto no-scrollbar">
+                                        
+                                        {/* Store Banner / Cover */}
+                                        <div className="h-28 w-full relative overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-green-800 shrink-0">
+                                            {profile.shop_thumbnail ? (
+                                                <img
+                                                    src={getMediaUrl(profile.shop_thumbnail)}
+                                                    alt="Banner Toko"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 opacity-95">
+                                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]"></div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Quick Share pill on banner */}
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-white/90 backdrop-blur-xs rounded-full text-[9px] font-bold text-slate-700 shadow-xs flex items-center gap-1">
+                                                <span className="material-icons text-[10px] text-emerald-700">share</span>
+                                                <span>Bagikan</span>
                                             </div>
                                         </div>
 
-                                        <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
-                                            <p className="font-black text-lg">{profile.shop_name ? profile.shop_name : `@${profile.username || 'username'}`}</p>
-                                            {profile.shop_name && <p className="text-[11px] text-gray-400 font-bold -mt-0.5">@{profile.username}</p>}
-                                            <p className="text-[10px] font-mono text-emerald-600 font-bold mt-1 bg-emerald-50 py-0.5 px-2 rounded-full inline-block">
-                                                barakah.cloud/toko/{profile.shop_name || profile.username || 'toko'}
+                                        {/* Store Identity Card (Overlapping Banner) */}
+                                        <div className="px-3 pb-3 bg-white border-b border-slate-200/80 shadow-2xs">
+                                            <div className="flex items-end justify-between -mt-8 relative z-10 mb-2">
+                                                {/* Store Avatar */}
+                                                <div className="relative group shrink-0">
+                                                    <div className="w-16 h-16 rounded-2xl border-2 border-white overflow-hidden bg-white shadow-md flex items-center justify-center">
+                                                        {profile.picture ? (
+                                                            <img
+                                                                src={getMediaUrl(profile.picture)}
+                                                                alt={profile.username}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-xl">
+                                                                {(profile.shop_name || profile.name_full || profile.username || '?').charAt(0).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-600 text-white p-0.5 rounded-full shadow-xs border border-white">
+                                                        <span className="material-icons text-[9px] block">verified</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Official Seller Pill */}
+                                                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                                                    <span className="material-icons text-[10px]">storefront</span>
+                                                    Official Seller
+                                                </span>
+                                            </div>
+
+                                            {/* Store Title & Handle */}
+                                            <h3 className="text-sm font-black text-slate-900 leading-tight">
+                                                {profile.shop_name || profile.name_full || profile.username || 'Nama Toko Anda'}
+                                            </h3>
+                                            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                                                @{profile.username || 'penjual'}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko Anda akan ditampilkan di sini.'}</p>
-                                            {profile.is_operational_hours_active && profile.operational_hours && (
-                                                <div className="mt-2 inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
-                                                    <span className="material-icons text-[12px] text-emerald-600">schedule</span>
-                                                    <span>{profile.operational_hours}</span>
+
+                                            {/* Store URL Tag */}
+                                            <div className="mt-1">
+                                                <span className="inline-block text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
+                                                    barakah.cloud/toko/{profile.shop_name || profile.username || 'toko'}
+                                                </span>
+                                            </div>
+
+                                            {/* Stats Row */}
+                                            <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-500">
+                                                <span><strong className="text-slate-800 font-bold">128</strong> Pengikut</span>
+                                                <span className="text-slate-300">•</span>
+                                                <span><strong className="text-slate-800 font-bold">12</strong> Mengikuti</span>
+                                                <span className="text-slate-300">•</span>
+                                                <span className="flex items-center gap-0.5 text-slate-600 truncate">
+                                                    <span className="material-icons text-[11px] text-rose-500">location_on</span>
+                                                    {profile.address_city_name || 'Kota Asal'}
+                                                </span>
+                                            </div>
+
+                                            {/* Store Operational & PO Badges */}
+                                            {(profile.is_operational_hours_active || profile.is_preorder || profile.is_delivery_schedule_active) && (
+                                                <div className="flex flex-wrap gap-1 mt-2.5">
+                                                    {profile.is_operational_hours_active && profile.operational_hours && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-semibold">
+                                                            <span className="material-icons text-[10px] text-emerald-600">schedule</span>
+                                                            <span>Jam: <strong>{profile.operational_hours}</strong></span>
+                                                        </span>
+                                                    )}
+                                                    {profile.is_preorder && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-[9px] font-semibold">
+                                                            <span className="material-icons text-[10px] text-blue-600">hourglass_top</span>
+                                                            <span>PO: <strong>{profile.preorder_duration || (profile.preorder_days ? `Hari ${profile.preorder_days}` : 'Aktif')}</strong></span>
+                                                        </span>
+                                                    )}
+                                                    {profile.is_delivery_schedule_active && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-semibold">
+                                                            <span className="material-icons text-[10px] text-amber-600">local_shipping</span>
+                                                            <span>Kirim: <strong>{profile.delivery_days ? `Hari ${profile.delivery_days}` : (profile.delivery_range_min ? `${profile.delivery_range_min}-${profile.delivery_range_max} Hari` : (profile.delivery_note || 'Jadwal Rutin'))}</strong></span>
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
+
+                                            {/* Store Description Quote */}
+                                            <p className="text-[10px] text-slate-600 italic mt-2 line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                "{profile.shop_description || 'Selamat datang di toko resmi kami di Barakah Economy!'}"
+                                            </p>
+
+                                            {/* Store Action Buttons */}
+                                            <div className="flex items-center gap-1.5 mt-2.5">
+                                                <button type="button" className="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs">
+                                                    <span className="material-icons text-xs">chat</span>
+                                                    <span>Chat</span>
+                                                </button>
+                                                <button type="button" className="py-1.5 px-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                                                    <span className="material-icons text-xs text-emerald-600">person_add</span>
+                                                    <span>Ikuti</span>
+                                                </button>
+                                                <button type="button" className="py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-0.5 text-slate-700">
+                                                    <span className="material-icons text-xs text-rose-500">favorite</span>
+                                                    <span>36</span>
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        {/* Fake Content Area based on Layout */}
-                                        <div className={`mt-6 p-4 flex-1 relative z-10 border-t border-gray-100 ${profile.shop_theme_color === 'dark' ? 'bg-gray-900/80' : 'bg-gray-50/50'}`}>
-                                            {profile.shop_layout === 'biolink' ? (
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 1</div>
-                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 2</div>
-                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Mini E-Course Belajar</div>
-                                                </div>
-                                            ) : profile.shop_layout === 'grid' ? (
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                    </div>
-                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                    </div>
-                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                    </div>
-                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                        <div className="flex-1">
-                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                        <div className="flex-1">
-                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                        {/* Store Navigation Tabs */}
+                                        <div className="bg-white px-3 pt-2 border-b border-slate-200 flex items-center gap-3 text-[10px] font-bold text-slate-500 sticky top-[37px] z-10">
+                                            <span className="pb-1.5 text-emerald-700 border-b-2 border-emerald-600">Semua Produk (4)</span>
+                                            <span className="pb-1.5 hover:text-slate-800">Koleksi Digital</span>
+                                            <span className="pb-1.5 hover:text-slate-800">Tentang</span>
                                         </div>
-                                    </>
-                                )}
+
+                                        {/* Product Catalog Grid Preview */}
+                                        <div className="p-2.5 grid grid-cols-2 gap-2">
+                                            {/* Product Card 1 */}
+                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                <div className="aspect-square bg-gradient-to-br from-amber-100 to-orange-100 relative overflow-hidden flex items-center justify-center">
+                                                    <span className="material-icons text-amber-500 text-3xl">eco</span>
+                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
+                                                </div>
+                                                <div className="p-2 flex-1 flex flex-col justify-between">
+                                                    <div>
+                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Madu Murni Asli Hutan Al-Barakah 500g</h4>
+                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 85.000</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                                                        <span className="text-amber-500 font-bold">★ 4.9</span>
+                                                        <span>42 terjual</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Product Card 2 */}
+                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                <div className="aspect-square bg-gradient-to-br from-stone-100 to-amber-100 relative overflow-hidden flex items-center justify-center">
+                                                    <span className="material-icons text-amber-700 text-3xl">coffee</span>
+                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
+                                                </div>
+                                                <div className="p-2 flex-1 flex flex-col justify-between">
+                                                    <div>
+                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Kopi Robusta Al-Barakah Premium 250g</h4>
+                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 45.000</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                                                        <span className="text-amber-500 font-bold">★ 4.8</span>
+                                                        <span>18 terjual</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Product Card 3 */}
+                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                <div className="aspect-square bg-gradient-to-br from-yellow-50 to-amber-100 relative overflow-hidden flex items-center justify-center">
+                                                    <span className="material-icons text-amber-600 text-3xl">spa</span>
+                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
+                                                </div>
+                                                <div className="p-2 flex-1 flex flex-col justify-between">
+                                                    <div>
+                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Kurma Sukari Al-Qassim Super 1kg</h4>
+                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 75.000</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                                                        <span className="text-amber-500 font-bold">★ 5.0</span>
+                                                        <span>95 terjual</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Product Card 4 */}
+                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                <div className="aspect-square bg-gradient-to-br from-emerald-50 to-teal-100 relative overflow-hidden flex items-center justify-center">
+                                                    <span className="material-icons text-emerald-700 text-3xl">medication</span>
+                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
+                                                </div>
+                                                <div className="p-2 flex-1 flex flex-col justify-between">
+                                                    <div>
+                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Habbatussauda Oil Softgel 200 Kapsul</h4>
+                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 120.000</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                                                        <span className="text-amber-500 font-bold">★ 4.9</span>
+                                                        <span>64 terjual</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    {/* Bottom Phone Bar */}
+                                    <div className="bg-white py-1.5 flex justify-center border-t border-slate-100 shrink-0">
+                                        <div className="w-20 h-1 bg-slate-300 rounded-full"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

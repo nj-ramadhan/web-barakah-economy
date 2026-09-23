@@ -5,6 +5,23 @@
 export const getMediaUrl = (url) => {
     if (!url) return '';
     
+    // Handle File or Blob instances (e.g. newly selected images before upload)
+    if (typeof window !== 'undefined' && (url instanceof Blob || url instanceof File)) {
+        try {
+            return URL.createObjectURL(url);
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Handle object with url property (e.g. { url: '...' })
+    if (typeof url === 'object' && url !== null && typeof url.url === 'string') {
+        return getMediaUrl(url.url);
+    }
+
+    // Must be a string from here on
+    if (typeof url !== 'string') return '';
+    
     // Handle blob and data URLs (usually for previews before upload)
     if (url.startsWith('blob:') || url.startsWith('data:')) return url;
     

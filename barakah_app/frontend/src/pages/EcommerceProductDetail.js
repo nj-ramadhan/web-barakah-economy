@@ -603,160 +603,6 @@ const EcommerceProductDetail = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Informasi Operasional Toko, PO & Jadwal Pengantaran (Jika diaktifkan penjual) */}
-                {(product?.is_operational_hours_active || product?.is_preorder || product?.is_delivery_schedule_active || product?.out_of_po_shipping_active || product?.is_shipping_cost_active || product?.allow_delivery_timing_choice) && (
-                  <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50/80 border border-slate-200 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                        <span className="material-icons text-base text-emerald-600">storefront</span>
-                        Layanan & Jadwal Toko
-                      </span>
-                      {product?.is_preorder && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 uppercase tracking-wide">
-                          Pre-Order
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {/* Jam Operasional */}
-                      {product?.is_operational_hours_active && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                            <span className="material-icons text-lg">schedule</span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-semibold text-slate-400 leading-tight">Jam Operasional</p>
-                            <p className="text-xs font-bold text-slate-800 mt-0.5">{product.operational_hours || 'Buka setiap hari'}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Waktu Pre-Order */}
-                      {product?.is_preorder && (() => {
-                        const poDateInfo = product.preorder_days ? getNextDateFromDays(product.preorder_days) : null;
-                        return (
-                          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200/80 shadow-2xs">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                              <span className="material-icons text-lg">hourglass_top</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[11px] font-semibold text-amber-600/90 leading-tight">Waktu Pre-Order (PO)</p>
-                              <p className="text-xs font-bold text-slate-800 mt-0.5">
-                                {product.preorder_type === 'days' || product.preorder_days ? (
-                                  <span>Setiap hari: <strong className="text-amber-800">{product.preorder_days}</strong></span>
-                                ) : (
-                                  product.preorder_duration || (
-                                    product.preorder_days_min && product.preorder_days_max
-                                      ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari`
-                                      : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`
-                                  )
-                                )}
-                              </p>
-                              {poDateInfo && (
-                                <p className="text-[11px] text-amber-900 font-semibold mt-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 inline-flex items-center gap-1">
-                                  <span className="material-icons text-[13px] text-amber-600">event</span>
-                                  <span>Jadwal PO Terdekat: <strong className="underline">{poDateInfo.display}</strong></span>
-                                </p>
-                              )}
-                              <p className="text-[10px] text-slate-400 mt-0.5">Pesanan diproses sesuai jadwal PO</p>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Ongkir Toko: Flat vs Sesuai Jarak */}
-                      {(product?.out_of_po_shipping_active || product?.is_shipping_cost_active || product?.shipping_cost_type === 'distance') && (() => {
-                        const isDistance = product?.shipping_cost_type === 'distance' || (product?.out_of_po_shipping_active && product?.out_of_po_shipping_type === 'distance');
-                        return (
-                          <div className={`flex items-start gap-2.5 p-3 rounded-xl bg-white shadow-2xs ${isDistance ? 'border border-blue-200/90' : 'border border-purple-200/80'}`}>
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDistance ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
-                              <span className="material-icons text-lg">{isDistance ? 'near_me' : 'local_atm'}</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className={`text-[11px] font-semibold leading-tight ${isDistance ? 'text-blue-700' : 'text-purple-700'}`}>
-                                  {isDistance ? 'Ongkir Sesuai Jarak' : 'Ongkir Flat Toko'}
-                                </p>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${isDistance ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-                                  {isDistance ? 'Dikonfirmasi Kurir/Admin' : 'Flat Beli Banyak'}
-                                </span>
-                              </div>
-                              <p className="text-xs font-bold text-slate-800 mt-0.5">
-                                {isDistance
-                                  ? 'Dikonfirmasi Penjual / Kurir'
-                                  : (Number(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost) > 0
-                                      ? `Rp ${new Intl.NumberFormat('id-ID').format(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost)}`
-                                      : 'Bebas Ongkir')}
-                              </p>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                {isDistance
-                                  ? 'Biaya ongkir dihitung sesuai jarak alamat dan akan dikabari langsung oleh pihak Admin / Seller / Kurir'
-                                  : 'Tarif tetap satu harga walau membeli banyak produk dari toko ini'}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Jadwal / Tanggal Pengantaran */}
-                      {product?.is_delivery_schedule_active && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-emerald-200/80 shadow-2xs">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                            <span className="material-icons text-lg">local_shipping</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-semibold text-emerald-700 leading-tight">Jadwal & Pengantaran</p>
-                            <p className="text-xs font-bold text-slate-800 mt-0.5">
-                              {product.delivery_schedule_type === 'range' && (
-                                <span>Estimasi Rentang {product.delivery_range_min || 1} - {product.delivery_range_max || 3} Hari Kerja</span>
-                              )}
-                              {product.delivery_schedule_type === 'days' && (() => {
-                                const delDateInfo = product.delivery_days ? getNextDateFromDays(product.delivery_days) : null;
-                                return (
-                                  <div>
-                                    <span>Pengiriman pada hari: <strong className="text-emerald-800">{product.delivery_days || 'Setiap Hari'}</strong></span>
-                                    {delDateInfo && (
-                                      <span className="block text-[11px] text-emerald-800 font-semibold mt-0.5">
-                                        Pengantaran Terdekat: <strong className="underline">{delDateInfo.display}</strong>
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                              {product.delivery_schedule_type === 'date' && (
-                                <span>Tanggal Pengiriman: <strong className="text-emerald-800">{product.delivery_date ? new Date(product.delivery_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong></span>
-                              )}
-                            </p>
-                            {product.delivery_note && (
-                              <p className="text-[11px] text-slate-500 mt-1 italic flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                                <span className="material-icons text-[13px] text-slate-400">info_outline</span>
-                                {product.delivery_note}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Opsi Fleksibel Pilihan Pengiriman */}
-                      {product?.allow_delivery_timing_choice && (
-                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-teal-200/80 shadow-2xs sm:col-span-2">
-                          <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-                            <span className="material-icons text-lg">calendar_month</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-semibold text-teal-700 leading-tight">Fleksibilitas Pengiriman</p>
-                            <p className="text-xs font-bold text-slate-800 mt-0.5">
-                              Bisa pilih: <span className="text-emerald-700">Ikut Jadwal Minggu Ini</span> atau <span className="text-purple-700">Kirim ke Minggu Depannya</span>
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Pilihan jadwal pengiriman dapat ditentukan secara fleksibel saat checkout</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
 
             {(() => {
@@ -954,33 +800,194 @@ const EcommerceProductDetail = () => {
         {/* Tab Content */}
         <div className="mt-4">
           {activeTab === 'description' && (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              {product.description ? (
-                <div>
-                  <div 
-                    className={`rich-text-content relative transition-all duration-300 ${!showFullDescription && product.description.length > 400 ? 'max-h-72 overflow-hidden' : ''}`}
-                    dangerouslySetInnerHTML={{
-                      __html: convertRelativeUrlsToAbsolute(product.description, baseUrl)
-                    }}
-                  />
-                  {!showFullDescription && product.description.length > 400 && (
-                    <div className="absolute -mt-16 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-                  )}
-                  {product.description.length > 400 && (
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                      <button
-                        onClick={toggleDescription}
-                        className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-sm hover:text-emerald-800 transition"
-                      >
-                        <span>{showFullDescription ? 'Tampilkan Lebih Ringkas' : 'Baca Selengkapnya'}</span>
-                        <span className="material-icons text-sm">{showFullDescription ? 'expand_less' : 'expand_more'}</span>
-                      </button>
-                    </div>
-                  )}
+            <div className="space-y-6">
+              {/* Informasi Operasional Toko, PO & Jadwal Pengantaran (Jika diaktifkan penjual) */}
+              {(product?.is_operational_hours_active || product?.is_preorder || product?.is_delivery_schedule_active || product?.out_of_po_shipping_active || product?.is_shipping_cost_active || product?.allow_delivery_timing_choice) && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50/80 border border-slate-200 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <span className="material-icons text-base text-emerald-600">storefront</span>
+                      Layanan & Jadwal Toko
+                    </span>
+                    {product?.is_preorder && (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase tracking-wide">
+                        Pre-Order
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Jam Operasional */}
+                    {product?.is_operational_hours_active && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                          <span className="material-icons text-lg">schedule</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold text-slate-400 leading-tight">Jam Operasional</p>
+                          <p className="text-xs font-bold text-slate-800 mt-0.5">{product.operational_hours || 'Buka setiap hari'}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Waktu Pre-Order */}
+                    {product?.is_preorder && (() => {
+                      const poDateInfo = product.preorder_days ? getNextDateFromDays(product.preorder_days) : null;
+                      return (
+                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200/80 shadow-2xs">
+                          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <span className="material-icons text-lg">hourglass_top</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-semibold text-amber-600/90 leading-tight">Waktu Pre-Order (PO)</p>
+                            <p className="text-xs font-bold text-slate-800 mt-0.5">
+                              {product.preorder_type === 'days' || product.preorder_days ? (
+                                <span>Setiap hari: <strong className="text-amber-800">{product.preorder_days}</strong></span>
+                              ) : (
+                                product.preorder_duration || (
+                                  product.preorder_days_min && product.preorder_days_max
+                                    ? `${product.preorder_days_min} - ${product.preorder_days_max} Hari`
+                                    : `${product.preorder_days_min || product.preorder_days_max || 7} Hari`
+                                )
+                              )}
+                            </p>
+                            {poDateInfo && (
+                              <p className="text-[11px] text-amber-900 font-semibold mt-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 inline-flex items-center gap-1">
+                                <span className="material-icons text-[13px] text-amber-600">event</span>
+                                <span>Jadwal PO Terdekat: <strong className="underline">{poDateInfo.display}</strong></span>
+                              </p>
+                            )}
+                            <p className="text-[10px] text-slate-400 mt-0.5">Pesanan diproses sesuai jadwal PO</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Ongkir Toko: Flat vs Sesuai Jarak */}
+                    {(product?.out_of_po_shipping_active || product?.is_shipping_cost_active || product?.shipping_cost_type === 'distance') && (() => {
+                      const isDistance = product?.shipping_cost_type === 'distance' || (product?.out_of_po_shipping_active && product?.out_of_po_shipping_type === 'distance');
+                      return (
+                        <div className={`flex items-start gap-2.5 p-3 rounded-xl bg-white shadow-2xs ${isDistance ? 'border border-blue-200/90' : 'border border-purple-200/80'}`}>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDistance ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                            <span className="material-icons text-lg">{isDistance ? 'near_me' : 'local_atm'}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className={`text-[11px] font-semibold leading-tight ${isDistance ? 'text-blue-700' : 'text-purple-700'}`}>
+                                {isDistance ? 'Ongkir Sesuai Jarak' : 'Ongkir Flat Toko'}
+                              </p>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${isDistance ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                                {isDistance ? 'Dikonfirmasi Kurir/Admin' : 'Flat Beli Banyak'}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-slate-800 mt-0.5">
+                              {isDistance
+                                ? 'Dikonfirmasi Penjual / Kurir'
+                                : (Number(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost) > 0
+                                    ? `Rp ${new Intl.NumberFormat('id-ID').format(product.out_of_po_shipping_active && product.out_of_po_shipping_cost ? product.out_of_po_shipping_cost : product.shipping_cost)}`
+                                    : 'Bebas Ongkir')}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {isDistance
+                                ? 'Biaya ongkir dihitung sesuai jarak alamat dan akan dikabari langsung oleh pihak Admin / Seller / Kurir'
+                                : 'Tarif tetap satu harga walau membeli banyak produk dari toko ini'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Jadwal / Tanggal Pengantaran */}
+                    {product?.is_delivery_schedule_active && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-emerald-200/80 shadow-2xs">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <span className="material-icons text-lg">local_shipping</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-semibold text-emerald-700 leading-tight">Jadwal & Pengantaran</p>
+                          <p className="text-xs font-bold text-slate-800 mt-0.5">
+                            {product.delivery_schedule_type === 'range' && (
+                              <span>Estimasi Rentang {product.delivery_range_min || 1} - {product.delivery_range_max || 3} Hari Kerja</span>
+                            )}
+                            {product.delivery_schedule_type === 'days' && (() => {
+                              const delDateInfo = product.delivery_days ? getNextDateFromDays(product.delivery_days) : null;
+                              return (
+                                <div>
+                                  <span>Pengiriman pada hari: <strong className="text-emerald-800">{product.delivery_days || 'Setiap Hari'}</strong></span>
+                                  {delDateInfo && (
+                                    <span className="block text-[11px] text-emerald-800 font-semibold mt-0.5">
+                                      Pengantaran Terdekat: <strong className="underline">{delDateInfo.display}</strong>
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                            {product.delivery_schedule_type === 'date' && (
+                              <span>Tanggal Pengiriman: <strong className="text-emerald-800">{product.delivery_date ? new Date(product.delivery_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong></span>
+                            )}
+                          </p>
+                          {product.delivery_note && (
+                            <p className="text-[11px] text-slate-500 mt-1 italic flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                              <span className="material-icons text-[13px] text-slate-400">info_outline</span>
+                              {product.delivery_note}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Opsi Fleksibel Pilihan Pengiriman */}
+                    {product?.allow_delivery_timing_choice && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-teal-200/80 shadow-2xs sm:col-span-2">
+                        <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                          <span className="material-icons text-lg">calendar_month</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-semibold text-teal-700 leading-tight">Fleksibilitas Pengiriman</p>
+                          <p className="text-xs font-bold text-slate-800 mt-0.5">
+                            Bisa pilih: <span className="text-emerald-700">Ikut Jadwal Minggu Ini</span> atau <span className="text-purple-700">Kirim ke Minggu Depannya</span>
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Pilihan jadwal pengiriman dapat ditentukan secara fleksibel saat checkout</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-400 text-sm italic">Belum ada deskripsi untuk produk ini.</p>
               )}
+
+              {/* Deskripsi Produk */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
+                  <span className="material-icons text-base text-emerald-600">description</span>
+                  <span>Deskripsi Lengkap Produk</span>
+                </h3>
+                {product.description ? (
+                  <div>
+                    <div 
+                      className={`rich-text-content relative transition-all duration-300 ${!showFullDescription && product.description.length > 400 ? 'max-h-72 overflow-hidden' : ''}`}
+                      dangerouslySetInnerHTML={{
+                        __html: convertRelativeUrlsToAbsolute(product.description, baseUrl)
+                      }}
+                    />
+                    {!showFullDescription && product.description.length > 400 && (
+                      <div className="absolute -mt-16 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                    )}
+                    {product.description.length > 400 && (
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <button
+                          onClick={toggleDescription}
+                          className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-sm hover:text-emerald-800 transition"
+                        >
+                          <span>{showFullDescription ? 'Tampilkan Lebih Ringkas' : 'Baca Selengkapnya'}</span>
+                          <span className="material-icons text-sm">{showFullDescription ? 'expand_less' : 'expand_more'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm italic">Belum ada deskripsi untuk produk ini.</p>
+                )}
+              </div>
             </div>
           )}
 

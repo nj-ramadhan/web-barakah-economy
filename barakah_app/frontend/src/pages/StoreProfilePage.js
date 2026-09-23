@@ -830,8 +830,6 @@ const StoreProfilePage = () => {
                   const finalPrice = product.discounted_price ? Number(product.discounted_price) : price;
                   const hasDiscount = product.discounted_price && finalPrice < price;
 
-                  const isDistanceShipping = product.shipping_cost_type === 'distance' || product.out_of_po_shipping_type === 'distance';
-
                   return (
                     <div
                       key={product.id}
@@ -859,21 +857,6 @@ const StoreProfilePage = () => {
                               HEMAT {product.promo_discount_percentage}%
                             </span>
                           )}
-                        </div>
-
-                        {/* Distance / Flat Shipping Indicator */}
-                        <div className="absolute bottom-2 left-2 right-2">
-                          {isDistanceShipping ? (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-blue-600/90 text-white backdrop-blur-xs flex items-center gap-1 shadow-xs">
-                              <span className="material-icons text-[10px]">near_me</span>
-                              Ongkir Jarak
-                            </span>
-                          ) : product.is_shipping_cost_active ? (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-600/90 text-white backdrop-blur-xs flex items-center gap-1 shadow-xs">
-                              <span className="material-icons text-[10px]">local_shipping</span>
-                              Ongkir Flat
-                            </span>
-                          ) : null}
                         </div>
 
                         {isOutOfStock && (
