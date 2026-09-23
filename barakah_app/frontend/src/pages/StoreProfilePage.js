@@ -46,9 +46,9 @@ const StoreProfilePage = () => {
   }, [username]);
 
   const profile = profileData?.profile || {};
-  const physicalProducts = profileData?.ecommerce_products || [];
-  const digitalProducts = profileData?.products || [];
-  const courses = profileData?.courses || [];
+  const physicalProducts = useMemo(() => profileData?.ecommerce_products || [], [profileData]);
+  const digitalProducts = useMemo(() => profileData?.products || [], [profileData]);
+  const courses = useMemo(() => profileData?.courses || [], [profileData]);
 
   // Total sales across all physical products
   const totalSold = useMemo(() => {
