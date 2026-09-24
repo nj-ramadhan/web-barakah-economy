@@ -59,7 +59,7 @@ const DashboardSinergyAdminPage = () => {
     const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
     const [outOfPoShippingType, setOutOfPoShippingType] = useState('flat'); // 'flat' | 'distance'
     const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
-    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
+    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(false);
     const [useStoreOperationalSettings, setUseStoreOperationalSettings] = useState(true);
 
     // Quick Edit Sold Modal State
@@ -201,7 +201,7 @@ const DashboardSinergyAdminPage = () => {
         setOutOfPoShippingActive(product.out_of_po_shipping_active || false);
         setOutOfPoShippingType(product.out_of_po_shipping_type || 'flat');
         setOutOfPoShippingCost(parseCurrency(product.out_of_po_shipping_cost) || 0);
-        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? product.allow_delivery_timing_choice : true);
+        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? Boolean(product.allow_delivery_timing_choice) : false);
 
         setVariants(product.variations && product.variations.length > 0 
             ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })) 

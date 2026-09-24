@@ -10,10 +10,42 @@ class AISettingsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserBriefSerializer(serializers.ModelSerializer):
-    picture = serializers.ImageField(source='profile.picture', read_only=True)
+    picture = serializers.SerializerMethodField()
+    shop_name = serializers.SerializerMethodField()
+    name_full = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'is_staff', 'picture']
+        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'is_staff', 'picture', 'shop_name', 'name_full']
+
+    def get_picture(self, obj):
+        try:
+            if hasattr(obj, 'profile') and obj.profile and obj.profile.picture:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.profile.picture.url)
+                return obj.profile.picture.url
+            if hasattr(obj, 'profile') and obj.profile and getattr(obj.profile, 'google_picture_url', None):
+                return obj.profile.google_picture_url
+        except Exception:
+            pass
+        return None
+
+    def get_shop_name(self, obj):
+        try:
+            if hasattr(obj, 'profile') and obj.profile:
+                return obj.profile.shop_name or ''
+        except Exception:
+            pass
+        return ''
+
+    def get_name_full(self, obj):
+        try:
+            if hasattr(obj, 'profile') and obj.profile:
+                return obj.profile.name_full or ''
+        except Exception:
+            pass
+        return ''
 
 class ConsultantCategorySerializer(serializers.ModelSerializer):
     class Meta:

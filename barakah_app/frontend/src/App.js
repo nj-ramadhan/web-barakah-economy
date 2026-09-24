@@ -187,7 +187,18 @@ const NotificationHandler = () => {
 
             // Don't notify if we are currently in that chat window
             if (session.id.toString() !== activeSessionId && lastMsg.id !== prevLastMsgId) {
-              const senderName = session.consultant_details?.username || `Chat ${session.category_name}`;
+              const isStore = session.session_type === 'store' || session.session_type === 'order' || !!session.product || !!session.order;
+              const isCurrentSeller = session.seller_details && (session.seller_details.id === currentUser?.id || session.seller_details.username === currentUser?.username);
+              let senderName = '';
+              if (isStore) {
+                if (isCurrentSeller) {
+                  senderName = session.user_details?.name_full || session.user_details?.username || 'Pelanggan';
+                } else {
+                  senderName = session.seller_details?.shop_name || session.seller_details?.name_full || session.seller_details?.username || 'Toko';
+                }
+              } else {
+                senderName = session.consultant_details?.name_full || session.consultant_details?.username || (session.category_name ? `Konsultasi ${session.category_name}` : 'Pakar Syariah');
+              }
               NotificationService.showNotification(`Pesan Baru dari ${senderName}`, {
                 body: lastMsg.content || 'Mengirim file...',
                 url: `/chat/${session.id}`

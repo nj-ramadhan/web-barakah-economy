@@ -365,9 +365,44 @@ const ChatWindowPage = () => {
         ...availableCommands
     ];
 
-    const otherUser = session?.seller_details?.username === currentUser.username
+    const isCurrentSeller = Boolean(
+        session?.seller_details && (
+            session.seller_details.id === currentUser?.id || 
+            session.seller_details.username === currentUser?.username
+        )
+    );
+
+    const otherUser = isCurrentSeller
         ? session?.user_details
-        : (session?.consultant_details?.username === currentUser.username ? session?.user_details : (session?.seller_details || session?.consultant_details || session?.user_details));
+        : (session?.consultant_details?.username === currentUser?.username 
+            ? session?.user_details 
+            : (session?.seller_details || session?.consultant_details || session?.user_details));
+
+    const getChatHeaderInfo = () => {
+        if (isStoreChat) {
+            if (isCurrentSeller) {
+                const customerName = session?.user_details?.name_full || session?.user_details?.username || 'Pelanggan';
+                return {
+                    title: customerName,
+                    subtitle: 'Pembeli / Pelanggan',
+                    badge: 'Pelanggan'
+                };
+            }
+            const storeName = session?.seller_details?.shop_name || session?.seller_details?.name_full || session?.seller_details?.username;
+            return {
+                title: storeName ? `Toko ${storeName}` : (session?.product_details?.title || 'Chat Toko'),
+                subtitle: 'Toko Penjual',
+                badge: 'Penjual Langsung'
+            };
+        }
+        return {
+            title: otherUser?.name_full || otherUser?.username || session?.category_name || 'Konsultasi',
+            subtitle: session?.category_name || 'Pakar Syariah',
+            badge: null
+        };
+    };
+
+    const headerInfo = getChatHeaderInfo();
 
     return (
         <div className="fixed inset-0 z-30 lg:relative lg:inset-auto lg:z-auto flex flex-col h-[100dvh] max-h-[100dvh] lg:h-[740px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto overflow-hidden lg:my-4 border-0 lg:border lg:border-gray-100">
@@ -390,14 +425,12 @@ const ChatWindowPage = () => {
 
                 <div className="flex-1 min-w-0">
                     <h2 className="font-bold text-gray-900 text-xs truncate">
-                        {isStoreChat 
-                            ? (session?.seller_details ? `Toko @${session.seller_details.username}` : (session?.product_details?.title || 'Chat Toko'))
-                            : (otherUser?.username || session?.category_name || 'Konsultasi')}
+                        {headerInfo.title}
                     </h2>
                     <p className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>{isStoreChat ? 'Toko Penjual' : (session?.category_name || 'Pakar Syariah')}</span>
-                        {isStoreChat && <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-1.5 py-0.2 rounded">Penjual Langsung</span>}
+                        <span>{headerInfo.subtitle}</span>
+                        {headerInfo.badge && <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-1.5 py-0.2 rounded">{headerInfo.badge}</span>}
                     </p>
                 </div>
 

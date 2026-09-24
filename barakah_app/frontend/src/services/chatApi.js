@@ -21,10 +21,16 @@ export const createSession = (categoryIdOrPayload, consultantId = null) => {
     });
 };
 
-export const createStoreChat = (productId, sellerId = null, initialMessage = '') => {
+export const createStoreChat = (productIdOrPayload, sellerId = null, initialMessage = '') => {
+    if (typeof productIdOrPayload === 'object' && productIdOrPayload !== null) {
+        return api.post(`${API_URL}sessions/`, {
+            session_type: 'store',
+            ...productIdOrPayload
+        });
+    }
     return api.post(`${API_URL}sessions/`, {
         session_type: 'store',
-        product: productId,
+        product: productIdOrPayload,
         seller: sellerId,
         initial_message: initialMessage
     });

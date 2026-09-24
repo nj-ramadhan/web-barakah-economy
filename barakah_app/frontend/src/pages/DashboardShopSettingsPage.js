@@ -47,7 +47,7 @@ const DashboardShopSettingsPage = () => {
         out_of_po_shipping_active: false,
         out_of_po_shipping_type: 'flat',
         out_of_po_shipping_cost: 0,
-        allow_delivery_timing_choice: true,
+        allow_delivery_timing_choice: false,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -89,7 +89,7 @@ const DashboardShopSettingsPage = () => {
                         out_of_po_shipping_active: Boolean(profileData.out_of_po_shipping_active),
                         out_of_po_shipping_type: profileData.out_of_po_shipping_type || 'flat',
                         out_of_po_shipping_cost: profileData.out_of_po_shipping_cost || 0,
-                        allow_delivery_timing_choice: profileData.allow_delivery_timing_choice !== undefined && profileData.allow_delivery_timing_choice !== null ? Boolean(profileData.allow_delivery_timing_choice) : true,
+                        allow_delivery_timing_choice: profileData.allow_delivery_timing_choice !== undefined && profileData.allow_delivery_timing_choice !== null ? Boolean(profileData.allow_delivery_timing_choice) : false,
                     });
                 } else {
                     navigate('/login');
@@ -330,121 +330,184 @@ const DashboardShopSettingsPage = () => {
 
                             {/* Shop Description */}
                             <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Deskripsi Toko</label>
+                                <label className="block font-bold text-gray-700 mb-1.5 text-sm flex items-center justify-between">
+                                    <span>Deskripsi Profil Toko</span>
+                                    <span className="text-[11px] font-normal text-gray-400">Tampil di header etalase toko</span>
+                                </label>
                                 <textarea
                                     name="shop_description"
-                                    placeholder="Jelaskan spesialisasi atau deskripsi toko digital Anda"
+                                    placeholder="Tuliskan sambutan hangat, profil toko, spesialisasi produk fisik/katalog, jaminan kualitas, dan komitmen layanan toko Anda kepada pembeli..."
                                     value={profile.shop_description || ''}
                                     onChange={handleChange}
-                                    rows="4"
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    rows="3"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200/80 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
                                 />
                             </div>
 
-                            {/* Shop Layout */}
+                            {/* Template & Gaya Header Toko */}
                             <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Layout Toko</label>
-                                <select
-                                    name="shop_layout"
-                                    value={profile.shop_layout || 'default'}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="default">Default List</option>
-                                    <option value="grid">Grid Minimalis</option>
-                                    <option value="biolink">Bio Link Style (Pusat)</option>
-                                </select>
+                                <label className="block font-bold text-gray-700 mb-1.5 text-sm flex items-center justify-between">
+                                    <span>Gaya Tampilan Header Toko</span>
+                                    <span className="text-[11px] font-semibold text-emerald-600">Desain Toko Modern</span>
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {[
+                                        { id: 'none', name: 'Standard Store', desc: 'Banner proporsional & klasik', icon: 'view_carousel', bg: 'from-emerald-700 to-teal-800' },
+                                        { id: 'grand_hero', name: 'Grand Showcase', desc: 'Banner megah & luas', icon: 'photo_size_select_actual', bg: 'from-slate-900 to-emerald-950' },
+                                        { id: 'compact_clean', name: 'Katalog Cepat', desc: 'Header ringkas minim spasi', icon: 'splitscreen', bg: 'from-blue-700 to-teal-700' },
+                                        { id: 'islamic_heritage', name: 'Syariah Signature', desc: 'Aksen islami & badge amanah', icon: 'verified', bg: 'from-emerald-800 to-green-950' },
+                                    ].map((tmpl) => {
+                                        const isSelected = (profile.shop_template || 'none') === tmpl.id;
+                                        return (
+                                            <button
+                                                key={tmpl.id}
+                                                type="button"
+                                                onClick={() => setProfile(prev => ({ ...prev, shop_template: tmpl.id }))}
+                                                className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 text-left relative overflow-hidden ${
+                                                    isSelected 
+                                                        ? 'border-emerald-600 bg-emerald-50/50 shadow-md ring-1 ring-emerald-500' 
+                                                        : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-gray-50/50'
+                                                }`}
+                                            >
+                                                <div className={`w-full h-11 rounded-xl bg-gradient-to-r ${tmpl.bg} text-white flex items-center justify-center shadow-xs`}>
+                                                    <span className="material-icons text-xl">{tmpl.icon}</span>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-bold text-gray-800 leading-tight">{tmpl.name}</p>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{tmpl.desc}</p>
+                                                </div>
+                                                {isSelected && (
+                                                    <div className="absolute top-2 right-2 w-4 h-4 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xs">
+                                                        <span className="material-icons text-[11px] font-bold">check</span>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
-                            {/* Shop Theme Color */}
+                            {/* Layout Etalase Toko */}
                             <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Tema Warna</label>
-                                <div className="flex gap-2 flex-wrap mb-3">
-                                    {['green', 'blue', 'purple', 'dark', 'rose'].map(color => (
-                                        <button
-                                            key={color}
-                                            type="button"
-                                            onClick={() => setProfile(prev => ({ ...prev, shop_theme_color: color }))}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-bold border ${profile.shop_theme_color === color ? 'border-gray-800 ring-2 ring-gray-300' : 'border-gray-200'} capitalize transition`}
-                                        >
-                                            {color}
-                                        </button>
-                                    ))}
+                                <label className="block font-bold text-gray-700 mb-1.5 text-sm flex items-center justify-between">
+                                    <span>Layout Tampilan Produk</span>
+                                    <span className="text-[11px] font-normal text-gray-400">Pilih susunan kartu katalog etalase</span>
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {[
+                                        { id: 'grid', name: 'Grid Marketplace', desc: 'Standar 4-5 kolom, kartu seimbang & modern', icon: 'grid_view' },
+                                        { id: 'compact', name: 'Grid Kompak', desc: 'Kartu rapat & muat banyak dalam satu layar', icon: 'view_module' },
+                                        { id: 'list', name: 'Katalog List', desc: 'Baris horizontal fokus spesifikasi & harga', icon: 'view_list' },
+                                    ].map((lay) => {
+                                        const isSelected = (profile.shop_layout === lay.id) || (lay.id === 'grid' && (!profile.shop_layout || profile.shop_layout === 'default'));
+                                        return (
+                                            <button
+                                                key={lay.id}
+                                                type="button"
+                                                onClick={() => setProfile(prev => ({ ...prev, shop_layout: lay.id }))}
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-center gap-3 text-left ${
+                                                    isSelected 
+                                                        ? 'border-emerald-600 bg-emerald-50/50 shadow-md ring-1 ring-emerald-500' 
+                                                        : 'border-gray-200 bg-white hover:border-emerald-300'
+                                                }`}
+                                            >
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-emerald-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <span className="material-icons text-xl">{lay.icon}</span>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-bold text-gray-800">{lay.name}</p>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{lay.desc}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                                <div className="flex items-center gap-3">
+                            </div>
+
+                            {/* Tema Warna Aksen Toko */}
+                            <div>
+                                <label className="block font-bold text-gray-700 mb-1.5 text-sm flex items-center justify-between">
+                                    <span>Tema Warna Toko</span>
+                                    <span className="text-[11px] font-normal text-gray-400">Aksen tombol, badge, dan highlight etalase</span>
+                                </label>
+                                <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 mb-3">
+                                    {[
+                                        { id: 'emerald', label: 'Barakah', hex: '#059669', bgClass: 'bg-emerald-600' },
+                                        { id: 'blue', label: 'Bahari', hex: '#2563eb', bgClass: 'bg-blue-600' },
+                                        { id: 'teal', label: 'Alami', hex: '#0d9488', bgClass: 'bg-teal-600' },
+                                        { id: 'amber', label: 'Gold', hex: '#d97706', bgClass: 'bg-amber-600' },
+                                        { id: 'purple', label: 'Ungu', hex: '#7c3aed', bgClass: 'bg-purple-600' },
+                                        { id: 'rose', label: 'Mewah', hex: '#e11d48', bgClass: 'bg-rose-600' },
+                                        { id: 'dark', label: 'Slate', hex: '#0f172a', bgClass: 'bg-slate-900' },
+                                    ].map(color => {
+                                        const isSelected = profile.shop_theme_color === color.id || profile.shop_theme_color === color.hex;
+                                        return (
+                                            <button
+                                                key={color.id}
+                                                type="button"
+                                                onClick={() => setProfile(prev => ({ ...prev, shop_theme_color: color.id }))}
+                                                className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center gap-1.5 ${
+                                                    isSelected ? 'border-gray-900 ring-2 ring-emerald-400 bg-white shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                            >
+                                                <span className={`w-5 h-5 rounded-full ${color.bgClass} shadow-xs`}></span>
+                                                <span className="text-[10px] font-bold text-gray-700">{color.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex items-center gap-3 bg-gray-50 p-2.5 rounded-xl border border-gray-200/80">
                                     <input
                                         type="color"
-                                        value={profile.shop_theme_color?.startsWith('#') ? profile.shop_theme_color : '#166534'}
+                                        value={profile.shop_theme_color?.startsWith('#') ? profile.shop_theme_color : '#059669'}
                                         onChange={(e) => setProfile(prev => ({ ...prev, shop_theme_color: e.target.value }))}
-                                        className="w-12 h-12 rounded-lg cursor-pointer border-0 p-0 shadow-sm"
-                                        title="Pilih Warna Custom"
+                                        className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0 shadow-sm"
+                                        title="Pilih Warna Custom HEX"
                                     />
-                                    <input
-                                        type="text"
-                                        placeholder="# HEX / rgb()"
-                                        value={profile.shop_theme_color || 'green'}
-                                        onChange={(e) => setProfile(prev => ({ ...prev, shop_theme_color: e.target.value }))}
-                                        className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold uppercase focus:ring-2 focus:ring-green-500"
-                                    />
+                                    <div className="flex-1">
+                                        <p className="text-[11px] font-bold text-gray-700">Warna Kustom (HEX / Brand):</p>
+                                        <input
+                                            type="text"
+                                            placeholder="#059669"
+                                            value={profile.shop_theme_color || 'emerald'}
+                                            onChange={(e) => setProfile(prev => ({ ...prev, shop_theme_color: e.target.value }))}
+                                            className="w-full bg-white px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500 uppercase mt-0.5"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Shop Font */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Jenis Font</label>
-                                <select
-                                    name="shop_font"
-                                    value={profile.shop_font || 'sans'}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="sans">Modern Sans (Default)</option>
-                                    <option value="serif">Classic Serif</option>
-                                    <option value="mono">Tech Mono</option>
-                                    <option value="poppins">Poppins (Friendly)</option>
-                                </select>
-                            </div>
-
-
-                            {/* Shop Decoration */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Dekorasi Background</label>
-                                <select
-                                    name="shop_decoration"
-                                    value={profile.shop_decoration || 'none'}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="none">Tanpa Dekorasi</option>
-                                    <option value="islamic">Islamic - Ramadan</option>
-                                    <option value="clouds">Awan Lembut</option>
-                                </select>
-                            </div>
-
-                            {/* Shop Template Selection */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Template Toko Khusus</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {[
-                                        { id: 'none', name: 'Standard (Default)', color: 'bg-gray-100' },
-                                        { id: 'hijrah_elegan', name: 'Hijrah Elegan', color: 'bg-emerald-800' },
-                                        { id: 'ketenangan_senja', name: 'Ketenangan Senja', color: 'bg-orange-500' },
-                                        { id: 'aesthetic_lofi', name: 'Aesthetic LoFi', color: 'bg-[#f4f1ea]' },
-                                    ].map((tmpl) => (
-                                        <button
-                                            key={tmpl.id}
-                                            type="button"
-                                            onClick={() => setProfile(prev => ({ ...prev, shop_template: tmpl.id }))}
-                                            className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${profile.shop_template === tmpl.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-gray-200'}`}
-                                        >
-                                            <div className={`w-full aspect-video rounded-lg ${tmpl.color} flex items-center justify-center text-white text-[10px] font-bold shadow-inner`}>
-                                                {tmpl.id === 'none' ? 'Barakah Standard' : 'Premium'}
-                                            </div>
-                                            <span className="text-[10px] font-bold text-gray-600">{tmpl.name}</span>
-                                        </button>
-                                    ))}
+                            {/* Jenis Font & Dekorasi Aksen Latar */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1.5 text-sm">Jenis Font Toko</label>
+                                    <select
+                                        name="shop_font"
+                                        value={profile.shop_font || 'sans'}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200/80 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                                    >
+                                        <option value="sans">Modern Sans (Inter / Bersih & Universal)</option>
+                                        <option value="poppins">Poppins (Friendly, Santai & Hangat)</option>
+                                        <option value="serif">Classic Serif (Mewah, Elegan & Busana Muslim)</option>
+                                        <option value="mono">Tech Mono (Kontemporer & Terstruktur)</option>
+                                    </select>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-2 italic">* Memilih template khusus akan menimpa pengaturan Layout & Warna di bawah ini.</p>
+
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1.5 text-sm">Aksen Latar Etalase</label>
+                                    <select
+                                        name="shop_decoration"
+                                        value={profile.shop_decoration || 'none'}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200/80 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                                    >
+                                        <option value="none">Minimalis Bersih (Clean White)</option>
+                                        <option value="islamic_geometric">Aksen Syariah Geometris (Islamic Pattern)</option>
+                                        <option value="soft_dots">Pola Modern Dots & Grid (Marketplace Style)</option>
+                                        <option value="warm_gradient">Aksen Gradasi Hangat (Soft Warm Gradient)</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* PENGATURAN GLOBAL: JAM OPERASIONAL, PRE-ORDER & PENGANTARAN */}
@@ -921,7 +984,11 @@ const DashboardShopSettingsPage = () => {
                                 <div className="w-24 h-3 bg-slate-800 rounded-b-xl mx-auto -mt-1 mb-1 z-30"></div>
 
                                 {/* Phone Inner Screen */}
-                                <div className="w-full bg-slate-50 rounded-[2rem] overflow-hidden relative h-[610px] flex flex-col text-slate-800 text-left">
+                                <div className={`w-full bg-slate-50 rounded-[2rem] overflow-hidden relative h-[610px] flex flex-col text-slate-800 text-left ${
+                                    profile.shop_font === 'serif' ? 'font-serif' :
+                                    profile.shop_font === 'mono' ? 'font-mono' :
+                                    profile.shop_font === 'poppins' ? 'font-[Poppins]' : 'font-sans'
+                                }`}>
                                     
                                     {/* Mobile Store Navbar */}
                                     <div className="bg-white/95 px-3 py-2 border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-20 backdrop-blur-xs">
@@ -940,10 +1007,26 @@ const DashboardShopSettingsPage = () => {
                                     </div>
 
                                     {/* Scrollable Store Content */}
-                                    <div className="flex-1 overflow-y-auto no-scrollbar">
+                                    <div className={`flex-1 overflow-y-auto no-scrollbar relative ${
+                                        profile.shop_decoration === 'warm_gradient' ? 'bg-gradient-to-b from-amber-50/40 via-white to-slate-50' :
+                                        profile.shop_decoration === 'islamic_geometric' ? 'bg-slate-50 bg-[radial-gradient(#10b981_0.7px,transparent_0.7px)] [background-size:14px_14px]' :
+                                        profile.shop_decoration === 'soft_dots' ? 'bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px]' : 'bg-slate-50'
+                                    }`}>
                                         
                                         {/* Store Banner / Cover */}
-                                        <div className="h-28 w-full relative overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-green-800 shrink-0">
+                                        <div className={`w-full relative overflow-hidden shrink-0 transition-all ${
+                                            profile.shop_template === 'grand_hero' ? 'h-36' :
+                                            profile.shop_template === 'compact_clean' ? 'h-20' :
+                                            profile.shop_template === 'islamic_heritage' ? 'h-32' : 'h-28'
+                                        } ${
+                                            profile.shop_theme_color === 'blue' ? 'bg-gradient-to-r from-blue-900 via-sky-800 to-blue-950' :
+                                            profile.shop_theme_color === 'teal' ? 'bg-gradient-to-r from-teal-900 via-cyan-800 to-emerald-950' :
+                                            profile.shop_theme_color === 'amber' ? 'bg-gradient-to-r from-amber-900 via-yellow-800 to-stone-900' :
+                                            profile.shop_theme_color === 'purple' ? 'bg-gradient-to-r from-purple-900 via-indigo-800 to-purple-950' :
+                                            profile.shop_theme_color === 'rose' ? 'bg-gradient-to-r from-rose-900 via-pink-800 to-red-950' :
+                                            profile.shop_theme_color === 'dark' ? 'bg-gradient-to-r from-slate-950 via-gray-900 to-slate-900' :
+                                            'bg-gradient-to-r from-emerald-800 via-teal-800 to-green-900'
+                                        }`}>
                                             {profile.shop_thumbnail ? (
                                                 <img
                                                     src={getMediaUrl(profile.shop_thumbnail)}
@@ -951,11 +1034,18 @@ const DashboardShopSettingsPage = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 opacity-95">
-                                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]"></div>
+                                                <div className="absolute inset-0 opacity-95">
+                                                    <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]"></div>
                                                 </div>
                                             )}
                                             
+                                            {profile.shop_template === 'islamic_heritage' && (
+                                                <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-900/90 border border-emerald-400/40 backdrop-blur-xs rounded-full text-[8px] font-black uppercase text-emerald-200 flex items-center gap-1 shadow-sm">
+                                                    <span className="material-icons text-[10px] text-amber-400">verified</span>
+                                                    <span>Toko Syariah Berkah</span>
+                                                </div>
+                                            )}
+
                                             {/* Quick Share pill on banner */}
                                             <div className="absolute top-2 right-2 px-2 py-0.5 bg-white/90 backdrop-blur-xs rounded-full text-[9px] font-bold text-slate-700 shadow-xs flex items-center gap-1">
                                                 <span className="material-icons text-[10px] text-emerald-700">share</span>
@@ -993,19 +1083,14 @@ const DashboardShopSettingsPage = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Store Title & Handle */}
-                                            <h3 className="text-sm font-black text-slate-900 leading-tight">
-                                                {profile.shop_name || profile.name_full || profile.username || 'Nama Toko Anda'}
-                                            </h3>
-                                            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
-                                                @{profile.username || 'penjual'}
-                                            </p>
-
-                                            {/* Store URL Tag */}
-                                            <div className="mt-1">
-                                                <span className="inline-block text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
-                                                    barakah.cloud/store/{profile.shop_name || profile.username || 'toko'}
-                                                </span>
+                                            {/* Store Title & Handle Wrapped in White Stabilo Container */}
+                                            <div className="bg-white/95 backdrop-blur-xs px-2.5 py-1.5 rounded-xl shadow-xs border border-slate-200/90 inline-block mb-1">
+                                                <h3 className="text-sm font-black text-slate-900 leading-tight">
+                                                    {profile.shop_name || profile.name_full || profile.username || 'Nama Toko Anda'}
+                                                </h3>
+                                                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                                                    @{profile.username || 'penjual'}
+                                                </p>
                                             </div>
 
                                             {/* Stats Row */}
@@ -1069,84 +1154,82 @@ const DashboardShopSettingsPage = () => {
                                         {/* Store Navigation Tabs */}
                                         <div className="bg-white px-3 pt-2 border-b border-slate-200 flex items-center gap-3 text-[10px] font-bold text-slate-500 sticky top-[37px] z-10">
                                             <span className="pb-1.5 text-emerald-700 border-b-2 border-emerald-600">Semua Produk (4)</span>
-                                            <span className="pb-1.5 hover:text-slate-800">Koleksi Digital</span>
-                                            <span className="pb-1.5 hover:text-slate-800">Tentang</span>
+                                            <span className="pb-1.5 hover:text-slate-800">Tentang Toko</span>
                                         </div>
 
-                                        {/* Product Catalog Grid Preview */}
-                                        <div className="p-2.5 grid grid-cols-2 gap-2">
-                                            {/* Product Card 1 */}
-                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
-                                                <div className="aspect-square bg-gradient-to-br from-amber-100 to-orange-100 relative overflow-hidden flex items-center justify-center">
-                                                    <span className="material-icons text-amber-500 text-3xl">eco</span>
-                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
-                                                </div>
-                                                <div className="p-2 flex-1 flex flex-col justify-between">
-                                                    <div>
-                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Madu Murni Asli Hutan Al-Barakah 500g</h4>
-                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 85.000</p>
+                                        {/* Product Catalog Display (Grid vs Compact vs List) */}
+                                        {profile.shop_layout === 'list' ? (
+                                            /* List Layout Preview */
+                                            <div className="p-2.5 flex flex-col gap-2">
+                                                {[
+                                                    { title: 'Madu Murni Asli Hutan Al-Barakah 500g', price: 'Rp 85.000', sold: '42 terjual', rating: '4.9', icon: 'eco', color: 'from-amber-100 to-orange-100', textIcon: 'text-amber-500' },
+                                                    { title: 'Kopi Robusta Al-Barakah Premium 250g', price: 'Rp 45.000', sold: '18 terjual', rating: '4.8', icon: 'coffee', color: 'from-stone-100 to-amber-100', textIcon: 'text-amber-700' },
+                                                    { title: 'Kurma Sukari Al-Qassim Super 1kg', price: 'Rp 75.000', sold: '95 terjual', rating: '5.0', icon: 'spa', color: 'from-yellow-50 to-amber-100', textIcon: 'text-amber-600' },
+                                                    { title: 'Habbatussauda Oil Softgel 200 Kapsul', price: 'Rp 120.000', sold: '64 terjual', rating: '4.9', icon: 'medication', color: 'from-emerald-50 to-teal-100', textIcon: 'text-emerald-700' },
+                                                ].map((p, idx) => (
+                                                    <div key={idx} className="bg-white rounded-xl border border-slate-200/90 p-2 shadow-2xs flex items-center gap-2.5">
+                                                        <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${p.color} shrink-0 flex items-center justify-center relative overflow-hidden`}>
+                                                            <span className={`material-icons ${p.textIcon} text-2xl`}>{p.icon}</span>
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <h4 className="text-[10px] font-bold text-slate-800 line-clamp-1">{p.title}</h4>
+                                                            <p className="text-[11px] font-black text-emerald-700">{p.price}</p>
+                                                            <div className="flex items-center gap-2 text-[8px] text-slate-400 mt-0.5">
+                                                                <span className="text-amber-500 font-bold">★ {p.rating}</span>
+                                                                <span>{p.sold}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
-                                                        <span className="text-amber-500 font-bold">★ 4.9</span>
-                                                        <span>42 terjual</span>
-                                                    </div>
-                                                </div>
+                                                ))}
                                             </div>
-
-                                            {/* Product Card 2 */}
-                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
-                                                <div className="aspect-square bg-gradient-to-br from-stone-100 to-amber-100 relative overflow-hidden flex items-center justify-center">
-                                                    <span className="material-icons text-amber-700 text-3xl">coffee</span>
-                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
-                                                </div>
-                                                <div className="p-2 flex-1 flex flex-col justify-between">
-                                                    <div>
-                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Kopi Robusta Al-Barakah Premium 250g</h4>
-                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 45.000</p>
+                                        ) : profile.shop_layout === 'compact' ? (
+                                            /* Compact Grid Layout Preview */
+                                            <div className="p-2 grid grid-cols-2 gap-1.5">
+                                                {[
+                                                    { title: 'Madu Murni Asli Hutan 500g', price: 'Rp 85.000', rating: '4.9', icon: 'eco', color: 'from-amber-100 to-orange-100', textIcon: 'text-amber-500' },
+                                                    { title: 'Kopi Robusta Premium 250g', price: 'Rp 45.000', rating: '4.8', icon: 'coffee', color: 'from-stone-100 to-amber-100', textIcon: 'text-amber-700' },
+                                                    { title: 'Kurma Sukari Super 1kg', price: 'Rp 75.000', rating: '5.0', icon: 'spa', color: 'from-yellow-50 to-amber-100', textIcon: 'text-amber-600' },
+                                                    { title: 'Habbatussauda Oil 200 Kapsul', price: 'Rp 120.000', rating: '4.9', icon: 'medication', color: 'from-emerald-50 to-teal-100', textIcon: 'text-emerald-700' },
+                                                ].map((p, idx) => (
+                                                    <div key={idx} className="bg-white rounded-lg border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                        <div className={`aspect-4/3 bg-gradient-to-br ${p.color} relative overflow-hidden flex items-center justify-center`}>
+                                                            <span className={`material-icons ${p.textIcon} text-2xl`}>{p.icon}</span>
+                                                        </div>
+                                                        <div className="p-1.5">
+                                                            <h4 className="text-[9px] font-bold text-slate-800 line-clamp-1">{p.title}</h4>
+                                                            <p className="text-[10px] font-black text-emerald-700">{p.price}</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
-                                                        <span className="text-amber-500 font-bold">★ 4.8</span>
-                                                        <span>18 terjual</span>
-                                                    </div>
-                                                </div>
+                                                ))}
                                             </div>
-
-                                            {/* Product Card 3 */}
-                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
-                                                <div className="aspect-square bg-gradient-to-br from-yellow-50 to-amber-100 relative overflow-hidden flex items-center justify-center">
-                                                    <span className="material-icons text-amber-600 text-3xl">spa</span>
-                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
-                                                </div>
-                                                <div className="p-2 flex-1 flex flex-col justify-between">
-                                                    <div>
-                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Kurma Sukari Al-Qassim Super 1kg</h4>
-                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 75.000</p>
+                                        ) : (
+                                            /* Standard Marketplace Grid Preview */
+                                            <div className="p-2.5 grid grid-cols-2 gap-2">
+                                                {[
+                                                    { title: 'Madu Murni Asli Hutan Al-Barakah 500g', price: 'Rp 85.000', sold: '42 terjual', rating: '4.9', icon: 'eco', color: 'from-amber-100 to-orange-100', textIcon: 'text-amber-500' },
+                                                    { title: 'Kopi Robusta Al-Barakah Premium 250g', price: 'Rp 45.000', sold: '18 terjual', rating: '4.8', icon: 'coffee', color: 'from-stone-100 to-amber-100', textIcon: 'text-amber-700' },
+                                                    { title: 'Kurma Sukari Al-Qassim Super 1kg', price: 'Rp 75.000', sold: '95 terjual', rating: '5.0', icon: 'spa', color: 'from-yellow-50 to-amber-100', textIcon: 'text-amber-600' },
+                                                    { title: 'Habbatussauda Oil Softgel 200 Kapsul', price: 'Rp 120.000', sold: '64 terjual', rating: '4.9', icon: 'medication', color: 'from-emerald-50 to-teal-100', textIcon: 'text-emerald-700' },
+                                                ].map((p, idx) => (
+                                                    <div key={idx} className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
+                                                        <div className={`aspect-square bg-gradient-to-br ${p.color} relative overflow-hidden flex items-center justify-center`}>
+                                                            <span className={`material-icons ${p.textIcon} text-3xl`}>{p.icon}</span>
+                                                            <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
+                                                        </div>
+                                                        <div className="p-2 flex-1 flex flex-col justify-between">
+                                                            <div>
+                                                                <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">{p.title}</h4>
+                                                                <p className="text-[11px] font-black text-emerald-700 mt-1">{p.price}</p>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+                                                                <span className="text-amber-500 font-bold">★ {p.rating}</span>
+                                                                <span>{p.sold}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
-                                                        <span className="text-amber-500 font-bold">★ 5.0</span>
-                                                        <span>95 terjual</span>
-                                                    </div>
-                                                </div>
+                                                ))}
                                             </div>
-
-                                            {/* Product Card 4 */}
-                                            <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-2xs flex flex-col">
-                                                <div className="aspect-square bg-gradient-to-br from-emerald-50 to-teal-100 relative overflow-hidden flex items-center justify-center">
-                                                    <span className="material-icons text-emerald-700 text-3xl">medication</span>
-                                                    <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.2 rounded">Stok Ada</span>
-                                                </div>
-                                                <div className="p-2 flex-1 flex flex-col justify-between">
-                                                    <div>
-                                                        <h4 className="text-[10px] font-bold text-slate-800 line-clamp-2 leading-tight">Habbatussauda Oil Softgel 200 Kapsul</h4>
-                                                        <p className="text-[11px] font-black text-emerald-700 mt-1">Rp 120.000</p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
-                                                        <span className="text-amber-500 font-bold">★ 4.9</span>
-                                                        <span>64 terjual</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        )}
 
                                     </div>
 

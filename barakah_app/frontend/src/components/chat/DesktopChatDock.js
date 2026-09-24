@@ -115,13 +115,29 @@ const FloatingChatBox = ({ session: initialSession, sessionId, onClose, onFocus 
     };
 
     const isStoreChat = session?.session_type === 'store' || session?.session_type === 'order' || !!session?.product_details || !!session?.seller_details;
-    const otherUser = session?.seller_details?.username === currentUser.username
+    const isCurrentSeller = Boolean(
+        session?.seller_details && (
+            session.seller_details.id === currentUser?.id || 
+            session.seller_details.username === currentUser?.username
+        )
+    );
+    const otherUser = isCurrentSeller
         ? session?.user_details
-        : (session?.consultant_details?.username === currentUser.username ? session?.user_details : (session?.seller_details || session?.consultant_details || session?.user_details));
+        : (session?.consultant_details?.username === currentUser?.username 
+            ? session?.user_details 
+            : (session?.seller_details || session?.consultant_details || session?.user_details));
 
-    const chatTitle = isStoreChat 
-        ? (session?.seller_details ? `Toko @${session.seller_details.username}` : (session?.product_details?.title || 'Chat Toko'))
-        : (otherUser?.username || session?.category_name || 'Konsultasi');
+    let chatTitle = '';
+    if (isStoreChat) {
+        if (isCurrentSeller) {
+            chatTitle = session?.user_details?.name_full || session?.user_details?.username || 'Pelanggan';
+        } else {
+            const storeName = session?.seller_details?.shop_name || session?.seller_details?.name_full || session?.seller_details?.username;
+            chatTitle = storeName ? `Toko ${storeName}` : (session?.product_details?.title || 'Chat Toko');
+        }
+    } else {
+        chatTitle = otherUser?.name_full || otherUser?.username || session?.category_name || 'Konsultasi';
+    }
 
     return (
         <div 
@@ -661,13 +677,29 @@ const DesktopChatDock = () => {
                             ) : (
                                 filteredSessions.map((s) => {
                                     const isStore = s.session_type === 'store' || s.session_type === 'order' || !!s.product || !!s.order;
-                                    const other = s.seller_details?.username === currentUser.username
+                                    const isCurrentSeller = Boolean(
+                                        s.seller_details && (
+                                            s.seller_details.id === currentUser?.id || 
+                                            s.seller_details.username === currentUser?.username
+                                        )
+                                    );
+                                    const other = isCurrentSeller
                                         ? s.user_details
-                                        : (s.consultant_details?.username === currentUser.username ? s.user_details : (s.seller_details || s.consultant_details || s.user_details));
+                                        : (s.consultant_details?.username === currentUser?.username 
+                                            ? s.user_details 
+                                            : (s.seller_details || s.consultant_details || s.user_details));
                                     
-                                    const title = isStore 
-                                        ? (s.seller_details ? `Toko @${s.seller_details.username}` : (s.product_details?.title || 'Chat Toko'))
-                                        : (other?.username || s.category_name || 'Konsultasi');
+                                    let title = '';
+                                    if (isStore) {
+                                        if (isCurrentSeller) {
+                                            title = s.user_details?.name_full || s.user_details?.username || 'Pelanggan';
+                                        } else {
+                                            const storeName = s.seller_details?.shop_name || s.seller_details?.name_full || s.seller_details?.username;
+                                            title = storeName ? `Toko ${storeName}` : (s.product_details?.title || 'Chat Toko');
+                                        }
+                                    } else {
+                                        title = other?.name_full || other?.username || s.category_name || 'Konsultasi';
+                                    }
                                     
                                     const unread = s.unread_count || unreadStats.by_session?.[s.id] || 0;
 

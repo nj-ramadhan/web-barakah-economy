@@ -208,9 +208,30 @@ const ChatListPage = () => {
                             filteredSessions.map((session) => {
                                 const isStoreSession = session.session_type === 'store' || session.session_type === 'order' || !!session.product || !!session.order;
                                 
-                                const otherUser = session.seller_details?.username === currentUser.username
+                                const isCurrentSeller = Boolean(
+                                    session.seller_details && (
+                                        session.seller_details.id === currentUser?.id || 
+                                        session.seller_details.username === currentUser?.username
+                                    )
+                                );
+
+                                const otherUser = isCurrentSeller
                                     ? session.user_details
-                                    : (session.consultant_details?.username === currentUser.username ? session.user_details : (session.seller_details || session.consultant_details || session.user_details));
+                                    : (session.consultant_details?.username === currentUser?.username 
+                                        ? session.user_details 
+                                        : (session.seller_details || session.consultant_details || session.user_details));
+
+                                let displayTitle = '';
+                                if (isStoreSession) {
+                                    if (isCurrentSeller) {
+                                        displayTitle = session.user_details?.name_full || session.user_details?.username || 'Pelanggan';
+                                    } else {
+                                        const storeName = session.seller_details?.shop_name || session.seller_details?.name_full || session.seller_details?.username;
+                                        displayTitle = storeName ? `Toko ${storeName}` : (session.product_details?.title || 'Chat Toko');
+                                    }
+                                } else {
+                                    displayTitle = otherUser?.name_full || otherUser?.username || session.category_name || 'Konsultasi Syariah';
+                                }
 
                                 const isOrderChat = !!session.order_details || session.session_type === 'order';
                                 const unreadCount = session.unread_count || unreadStats.by_session?.[String(session.id)] || 0;
@@ -245,16 +266,14 @@ const ChatListPage = () => {
                                             <div className="flex justify-between items-start mb-0.5">
                                                 <div className="flex items-center gap-1.5">
                                                     <h3 className="font-bold text-gray-900 text-xs truncate max-w-[160px] sm:max-w-[240px]">
-                                                        {isStoreSession 
-                                                            ? (session.seller_details ? `Toko @${session.seller_details.username}` : (session.product_details?.title || 'Chat Toko'))
-                                                            : (otherUser?.username || session.category_name || 'Konsultasi Syariah')}
+                                                        {displayTitle}
                                                     </h3>
                                                     <span className={`text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
                                                         isOrderChat 
                                                             ? 'bg-amber-100 text-amber-700' 
                                                             : (isStoreSession ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700')
                                                     }`}>
-                                                        {isOrderChat ? 'Pesanan' : (isStoreSession ? 'Toko' : (session.category_name || 'Pakar'))}
+                                                        {isOrderChat ? 'Pesanan' : (isStoreSession ? (isCurrentSeller ? 'Pelanggan' : 'Toko') : (session.category_name || 'Pakar'))}
                                                     </span>
                                                 </div>
                                                 <span className="text-[10px] text-gray-400 shrink-0">

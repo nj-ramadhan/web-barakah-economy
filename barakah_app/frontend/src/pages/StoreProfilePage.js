@@ -85,6 +85,108 @@ const StoreProfilePage = () => {
     ))
   );
 
+  // Shop Customizations
+  const shopFont = profile.shop_font || 'sans';
+  const shopLayout = profile.shop_layout || 'grid';
+  const shopThemeColor = profile.shop_theme_color || 'green';
+  const shopTemplate = profile.shop_template || 'none';
+  const shopDecoration = profile.shop_decoration || 'none';
+
+  const fontClass = 
+    shopFont === 'serif' ? 'font-serif' :
+    shopFont === 'mono' ? 'font-mono' :
+    shopFont === 'poppins' ? 'font-[Poppins]' : 'font-sans';
+
+  const getThemePalette = () => {
+    switch (shopThemeColor) {
+      case 'blue':
+        return {
+          banner: 'from-blue-900 via-sky-800 to-blue-950',
+          btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white',
+          btnLight: 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200',
+          textAccent: 'text-blue-700',
+          borderActive: 'border-blue-600 text-blue-700 bg-blue-50/50',
+          chipActive: 'bg-blue-600 text-white shadow-xs',
+          verifiedBadge: 'bg-blue-600 text-white',
+        };
+      case 'teal':
+        return {
+          banner: 'from-teal-900 via-cyan-800 to-emerald-950',
+          btnPrimary: 'bg-teal-600 hover:bg-teal-700 text-white',
+          btnLight: 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200',
+          textAccent: 'text-teal-700',
+          borderActive: 'border-teal-600 text-teal-700 bg-teal-50/50',
+          chipActive: 'bg-teal-600 text-white shadow-xs',
+          verifiedBadge: 'bg-teal-600 text-white',
+        };
+      case 'amber':
+        return {
+          banner: 'from-amber-900 via-yellow-800 to-stone-900',
+          btnPrimary: 'bg-amber-600 hover:bg-amber-700 text-white',
+          btnLight: 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200',
+          textAccent: 'text-amber-700',
+          borderActive: 'border-amber-600 text-amber-700 bg-amber-50/50',
+          chipActive: 'bg-amber-600 text-white shadow-xs',
+          verifiedBadge: 'bg-amber-600 text-white',
+        };
+      case 'purple':
+        return {
+          banner: 'from-purple-900 via-indigo-800 to-purple-950',
+          btnPrimary: 'bg-purple-600 hover:bg-purple-700 text-white',
+          btnLight: 'bg-purple-50 hover:bg-purple-100 text-purple-800 border-purple-200',
+          textAccent: 'text-purple-700',
+          borderActive: 'border-purple-600 text-purple-700 bg-purple-50/50',
+          chipActive: 'bg-purple-600 text-white shadow-xs',
+          verifiedBadge: 'bg-purple-600 text-white',
+        };
+      case 'rose':
+        return {
+          banner: 'from-rose-900 via-pink-800 to-red-950',
+          btnPrimary: 'bg-rose-600 hover:bg-rose-700 text-white',
+          btnLight: 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-200',
+          textAccent: 'text-rose-700',
+          borderActive: 'border-rose-600 text-rose-700 bg-rose-50/50',
+          chipActive: 'bg-rose-600 text-white shadow-xs',
+          verifiedBadge: 'bg-rose-600 text-white',
+        };
+      case 'dark':
+        return {
+          banner: 'from-slate-950 via-gray-900 to-slate-900',
+          btnPrimary: 'bg-slate-900 hover:bg-black text-white',
+          btnLight: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300',
+          textAccent: 'text-slate-900',
+          borderActive: 'border-slate-900 text-slate-900 bg-slate-100',
+          chipActive: 'bg-slate-900 text-white shadow-xs',
+          verifiedBadge: 'bg-slate-900 text-white',
+        };
+      case 'green':
+      case 'emerald':
+      default:
+        return {
+          banner: 'from-emerald-800 via-teal-800 to-green-900',
+          btnPrimary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+          btnLight: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200',
+          textAccent: 'text-emerald-700',
+          borderActive: 'border-emerald-600 text-emerald-700 bg-emerald-50/50',
+          chipActive: 'bg-emerald-600 text-white shadow-xs',
+          verifiedBadge: 'bg-emerald-600 text-white',
+        };
+    }
+  };
+  const theme = getThemePalette();
+
+  const bannerHeightClass = 
+    shopTemplate === 'grand_hero' ? 'h-52 sm:h-64 md:h-72' :
+    shopTemplate === 'compact_clean' ? 'h-28 sm:h-36 md:h-44' :
+    shopTemplate === 'islamic_heritage' ? 'h-44 sm:h-56 md:h-64' :
+    'h-40 sm:h-52 md:h-60';
+
+  const decorationClass = 
+    shopDecoration === 'warm_gradient' ? 'bg-gradient-to-b from-amber-50/30 via-slate-50 to-white' :
+    shopDecoration === 'islamic_geometric' ? 'bg-slate-50 bg-[radial-gradient(#10b981_0.8px,transparent_0.8px)] [background-size:18px_18px]' :
+    shopDecoration === 'soft_dots' ? 'bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:14px_14px]' :
+    'bg-slate-50';
+
   // Total sales across all physical products
   const totalSold = useMemo(() => {
     return physicalProducts.reduce((sum, p) => sum + (Number(p.sold_count) || 0), 0);
@@ -266,12 +368,15 @@ const StoreProfilePage = () => {
 
     setIsStartingChat(true);
     try {
-      const sellerId = profile?.user_id || (physicalProducts[0]?.seller);
-      if (!sellerId) {
+      const sellerTarget = profile?.user_id || profile?.username || username || (physicalProducts[0]?.seller);
+      if (!sellerTarget) {
         alert(i18n.language === 'en' ? 'Seller is currently unavailable for chat.' : 'Penjual tidak dapat dihubungi saat ini.');
         return;
       }
-      const res = await createStoreChat(sellerId, null);
+      const res = await createStoreChat({
+        seller: sellerTarget,
+        product: null
+      });
       if (res.data && res.data.id) {
         navigate(`/chat/${res.data.id}`);
       } else {
@@ -279,6 +384,8 @@ const StoreProfilePage = () => {
       }
     } catch (err) {
       console.error('Error starting store chat:', err);
+      const errMsg = err?.response?.data?.error || (i18n.language === 'en' ? 'Unable to connect to store chat.' : 'Gagal membuka obrolan dengan toko.');
+      alert(errMsg);
       navigate('/chat');
     } finally {
       setIsStartingChat(false);
@@ -343,7 +450,7 @@ const StoreProfilePage = () => {
   }
 
   return (
-    <div className="body min-h-screen bg-slate-50 text-slate-900 pb-24">
+    <div className={`body min-h-screen ${decorationClass} text-slate-900 pb-24 ${fontClass}`}>
       <Helmet>
         <title>{`${t('store.store', 'Toko')} ${storeDisplayName} | Barakah Economy`}</title>
         <meta name="description" content={profile.shop_description || `Koleksi produk fisik, digital, dan e-course terlengkap dari Toko ${storeDisplayName} di Barakah Economy.`} />
@@ -433,7 +540,7 @@ const StoreProfilePage = () => {
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden mb-6 relative">
           
           {/* Banner / Cover */}
-          <div className="h-40 sm:h-52 md:h-60 w-full relative overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-800 to-green-900">
+          <div className={`${bannerHeightClass} w-full relative overflow-hidden bg-gradient-to-r ${theme.banner} transition-all`}>
             {profile.shop_thumbnail ? (
               <img
                 src={getMediaUrl(profile.shop_thumbnail)}
@@ -441,8 +548,15 @@ const StoreProfilePage = () => {
                 className="w-full h-full object-cover opacity-90"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-800 via-teal-800 to-green-900 opacity-95">
+              <div className="absolute inset-0 bg-gradient-to-r opacity-95">
                 <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+              </div>
+            )}
+
+            {shopTemplate === 'islamic_heritage' && (
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 px-3 py-1 bg-emerald-950/85 backdrop-blur-md rounded-full text-xs font-bold text-emerald-200 border border-emerald-400/30 flex items-center gap-1.5 shadow-md">
+                <span className="material-icons text-sm text-amber-400">verified</span>
+                <span>{t('store.islamic_syariah_badge', 'Toko Syariah Terverifikasi Barakah')}</span>
               </div>
             )}
             
@@ -852,7 +966,13 @@ const StoreProfilePage = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className={
+                shopLayout === 'list' 
+                  ? "flex flex-col gap-3" 
+                  : shopLayout === 'compact'
+                  ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3"
+                  : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"
+              }>
                 {filteredProducts.map(product => {
                   const stock = Number(product.total_stock ?? product.stock ?? 0);
                   const isOutOfStock = stock <= 0;
@@ -884,17 +1004,134 @@ const StoreProfilePage = () => {
                   const hasPriceRange = minPrice < maxPrice;
 
                   // Discount calculation
-                  const finalPrice = product.discounted_price ? Number(product.discounted_price) : price;
-                  const hasDiscount = Boolean(product.discounted_price && finalPrice < price);
-                  const discountPct = Number(product.promo_discount_percentage || 0);
+                  const hasDiscount = Boolean(product.discounted_price && Number(product.discounted_price) < price);
+                  const finalPrice = hasDiscount ? Number(product.discounted_price) : price;
 
-                  const finalMinPrice = hasDiscount
-                    ? (discountPct > 0 ? Math.round(minPrice * (1 - discountPct / 100)) : Math.max(0, minPrice - (price - finalPrice)))
-                    : minPrice;
+                  let finalMinPrice = minPrice;
+                  let finalMaxPrice = maxPrice;
 
-                  const finalMaxPrice = hasDiscount
-                    ? (discountPct > 0 ? Math.round(maxPrice * (1 - discountPct / 100)) : Math.max(0, maxPrice - (price - finalPrice)))
-                    : maxPrice;
+                  if (hasDiscount) {
+                    if (!hasPriceRange) {
+                      finalMinPrice = finalPrice;
+                      finalMaxPrice = finalPrice;
+                    } else {
+                      const promo = product.active_promotion;
+                      if (promo?.discount_type === 'percentage') {
+                        const pct = Number(promo.discount_value) / 100;
+                        finalMinPrice = Math.round(minPrice * (1 - pct));
+                        finalMaxPrice = Math.round(maxPrice * (1 - pct));
+                      } else if (promo?.discount_type === 'nominal') {
+                        const nom = Number(promo.discount_value);
+                        finalMinPrice = Math.max(0, minPrice - nom);
+                        finalMaxPrice = Math.max(0, maxPrice - nom);
+                      } else {
+                        const ratio = price > 0 ? (finalPrice / price) : 1;
+                        finalMinPrice = Math.round(minPrice * ratio);
+                        finalMaxPrice = Math.round(maxPrice * ratio);
+                      }
+                    }
+                  }
+
+                  if (shopLayout === 'list') {
+                    return (
+                      <div
+                        key={product.id}
+                        onClick={() => navigate(`/produk/${product.slug || product.id}`)}
+                        className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-lg hover:border-emerald-300 transition-all duration-300 overflow-hidden flex flex-col sm:flex-row cursor-pointer group p-3.5 sm:p-4 gap-4 items-stretch"
+                      >
+                        <div className="w-full sm:w-44 h-44 sm:h-auto aspect-square relative rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+                          <img
+                            src={getMediaUrl(product.images?.[0]?.image || product.thumbnail) || '/placeholder-product.png'}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          {product.is_preorder && (
+                            <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm uppercase">
+                              {t('store.preorder_badge', 'PO')}
+                            </span>
+                          )}
+                          {hasDiscount && (
+                            <span className="absolute top-2 right-2 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm">
+                              {t('store.save_discount', 'HEMAT')} {product.promo_discount_percentage}%
+                            </span>
+                          )}
+                          {isOutOfStock && (
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center">
+                              <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                {t('store.out_of_stock', 'Stok Habis')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 flex flex-col justify-between min-w-0">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                {product.category_display || product.category || 'Produk'}
+                              </span>
+                              {product.is_delivery_schedule_active && (
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <span className="material-icons text-[11px]">local_shipping</span>
+                                  Jadwal Kirim
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-sm sm:text-base font-bold text-slate-800 group-hover:text-emerald-700 transition line-clamp-2">
+                              {product.title}
+                            </h3>
+                            {product.description && (
+                              <p className="text-xs text-slate-500 line-clamp-2 mt-1 hidden sm:block">
+                                {product.description.replace(/<[^>]*>?/gm, '')}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mt-3 pt-3 border-t border-slate-100">
+                            <div>
+                              <div className="flex items-baseline gap-1.5 flex-wrap">
+                                {hasPriceRange ? (
+                                  <span className="text-sm sm:text-base font-black text-emerald-700">
+                                    {formatIDR(finalMinPrice)} - {formatIDR(finalMaxPrice)}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm sm:text-base font-black text-emerald-700">
+                                    {formatIDR(finalMinPrice)}
+                                  </span>
+                                )}
+                                {hasDiscount && (
+                                  <span className="text-xs text-slate-400 line-through">
+                                    {hasPriceRange ? `${formatIDR(minPrice)} - ${formatIDR(maxPrice)}` : formatIDR(price)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
+                                <span className="text-amber-500 font-bold flex items-center gap-0.5">
+                                  <span className="material-icons text-xs">star</span>
+                                  {product.rating_average ? Number(product.rating_average).toFixed(1) : '5.0'}
+                                </span>
+                                <span>•</span>
+                                <span>{t('store.sold', 'Terjual')} {Number(product.sold_count || 0)}</span>
+                                <span>•</span>
+                                <span className={stock > 5 ? 'text-slate-500' : 'text-amber-600 font-bold'}>
+                                  {t('store.stock', 'Stok')}: {stock}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 justify-center ${theme.btnPrimary}`}
+                            >
+                              <span className="material-icons text-sm">visibility</span>
+                              <span>{t('store.view_detail', 'Lihat Produk')}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div

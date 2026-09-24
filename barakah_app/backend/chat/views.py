@@ -110,6 +110,17 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             order = None
             seller = None
 
+            # First resolve seller directly if seller is provided (ID, username, or shop_name)
+            target_seller_param = seller_id or request.data.get('seller_id')
+            if target_seller_param:
+                try:
+                    seller = User.objects.filter(id=int(target_seller_param)).first()
+                except (ValueError, TypeError):
+                    seller = User.objects.filter(
+                        Q(username__iexact=str(target_seller_param)) | 
+                        Q(profile__shop_name__iexact=str(target_seller_param))
+                    ).first()
+
             if product_id:
                 from products.models import Product
                 product = Product.objects.filter(id=product_id).first()
@@ -122,12 +133,11 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 if order and order.seller:
                     seller = order.seller
 
-            if seller_id and not seller:
-                seller = User.objects.filter(id=seller_id).first()
-
             if not seller:
-                # If product or order has no explicit seller, fallback to admin
-                seller = User.objects.filter(is_superuser=True).first()
+                return response.Response(
+                    {"error": "Penjual tidak ditemukan atau tidak tersedia."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             if seller == user:
                 return response.Response({"error": "Anda tidak dapat membuka obrolan dengan toko Anda sendiri"}, status=status.HTTP_400_BAD_REQUEST)

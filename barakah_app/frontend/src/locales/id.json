@@ -139,7 +139,9 @@
     "owner_manage_products": "Kelola Produk",
     "not_found_title": "Toko Tidak Ditemukan",
     "not_found_desc": "Toko belum terdaftar atau produk belum tersedia.",
-    "explore_store": "Jelajahi Barakah Store"
+    "explore_store": "Jelajahi Barakah Store",
+    "islamic_syariah_badge": "Toko Syariah Terverifikasi Barakah",
+    "view_detail": "Lihat Produk"
   },
   "seller": {
     "my_products": "Produk (Store) Saya",

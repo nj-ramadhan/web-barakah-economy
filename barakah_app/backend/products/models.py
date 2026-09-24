@@ -143,7 +143,7 @@ class Product(models.Model):
         help_text="Tipe ongkir luar jam PO: flat atau distance (sesuai jarak)"
     )
     out_of_po_shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal ongkos kirim flat di luar jam PO")
-    allow_delivery_timing_choice = models.BooleanField(default=True, help_text="Izinkan pembeli memilih pengiriman minggu ini atau minggu depannya")
+    allow_delivery_timing_choice = models.BooleanField(default=False, help_text="Izinkan pembeli memilih pengiriman minggu ini atau minggu depannya")
 
 
     purchase_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Harga Beli")

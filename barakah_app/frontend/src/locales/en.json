@@ -139,7 +139,9 @@
     "owner_manage_products": "Manage Products",
     "not_found_title": "Store Not Found",
     "not_found_desc": "Store is not registered yet or products are unavailable.",
-    "explore_store": "Explore Barakah Store"
+    "explore_store": "Explore Barakah Store",
+    "islamic_syariah_badge": "Barakah Verified Syariah Store",
+    "view_detail": "View Product"
   },
   "seller": {
     "my_products": "My Store Products",

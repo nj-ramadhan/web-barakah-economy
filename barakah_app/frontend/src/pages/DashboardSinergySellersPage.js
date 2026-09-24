@@ -60,7 +60,7 @@ const DashboardSinergySellersPage = () => {
     const [outOfPoShippingActive, setOutOfPoShippingActive] = useState(false);
     const [outOfPoShippingType, setOutOfPoShippingType] = useState('flat'); // 'flat' | 'distance'
     const [outOfPoShippingCost, setOutOfPoShippingCost] = useState(0);
-    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(true);
+    const [allowDeliveryTimingChoice, setAllowDeliveryTimingChoice] = useState(false);
 
     // Pengaturan Operasional & PO Toko vs Custom Produk
     const [useStoreOperationalSettings, setUseStoreOperationalSettings] = useState(true);
@@ -227,7 +227,7 @@ const DashboardSinergySellersPage = () => {
         setDeliveryNote(product.delivery_note || '');
         setOutOfPoShippingActive(product.out_of_po_shipping_active || false);
         setOutOfPoShippingCost(parseCurrency(product.out_of_po_shipping_cost) || 0);
-        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? product.allow_delivery_timing_choice : true);
+        setAllowDeliveryTimingChoice(product.allow_delivery_timing_choice !== undefined && product.allow_delivery_timing_choice !== null ? Boolean(product.allow_delivery_timing_choice) : false);
 
         const detailsObj = {
             own_bank_status: product.own_bank_status || 'none',
@@ -474,7 +474,7 @@ const DashboardSinergySellersPage = () => {
             setOutOfPoShippingActive(false);
             setOutOfPoShippingType('flat');
             setOutOfPoShippingCost(0);
-            setAllowDeliveryTimingChoice(true);
+            setAllowDeliveryTimingChoice(false);
         } catch (error) {
             console.error('Error saving product detail:', error.response?.data || error);
             const detailMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Gagal menyimpan produk';
@@ -720,7 +720,7 @@ const DashboardSinergySellersPage = () => {
                             setOutOfPoShippingActive(false);
                             setOutOfPoShippingType('flat');
                             setOutOfPoShippingCost(0);
-                            setAllowDeliveryTimingChoice(true);
+                            setAllowDeliveryTimingChoice(false);
                             setUseStoreOperationalSettings(true);
                             resetBankStates();
                         }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap active:scale-95">
@@ -986,7 +986,7 @@ const DashboardSinergySellersPage = () => {
                                             setOutOfPoShippingActive(p.out_of_po_shipping_active || false);
                                             setOutOfPoShippingType(p.out_of_po_shipping_type || 'flat');
                                             setOutOfPoShippingCost(parseCurrency(p.out_of_po_shipping_cost) || 0);
-                                            setAllowDeliveryTimingChoice(p.allow_delivery_timing_choice !== false);
+                                            setAllowDeliveryTimingChoice(Boolean(p.allow_delivery_timing_choice));
                                             setActiveTab('edit');
                                         }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition flex items-center justify-center gap-1">
                                             <span className="material-icons text-xs">edit</span>

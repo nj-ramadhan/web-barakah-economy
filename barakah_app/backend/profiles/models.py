@@ -252,7 +252,7 @@ class Profile(models.Model):
         null=True
     )
     out_of_po_shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    allow_delivery_timing_choice = models.BooleanField(default=True)
+    allow_delivery_timing_choice = models.BooleanField(default=False)
 
 
     @property
