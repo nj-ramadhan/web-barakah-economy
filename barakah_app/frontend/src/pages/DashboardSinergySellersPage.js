@@ -587,81 +587,6 @@ const DashboardSinergySellersPage = () => {
         return (
             <div className="space-y-6 animate-fade-in">
 
-                {/* OFFICIAL STORE BANNER & QUICK CONTROLS */}
-                <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 rounded-3xl text-white shadow-lg border border-emerald-600/30">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="min-w-0">
-                            <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-1.5 backdrop-blur-sm">
-                                <span className="material-icons text-xs">storefront</span>
-                                <span>{t('seller.official_store_url', 'Alamat Resmi Toko Anda')}</span>
-                            </div>
-                            <p className="text-xs sm:text-base font-mono font-bold truncate text-emerald-100 flex items-center gap-1.5">
-                                <span>{sellerStoreUrl}</span>
-                            </p>
-                            <p className="text-[11px] text-emerald-200/80 mt-1">
-                                {i18n.language === 'en' 
-                                    ? 'Share this official store link with buyers to view your complete personal storefront.' 
-                                    : 'Bagikan tautan resmi toko ini kepada pembeli untuk melihat etalase terpadu toko Anda.'}
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                            <button
-                                type="button"
-                                onClick={handleCopyStoreLink}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-sm ${
-                                    storeUrlCopied 
-                                        ? 'bg-emerald-400 text-emerald-950 font-black' 
-                                        : 'bg-white/20 hover:bg-white/30 text-white'
-                                }`}
-                                title={t('seller.copy_store_link', 'Salin Link')}
-                            >
-                                <span className="material-icons text-sm">{storeUrlCopied ? 'check' : 'content_copy'}</span>
-                                <span>{storeUrlCopied ? t('common.copied', 'Tersalin!') : t('seller.copy_store_link', 'Salin Link')}</span>
-                            </button>
-
-                            <a
-                                href={sellerStoreUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-4 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 active:scale-95"
-                            >
-                                <span>{t('seller.view_my_store', 'Buka Toko')}</span>
-                                <span className="material-icons text-sm">open_in_new</span>
-                            </a>
-
-                            <Link
-                                to="/dashboard/shop-settings"
-                                className="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
-                                title={t('seller.settings_store', 'Pengaturan Toko')}
-                            >
-                                <span className="material-icons text-sm">settings</span>
-                                <span className="hidden sm:inline">{t('seller.settings_store', 'Pengaturan Toko')}</span>
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Quick Store KPI Badges */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-white/15">
-                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
-                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.total_stock', 'Total Produk')}</span>
-                            <span className="text-lg font-black text-white">{products.length}</span>
-                        </div>
-                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
-                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.sold_count', 'Total Terjual')}</span>
-                            <span className="text-lg font-black text-emerald-300">{totalSoldAll}</span>
-                        </div>
-                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
-                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.filter_low_stock', 'Stok Rendah (< 5)')}</span>
-                            <span className={`text-lg font-black ${lowStockCount > 0 ? 'text-amber-300' : 'text-white'}`}>{lowStockCount}</span>
-                        </div>
-                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
-                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.incoming_orders', 'Pesanan Masuk')}</span>
-                            <span className={`text-lg font-black ${pendingOrdersCount > 0 ? 'text-rose-300 animate-pulse' : 'text-white'}`}>{pendingOrdersCount}</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* ACTION BAR & CONTROLS */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
@@ -739,6 +664,81 @@ const DashboardSinergySellersPage = () => {
                             <span className="material-icons text-sm">add</span> 
                             <span>{t('seller.add_product', 'Tambah Produk Baru')}</span>
                         </button>
+                    </div>
+                </div>
+
+                {/* OFFICIAL STORE BANNER & QUICK CONTROLS */}
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 rounded-3xl text-white shadow-lg border border-emerald-600/30">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="min-w-0">
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-1.5 backdrop-blur-sm">
+                                <span className="material-icons text-xs">storefront</span>
+                                <span>{t('seller.official_store_url', 'Alamat Resmi Toko Anda')}</span>
+                            </div>
+                            <p className="text-xs sm:text-base font-mono font-bold truncate text-emerald-100 flex items-center gap-1.5">
+                                <span>{sellerStoreUrl}</span>
+                            </p>
+                            <p className="text-[11px] text-emerald-200/80 mt-1">
+                                {i18n.language === 'en' 
+                                    ? 'Share this official store link with buyers to view your complete personal storefront.' 
+                                    : 'Bagikan tautan resmi toko ini kepada pembeli untuk melihat etalase terpadu toko Anda.'}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <button
+                                type="button"
+                                onClick={handleCopyStoreLink}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-sm ${
+                                    storeUrlCopied 
+                                        ? 'bg-emerald-400 text-emerald-950 font-black' 
+                                        : 'bg-white/20 hover:bg-white/30 text-white'
+                                }`}
+                                title={t('seller.copy_store_link', 'Salin Link')}
+                            >
+                                <span className="material-icons text-sm">{storeUrlCopied ? 'check' : 'content_copy'}</span>
+                                <span>{storeUrlCopied ? t('common.copied', 'Tersalin!') : t('seller.copy_store_link', 'Salin Link')}</span>
+                            </button>
+
+                            <a
+                                href={sellerStoreUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 active:scale-95"
+                            >
+                                <span>{t('seller.view_my_store', 'Buka Toko')}</span>
+                                <span className="material-icons text-sm">open_in_new</span>
+                            </a>
+
+                            <Link
+                                to="/dashboard/shop-settings"
+                                className="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                                title={t('seller.settings_store', 'Pengaturan Toko')}
+                            >
+                                <span className="material-icons text-sm">settings</span>
+                                <span className="hidden sm:inline">{t('seller.settings_store', 'Pengaturan Toko')}</span>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Quick Store KPI Badges */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-white/15">
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.total_stock', 'Total Produk')}</span>
+                            <span className="text-lg font-black text-white">{products.length}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.sold_count', 'Total Terjual')}</span>
+                            <span className="text-lg font-black text-emerald-300">{totalSoldAll}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.filter_low_stock', 'Stok Rendah (< 5)')}</span>
+                            <span className={`text-lg font-black ${lowStockCount > 0 ? 'text-amber-300' : 'text-white'}`}>{lowStockCount}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.incoming_orders', 'Pesanan Masuk')}</span>
+                            <span className={`text-lg font-black ${pendingOrdersCount > 0 ? 'text-rose-300 animate-pulse' : 'text-white'}`}>{pendingOrdersCount}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1165,7 +1165,13 @@ const DashboardSinergySellersPage = () => {
                             <option value="jilid">jilid</option>
                             <option value="kg">kg (Kilogram)</option>
                             <option value="gram">gram (g)</option>
+                            <option value="50 gram">50 gram</option>
+                            <option value="100 gram">100 gram</option>
+                            <option value="200 gram">200 gram</option>
+                            <option value="250 gram">250 gram</option>
+                            <option value="500 gram">500 gram</option>
                             <option value="ons">ons</option>
+                            <option value="ikat">ikat</option>
                             <option value="liter">liter (L)</option>
                             <option value="ml">mililiter (ml)</option>
                             <option value="pack">pack / bungkus</option>

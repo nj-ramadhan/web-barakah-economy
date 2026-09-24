@@ -553,7 +553,13 @@ const DashboardSinergyAdminPage = () => {
                                             <option value="jilid">jilid</option>
                                             <option value="kg">kg (Kilogram)</option>
                                             <option value="gram">gram (g)</option>
+                                            <option value="50 gram">50 gram</option>
+                                            <option value="100 gram">100 gram</option>
+                                            <option value="200 gram">200 gram</option>
+                                            <option value="250 gram">250 gram</option>
+                                            <option value="500 gram">500 gram</option>
                                             <option value="ons">ons</option>
+                                            <option value="ikat">ikat</option>
                                             <option value="liter">liter (L)</option>
                                             <option value="ml">mililiter (ml)</option>
                                             <option value="pack">pack / bungkus</option>

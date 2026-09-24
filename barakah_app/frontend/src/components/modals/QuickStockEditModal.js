@@ -373,49 +373,50 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-            <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-gray-100 animate-scale-up">
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-6">
+            <div className="bg-white w-full max-w-3xl lg:max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[78vh] overflow-hidden border border-gray-100 animate-scale-up my-auto">
                 {/* Header */}
-                <div className="p-4 sm:p-6 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-                            <span className="material-icons text-xl sm:text-2xl text-emerald-300">inventory_2</span>
+                <div className="px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+                            <span className="material-icons text-lg text-emerald-300">inventory_2</span>
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base sm:text-lg font-black tracking-tight">Edit Stok Cepat (List Massal)</h3>
-                                <span className="bg-emerald-400 text-emerald-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                <h3 className="text-xs sm:text-sm font-black tracking-tight">Edit Stok Cepat (List Massal)</h3>
+                                <span className="bg-emerald-400 text-emerald-950 text-[9px] font-black px-2 py-0.2 rounded-full uppercase tracking-wider">
                                     {products.length} Produk
                                 </span>
                             </div>
-                            <p className="text-xs text-emerald-100/80 mt-0.5">
-                                Perbarui stok banyak produk dan variasi secara langsung dalam bentuk list tanpa membuka form satu per satu
+                            <p className="text-[10px] sm:text-[11px] text-emerald-100/80 mt-0.5 line-clamp-1">
+                                Perbarui stok banyak produk dan variasi secara langsung tanpa membuka form satu per satu
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+                        title="Tutup Modal"
                     >
-                        <span className="material-icons text-lg">close</span>
+                        <span className="material-icons text-base">close</span>
                     </button>
                 </div>
 
                 {/* Toolbar Filter & Search */}
-                <div className="p-3.5 sm:p-4 bg-gray-50 border-b border-gray-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
+                <div className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-50 border-b border-gray-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 shrink-0">
                     <div className="relative flex-1">
-                        <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                        <span className="material-icons absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
                         <input
                             type="text"
                             placeholder="Cari berdasarkan nama produk atau kategori..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            className="w-full pl-8 pr-4 py-1.5 bg-white border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
                                 <span className="material-icons text-xs">close</span>
                             </button>
@@ -423,11 +424,11 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                     </div>
 
                     {/* Filter Status Chips */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
                         <button
                             type="button"
                             onClick={() => setStatusFilter('all')}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition ${
                                 statusFilter === 'all'
                                     ? 'bg-emerald-600 text-white shadow-xs'
                                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
@@ -438,7 +439,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                         <button
                             type="button"
                             onClick={() => setStatusFilter('out_of_stock')}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1 ${
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1 ${
                                 statusFilter === 'out_of_stock'
                                     ? 'bg-rose-600 text-white shadow-xs'
                                     : 'bg-white text-rose-600 border border-rose-200 hover:bg-rose-50'
@@ -450,7 +451,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                         <button
                             type="button"
                             onClick={() => setStatusFilter('low_stock')}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1 ${
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1 ${
                                 statusFilter === 'low_stock'
                                     ? 'bg-amber-600 text-white shadow-xs'
                                     : 'bg-white text-amber-600 border border-amber-200 hover:bg-amber-50'
@@ -465,51 +466,51 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                         <button
                             type="button"
                             onClick={() => setStatusFilter('changed')}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1 ${
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1 ${
                                 statusFilter === 'changed'
                                     ? 'bg-blue-600 text-white shadow-xs'
                                     : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
                             }`}
                         >
-                            <span className="material-icons text-[14px]">edit</span>
+                            <span className="material-icons text-[12px]">edit</span>
                             Berubah ({changedProducts.length})
                         </button>
                     </div>
                 </div>
 
                 {/* Bulk Action Bar (Aktif jika produk dicentang) */}
-                <div className="bg-emerald-50/70 border-b border-emerald-100/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 font-bold text-gray-700 cursor-pointer select-none">
+                <div className="bg-emerald-50/70 border-b border-emerald-100/90 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                    <div className="flex items-center gap-2.5">
+                        <label className="flex items-center gap-1.5 font-bold text-gray-700 cursor-pointer select-none text-[11px]">
                             <input
                                 type="checkbox"
                                 checked={isAllFilteredSelected}
                                 onChange={handleToggleSelectAll}
-                                className="w-4 h-4 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 transition cursor-pointer"
+                                className="w-3.5 h-3.5 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 transition cursor-pointer"
                             />
                             <span>Pilih Semua Halaman ({filteredProducts.length})</span>
                         </label>
                         {selectedProductIds.size > 0 && (
-                            <span className="font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                {selectedProductIds.size} produk terpilih
+                            <span className="font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md text-[10px]">
+                                {selectedProductIds.size} dipilih
                             </span>
                         )}
                     </div>
 
                     {selectedProductIds.size > 0 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-md p-0.5">
                                 <input
                                     type="number"
                                     min="0"
                                     placeholder="Set stok"
                                     value={bulkValue}
                                     onChange={(e) => setBulkValue(e.target.value)}
-                                    className="w-18 px-2 py-1 text-xs outline-none text-center font-bold"
+                                    className="w-16 px-1.5 py-0.5 text-xs outline-none text-center font-bold"
                                 />
                                 <button
                                     onClick={handleApplyBulkSet}
-                                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded"
+                                    className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded"
                                 >
                                     Terapkan
                                 </button>
@@ -517,13 +518,13 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
 
                             <button
                                 onClick={() => handleApplyBulkDelta(10)}
-                                className="px-2.5 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] rounded-lg border border-emerald-200 transition"
+                                className="px-2 py-1 bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-md border border-emerald-200 transition"
                             >
                                 +10 Stok
                             </button>
                             <button
                                 onClick={() => handleApplyBulkDelta(50)}
-                                className="px-2.5 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] rounded-lg border border-emerald-200 transition"
+                                className="px-2 py-1 bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-md border border-emerald-200 transition"
                             >
                                 +50 Stok
                             </button>
@@ -532,7 +533,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                     setBulkValue('0');
                                     handleApplyBulkSet();
                                 }}
-                                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] rounded-lg border border-rose-200 transition"
+                                className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] rounded-md border border-rose-200 transition"
                             >
                                 Set 0 (Habis)
                             </button>
@@ -541,14 +542,14 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                 </div>
 
                 {/* Product List Table / Form */}
-                <div className="flex-1 overflow-y-auto p-4 divide-y divide-gray-100">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 divide-y divide-gray-100">
                     {filteredProducts.length === 0 ? (
-                        <div className="text-center py-16">
-                            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-gray-400">
-                                <span className="material-icons text-3xl">inventory</span>
+                        <div className="text-center py-12">
+                            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-2.5 text-gray-400">
+                                <span className="material-icons text-2xl">inventory</span>
                             </div>
-                            <h4 className="text-sm font-bold text-gray-700">Tidak ada produk yang cocok</h4>
-                            <p className="text-xs text-gray-400 mt-1">Coba ganti kata kunci pencarian atau ubah filter status.</p>
+                            <h4 className="text-xs sm:text-sm font-bold text-gray-700">Tidak ada produk yang cocok</h4>
+                            <p className="text-[11px] text-gray-400 mt-0.5">Coba ganti kata kunci pencarian atau ubah filter status.</p>
                         </div>
                     ) : (
                         filteredProducts.map((p) => {
@@ -563,13 +564,13 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                             return (
                                 <div
                                     key={p.id}
-                                    className={`py-3.5 transition-colors rounded-2xl px-2.5 ${
-                                        isChanged ? 'bg-amber-50/40 border border-amber-200/60 my-1' : 'hover:bg-gray-50/70'
+                                    className={`py-2.5 transition-colors rounded-xl px-2 ${
+                                        isChanged ? 'bg-amber-50/50 border border-amber-200/70 my-1' : 'hover:bg-gray-50/70'
                                     }`}
                                 >
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                                         {/* Product Info */}
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
@@ -577,7 +578,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                 className="w-4 h-4 rounded text-emerald-600 border-gray-300 focus:ring-emerald-500 transition cursor-pointer"
                                             />
 
-                                            <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative">
+                                            <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative">
                                                 <img
                                                     src={getMediaUrl(p.thumbnail) || '/placeholder-image.jpg'}
                                                     alt={p.title}
@@ -589,7 +590,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                             </div>
 
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1.5">
                                                     <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate">
                                                         {p.title}
                                                     </h4>
@@ -621,15 +622,15 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                         </div>
 
                                         {/* Stock Badge & Input Stepper */}
-                                        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 pl-7 sm:pl-0">
+                                        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2.5 pl-6 sm:pl-0">
                                             {/* Initial & Diff Badge */}
                                             <div className="text-right shrink-0">
                                                 <div className="text-[10px] text-gray-400 font-medium">
                                                     Awal: {initialTotal} {p.unit || 'pcs'}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 justify-end">
+                                                <div className="flex items-center gap-1 justify-end">
                                                     <span
-                                                        className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                                                        className={`text-xs font-black px-1.5 py-0.5 rounded-md ${
                                                             currentTotal <= 0
                                                                 ? 'bg-rose-100 text-rose-700'
                                                                 : currentTotal <= 5
@@ -653,12 +654,12 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
 
                                             {/* Non-variation Stock Stepper & Quick Actions */}
                                             {!hasVars ? (
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="flex items-center bg-white border border-gray-200 rounded-xl p-0.5 shadow-2xs">
+                                                <div className="flex items-center gap-1">
+                                                    <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
                                                         <button
                                                             type="button"
                                                             onClick={() => handleStockStep(p.id, -1)}
-                                                            className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded-lg hover:bg-gray-100 transition"
+                                                            className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100 transition"
                                                         >
                                                             <span className="material-icons text-xs">remove</span>
                                                         </button>
@@ -667,12 +668,12 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                             min="0"
                                                             value={stockDrafts[p.id]?.stock ?? p.stock ?? 0}
                                                             onChange={(e) => handleStockChange(p.id, e.target.value)}
-                                                            className="w-14 text-center text-xs font-black text-gray-800 outline-none"
+                                                            className="w-12 text-center text-xs font-black text-gray-800 outline-none"
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => handleStockStep(p.id, 1)}
-                                                            className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded-lg hover:bg-gray-100 transition"
+                                                            className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100 transition"
                                                         >
                                                             <span className="material-icons text-xs">add</span>
                                                         </button>
@@ -681,7 +682,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleStockStep(p.id, 10)}
-                                                        className="px-2 py-1.5 bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 font-bold text-[10px] rounded-lg transition"
+                                                        className="px-1.5 py-1 bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 font-bold text-[10px] rounded transition"
                                                         title="Tambah 10 stok"
                                                     >
                                                         +10
@@ -689,7 +690,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleStockChange(p.id, 0)}
-                                                        className="px-1.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[10px] rounded-lg transition"
+                                                        className="px-1.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[10px] rounded transition"
                                                         title="Set stok ke 0 (Habis)"
                                                     >
                                                         0
@@ -699,7 +700,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleResetProduct(p)}
-                                                            className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                                                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition"
                                                             title="Kembalikan ke stok semula"
                                                         >
                                                             <span className="material-icons text-xs">undo</span>
@@ -710,7 +711,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleExpandVariation(p.id)}
-                                                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-200 flex items-center gap-1 transition"
+                                                    className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-lg border border-emerald-200 flex items-center gap-1 transition"
                                                 >
                                                     <span>{isExpanded ? 'Tutup Variasi' : 'Atur Variasi'}</span>
                                                     <span className="material-icons text-xs">
@@ -723,8 +724,8 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
 
                                     {/* Sub-table Variasi jika ada */}
                                     {hasVars && isExpanded && (
-                                        <div className="mt-3 ml-7 p-3 bg-gray-50/80 rounded-2xl border border-gray-200/80 space-y-2">
-                                            <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        <div className="mt-2.5 ml-4 sm:ml-6 p-2.5 bg-gray-50/80 rounded-xl border border-gray-200/80 space-y-1.5">
+                                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center justify-between">
                                                 <span>Daftar Variasi ({p.variations.length})</span>
                                                 <span className="text-[10px] text-gray-400 font-normal">
                                                     Ubah stok variasi, total produk akan dihitung otomatis
@@ -739,7 +740,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                     return (
                                                         <div
                                                             key={v.id}
-                                                            className="py-2 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
+                                                            className="py-1.5 flex items-center justify-between gap-2.5 first:pt-0 last:pb-0"
                                                         >
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="text-xs font-bold text-gray-800 truncate">
@@ -752,7 +753,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                                 )}
                                                             </div>
 
-                                                            <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-2">
                                                                 <div className="text-right text-[10px] text-gray-400">
                                                                     <span>Awal: {v.stock ?? 0}</span>
                                                                     {varDiff !== 0 && (
@@ -766,11 +767,11 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                                     )}
                                                                 </div>
 
-                                                                <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
+                                                                <div className="flex items-center bg-white border border-gray-200 rounded-md p-0.5 shadow-2xs">
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleVariationStockStep(p.id, v.id, -1)}
-                                                                        className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100"
+                                                                        className="w-5 h-5 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100"
                                                                     >
                                                                         <span className="material-icons text-xs">remove</span>
                                                                     </button>
@@ -781,12 +782,12 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                                         onChange={(e) =>
                                                                             handleVariationStockChange(p.id, v.id, e.target.value)
                                                                         }
-                                                                        className="w-12 text-center text-xs font-black text-gray-800 outline-none"
+                                                                        className="w-11 text-center text-xs font-black text-gray-800 outline-none"
                                                                     />
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleVariationStockStep(p.id, v.id, 1)}
-                                                                        className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100"
+                                                                        className="w-5 h-5 flex items-center justify-center text-gray-600 hover:text-emerald-700 rounded hover:bg-gray-100"
                                                                     >
                                                                         <span className="material-icons text-xs">add</span>
                                                                     </button>
@@ -795,7 +796,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleVariationStockStep(p.id, v.id, 10)}
-                                                                    className="px-2 py-1 bg-white hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 font-bold text-[10px] rounded border border-gray-200 transition"
+                                                                    className="px-1.5 py-0.5 bg-white hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 font-bold text-[10px] rounded border border-gray-200 transition"
                                                                 >
                                                                     +10
                                                                 </button>
@@ -813,9 +814,9 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                 </div>
 
                 {/* Footer Sticky Actions */}
-                <div className="p-4 sm:p-5 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                    <div className="text-xs text-gray-600 flex items-center gap-2">
-                        <span className="material-icons text-base text-emerald-600">info</span>
+                <div className="p-3 sm:px-4 sm:py-3 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
+                    <div className="text-xs text-gray-600 flex items-center gap-1.5">
+                        <span className="material-icons text-sm text-emerald-600">info</span>
                         <span>
                             {changedProducts.length > 0 ? (
                                 <>
@@ -827,12 +828,12 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={saving}
-                            className="flex-1 sm:flex-initial px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+                            className="flex-1 sm:flex-initial px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-lg transition"
                         >
                             Tutup
                         </button>
@@ -841,7 +842,6 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    // Reset semua draft
                                     const drafts = {};
                                     products.forEach((p) => {
                                         const hasVars = p.variations && p.variations.length > 0;
@@ -859,7 +859,7 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                                     setStockDrafts(drafts);
                                 }}
                                 disabled={saving}
-                                className="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-xl transition"
+                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-lg transition"
                             >
                                 Reset Semua
                             </button>
@@ -869,10 +869,10 @@ const QuickStockEditModal = ({ isOpen, onClose, products = [], onSuccess }) => {
                             type="button"
                             onClick={handleSaveAll}
                             disabled={saving || changedProducts.length === 0}
-                            className={`flex-1 sm:flex-initial px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 transition ${
+                            className={`flex-1 sm:flex-initial px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-md shadow-emerald-200 flex items-center justify-center gap-1.5 transition ${
                                 saving || changedProducts.length === 0
                                     ? 'opacity-40 cursor-not-allowed saturate-50'
-                                    : 'hover:shadow-emerald-300 hover:scale-[1.02] active:scale-[0.98]'
+                                    : 'hover:shadow-emerald-300 hover:scale-[1.01] active:scale-[0.99]'
                             }`}
                         >
                             {saving ? (
