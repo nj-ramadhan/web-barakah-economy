@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
+import { useTranslation } from 'react-i18next';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
@@ -11,10 +12,14 @@ import ProductPromoModal from '../components/modals/ProductPromoModal';
 import { getNextDateFromDays } from '../utils/dateUtils';
 
 const DashboardSinergySellersPage = () => {
+    const { t, i18n } = useTranslation();
     const [products, setProducts] = useState([]);
     const [vouchers, setVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
+    const [productSearch, setProductSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'low_stock' | 'out_of_stock' | 'preorder' | 'promo'
+    const [storeUrlCopied, setStoreUrlCopied] = useState(false);
     const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
     const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -526,184 +531,506 @@ const DashboardSinergySellersPage = () => {
         }
     };
 
-    const renderList = () => (
-        <div className="space-y-4 animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
-                    <Link to="/dashboard/sinergy/seller/orders" className="relative flex-1 sm:flex-initial bg-blue-100 hover:bg-blue-200 text-blue-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap">
-                        <span className="material-icons text-sm">shopping_basket</span> 
-                        <span>Pesanan Masuk</span>
-                        {pendingOrdersCount > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse shadow">
-                                {pendingOrdersCount}
-                            </span>
-                        )}
-                    </Link>
-                    <button onClick={() => setActiveTab('voucher')} className="flex-1 sm:flex-initial bg-orange-100 hover:bg-orange-200 text-orange-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap">
-                        <span className="material-icons text-sm">local_activity</span> 
-                        <span>Buat Voucher</span>
-                    </button>
-                    <button onClick={() => { 
-                        setActiveTab('add'); 
-                        setEditingProduct(null); 
-                        setDescription('');
-                        setUnit('pcs');
-                        setVariants([{name: '', additional_price: 0, stock: 0}]); 
-                        setManualPrice(0);
-                        setManualPurchasePrice(0);
-                        setManualStock(0);
-                        setIsCodAvailable(false);
-                        setIsShippingCostActive(false);
-                        setShippingCostType('flat');
-                        setShippingCost(0);
-                        setThumbnailFile(null);
-                        setThumbnailPreview(null);
-                        setGalleryFiles([]);
-                        setGalleryPreviews([]);
-                        setIsOperationalHoursActive(false);
-                        setOperationalHours('');
-                        setIsPreorder(false);
-                        setPreorderType('days');
-                        setPreorderDays([]);
-                        setPreorderDaysMin('');
-                        setPreorderDaysMax('');
-                        setPreorderDuration('');
-                        setIsDeliveryScheduleActive(false);
-                        setDeliveryScheduleType('range');
-                        setDeliveryRangeMin('');
-                        setDeliveryRangeMax('');
-                        setDeliveryDays([]);
-                        setDeliveryDate('');
-                        setDeliveryNote('');
-                        setOutOfPoShippingActive(false);
-                        setOutOfPoShippingType('flat');
-                        setOutOfPoShippingCost(0);
-                        setAllowDeliveryTimingChoice(true);
-                        setUseStoreOperationalSettings(true);
-                        resetBankStates();
-                    }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap">
-                        <span className="material-icons text-sm">add</span> 
-                        <span>Tambah Produk</span>
-                    </button>
-                </div>
-            </div>
-            
-            {loading ? (
-                <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>
-            ) : products.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
-                    <span className="material-icons text-4xl text-gray-300">inventory_2</span>
-                    <p className="mt-2 text-sm text-gray-500">Anda belum memiliki produk fisik E-commerce.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map(p => (
-                        <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
-                            <div>
-                                <div className="h-40 bg-gray-100 rounded-xl overflow-hidden mb-3 relative">
-                                    <img src={getMediaUrl(p.thumbnail || p.thumbnail_url)} alt={p.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }} />
-                                    {p.category && (
-                                        <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                            {p.category}
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className="font-bold text-gray-800 text-base line-clamp-1">{p.title}</h3>
-                                <p className="text-emerald-700 font-bold text-sm mt-1">
-                                    Rp {formatCurrency(p.price)}
-                                </p>
-                                <div className="flex justify-between items-center text-xs text-gray-400">
-                                    <span>Total Stok: <span className="font-bold text-gray-700">{p.total_stock || p.stock} {p.unit || 'pcs'}</span></span>
-                                    <span 
-                                        className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]"
-                                        title={`${p.store_sold_count || 0} via Toko, ${p.charity_sold_count || 0} via Charity/Waqaf`}
-                                    >
-                                        Terjual: {p.sold_count || 0}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">
-                                    {(p.description || '').replace(/<[^>]*>/g, '')}
-                                </p>
-                            </div>
-                            <div className="flex gap-2 mt-4">
-                                <button onClick={() => {
-                                    setEditingProduct(p);
-                                    setDescription(p.description || '');
-                                    setUnit(p.unit || 'pcs');
-                                    if (p.variations && p.variations.length > 0) {
-                                        setVariants(p.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })));
-                                    } else {
-                                        setVariants([{name: '', additional_price: 0, stock: 0}]);
-                                    }
-                                    setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
-                                    setIsCodAvailable(p.is_cod_available || false);
-                                    setIsShippingCostActive(p.is_shipping_cost_active || false);
-                                    setShippingCostType(p.shipping_cost_type || 'flat');
-                                    setShippingCost(parseCurrency(p.shipping_cost) || 0);
-                                    setManualStock(p.stock || 0);
-                                    setManualPrice(parseCurrency(p.price) || 0);
-                                    setManualPurchasePrice(parseCurrency(p.purchase_price) || 0);
-                                    setThumbnailFile(null);
-                                    setThumbnailPreview(p.thumbnail || p.thumbnail_url);
-                                    setGalleryFiles([]);
-                                    setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
-                                    setIsOperationalHoursActive(p.is_operational_hours_active || false);
-                                    setOperationalHours(p.operational_hours || '');
-                                    setIsPreorder(p.is_preorder || false);
-                                    setPreorderType(p.preorder_type || (p.preorder_days ? 'days' : (p.preorder_days_min ? 'range' : 'days')));
-                                    setPreorderDays(p.preorder_days ? p.preorder_days.split(',').map(d => d.trim()).filter(Boolean) : []);
-                                    setPreorderDaysMin(p.preorder_days_min !== null && p.preorder_days_min !== undefined ? p.preorder_days_min : '');
-                                    setPreorderDaysMax(p.preorder_days_max !== null && p.preorder_days_max !== undefined ? p.preorder_days_max : '');
-                                    setPreorderDuration(p.preorder_duration || '');
-                                    setIsDeliveryScheduleActive(p.is_delivery_schedule_active || false);
-                                    setDeliveryScheduleType(p.delivery_schedule_type || 'range');
-                                    setDeliveryRangeMin(p.delivery_range_min !== null && p.delivery_range_min !== undefined ? p.delivery_range_min : '');
-                                    setDeliveryRangeMax(p.delivery_range_max !== null && p.delivery_range_max !== undefined ? p.delivery_range_max : '');
-                                    setDeliveryDays(p.delivery_days ? p.delivery_days.split(',').map(d => d.trim()).filter(Boolean) : []);
-                                    setDeliveryDate(p.delivery_date || '');
-                                    setDeliveryNote(p.delivery_note || '');
-                                    setOutOfPoShippingActive(p.out_of_po_shipping_active || false);
-                                    setOutOfPoShippingType(p.out_of_po_shipping_type || 'flat');
-                                    setOutOfPoShippingCost(parseCurrency(p.out_of_po_shipping_cost) || 0);
-                                    setAllowDeliveryTimingChoice(p.allow_delivery_timing_choice !== false);
-                                    setActiveTab('edit');
-                                }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit</button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedPromoProduct(p);
-                                        setIsPromoModalOpen(true);
-                                    }}
-                                    className="flex-1 py-2 text-xs font-bold text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 border border-purple-100 transition flex items-center justify-center gap-1"
-                                    title="Atur Promo & Diskon"
-                                >
-                                    <span className="material-icons text-xs">campaign</span>
-                                    <span>Promo</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => openTransferModal(p)}
-                                    className="w-8 py-2 text-xs font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-100 transition flex items-center justify-center"
-                                    title="Pindahkan Kepemilikan Produk ke Akun Lain"
-                                >
-                                    <span className="material-icons text-sm">swap_horiz</span>
-                                </button>
-                                <button 
-                                    onClick={() => handleDeleteProduct(p.id)}
-                                    className="w-8 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition flex items-center justify-center"
-                                    title="Hapus Produk"
-                                >
-                                    <span className="material-icons text-sm">delete</span>
-                                </button>
+    const renderList = () => {
+        const user = JSON.parse(localStorage.getItem('user')) || {};
+        const sellerStoreSlug = sellerProfile?.shop_name || sellerProfile?.username || user?.username || 'toko';
+        const sellerStoreUrl = `https://barakah.cloud/store/${sellerStoreSlug}`;
 
+        const handleCopyStoreLink = () => {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(sellerStoreUrl).then(() => {
+                    setStoreUrlCopied(true);
+                    setTimeout(() => setStoreUrlCopied(false), 2500);
+                });
+            }
+        };
+
+        const lowStockCount = products.filter(p => {
+            const s = Number(p.total_stock ?? p.stock ?? 0);
+            return s > 0 && s <= 5;
+        }).length;
+
+        const outOfStockCount = products.filter(p => {
+            const s = Number(p.total_stock ?? p.stock ?? 0);
+            return s <= 0;
+        }).length;
+
+        const totalSoldAll = products.reduce((acc, p) => acc + (Number(p.sold_count) || 0), 0);
+
+        // Filter products based on search and status
+        const filteredProducts = products.filter(p => {
+            if (productSearch.trim()) {
+                const q = productSearch.toLowerCase().trim();
+                const matchTitle = (p.title || '').toLowerCase().includes(q);
+                const matchCat = (p.category || '').toLowerCase().includes(q);
+                if (!matchTitle && !matchCat) return false;
+            }
+
+            const stock = Number(p.total_stock ?? p.stock ?? 0);
+            if (statusFilter === 'low_stock') {
+                return stock > 0 && stock <= 5;
+            }
+            if (statusFilter === 'out_of_stock') {
+                return stock <= 0;
+            }
+            if (statusFilter === 'preorder') {
+                return Boolean(p.is_preorder);
+            }
+            if (statusFilter === 'promo') {
+                return Boolean(p.promo_discount_percentage > 0 || p.discounted_price);
+            }
+            return true;
+        });
+
+        return (
+            <div className="space-y-6 animate-fade-in">
+
+                {/* OFFICIAL STORE BANNER & QUICK CONTROLS */}
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 rounded-3xl text-white shadow-lg border border-emerald-600/30">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="min-w-0">
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-1.5 backdrop-blur-sm">
+                                <span className="material-icons text-xs">storefront</span>
+                                <span>{t('seller.official_store_url', 'Alamat Resmi Toko Anda')}</span>
                             </div>
+                            <p className="text-xs sm:text-base font-mono font-bold truncate text-emerald-100 flex items-center gap-1.5">
+                                <span>{sellerStoreUrl}</span>
+                            </p>
+                            <p className="text-[11px] text-emerald-200/80 mt-1">
+                                {i18n.language === 'en' 
+                                    ? 'Share this official store link with buyers to view your complete personal storefront.' 
+                                    : 'Bagikan tautan resmi toko ini kepada pembeli untuk melihat etalase terpadu toko Anda.'}
+                            </p>
                         </div>
-                    ))}
+
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <button
+                                type="button"
+                                onClick={handleCopyStoreLink}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-sm ${
+                                    storeUrlCopied 
+                                        ? 'bg-emerald-400 text-emerald-950 font-black' 
+                                        : 'bg-white/20 hover:bg-white/30 text-white'
+                                }`}
+                                title={t('seller.copy_store_link', 'Salin Link')}
+                            >
+                                <span className="material-icons text-sm">{storeUrlCopied ? 'check' : 'content_copy'}</span>
+                                <span>{storeUrlCopied ? t('common.copied', 'Tersalin!') : t('seller.copy_store_link', 'Salin Link')}</span>
+                            </button>
+
+                            <a
+                                href={sellerStoreUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 active:scale-95"
+                            >
+                                <span>{t('seller.view_my_store', 'Buka Toko')}</span>
+                                <span className="material-icons text-sm">open_in_new</span>
+                            </a>
+
+                            <Link
+                                to="/dashboard/shop-settings"
+                                className="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                                title={t('seller.settings_store', 'Pengaturan Toko')}
+                            >
+                                <span className="material-icons text-sm">settings</span>
+                                <span className="hidden sm:inline">{t('seller.settings_store', 'Pengaturan Toko')}</span>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Quick Store KPI Badges */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-white/15">
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.total_stock', 'Total Produk')}</span>
+                            <span className="text-lg font-black text-white">{products.length}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.sold_count', 'Total Terjual')}</span>
+                            <span className="text-lg font-black text-emerald-300">{totalSoldAll}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.filter_low_stock', 'Stok Rendah (< 5)')}</span>
+                            <span className={`text-lg font-black ${lowStockCount > 0 ? 'text-amber-300' : 'text-white'}`}>{lowStockCount}</span>
+                        </div>
+                        <div className="bg-black/15 rounded-2xl p-2.5 text-center">
+                            <span className="text-[10px] uppercase font-bold text-emerald-200 block">{t('seller.incoming_orders', 'Pesanan Masuk')}</span>
+                            <span className={`text-lg font-black ${pendingOrdersCount > 0 ? 'text-rose-300 animate-pulse' : 'text-white'}`}>{pendingOrdersCount}</span>
+                        </div>
+                    </div>
                 </div>
-            )}
-        </div>
-    );
+
+                {/* ACTION BAR & CONTROLS */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 className="text-xl font-black text-gray-800 tracking-tight flex items-center gap-2">
+                            <span>{t('seller.my_products', 'Produk (Store) Saya')}</span>
+                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                {products.length}
+                            </span>
+                        </h2>
+                    </div>
+
+                    <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                        <Link to="/dashboard/sinergy/seller/orders" className="relative flex-1 sm:flex-initial bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap active:scale-95 shadow-2xs">
+                            <span className="material-icons text-sm">shopping_basket</span> 
+                            <span>{t('seller.incoming_orders', 'Pesanan Masuk')}</span>
+                            {pendingOrdersCount > 0 && (
+                                <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse shadow">
+                                    {pendingOrdersCount}
+                                </span>
+                            )}
+                        </Link>
+                        <button onClick={() => setActiveTab('voucher')} className="flex-1 sm:flex-initial bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap active:scale-95 shadow-2xs">
+                            <span className="material-icons text-sm">local_activity</span> 
+                            <span>{t('seller.create_voucher', 'Buat Voucher')}</span>
+                        </button>
+                        <button onClick={() => { 
+                            setActiveTab('add'); 
+                            setEditingProduct(null); 
+                            setDescription('');
+                            setUnit('pcs');
+                            setVariants([{name: '', additional_price: 0, stock: 0}]); 
+                            setManualPrice(0);
+                            setManualPurchasePrice(0);
+                            setManualStock(0);
+                            setIsCodAvailable(false);
+                            setIsShippingCostActive(false);
+                            setShippingCostType('flat');
+                            setShippingCost(0);
+                            setThumbnailFile(null);
+                            setThumbnailPreview(null);
+                            setGalleryFiles([]);
+                            setGalleryPreviews([]);
+                            setIsOperationalHoursActive(false);
+                            setOperationalHours('');
+                            setIsPreorder(false);
+                            setPreorderType('days');
+                            setPreorderDays([]);
+                            setPreorderDaysMin('');
+                            setPreorderDaysMax('');
+                            setPreorderDuration('');
+                            setIsDeliveryScheduleActive(false);
+                            setDeliveryScheduleType('range');
+                            setDeliveryRangeMin('');
+                            setDeliveryRangeMax('');
+                            setDeliveryDays([]);
+                            setDeliveryDate('');
+                            setDeliveryNote('');
+                            setOutOfPoShippingActive(false);
+                            setOutOfPoShippingType('flat');
+                            setOutOfPoShippingCost(0);
+                            setAllowDeliveryTimingChoice(true);
+                            setUseStoreOperationalSettings(true);
+                            resetBankStates();
+                        }} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm transition-all shadow-emerald-200 whitespace-nowrap active:scale-95">
+                            <span className="material-icons text-sm">add</span> 
+                            <span>{t('seller.add_product', 'Tambah Produk Baru')}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* SEARCH & FILTER CONTROLS */}
+                <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-100 shadow-2xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search inside seller products */}
+                    <div className="relative flex-1">
+                        <span className="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                        <input
+                            type="text"
+                            placeholder={t('seller.search_products_placeholder', 'Cari produk saya...')}
+                            value={productSearch}
+                            onChange={(e) => setProductSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition"
+                        />
+                        {productSearch && (
+                            <button
+                                type="button"
+                                onClick={() => setProductSearch('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Filter Status Chips */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('all')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                                statusFilter === 'all'
+                                    ? 'bg-emerald-600 text-white shadow-xs'
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
+                        >
+                            {t('seller.filter_all', 'Semua')} ({products.length})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('low_stock')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                                statusFilter === 'low_stock'
+                                    ? 'bg-amber-600 text-white shadow-xs'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
+                            }`}
+                        >
+                            {t('seller.filter_low_stock', 'Stok Rendah')} ({lowStockCount})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('out_of_stock')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                                statusFilter === 'out_of_stock'
+                                    ? 'bg-rose-600 text-white shadow-xs'
+                                    : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                            }`}
+                        >
+                            {t('seller.filter_out_of_stock', 'Stok Habis')} ({outOfStockCount})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('preorder')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                                statusFilter === 'preorder'
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
+                            }`}
+                        >
+                            {t('seller.filter_preorder', 'Pre-Order')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('promo')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                                statusFilter === 'promo'
+                                    ? 'bg-purple-600 text-white shadow-xs'
+                                    : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
+                            }`}
+                        >
+                            {t('seller.filter_promo', 'Promo')}
+                        </button>
+                    </div>
+                </div>
+                
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center p-12">
+                        <div className="animate-spin rounded-full h-10 w-10 border-3 border-emerald-600 border-t-transparent shadow-md"></div>
+                        <p className="mt-3 text-xs font-semibold text-gray-500 animate-pulse">{t('common.loading', 'Memuat daftar produk...')}</p>
+                    </div>
+                ) : filteredProducts.length === 0 ? (
+                    <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200 p-8 shadow-2xs">
+                        <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <span className="material-icons text-3xl">inventory_2</span>
+                        </div>
+                        <h3 className="text-base font-bold text-gray-800 mb-1">
+                            {products.length === 0 
+                                ? t('seller.no_products_yet', 'Belum ada produk yang ditambahkan.') 
+                                : t('seller.no_products_matching', 'Tidak ada produk yang cocok dengan pencarian atau filter status ini.')}
+                        </h3>
+                        {products.length === 0 ? (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('add')}
+                                className="mt-4 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-200"
+                            >
+                                {t('seller.add_first_product', 'Tambah Produk Pertama Anda')}
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => { setProductSearch(''); setStatusFilter('all'); }}
+                                className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition"
+                            >
+                                {t('common.reset', 'Reset Filter')}
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filteredProducts.map(p => {
+                            const stock = Number(p.total_stock ?? p.stock ?? 0);
+                            const isOutOfStock = stock <= 0;
+                            const isLowStock = stock > 0 && stock <= 5;
+
+                            return (
+                                <div key={p.id} className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-lg hover:border-emerald-200 transition-all duration-200 group">
+                                    <div>
+                                        {/* Product Thumbnail */}
+                                        <div className="h-44 bg-gray-100 rounded-2xl overflow-hidden mb-3 relative">
+                                            <img 
+                                                src={getMediaUrl(p.thumbnail || p.thumbnail_url)} 
+                                                alt={p.title} 
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                                onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }} 
+                                            />
+
+                                            {/* Badges Over Image */}
+                                            <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+                                                {p.is_preorder && (
+                                                    <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wide">
+                                                        PO
+                                                    </span>
+                                                )}
+                                                {p.promo_discount_percentage > 0 && (
+                                                    <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm">
+                                                        HEMAT {p.promo_discount_percentage}%
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {p.category && (
+                                                <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+                                                    {p.category}
+                                                </span>
+                                            )}
+
+                                            {isOutOfStock && (
+                                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center">
+                                                    <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                                        {t('store.out_of_stock', 'Stok Habis')}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Title & Price */}
+                                        <h3 className="font-bold text-gray-800 text-base line-clamp-1 group-hover:text-emerald-700 transition">
+                                            {p.title}
+                                        </h3>
+                                        
+                                        <div className="flex items-baseline justify-between gap-2 mt-1">
+                                            <p className="text-emerald-700 font-black text-base">
+                                                Rp {formatCurrency(p.price)}
+                                            </p>
+                                            {p.purchase_price > 0 && (
+                                                <span className="text-[11px] text-gray-400 font-medium">
+                                                    Beli: Rp {formatCurrency(p.purchase_price)}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Stock & Sold Row */}
+                                        <div className="flex justify-between items-center text-xs mt-2.5 pt-2 border-t border-gray-100">
+                                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                                                isOutOfStock 
+                                                    ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                                                    : isLowStock 
+                                                    ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                                                    : 'bg-slate-100 text-slate-700'
+                                            }`}>
+                                                {t('store.stock', 'Stok')}: {stock} {p.unit || 'pcs'}
+                                            </span>
+                                            
+                                            <span 
+                                                className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]"
+                                                title={`${p.store_sold_count || 0} via Toko, ${p.charity_sold_count || 0} via Charity/Waqaf`}
+                                            >
+                                                {t('seller.sold_count', 'Terjual')}: {p.sold_count || 0}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 line-clamp-2 mt-2 leading-relaxed">
+                                            {(p.description || '').replace(/<[^>]*>/g, '')}
+                                        </p>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-gray-100">
+                                        <Link
+                                            to={`/produk/${p.slug || p.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 border border-slate-200 transition flex items-center justify-center"
+                                            title={t('seller.btn_view_product', 'Lihat Produk di Etalase')}
+                                        >
+                                            <span className="material-icons text-sm">visibility</span>
+                                        </Link>
+
+                                        <button onClick={() => {
+                                            setEditingProduct(p);
+                                            setDescription(p.description || '');
+                                            setUnit(p.unit || 'pcs');
+                                            if (p.variations && p.variations.length > 0) {
+                                                setVariants(p.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })));
+                                            } else {
+                                                setVariants([{name: '', additional_price: 0, stock: 0}]);
+                                            }
+                                            setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
+                                            setIsCodAvailable(p.is_cod_available || false);
+                                            setIsShippingCostActive(p.is_shipping_cost_active || false);
+                                            setShippingCostType(p.shipping_cost_type || 'flat');
+                                            setShippingCost(parseCurrency(p.shipping_cost) || 0);
+                                            setManualStock(p.stock || 0);
+                                            setManualPrice(parseCurrency(p.price) || 0);
+                                            setManualPurchasePrice(parseCurrency(p.purchase_price) || 0);
+                                            setThumbnailFile(null);
+                                            setThumbnailPreview(p.thumbnail || p.thumbnail_url);
+                                            setGalleryFiles([]);
+                                            setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
+                                            setIsOperationalHoursActive(p.is_operational_hours_active || false);
+                                            setOperationalHours(p.operational_hours || '');
+                                            setIsPreorder(p.is_preorder || false);
+                                            setPreorderType(p.preorder_type || (p.preorder_days ? 'days' : (p.preorder_days_min ? 'range' : 'days')));
+                                            setPreorderDays(p.preorder_days ? p.preorder_days.split(',').map(d => d.trim()).filter(Boolean) : []);
+                                            setPreorderDaysMin(p.preorder_days_min !== null && p.preorder_days_min !== undefined ? p.preorder_days_min : '');
+                                            setPreorderDaysMax(p.preorder_days_max !== null && p.preorder_days_max !== undefined ? p.preorder_days_max : '');
+                                            setPreorderDuration(p.preorder_duration || '');
+                                            setIsDeliveryScheduleActive(p.is_delivery_schedule_active || false);
+                                            setDeliveryScheduleType(p.delivery_schedule_type || 'range');
+                                            setDeliveryRangeMin(p.delivery_range_min !== null && p.delivery_range_min !== undefined ? p.delivery_range_min : '');
+                                            setDeliveryRangeMax(p.delivery_range_max !== null && p.delivery_range_max !== undefined ? p.delivery_range_max : '');
+                                            setDeliveryDays(p.delivery_days ? p.delivery_days.split(',').map(d => d.trim()).filter(Boolean) : []);
+                                            setDeliveryDate(p.delivery_date || '');
+                                            setDeliveryNote(p.delivery_note || '');
+                                            setOutOfPoShippingActive(p.out_of_po_shipping_active || false);
+                                            setOutOfPoShippingType(p.out_of_po_shipping_type || 'flat');
+                                            setOutOfPoShippingCost(parseCurrency(p.out_of_po_shipping_cost) || 0);
+                                            setAllowDeliveryTimingChoice(p.allow_delivery_timing_choice !== false);
+                                            setActiveTab('edit');
+                                        }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition flex items-center justify-center gap-1">
+                                            <span className="material-icons text-xs">edit</span>
+                                            <span>{t('seller.btn_edit', 'Edit')}</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedPromoProduct(p);
+                                                setIsPromoModalOpen(true);
+                                            }}
+                                            className="flex-1 py-2 text-xs font-bold text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 border border-purple-100 transition flex items-center justify-center gap-1"
+                                            title={t('seller.btn_promo', 'Atur Promo & Diskon')}
+                                        >
+                                            <span className="material-icons text-xs">campaign</span>
+                                            <span>{t('seller.btn_promo', 'Promo')}</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => openTransferModal(p)}
+                                            className="w-8 py-2 text-xs font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-100 transition flex items-center justify-center"
+                                            title={t('seller.btn_transfer', 'Pindahkan Kepemilikan Produk ke Akun Lain')}
+                                        >
+                                            <span className="material-icons text-sm">swap_horiz</span>
+                                        </button>
+
+                                        <button 
+                                            onClick={() => handleDeleteProduct(p.id)}
+                                            className="w-8 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition flex items-center justify-center"
+                                            title={t('seller.btn_delete', 'Hapus Produk')}
+                                        >
+                                            <span className="material-icons text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const renderVouchers = () => (
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up">

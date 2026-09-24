@@ -435,13 +435,13 @@ const ChatWindowPage = () => {
                             <img
                                 src={session.product_details.thumbnail}
                                 alt="Product"
-                                onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                onClick={() => session.product_details.slug && navigate(`/produk/${session.product_details.slug}`)}
                                 className="w-12 h-12 rounded-xl object-cover border border-blue-200 shrink-0 cursor-pointer hover:opacity-90 transition"
                             />
                         )}
                         <div className="flex-1 min-w-0">
                             <h4
-                                onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                onClick={() => session.product_details.slug && navigate(`/produk/${session.product_details.slug}`)}
                                 className="text-xs font-bold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition"
                             >
                                 {session.product_details.title}
@@ -477,7 +477,7 @@ const ChatWindowPage = () => {
                         </div>
                         {session.product_details.slug && (
                             <button
-                                onClick={() => navigate(`/store/${session.product_details.slug}`)}
+                                onClick={() => navigate(`/produk/${session.product_details.slug}`)}
                                 className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold shrink-0 transition shadow-sm active:scale-95"
                             >
                                 Lihat

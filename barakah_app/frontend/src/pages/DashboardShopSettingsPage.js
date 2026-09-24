@@ -113,7 +113,7 @@ const DashboardShopSettingsPage = () => {
     };
 
     const handleCopyStoreLink = () => {
-        const url = `https://barakah.cloud/toko/${profile.shop_name || profile.username}`;
+        const url = `https://barakah.cloud/store/${profile.shop_name || profile.username}`;
         navigator.clipboard.writeText(url).then(() => {
             setCopySuccess(true);
             setTimeout(() => setCopySuccess(false), 2500);
@@ -240,7 +240,7 @@ const DashboardShopSettingsPage = () => {
                                             Alamat Resmi Toko Anda
                                         </div>
                                         <p className="text-xs sm:text-sm font-mono font-bold truncate text-emerald-100">
-                                            https://barakah.cloud/toko/{profile.shop_name || profile.username || 'nama_toko'}
+                                            https://barakah.cloud/store/{profile.shop_name || profile.username || 'nama_toko'}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
@@ -254,7 +254,7 @@ const DashboardShopSettingsPage = () => {
                                             <span>{copySuccess ? 'Tersalin!' : 'Salin'}</span>
                                         </button>
                                         <a
-                                            href={`/toko/${profile.shop_name || profile.username}`}
+                                            href={`/store/${profile.shop_name || profile.username}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="px-4 py-2 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow transition flex items-center gap-1 active:scale-95"
@@ -278,7 +278,7 @@ const DashboardShopSettingsPage = () => {
                                     Nama Toko (Custom URL / Slug)
                                 </label>
                                 <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1 border border-gray-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200 transition">
-                                    <span className="text-xs font-mono text-gray-400 select-none">barakah.cloud/toko/</span>
+                                    <span className="text-xs font-mono text-gray-400 select-none">barakah.cloud/store/</span>
                                     <input
                                         type="text"
                                         name="shop_name"
@@ -289,7 +289,7 @@ const DashboardShopSettingsPage = () => {
                                     />
                                 </div>
                                 <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
-                                    Jika diisi, toko Anda akan langsung beralamat di <strong>https://barakah.cloud/toko/{profile.shop_name || profile.username}</strong>. Jika dikosongkan, alamat toko otomatis memakai username Anda (<strong>@{profile.username}</strong>).
+                                    Jika diisi, toko Anda akan langsung beralamat di <strong>https://barakah.cloud/store/{profile.shop_name || profile.username}</strong>. Jika dikosongkan, alamat toko otomatis memakai username Anda (<strong>@{profile.username}</strong>).
                                 </p>
                             </div>
 
@@ -1004,7 +1004,7 @@ const DashboardShopSettingsPage = () => {
                                             {/* Store URL Tag */}
                                             <div className="mt-1">
                                                 <span className="inline-block text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
-                                                    barakah.cloud/toko/{profile.shop_name || profile.username || 'toko'}
+                                                    barakah.cloud/store/{profile.shop_name || profile.username || 'toko'}
                                                 </span>
                                             </div>
 

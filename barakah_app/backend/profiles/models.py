@@ -200,7 +200,7 @@ class Profile(models.Model):
     username_change_count = models.IntegerField(default=0)
     
     # Shop fields for digital product & ecommerce sellers
-    shop_name = models.CharField(max_length=150, blank=True, null=True, unique=True, db_index=True, help_text="Nama toko unik untuk URL /toko/{nama_toko}")
+    shop_name = models.CharField(max_length=150, blank=True, null=True, unique=True, db_index=True, help_text="Nama toko unik untuk URL /store/{nama_toko}")
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)
     shop_description = models.TextField(blank=True, null=True)
     shop_layout = models.CharField(max_length=50, default='default', blank=True)

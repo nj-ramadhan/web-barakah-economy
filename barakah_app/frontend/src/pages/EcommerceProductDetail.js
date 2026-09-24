@@ -761,7 +761,7 @@ const EcommerceProductDetail = () => {
 
           <div className="flex items-center gap-2 flex-wrap self-end md:self-auto w-full md:w-auto">
             <Link
-              to={`/toko/${product.seller_shop_name || product.seller_name}`}
+              to={`/store/${product.seller_shop_name || product.seller_name}`}
               className="flex-1 md:flex-none px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 shadow-sm shadow-emerald-200"
             >
               <span className="material-icons text-base">storefront</span>

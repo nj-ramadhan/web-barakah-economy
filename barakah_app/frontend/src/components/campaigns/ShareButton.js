@@ -22,7 +22,9 @@ const ShareButton = ({
 
     // Determine share URL based on type
     let shareUrl = '';
-    if (type === 'product' || type === 'sinergy' || type === 'store') {
+    if (type === 'product' || type === 'sinergy') {
+        shareUrl = `${shareBaseUrl}/produk/${slug}`;
+    } else if (type === 'store') {
         shareUrl = `${shareBaseUrl}/store/${slug}`;
     } else if (type === 'article') {
         shareUrl = `${shareBaseUrl}/articles/${slug}`;

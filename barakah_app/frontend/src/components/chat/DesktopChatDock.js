@@ -205,13 +205,13 @@ const FloatingChatBox = ({ session: initialSession, sessionId, onClose, onFocus 
                                     <img
                                         src={session.product_details.thumbnail}
                                         alt="Product"
-                                        onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                        onClick={() => session.product_details.slug && navigate(`/produk/${session.product_details.slug}`)}
                                         className="w-9 h-9 rounded-lg object-cover border border-blue-200 shrink-0 cursor-pointer"
                                     />
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <h5
-                                        onClick={() => session.product_details.slug && navigate(`/store/${session.product_details.slug}`)}
+                                        onClick={() => session.product_details.slug && navigate(`/produk/${session.product_details.slug}`)}
                                         className="text-[11px] font-bold text-gray-900 truncate cursor-pointer hover:text-blue-600"
                                     >
                                         {session.product_details.title}
@@ -234,7 +234,7 @@ const FloatingChatBox = ({ session: initialSession, sessionId, onClose, onFocus 
                                 </div>
                                 {session.product_details.slug && (
                                     <button
-                                        onClick={() => navigate(`/store/${session.product_details.slug}`)}
+                                        onClick={() => navigate(`/produk/${session.product_details.slug}`)}
                                         className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[9px] font-bold shrink-0 transition"
                                     >
                                         Lihat

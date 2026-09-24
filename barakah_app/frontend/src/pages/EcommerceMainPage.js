@@ -630,7 +630,7 @@ const EcommerceMainPage = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (product.seller_name) {
-                    navigate(`/toko/${product.seller_shop_name || product.seller_name}`);
+                    navigate(`/store/${product.seller_shop_name || product.seller_name}`);
                   } else {
                     setSelectedUserId(product.seller);
                     setIsProfileModalOpen(true);

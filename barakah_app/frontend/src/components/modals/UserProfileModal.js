@@ -186,10 +186,10 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
             <div className="user-profile-modal-shops">
               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Toko &amp; Layanan</h3>
               <div className="shop-links">
-                {/* Barakah Store links directly to /toko/{shop_name || username} which combines physical, digital & ecourses */}
+                {/* Barakah Store links directly to /store/{shop_name || username} which combines physical, digital & ecourses */}
                 {(profile.has_physical_products || profile.has_digital_products || profile.has_courses || profile.shop_name) ? (
                   <Link 
-                    to={`/toko/${profile.shop_name || profile.username}`} 
+                    to={`/store/${profile.shop_name || profile.username}`} 
                     className="shop-link store" 
                     onClick={onClose}
                   >

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { useTranslation } from 'react-i18next';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getPublicDigitalProfile } from '../services/digitalProductApi';
@@ -19,6 +20,7 @@ const formatIDR = (amount) => {
 const StoreProfilePage = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,8 +71,11 @@ const StoreProfilePage = () => {
   const digitalProducts = useMemo(() => profileData?.products || [], [profileData]);
   const courses = useMemo(() => profileData?.courses || [], [profileData]);
 
+  // Primary store slug and official URL
   const storeSlug = profile.shop_name || username;
   const storeDisplayName = profile.shop_name || profile.name_full || username;
+  const officialStoreUrl = `https://barakah.cloud/store/${storeSlug}`;
+
   const isOwnStore = Boolean(
     profile.is_owner || 
     (currentUser && (
@@ -97,8 +102,8 @@ const StoreProfilePage = () => {
       map.get(catKey).count += 1;
     });
     const list = Array.from(map.values()).sort((a, b) => b.count - a.count);
-    return [{ key: 'Semua', label: 'Semua', count: physicalProducts.length }, ...list];
-  }, [physicalProducts]);
+    return [{ key: 'Semua', label: t('store.category_all', 'Semua'), count: physicalProducts.length }, ...list];
+  }, [physicalProducts, t]);
 
   // Handle Multi-Select Category
   const handleCategoryClick = (catKey) => {
@@ -171,28 +176,26 @@ const StoreProfilePage = () => {
   }, [physicalProducts, searchQuery, selectedCategories, sortBy]);
 
   const handleCopyLink = () => {
-    const storeUrl = `https://barakah.cloud/toko/${storeSlug}`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(storeUrl).then(() => {
-        setShareToast('Tautan toko berhasil disalin!');
+      navigator.clipboard.writeText(officialStoreUrl).then(() => {
+        setShareToast(t('store.link_copied', 'Tautan toko berhasil disalin!'));
         setTimeout(() => setShareToast(''), 3000);
       });
     } else {
-      setShareToast('Tautan: ' + storeUrl);
+      setShareToast(officialStoreUrl);
       setTimeout(() => setShareToast(''), 3000);
     }
   };
 
   const handleShareStore = () => {
-    const storeUrl = `https://barakah.cloud/toko/${storeSlug}`;
-    const shareTitle = `Toko ${storeDisplayName} di Barakah Economy`;
-    const shareText = `Yuk cek berbagai produk terbaik dari Toko ${storeDisplayName} di Barakah Economy: ${storeUrl}`;
+    const shareTitle = `${t('store.store', 'Toko')} ${storeDisplayName} - Barakah Economy`;
+    const shareText = `Yuk cek berbagai produk terbaik dari ${t('store.store', 'Toko')} ${storeDisplayName} di Barakah Economy: ${officialStoreUrl}`;
 
     if (navigator.share) {
       navigator.share({
         title: shareTitle,
         text: shareText,
-        url: storeUrl
+        url: officialStoreUrl
       }).catch(err => {
         console.log('Share dismissed', err);
       });
@@ -203,7 +206,7 @@ const StoreProfilePage = () => {
 
   const handleToggleFollow = async () => {
     if (!currentUser) {
-      alert('Silakan login terlebih dahulu untuk mengikuti toko.');
+      alert(i18n.language === 'en' ? 'Please log in first to follow this store.' : 'Silakan login terlebih dahulu untuk mengikuti toko.');
       return;
     }
     setFollowLoading(true);
@@ -212,10 +215,13 @@ const StoreProfilePage = () => {
       const res = await api.post(`/profiles/${targetId}/toggle-follow/`);
       setIsFollowing(res.data.is_following);
       setFollowersCount(res.data.followers_count);
-      setShareToast(res.data.is_following ? 'Berhasil mengikuti toko!' : 'Berhenti mengikuti toko.');
+      setShareToast(res.data.is_following 
+        ? (i18n.language === 'en' ? 'Now following this store!' : 'Berhasil mengikuti toko!') 
+        : (i18n.language === 'en' ? 'Unfollowed store.' : 'Berhenti mengikuti toko.')
+      );
       setTimeout(() => setShareToast(''), 2500);
     } catch (err) {
-      const msg = err.response?.data?.error || 'Gagal mengubah status mengikuti.';
+      const msg = err.response?.data?.error || (i18n.language === 'en' ? 'Failed to update follow status.' : 'Gagal mengubah status mengikuti.');
       alert(msg);
     } finally {
       setFollowLoading(false);
@@ -224,7 +230,7 @@ const StoreProfilePage = () => {
 
   const handleToggleLike = async () => {
     if (!currentUser) {
-      alert('Silakan login terlebih dahulu untuk menyukai toko.');
+      alert(i18n.language === 'en' ? 'Please log in first to like this store.' : 'Silakan login terlebih dahulu untuk menyukai toko.');
       return;
     }
     setLikeLoading(true);
@@ -233,10 +239,13 @@ const StoreProfilePage = () => {
       const res = await api.post(`/profiles/${targetId}/toggle-like-shop/`);
       setIsShopLiked(res.data.is_shop_liked);
       setShopLikesCount(res.data.shop_likes_count);
-      setShareToast(res.data.is_shop_liked ? 'Anda menyukai toko ini!' : 'Batal menyukai toko.');
+      setShareToast(res.data.is_shop_liked 
+        ? (i18n.language === 'en' ? 'You liked this store!' : 'Anda menyukai toko ini!') 
+        : (i18n.language === 'en' ? 'Unliked store.' : 'Batal menyukai toko.')
+      );
       setTimeout(() => setShareToast(''), 2500);
     } catch (err) {
-      const msg = err.response?.data?.error || 'Gagal menyukai toko.';
+      const msg = err.response?.data?.error || (i18n.language === 'en' ? 'Failed to like store.' : 'Gagal menyukai toko.');
       alert(msg);
     } finally {
       setLikeLoading(false);
@@ -251,7 +260,7 @@ const StoreProfilePage = () => {
     }
 
     if (profile?.user_id && String(profile.user_id) === String(user.id)) {
-      alert('Ini adalah toko Anda sendiri.');
+      alert(i18n.language === 'en' ? 'This is your own store.' : 'Ini adalah toko Anda sendiri.');
       return;
     }
 
@@ -259,7 +268,7 @@ const StoreProfilePage = () => {
     try {
       const sellerId = profile?.user_id || (physicalProducts[0]?.seller);
       if (!sellerId) {
-        alert('Penjual tidak dapat dihubungi saat ini.');
+        alert(i18n.language === 'en' ? 'Seller is currently unavailable for chat.' : 'Penjual tidak dapat dihubungi saat ini.');
         return;
       }
       const res = await createStoreChat(sellerId, null);
@@ -279,12 +288,16 @@ const StoreProfilePage = () => {
   const handleWhatsApp = () => {
     const phone = profile.phone || physicalProducts[0]?.seller_phone;
     if (!phone) {
-      alert('Nomor WhatsApp penjual tidak tersedia.');
+      alert(i18n.language === 'en' ? 'Seller WhatsApp number is unavailable.' : 'Nomor WhatsApp penjual tidak tersedia.');
       return;
     }
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
-    const msg = encodeURIComponent(`Halo Toko @${username}, saya melihat toko Anda di Barakah Economy.`);
+    const msg = encodeURIComponent(
+      i18n.language === 'en'
+        ? `Hello Store @${username}, I found your store on Barakah Economy.`
+        : `Halo Toko @${username}, saya melihat toko Anda di Barakah Economy.`
+    );
     window.open(`https://wa.me/${waPhone}?text=${msg}`, '_blank');
   };
 
@@ -293,8 +306,10 @@ const StoreProfilePage = () => {
       <div className="body min-h-screen bg-slate-50 flex flex-col">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center py-24">
-          <div className="animate-spin rounded-full h-12 w-12 border-3 border-emerald-600 border-t-transparent"></div>
-          <p className="mt-4 text-sm font-semibold text-slate-500 animate-pulse">Memuat etalase toko...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-emerald-600 border-t-transparent shadow-md"></div>
+          <p className="mt-4 text-sm font-semibold text-slate-500 animate-pulse">
+            {t('common.loading', 'Memuat etalase toko...')}
+          </p>
         </div>
         <NavigationButton />
       </div>
@@ -309,15 +324,17 @@ const StoreProfilePage = () => {
           <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-4 shadow-sm">
             <span className="material-icons text-4xl">storefront</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-1">Toko Tidak Ditemukan</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-1">
+            {t('store.not_found_title', 'Toko Tidak Ditemukan')}
+          </h2>
           <p className="text-sm text-slate-500 max-w-sm mb-6">
-            Toko dengan username <strong className="text-slate-700">@{username}</strong> belum terdaftar atau produk belum tersedia.
+            {t('store.not_found_desc', 'Toko dengan URL ini belum terdaftar atau produk belum tersedia.')}
           </p>
           <button
             onClick={() => navigate('/store')}
             className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-200 transition"
           >
-            Jelajahi Barakah Store
+            {t('store.explore_store', 'Jelajahi Barakah Store')}
           </button>
         </div>
         <NavigationButton />
@@ -328,16 +345,16 @@ const StoreProfilePage = () => {
   return (
     <div className="body min-h-screen bg-slate-50 text-slate-900 pb-24">
       <Helmet>
-        <title>{`Toko ${storeDisplayName} | Barakah Economy`}</title>
+        <title>{`${t('store.store', 'Toko')} ${storeDisplayName} | Barakah Economy`}</title>
         <meta name="description" content={profile.shop_description || `Koleksi produk fisik, digital, dan e-course terlengkap dari Toko ${storeDisplayName} di Barakah Economy.`} />
-        <meta property="og:title" content={`Toko ${storeDisplayName} - Barakah Economy`} />
+        <meta property="og:title" content={`${t('store.store', 'Toko')} ${storeDisplayName} - Barakah Economy`} />
         <meta property="og:description" content={profile.shop_description || `Koleksi produk fisik, digital, dan e-course terlengkap dari Toko ${storeDisplayName}`} />
-        <meta property="og:url" content={`https://barakah.cloud/toko/${storeSlug}`} />
+        <meta property="og:url" content={officialStoreUrl} />
         {(profile.picture || profile.shop_thumbnail) && (
           <meta property="og:image" content={getMediaUrl(profile.picture || profile.shop_thumbnail)} />
         )}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`Toko ${storeDisplayName} - Barakah Economy`} />
+        <meta name="twitter:title" content={`${t('store.store', 'Toko')} ${storeDisplayName} - Barakah Economy`} />
         <meta name="twitter:description" content={profile.shop_description || `Koleksi produk dari Toko ${storeDisplayName}`} />
         {(profile.picture || profile.shop_thumbnail) && (
           <meta name="twitter:image" content={getMediaUrl(profile.picture || profile.shop_thumbnail)} />
@@ -346,7 +363,7 @@ const StoreProfilePage = () => {
 
       <Header />
 
-      {/* Toast Notification */}
+      {/* Floating Toast Notification */}
       {shareToast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900/95 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-xl border border-slate-700 flex items-center gap-2 animate-bounce">
           <span className="material-icons text-emerald-400 text-base">check_circle</span>
@@ -354,52 +371,59 @@ const StoreProfilePage = () => {
         </div>
       )}
 
-      {/* Main Container */}
+      {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4">
 
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4 overflow-x-auto whitespace-nowrap py-1">
-          <Link to="/store" className="hover:text-emerald-700 font-medium transition flex items-center gap-1">
+          <Link to="/" className="hover:text-emerald-700 font-medium transition flex items-center gap-1">
             <span className="material-icons text-sm">home</span>
-            <span>Store</span>
+            <span>{t('header.home', 'Beranda')}</span>
           </Link>
           <span className="material-icons text-[12px] text-slate-400">chevron_right</span>
-          <span className="text-slate-400">Toko</span>
+          <Link to="/store" className="hover:text-emerald-700 font-medium transition flex items-center gap-1">
+            <span className="material-icons text-sm">storefront</span>
+            <span>Store</span>
+          </Link>
           <span className="material-icons text-[12px] text-slate-400">chevron_right</span>
           <span className="text-slate-800 font-bold">{storeDisplayName}</span>
         </div>
 
-        {/* Owner Store Notice & Quick Edit (Only shown to the store owner) */}
+        {/* Owner Store Notice & Quick Actions (Only shown to store owner) */}
         {isOwnStore && (
-          <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in border border-emerald-600/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-xs">
-                <span className="material-icons text-xl text-white">storefront</span>
+          <div className="mb-5 p-4 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in border border-emerald-600/40">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md shadow-inner">
+                <span className="material-icons text-2xl text-white">storefront</span>
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs sm:text-sm font-bold text-white">Tampilan Toko Anda Sendiri</p>
-                  <span className="text-[10px] bg-emerald-500/60 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Pemilik Toko</span>
+                  <p className="text-xs sm:text-sm font-bold text-white">
+                    {t('store.owner_banner_title', 'Tampilan Toko Anda Sendiri')}
+                  </p>
+                  <span className="text-[10px] bg-emerald-500/80 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-xs">
+                    {t('store.owner_banner_badge', 'Pemilik Toko')}
+                  </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-emerald-100 mt-0.5">
-                  Anda sedang melihat etalase toko Anda. Pelanggan melihat toko Anda seperti tampilan di bawah ini.
+                <p className="text-[11px] sm:text-xs text-emerald-100 mt-0.5 leading-relaxed">
+                  {t('store.owner_banner_desc', 'Anda sedang melihat etalase toko Anda. Pelanggan melihat toko Anda persis seperti tampilan di bawah ini.')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-1 sm:pt-0">
               <Link
                 to="/dashboard/shop-settings"
-                className="px-4 py-2 bg-white text-emerald-800 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 transition active:scale-95"
+                className="px-4 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 transition active:scale-95"
               >
                 <span className="material-icons text-sm text-emerald-700">settings</span>
-                <span>Edit Pengaturan Toko</span>
+                <span>{t('store.owner_edit_settings', 'Edit Pengaturan Toko')}</span>
               </Link>
               <Link
                 to="/dashboard/sinergy/seller"
-                className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold backdrop-blur-xs flex items-center gap-1.5 transition active:scale-95"
+                className="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95"
               >
                 <span className="material-icons text-sm">inventory_2</span>
-                <span className="hidden sm:inline">Kelola Produk</span>
+                <span className="hidden sm:inline">{t('store.owner_manage_products', 'Kelola Produk')}</span>
               </Link>
             </div>
           </div>
@@ -409,7 +433,7 @@ const StoreProfilePage = () => {
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden mb-6 relative">
           
           {/* Banner / Cover */}
-          <div className="h-36 sm:h-48 md:h-56 w-full relative overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-green-800">
+          <div className="h-40 sm:h-52 md:h-60 w-full relative overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-800 to-green-900">
             {profile.shop_thumbnail ? (
               <img
                 src={getMediaUrl(profile.shop_thumbnail)}
@@ -417,44 +441,44 @@ const StoreProfilePage = () => {
                 className="w-full h-full object-cover opacity-90"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 opacity-95">
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-800 via-teal-800 to-green-900 opacity-95">
+                <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
               </div>
             )}
             
-            {/* Quick Actions Pill on Banner (Top Right) */}
+            {/* Quick Actions on Banner (Top Right) */}
             <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
               {isOwnStore && (
                 <Link
                   to="/dashboard/shop-settings"
                   className="px-3.5 py-1.5 bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-md rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95 border border-emerald-400/40"
-                  title="Edit Pengaturan Toko"
+                  title={t('store.owner_edit_settings', 'Edit Pengaturan Toko')}
                 >
                   <span className="material-icons text-sm">edit</span>
-                  <span>Edit Toko</span>
+                  <span>{t('common.edit', 'Edit')}</span>
                 </Link>
               )}
               <button
                 type="button"
                 onClick={handleShareStore}
                 className="px-3.5 py-1.5 bg-white/90 hover:bg-white text-slate-800 backdrop-blur-md rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95"
-                title="Bagikan Toko Ini"
+                title={t('store.share_store', 'Bagikan Toko')}
               >
                 <span className="material-icons text-sm text-emerald-700">share</span>
-                <span className="hidden sm:inline">Bagikan Toko</span>
+                <span className="hidden sm:inline">{t('store.share_store', 'Bagikan Toko')}</span>
               </button>
             </div>
           </div>
 
           {/* Profile Identity Details (Overlapping Banner) */}
           <div className="px-4 sm:px-8 pb-6 pt-0">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 -mt-12 sm:-mt-16 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 -mt-14 sm:-mt-16 relative z-10">
               
               {/* Avatar + Main Info */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3.5 sm:gap-5 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-5 text-center sm:text-left">
                 {/* Store Avatar */}
                 <div className="relative group shrink-0">
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-4 border-white overflow-hidden bg-white shadow-lg flex items-center justify-center">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border-4 border-white overflow-hidden bg-white shadow-xl flex items-center justify-center">
                     {profile.picture ? (
                       <img
                         src={getMediaUrl(profile.picture)}
@@ -467,7 +491,7 @@ const StoreProfilePage = () => {
                       </div>
                     )}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full shadow-md border-2 border-white" title="Penjual Terverifikasi">
+                  <div className="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full shadow-md border-2 border-white" title={t('store.verified_seller', 'Penjual Terverifikasi')}>
                     <span className="material-icons text-xs block">verified</span>
                   </div>
                 </div>
@@ -478,23 +502,29 @@ const StoreProfilePage = () => {
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                       {storeDisplayName}
                     </h1>
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
                       <span className="material-icons text-[13px]">storefront</span>
-                      Official Seller
+                      {t('store.official_seller', 'Official Seller')}
                     </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-0.5">
-                    @{profile.username || username}
-                  </p>
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                    <p className="text-xs sm:text-sm font-semibold text-slate-500">
+                      @{profile.username || username}
+                    </p>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-bold">
+                      barakah.cloud/store/{storeSlug}
+                    </span>
+                  </div>
 
-                  <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-2 text-xs text-slate-500 flex-wrap">
+                  <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-2.5 text-xs text-slate-500 flex-wrap">
                     <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
-                      <strong className="text-slate-800 font-bold">{followersCount}</strong> Pengikut
+                      <strong className="text-slate-800 font-bold">{followersCount}</strong> {t('store.followers', 'Pengikut')}
                     </span>
                     <span className="text-slate-300">•</span>
                     <span className="inline-flex items-center gap-1 text-slate-600 font-medium">
-                      <strong className="text-slate-800 font-bold">{followingCount}</strong> Mengikuti
+                      <strong className="text-slate-800 font-bold">{followingCount}</strong> {t('store.following', 'Mengikuti')}
                     </span>
                     {profile.city_name && (
                       <>
@@ -510,7 +540,7 @@ const StoreProfilePage = () => {
                         <span className="text-slate-300 hidden sm:inline">•</span>
                         <span className="inline-flex items-center gap-1 text-slate-500">
                           <span className="material-icons text-sm text-slate-400">calendar_month</span>
-                          Bergabung {new Date(profile.joined_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                          {t('store.joined', 'Bergabung')} {new Date(profile.joined_date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })}
                         </span>
                       </>
                     )}
@@ -522,19 +552,19 @@ const StoreProfilePage = () => {
                       {profile.is_operational_hours_active && profile.operational_hours && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold shadow-2xs">
                           <span className="material-icons text-sm text-emerald-600">schedule</span>
-                          <span>Jam Buka: <strong className="font-bold">{profile.operational_hours}</strong></span>
+                          <span>{t('store.opening_hours', 'Jam Buka')}: <strong className="font-bold">{profile.operational_hours}</strong></span>
                         </span>
                       )}
                       {profile.is_preorder && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold shadow-2xs">
                           <span className="material-icons text-sm text-blue-600">hourglass_top</span>
-                          <span>PO Toko: <strong className="font-bold">{profile.preorder_duration || (profile.preorder_days ? `Hari ${profile.preorder_days}` : 'Aktif')}</strong></span>
+                          <span>{t('store.store_po', 'PO Toko')}: <strong className="font-bold">{profile.preorder_duration || (profile.preorder_days ? `Hari ${profile.preorder_days}` : 'Aktif')}</strong></span>
                         </span>
                       )}
                       {profile.is_delivery_schedule_active && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold shadow-2xs">
                           <span className="material-icons text-sm text-amber-600">local_shipping</span>
-                          <span>Pengantaran: <strong className="font-bold">{profile.delivery_days ? `Hari ${profile.delivery_days}` : (profile.delivery_range_min ? `${profile.delivery_range_min}-${profile.delivery_range_max} Hari` : (profile.delivery_note || 'Jadwal Rutin'))}</strong></span>
+                          <span>{t('store.delivery', 'Pengantaran')}: <strong className="font-bold">{profile.delivery_days ? `Hari ${profile.delivery_days}` : (profile.delivery_range_min ? `${profile.delivery_range_min}-${profile.delivery_range_max} Hari` : (profile.delivery_note || 'Jadwal Rutin'))}</strong></span>
                         </span>
                       )}
                     </div>
@@ -542,7 +572,7 @@ const StoreProfilePage = () => {
                 </div>
               </div>
 
-              {/* Action Buttons: Owner controls vs Customer controls */}
+              {/* Action Buttons: Customer actions vs Owner actions */}
               <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap pt-2 sm:pt-0">
                 {isOwnStore ? (
                   <>
@@ -551,14 +581,14 @@ const StoreProfilePage = () => {
                       className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-200 flex items-center gap-1.5 transition active:scale-95"
                     >
                       <span className="material-icons text-base">edit</span>
-                      <span>Edit Toko</span>
+                      <span>{t('store.owner_edit_settings', 'Edit Toko')}</span>
                     </Link>
                     <Link
                       to="/dashboard/sinergy/seller"
                       className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
                     >
                       <span className="material-icons text-base">inventory_2</span>
-                      <span className="hidden sm:inline">Kelola Produk</span>
+                      <span className="hidden sm:inline">{t('store.owner_manage_products', 'Kelola Produk')}</span>
                     </Link>
                   </>
                 ) : (
@@ -574,7 +604,7 @@ const StoreProfilePage = () => {
                       ) : (
                         <>
                           <span className="material-icons text-base">chat</span>
-                          <span>Chat</span>
+                          <span>{t('store.chat', 'Chat')}</span>
                         </>
                       )}
                     </button>
@@ -584,7 +614,7 @@ const StoreProfilePage = () => {
                         type="button"
                         onClick={handleWhatsApp}
                         className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95"
-                        title="Hubungi via WhatsApp"
+                        title={t('store.whatsapp', 'Hubungi via WhatsApp')}
                       >
                         <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.888-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
@@ -605,7 +635,7 @@ const StoreProfilePage = () => {
                         }`}
                       >
                         <span className="material-icons text-base">{isFollowing ? 'check' : 'person_add'}</span>
-                        <span>{isFollowing ? 'Mengikuti' : 'Ikuti'}</span>
+                        <span>{isFollowing ? t('store.following_status', 'Mengikuti') : t('store.follow', 'Ikuti')}</span>
                       </button>
                     )}
 
@@ -618,7 +648,7 @@ const StoreProfilePage = () => {
                           ? 'bg-rose-50 text-rose-600 border-rose-200 shadow-xs'
                           : 'bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border-slate-200'
                       }`}
-                      title="Sukai Toko Ini"
+                      title={t('store.like_store', 'Sukai Toko Ini')}
                     >
                       <span className={`material-icons text-base ${isShopLiked ? 'text-rose-500' : 'text-slate-400'}`}>
                         {isShopLiked ? 'favorite' : 'favorite_border'}
@@ -632,7 +662,7 @@ const StoreProfilePage = () => {
                   type="button"
                   onClick={handleShareStore}
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95"
-                  title="Bagikan Toko"
+                  title={t('store.share_store', 'Bagikan Toko')}
                 >
                   <span className="material-icons text-base">share</span>
                 </button>
@@ -641,7 +671,7 @@ const StoreProfilePage = () => {
                   type="button"
                   onClick={handleCopyLink}
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95"
-                  title="Salin Link Toko"
+                  title={t('store.copy_link', 'Salin Link Toko')}
                 >
                   <span className="material-icons text-base">link</span>
                 </button>
@@ -659,24 +689,24 @@ const StoreProfilePage = () => {
 
             {/* Store Stats Counters */}
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4 mt-4 pt-4 border-t border-slate-100">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Produk Fisik</span>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.physical_products', 'Produk Fisik')}</span>
                 <span className="text-base sm:text-lg font-black text-slate-900">{physicalProducts.length}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Total Terjual</span>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.total_sold', 'Total Terjual')}</span>
                 <span className="text-base sm:text-lg font-black text-emerald-700">{totalSold}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Digital & Kelas</span>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.digital_and_courses', 'Digital & Kelas')}</span>
                 <span className="text-base sm:text-lg font-black text-blue-700">{digitalProducts.length + courses.length}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Pengikut</span>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.followers', 'Pengikut')}</span>
                 <span className="text-base sm:text-lg font-black text-slate-900">{followersCount}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">Suka Toko</span>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.store_likes', 'Suka Toko')}</span>
                 <span className="text-base sm:text-lg font-black text-rose-600">{shopLikesCount}</span>
               </div>
             </div>
@@ -685,18 +715,18 @@ const StoreProfilePage = () => {
         </div>
 
         {/* TABS NAVIGATION */}
-        <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto pb-1 scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab('products')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
               activeTab === 'products'
-                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-xl'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-2xl'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="material-icons text-base">storefront</span>
-            <span>Semua Produk Toko ({physicalProducts.length})</span>
+            <span>{t('store.tab_all_products', 'Semua Produk Toko')} ({physicalProducts.length})</span>
           </button>
 
           <button
@@ -704,12 +734,12 @@ const StoreProfilePage = () => {
             onClick={() => setActiveTab('digital')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
               activeTab === 'digital'
-                ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-xl'
+                ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-2xl'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="material-icons text-base">devices</span>
-            <span>Produk Digital & E-Course ({digitalProducts.length + courses.length})</span>
+            <span>{t('store.tab_digital_courses', 'Produk Digital & E-Course')} ({digitalProducts.length + courses.length})</span>
           </button>
 
           <button
@@ -717,30 +747,30 @@ const StoreProfilePage = () => {
             onClick={() => setActiveTab('about')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
               activeTab === 'about'
-                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-xl'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-2xl'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="material-icons text-base">info</span>
-            <span>Info & Jadwal Toko</span>
+            <span>{t('store.tab_about', 'Info & Jadwal Toko')}</span>
           </button>
         </div>
 
-        {/* TAB 1: SEMUA PRODUK TOKO (MARKETPLACE CATALOG) */}
+        {/* TAB 1: ALL PHYSICAL PRODUCTS CATALOG */}
         {activeTab === 'products' && (
           <div>
             {/* Search & Sort Controls Inside Store */}
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs mb-5 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+            <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200/90 shadow-2xs mb-5 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
               
               {/* Search Inside Store */}
               <div className="relative flex-1">
                 <span className="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
                 <input
                   type="text"
-                  placeholder={`Cari produk di toko @${username}...`}
+                  placeholder={t('store.search_placeholder', 'Cari produk di toko ini...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition"
                 />
                 {searchQuery && (
                   <button
@@ -755,17 +785,17 @@ const StoreProfilePage = () => {
 
               {/* Sort Selector */}
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap hidden sm:inline">Urutkan:</span>
+                <span className="text-xs font-bold text-slate-500 whitespace-nowrap hidden sm:inline">{t('store.sort_by', 'Urutkan:')}</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                  className="bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
                 >
-                  <option value="populer">Paling Populer</option>
-                  <option value="terlaris">Paling Terlaris</option>
-                  <option value="newest">Produk Terbaru</option>
-                  <option value="price_asc">Harga Terendah</option>
-                  <option value="price_desc">Harga Tertinggi</option>
+                  <option value="populer">{t('store.sort_popular', 'Paling Populer')}</option>
+                  <option value="terlaris">{t('store.sort_bestseller', 'Paling Terlaris')}</option>
+                  <option value="newest">{t('store.sort_newest', 'Produk Terbaru')}</option>
+                  <option value="price_asc">{t('store.sort_price_low', 'Harga Terendah')}</option>
+                  <option value="price_desc">{t('store.sort_price_high', 'Harga Tertinggi')}</option>
                 </select>
               </div>
             </div>
@@ -807,9 +837,11 @@ const StoreProfilePage = () => {
                 <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <span className="material-icons text-3xl">search_off</span>
                 </div>
-                <h3 className="text-base font-bold text-slate-800 mb-1">Produk Tidak Ditemukan</h3>
+                <h3 className="text-base font-bold text-slate-800 mb-1">{t('store.no_products_found', 'Produk Tidak Ditemukan')}</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-                  {searchQuery ? `Tidak ada produk yang cocok dengan kata kunci "${searchQuery}".` : 'Belum ada produk yang tersedia pada kategori ini.'}
+                  {searchQuery 
+                    ? `${t('store.no_products_match', 'Tidak ada produk yang cocok dengan kata kunci')} "${searchQuery}".` 
+                    : t('store.no_products_match', 'Belum ada produk yang tersedia pada kategori ini.')}
                 </p>
                 {(searchQuery || !selectedCategories.includes('Semua')) && (
                   <button
@@ -817,7 +849,7 @@ const StoreProfilePage = () => {
                     onClick={() => { setSearchQuery(''); setSelectedCategories(['Semua']); }}
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
                   >
-                    Reset Filter Pencarian
+                    {t('store.reset_filters', 'Reset Filter Pencarian')}
                   </button>
                 )}
               </div>
@@ -828,7 +860,7 @@ const StoreProfilePage = () => {
                   const isOutOfStock = stock <= 0;
                   const price = Number(product.price || 0);
 
-                  // Deteksi variasi & rentang harga
+                  // Variation & price range calculation
                   const activeVariations = Array.isArray(product.variations)
                     ? product.variations.filter(v => v && (v.is_active === undefined || v.is_active === true) && (v.name || Number(v.additional_price) > 0))
                     : [];
@@ -853,7 +885,7 @@ const StoreProfilePage = () => {
 
                   const hasPriceRange = minPrice < maxPrice;
 
-                  // Perhitungan diskon
+                  // Discount calculation
                   const finalPrice = product.discounted_price ? Number(product.discounted_price) : price;
                   const hasDiscount = Boolean(product.discounted_price && finalPrice < price);
                   const discountPct = Number(product.promo_discount_percentage || 0);
@@ -869,28 +901,28 @@ const StoreProfilePage = () => {
                   return (
                     <div
                       key={product.id}
-                      onClick={() => navigate(`/store/${product.slug || product.id}`)}
-                      className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-300 transition-all duration-200 overflow-hidden flex flex-col cursor-pointer group"
+                      onClick={() => navigate(`/produk/${product.slug || product.id}`)}
+                      className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-lg hover:border-emerald-300 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer group"
                     >
                       {/* Product Thumbnail */}
                       <div className="aspect-square relative overflow-hidden bg-slate-100">
                         <img
                           src={getMediaUrl(product.images?.[0]?.image || product.thumbnail) || '/placeholder-product.png'}
                           alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                           loading="lazy"
                         />
 
                         {/* Badges Over Image */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
                           {product.is_preorder && (
-                            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wide">
-                              PO
+                            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm uppercase tracking-wide">
+                              {t('store.preorder_badge', 'PO')}
                             </span>
                           )}
                           {hasDiscount && (
-                            <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm">
-                              HEMAT {product.promo_discount_percentage}%
+                            <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm">
+                              {t('store.save_discount', 'HEMAT')} {product.promo_discount_percentage}%
                             </span>
                           )}
                         </div>
@@ -898,21 +930,21 @@ const StoreProfilePage = () => {
                         {isOutOfStock && (
                           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center">
                             <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                              Stok Habis
+                              {t('store.out_of_stock', 'Stok Habis')}
                             </span>
                           </div>
                         )}
                       </div>
 
                       {/* Product Body */}
-                      <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <div>
                           <h3 className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-2 min-h-[34px] group-hover:text-emerald-700 transition">
                             {product.title}
                           </h3>
 
                           {/* Price */}
-                          <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
+                          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
                             {hasPriceRange ? (
                               <span className="text-xs sm:text-sm font-black text-emerald-700 leading-snug">
                                 {formatIDR(finalMinPrice)} - {formatIDR(finalMaxPrice)}
@@ -931,12 +963,12 @@ const StoreProfilePage = () => {
                         </div>
 
                         {/* Sold & Stock Footer */}
-                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                        <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
                           <span>
-                            {product.sold_count > 0 ? `${product.sold_count} terjual` : 'Belum terjual'}
+                            {product.sold_count > 0 ? `${product.sold_count} ${t('store.sold', 'terjual')}` : t('store.not_sold_yet', 'Belum terjual')}
                           </span>
                           <span className={stock > 5 ? 'text-slate-400' : 'text-amber-600 font-bold'}>
-                            Stok: {stock}
+                            {t('store.stock', 'Stok')}: {stock}
                           </span>
                         </div>
                       </div>
@@ -948,7 +980,7 @@ const StoreProfilePage = () => {
           </div>
         )}
 
-        {/* TAB 2: PRODUK DIGITAL & E-COURSE */}
+        {/* TAB 2: DIGITAL PRODUCTS & E-COURSES */}
         {activeTab === 'digital' && (
           <div className="space-y-6">
 
@@ -957,14 +989,14 @@ const StoreProfilePage = () => {
               <div>
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
                   <span className="material-icons text-blue-600 text-base">school</span>
-                  Kelas & E-Course ({courses.length})
+                  {t('store.courses_title', 'Kelas & E-Course')} ({courses.length})
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {courses.map(course => (
                     <Link
                       key={course.id}
                       to={`/kelas/${course.slug}`}
-                      className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition group flex flex-col"
+                      className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition group flex flex-col"
                     >
                       <div className="aspect-video relative overflow-hidden bg-slate-100">
                         <img
@@ -972,20 +1004,20 @@ const StoreProfilePage = () => {
                           alt={course.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         />
-                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold shadow-xs">
+                        <span className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shadow-xs">
                           E-Course
                         </span>
                       </div>
-                      <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div className="p-4 flex-1 flex flex-col justify-between">
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 min-h-[36px] group-hover:text-blue-700">
                           {course.title}
                         </h4>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm font-black text-blue-700">
-                            {Number(course.price) > 0 ? formatIDR(course.price) : 'Gratis'}
+                            {Number(course.price) > 0 ? formatIDR(course.price) : (i18n.language === 'en' ? 'Free' : 'Gratis')}
                           </span>
-                          <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                            Lihat Kelas <span className="material-icons text-xs">arrow_forward</span>
+                          <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1 group-hover:text-blue-600 transition">
+                            {t('store.view_course', 'Lihat Kelas')} <span className="material-icons text-xs">arrow_forward</span>
                           </span>
                         </div>
                       </div>
@@ -999,11 +1031,11 @@ const StoreProfilePage = () => {
             <div>
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
                 <span className="material-icons text-indigo-600 text-base">receipt_long</span>
-                Produk Digital ({digitalProducts.length})
+                {t('store.digital_products_title', 'Produk Digital')} ({digitalProducts.length})
               </h3>
               {digitalProducts.length === 0 ? (
-                <div className="p-8 bg-white rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-500">
-                  Belum ada produk digital yang dipublikasikan oleh seller ini.
+                <div className="p-8 bg-white rounded-3xl border border-dashed border-slate-200 text-center text-xs text-slate-500">
+                  {t('store.no_digital_products', 'Belum ada produk digital yang dipublikasikan oleh seller ini.')}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -1011,7 +1043,7 @@ const StoreProfilePage = () => {
                     <Link
                       key={prod.id}
                       to={`/digital-produk/${username}/${prod.slug}`}
-                      className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition group flex flex-col"
+                      className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition group flex flex-col"
                     >
                       <div className="aspect-square relative overflow-hidden bg-slate-100">
                         <img
@@ -1019,15 +1051,15 @@ const StoreProfilePage = () => {
                           alt={prod.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         />
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[9px] font-bold shadow-xs">
+                        <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-bold shadow-xs">
                           Digital
                         </span>
                       </div>
-                      <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 min-h-[34px] group-hover:text-indigo-700">
                           {prod.title}
                         </h4>
-                        <div className="mt-2">
+                        <div className="mt-2.5">
                           <span className="text-sm font-black text-indigo-700">
                             {formatIDR(prod.price)}
                           </span>
@@ -1042,37 +1074,43 @@ const StoreProfilePage = () => {
           </div>
         )}
 
-        {/* TAB 3: TENTANG TOKO & JADWAL */}
+        {/* TAB 3: ABOUT STORE & SCHEDULE */}
         {activeTab === 'about' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Profile Info */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <span className="material-icons text-emerald-600 text-base">store</span>
-                Tentang Toko
+                {t('store.about_title', 'Tentang Toko')}
               </h3>
               
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3.5 text-xs">
                 <div>
-                  <span className="text-slate-400 block font-medium">Nama Toko</span>
+                  <span className="text-slate-400 block font-medium">{t('store.shop_name', 'Nama Toko')}</span>
                   <span className="text-slate-800 font-bold text-sm">{profile.name_full || username}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-medium">Username</span>
+                  <span className="text-slate-400 block font-medium">{t('store.username', 'Username')}</span>
                   <span className="text-slate-800 font-semibold">@{username}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block font-medium">Official URL</span>
+                  <span className="text-emerald-700 font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 inline-block mt-0.5">
+                    {officialStoreUrl}
+                  </span>
                 </div>
                 {profile.shop_description && (
                   <div>
-                    <span className="text-slate-400 block font-medium">Deskripsi</span>
-                    <p className="text-slate-700 mt-1 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block font-medium">{t('store.description', 'Deskripsi')}</span>
+                    <p className="text-slate-700 mt-1 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                       {profile.shop_description}
                     </p>
                   </div>
                 )}
                 {profile.city_name && (
                   <div>
-                    <span className="text-slate-400 block font-medium">Asal Lokasi Pengiriman</span>
+                    <span className="text-slate-400 block font-medium">{t('store.shipping_origin', 'Asal Lokasi Pengiriman')}</span>
                     <span className="text-slate-800 font-semibold flex items-center gap-1 mt-0.5">
                       <span className="material-icons text-sm text-rose-500">location_on</span>
                       {profile.city_name} {profile.province_name ? `, ${profile.province_name}` : ''}
@@ -1082,31 +1120,31 @@ const StoreProfilePage = () => {
               </div>
             </div>
 
-            {/* Ketentuan Ongkir & Operasional */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            {/* Shipping Terms & Safety */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <span className="material-icons text-purple-600 text-base">local_shipping</span>
-                Ketentuan Ongkir & Pengiriman
+                {t('store.shipping_terms_title', 'Ketentuan Ongkir & Pengiriman')}
               </h3>
 
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-xl bg-purple-50/60 border border-purple-100 space-y-1">
+              <div className="space-y-3.5 text-xs">
+                <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-100 space-y-1">
                   <span className="font-bold text-purple-900 flex items-center gap-1">
                     <span className="material-icons text-sm text-purple-600">tune</span>
-                    Sistem Ongkos Kirim Fleksibel
+                    {t('store.flexible_shipping_title', 'Sistem Ongkos Kirim Fleksibel')}
                   </span>
                   <p className="text-slate-600 leading-relaxed">
-                    Toko ini mendukung pilihan <strong>Ongkir Flat Toko</strong> (satu tarif tetap walau membeli banyak barang) ataupun <strong>Ongkir Sesuai Jarak</strong> yang akan dikonfirmasi langsung oleh pihak Admin/Seller/Kurir setelah pesanan masuk.
+                    {t('store.flexible_shipping_desc', 'Toko ini mendukung pilihan Ongkir Flat Toko ataupun Ongkir Sesuai Jarak yang akan dikonfirmasi langsung oleh pihak Admin/Seller/Kurir setelah pesanan masuk.')}
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 space-y-1">
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1">
                   <span className="font-bold text-emerald-900 flex items-center gap-1">
                     <span className="material-icons text-sm text-emerald-600">verified</span>
-                    Garansi Transaksi Aman
+                    {t('store.safe_transaction_title', 'Garansi Transaksi Aman')}
                   </span>
                   <p className="text-slate-600 leading-relaxed">
-                    Seluruh pembayaran dan pengiriman diproses dengan aman melalui platform Barakah Economy.
+                    {t('store.safe_transaction_desc', 'Seluruh pembayaran dan pengiriman diproses dengan aman melalui ekosistem syariah Barakah Economy.')}
                   </p>
                 </div>
               </div>
@@ -1126,52 +1164,52 @@ const StoreProfilePage = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <span className="material-icons text-emerald-600">share</span>
-                Bagikan Toko
+                {t('store.share_modal_title', 'Bagikan Toko')}
               </h3>
               <button
                 type="button"
                 onClick={() => setShowShareModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition"
               >
                 <span className="material-icons text-sm">close</span>
               </button>
             </div>
 
             <p className="text-xs text-slate-500 mb-4">
-              Bagikan link etalase Toko {storeDisplayName} kepada calon pembeli dan relasi Anda:
+              {t('store.share_modal_desc', 'Bagikan link etalase toko kepada calon pembeli dan relasi Anda:')}
             </p>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 mb-5">
+            <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 border border-slate-200 mb-5">
               <input
                 type="text"
                 readOnly
-                value={`https://barakah.cloud/toko/${storeSlug}`}
+                value={officialStoreUrl}
                 className="text-xs text-slate-700 bg-transparent flex-1 outline-none font-mono"
               />
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shrink-0 transition"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shrink-0 transition"
               >
-                Salin
+                {t('common.copy', 'Salin')}
               </button>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Yuk belanja di Toko ${storeDisplayName} Barakah Economy: https://barakah.cloud/toko/${storeSlug}`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Yuk belanja di Toko ${storeDisplayName} Barakah Economy: ${officialStoreUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
+                className="p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
               >
                 <span className="material-icons text-emerald-600">chat</span>
                 <span>WhatsApp</span>
               </a>
               <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(`https://barakah.cloud/toko/${storeSlug}`)}&text=${encodeURIComponent(`Toko ${storeDisplayName} di Barakah Economy`)}`}
+                href={`https://t.me/share/url?url=${encodeURIComponent(officialStoreUrl)}&text=${encodeURIComponent(`Toko ${storeDisplayName} di Barakah Economy`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
+                className="p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
               >
                 <span className="material-icons text-blue-600">send</span>
                 <span>Telegram</span>
@@ -1179,10 +1217,10 @@ const StoreProfilePage = () => {
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
+                className="p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center text-xs font-bold flex flex-col items-center gap-1 transition"
               >
                 <span className="material-icons text-slate-600">content_copy</span>
-                <span>Salin Link</span>
+                <span>{t('store.copy_link', 'Salin Link')}</span>
               </button>
             </div>
           </div>

@@ -501,7 +501,7 @@ const DashboardPage = () => {
 
                                 {hasAccess('view_shop') && (
                                     <Link
-                                        to={`/toko/${userProfile?.shop_name || username}`}
+                                        to={`/store/${userProfile?.shop_name || username}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"

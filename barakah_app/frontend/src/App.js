@@ -393,11 +393,13 @@ const LayoutWrapper = ({ isDesktop }) => {
 
         <Route path="/sinergy" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/sinergy/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
-        <Route path="/store" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
-        <Route path="/store/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/ecommerce" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/ecommerce/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
+
+        {/* Store (Toko Pribadi) & Marketplace Store Routes */}
+        <Route path="/store" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
+        <Route path="/store/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/toko/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/store/toko/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/store/seller/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />

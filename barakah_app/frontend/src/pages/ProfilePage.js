@@ -1613,13 +1613,13 @@ const ProfilePage = () => {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
                                             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Informasi Toko</h4>
-                                            <Link to={`/toko/${profile.shop_name || profile.username || ''}`} className="text-[10px] font-black text-emerald-700 uppercase flex items-center gap-1 hover:underline">
+                                            <Link to={`/store/${profile.shop_name || profile.username || ''}`} className="text-[10px] font-black text-emerald-700 uppercase flex items-center gap-1 hover:underline">
                                                 Kunjungi Toko <span className="material-icons text-xs">open_in_new</span>
                                             </Link>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <ProfileInfoItem label="Nama Toko" value={profile.shop_name ? profile.shop_name : `Belum diatur (@${profile.username})`} icon="storefront" />
-                                            <ProfileInfoItem label="Alamat Toko (URL)" value={`https://barakah.cloud/toko/${profile.shop_name || profile.username}`} icon="link" />
+                                            <ProfileInfoItem label="Alamat Toko (URL)" value={`https://barakah.cloud/store/${profile.shop_name || profile.username}`} icon="link" />
                                             <ProfileInfoItem label="Deskripsi Toko" value={profile.shop_description} icon="description" fullWidth />
                                             <ProfileInfoItem label="Tema Warna" value={profile.shop_theme_color} icon="palette" />
                                             <ProfileInfoItem label="Gaya Font" value={profile.shop_font} icon="font_download" />

@@ -75,7 +75,8 @@ class SellerShareView(APIView):
                 thumbnail_url = f"{frontend_url}{encoded_path}"
             
         # Build target frontend URL
-        target_url = f"{frontend_url}/digital_produk/{username}"
+        target_slug = profile.shop_name or username
+        target_url = f"{frontend_url}/store/{target_slug}"
         
         # Build share URL (the URL of this view)
         share_url = request.build_absolute_uri()
