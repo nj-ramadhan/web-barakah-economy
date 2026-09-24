@@ -1048,10 +1048,13 @@ const StoreProfilePage = () => {
                       >
                         <div className="w-full sm:w-44 h-44 sm:h-auto aspect-square relative rounded-2xl overflow-hidden bg-slate-100 shrink-0">
                           <img
-                            src={getMediaUrl(product.images?.[0]?.image || product.thumbnail) || '/placeholder-product.png'}
+                            src={getMediaUrl(product.thumbnail || product.images?.[0]?.image) || '/placeholder-product.png'}
                             alt={product.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
+                            onError={(e) => {
+                              e.target.src = '/placeholder-product.png';
+                            }}
                           />
                           {product.is_preorder && (
                             <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm uppercase">
@@ -1153,10 +1156,13 @@ const StoreProfilePage = () => {
                       {/* Product Thumbnail */}
                       <div className="aspect-square relative overflow-hidden bg-slate-100">
                         <img
-                          src={getMediaUrl(product.images?.[0]?.image || product.thumbnail) || '/placeholder-product.png'}
+                          src={getMediaUrl(product.thumbnail || product.images?.[0]?.image) || '/placeholder-product.png'}
                           alt={product.title}
                           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                           loading="lazy"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-product.png';
+                          }}
                         />
 
                         {/* Badges Over Image */}
