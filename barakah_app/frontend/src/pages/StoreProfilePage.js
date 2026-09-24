@@ -496,26 +496,24 @@ const StoreProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Name & Badges */}
+                {/* Name & Badges in White Stabilo/Container */}
                 <div className="min-w-0">
-                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                    <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                      {storeDisplayName}
-                    </h1>
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
-                      <span className="material-icons text-[13px]">storefront</span>
-                      {t('store.official_seller', 'Official Seller')}
-                    </span>
-                  </div>
+                  <div className="bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-md border border-slate-200/90 inline-block text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        {storeDisplayName}
+                      </h1>
+                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                        <span className="material-icons text-[13px]">storefront</span>
+                        {t('store.official_seller', 'Official Seller')}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                    <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                      @{profile.username || username}
-                    </p>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-bold">
-                      barakah.cloud/store/{storeSlug}
-                    </span>
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-500">
+                        @{profile.username || username}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-2.5 text-xs text-slate-500 flex-wrap">

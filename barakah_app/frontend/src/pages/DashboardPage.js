@@ -649,7 +649,7 @@ const DashboardPage = () => {
                                             <span className="material-icons text-green-700">inventory</span>
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (E-commerce)</h3>
+                                            <h3 className="font-bold text-gray-800 text-sm">Produk Toko</h3>
                                             <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
                                         </div>
                                         <span className="material-icons text-gray-400">chevron_right</span>
