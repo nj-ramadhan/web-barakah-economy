@@ -48,6 +48,7 @@ const DashboardShopSettingsPage = () => {
         out_of_po_shipping_type: 'flat',
         out_of_po_shipping_cost: 0,
         allow_delivery_timing_choice: false,
+        show_sold_count: true,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -90,6 +91,7 @@ const DashboardShopSettingsPage = () => {
                         out_of_po_shipping_type: profileData.out_of_po_shipping_type || 'flat',
                         out_of_po_shipping_cost: profileData.out_of_po_shipping_cost || 0,
                         allow_delivery_timing_choice: profileData.allow_delivery_timing_choice !== undefined && profileData.allow_delivery_timing_choice !== null ? Boolean(profileData.allow_delivery_timing_choice) : false,
+                        show_sold_count: profileData.show_sold_count !== undefined && profileData.show_sold_count !== null ? Boolean(profileData.show_sold_count) : true,
                     });
                 } else {
                     navigate('/login');
@@ -171,7 +173,7 @@ const DashboardShopSettingsPage = () => {
                     'is_operational_hours_active', 'operational_hours',
                     'is_preorder', 'preorder_type', 'preorder_days', 'preorder_days_min', 'preorder_days_max', 'preorder_duration',
                     'is_delivery_schedule_active', 'delivery_schedule_type', 'delivery_range_min', 'delivery_range_max', 'delivery_days', 'delivery_date', 'delivery_note',
-                    'out_of_po_shipping_active', 'out_of_po_shipping_type', 'allow_delivery_timing_choice'
+                    'out_of_po_shipping_active', 'out_of_po_shipping_type', 'allow_delivery_timing_choice', 'show_sold_count'
                 ];
 
                 fields.forEach(f => {
@@ -518,14 +520,43 @@ const DashboardShopSettingsPage = () => {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-bold text-gray-900 text-sm">Pengaturan Jam Operasional, Pre-Order & Pengantaran Toko</h4>
+                                            <h4 className="font-bold text-gray-900 text-sm">Pengaturan Etalase, Jam Operasional & Pengantaran Toko</h4>
                                             <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                                                 Global Toko
                                             </span>
                                         </div>
                                         <p className="text-[11px] text-gray-500">
-                                            Pengaturan ini otomatis diterapkan ke <b>semua produk fisik</b> di toko Anda (cukup diatur sekali tanpa repot per produk).
+                                            Pengaturan ini otomatis diterapkan ke <b>semua produk</b> di toko Anda (cukup diatur sekali tanpa repot per produk).
                                         </p>
+                                    </div>
+                                </div>
+
+                                {/* 0. Tampilkan / Sembunyikan Jumlah Terjual */}
+                                <div className="bg-gradient-to-br from-gray-50 to-emerald-50/20 p-4 rounded-xl border border-gray-200/70">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${profile.show_sold_count ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-200 text-gray-500'}`}>
+                                                <span className="material-icons text-lg">visibility</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-bold text-gray-800">Tampilkan Jumlah Terjual</p>
+                                                    <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${profile.show_sold_count ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {profile.show_sold_count ? 'Aktif' : 'Disembunyikan'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">
+                                                    Bila dimatikan, jumlah produk terjual akan disembunyikan di semua produk toko Anda.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, show_sold_count: !prev.show_sold_count }))}
+                                            className={`w-11 h-6 rounded-full transition-all relative ${profile.show_sold_count ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${profile.show_sold_count ? 'left-6' : 'left-1'}`}></div>
+                                        </button>
                                     </div>
                                 </div>
 

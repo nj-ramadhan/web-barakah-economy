@@ -360,6 +360,10 @@ const EcommerceProductDetail = () => {
     );
   };
 
+  const showSoldCount = product?.seller_show_sold_count !== undefined && product?.seller_show_sold_count !== null 
+    ? Boolean(product.seller_show_sold_count) 
+    : true;
+
   return (
     <div className="body">
       <Helmet>
@@ -537,19 +541,23 @@ const EcommerceProductDetail = () => {
                           <span className="material-icons text-sm">visibility</span>
                           {product.views_count || 0} kali dilihat
                         </div>
-                        <span className="text-gray-300">•</span>
-                        <div 
-                          className="flex items-center gap-1 font-bold text-gray-800"
-                          title={`${product.store_sold_count || 0} terjual via Toko, ${product.charity_sold_count || 0} terjual via Charity/Waqaf`}
-                        >
-                          <span className="material-icons text-sm text-emerald-600">shopping_bag</span>
-                          <span>{product.sold_count || 0} Terjual</span>
-                          {product.charity_sold_count > 0 && (
-                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 ml-1">
-                              Waqaf: {product.charity_sold_count}
-                            </span>
-                          )}
-                        </div>
+                        {showSoldCount && (
+                          <>
+                            <span className="text-gray-300">•</span>
+                            <div 
+                              className="flex items-center gap-1 font-bold text-gray-800"
+                              title={`${product.store_sold_count || 0} terjual via Toko, ${product.charity_sold_count || 0} terjual via Charity/Waqaf`}
+                            >
+                              <span className="material-icons text-sm text-emerald-600">shopping_bag</span>
+                              <span>{product.sold_count || 0} Terjual</span>
+                              {product.charity_sold_count > 0 && (
+                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 ml-1">
+                                  Waqaf: {product.charity_sold_count}
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        )}
                         <span className="text-gray-300">•</span>
                         <div className="flex items-center gap-1">
                           <div 
@@ -572,13 +580,15 @@ const EcommerceProductDetail = () => {
                   <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200 inline-flex items-center gap-1.5">
                     Stok: <span className="font-bold text-gray-900">{selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}</span> {product.unit || 'pcs'}
                   </p>
-                  <p 
-                    className="text-sm font-medium text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 inline-flex items-center gap-1.5"
-                    title={`${product.store_sold_count || 0} terjual langsung di toko, ${product.charity_sold_count || 0} terjual lewat program charity / waqaf`}
-                  >
-                    <span className="material-icons text-emerald-600 text-sm">verified</span>
-                    Terjual: <span className="font-bold text-emerald-900">{product.sold_count || 0}</span> {product.unit || 'pcs'}
-                  </p>
+                  {showSoldCount && (
+                    <p 
+                      className="text-sm font-medium text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 inline-flex items-center gap-1.5"
+                      title={`${product.store_sold_count || 0} terjual langsung di toko, ${product.charity_sold_count || 0} terjual lewat program charity / waqaf`}
+                    >
+                      <span className="material-icons text-emerald-600 text-sm">verified</span>
+                      Terjual: <span className="font-bold text-emerald-900">{product.sold_count || 0}</span> {product.unit || 'pcs'}
+                    </p>
+                  )}
                   {product?.is_preorder && (
                     <p className="text-sm font-semibold text-amber-800 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-200 inline-flex items-center gap-1.5 shadow-2xs">
                       <span className="material-icons text-amber-600 text-sm">hourglass_top</span>
@@ -745,10 +755,12 @@ const EcommerceProductDetail = () => {
                     {product.seller_city_name}
                   </span>
                 )}
-                <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                  <span className="material-icons text-sm">verified</span>
-                  {product.sold_count || 0} Terjual
-                </span>
+                {showSoldCount && (
+                  <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                    <span className="material-icons text-sm">verified</span>
+                    {product.sold_count || 0} Terjual
+                  </span>
+                )}
                 {product.seller_followers_count !== undefined && (
                   <span className="flex items-center gap-1 text-gray-500 font-semibold">
                     <span className="material-icons text-sm text-gray-400">group</span>

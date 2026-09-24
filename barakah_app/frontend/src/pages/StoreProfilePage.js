@@ -71,6 +71,11 @@ const StoreProfilePage = () => {
   const digitalProducts = useMemo(() => profileData?.products || [], [profileData]);
   const courses = useMemo(() => profileData?.courses || [], [profileData]);
 
+  // Shop Global Settings
+  const showSoldCount = profile.show_sold_count !== undefined && profile.show_sold_count !== null 
+    ? Boolean(profile.show_sold_count) 
+    : true;
+
   // Primary store slug and official URL
   const storeSlug = profile.shop_name || username;
   const storeDisplayName = profile.shop_name || profile.name_full || username;
@@ -800,15 +805,17 @@ const StoreProfilePage = () => {
             )}
 
             {/* Store Stats Counters */}
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4 mt-4 pt-4 border-t border-slate-100">
+            <div className={`grid gap-2 sm:gap-4 mt-4 pt-4 border-t border-slate-100 ${showSoldCount ? 'grid-cols-3 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.physical_products', 'Produk Fisik')}</span>
                 <span className="text-base sm:text-lg font-black text-slate-900">{physicalProducts.length}</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.total_sold', 'Total Terjual')}</span>
-                <span className="text-base sm:text-lg font-black text-emerald-700">{totalSold}</span>
-              </div>
+              {showSoldCount && (
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.total_sold', 'Total Terjual')}</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-700">{totalSold}</span>
+                </div>
+              )}
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-emerald-50/40 transition">
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase block">{t('store.digital_and_courses', 'Digital & Kelas')}</span>
                 <span className="text-base sm:text-lg font-black text-blue-700">{digitalProducts.length + courses.length}</span>
@@ -1111,8 +1118,12 @@ const StoreProfilePage = () => {
                                   <span className="material-icons text-xs">star</span>
                                   {product.rating_average ? Number(product.rating_average).toFixed(1) : '5.0'}
                                 </span>
-                                <span>•</span>
-                                <span>{t('store.sold', 'Terjual')} {Number(product.sold_count || 0)}</span>
+                                {showSoldCount && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{t('store.sold', 'Terjual')} {Number(product.sold_count || 0)}</span>
+                                  </>
+                                )}
                                 <span>•</span>
                                 <span className={stock > 5 ? 'text-slate-500' : 'text-amber-600 font-bold'}>
                                   {t('store.stock', 'Stok')}: {stock}
@@ -1199,9 +1210,15 @@ const StoreProfilePage = () => {
 
                         {/* Sold & Stock Footer */}
                         <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
-                          <span>
-                            {product.sold_count > 0 ? `${product.sold_count} ${t('store.sold', 'terjual')}` : t('store.not_sold_yet', 'Belum terjual')}
-                          </span>
+                          {showSoldCount ? (
+                            <span>
+                              {product.sold_count > 0 ? `${product.sold_count} ${t('store.sold', 'terjual')}` : t('store.not_sold_yet', 'Belum terjual')}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-medium truncate max-w-[120px]">
+                              {product.category_display || product.category || 'Toko'}
+                            </span>
+                          )}
                           <span className={stock > 5 ? 'text-slate-400' : 'text-amber-600 font-bold'}>
                             {t('store.stock', 'Stok')}: {stock}
                           </span>

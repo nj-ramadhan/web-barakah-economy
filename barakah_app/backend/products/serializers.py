@@ -51,6 +51,7 @@ class ProductSerializer(serializers.ModelSerializer):
     sold_count = serializers.SerializerMethodField()
     store_sold_count = serializers.SerializerMethodField()
     charity_sold_count = serializers.SerializerMethodField()
+    seller_show_sold_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -203,6 +204,14 @@ class ProductSerializer(serializers.ModelSerializer):
             if profile.google_picture_url:
                 return profile.google_picture_url
         return None
+
+    def get_seller_show_sold_count(self, obj):
+        try:
+            if obj.seller and hasattr(obj.seller, 'profile'):
+                return getattr(obj.seller.profile, 'show_sold_count', True)
+        except Exception:
+            pass
+        return True
 
     def get_min_price(self, obj):
         variations = obj.variations.filter(is_active=True)

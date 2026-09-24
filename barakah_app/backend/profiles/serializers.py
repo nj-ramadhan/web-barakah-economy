@@ -56,7 +56,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         mutable_data = data.copy() if hasattr(data, 'copy') else data
-        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice']:
+        for bool_field in ['is_operational_hours_active', 'is_preorder', 'is_delivery_schedule_active', 'out_of_po_shipping_active', 'allow_delivery_timing_choice', 'show_sold_count']:
             if bool_field in mutable_data:
                 val = mutable_data[bool_field]
                 if isinstance(val, str):

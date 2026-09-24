@@ -323,6 +323,7 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'is_following': user.follower_relations.filter(follower=request.user).exists() if request.user.is_authenticated else False,
                 'is_shop_liked': user.shop_likes.filter(user=request.user).exists() if request.user.is_authenticated else False,
                 'is_owner': bool(request.user.is_authenticated and request.user.id == user.id),
+                'show_sold_count': getattr(profile, 'show_sold_count', True),
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)
