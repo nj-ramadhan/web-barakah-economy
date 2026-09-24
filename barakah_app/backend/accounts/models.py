@@ -257,3 +257,46 @@ class UserDeviceSession(models.Model):
         return f"{self.user.username} - {self.device_name} ({self.device_id[:8]})"
 
 
+class WhatsAppBlastSession(models.Model):
+    task_id = models.CharField(max_length=64, unique=True, db_index=True)
+    title = models.CharField(max_length=200, blank=True, default='')
+    campaign_source = models.CharField(max_length=50, default='custom_broadcast', help_text="custom_broadcast, event, meeting, users")
+    message_template = models.TextField()
+    has_image = models.BooleanField(default=False)
+    image_filename = models.CharField(max_length=255, blank=True, default='')
+    device_id = models.CharField(max_length=100, blank=True, null=True)
+    created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='wa_blast_sessions')
+    status = models.CharField(max_length=20, default='queued', db_index=True)  # scheduled, queued, processing, completed, cancelled, failed
+    total_recipients = models.IntegerField(default=0)
+    success_count = models.IntegerField(default=0)
+    failed_count = models.IntegerField(default=0)
+    scheduled_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    scheduled_payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"BlastSession #{self.id} ({self.task_id[:8]}) - {self.total_recipients} recipients [{self.status}]"
+
+
+class WhatsAppBlastRecipient(models.Model):
+    session = models.ForeignKey(WhatsAppBlastSession, on_delete=models.CASCADE, related_name='recipients')
+    phone = models.CharField(max_length=40, db_index=True)
+    name = models.CharField(max_length=150, blank=True, default='')
+    message = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, default='pending', db_index=True)  # pending, success, failed
+    error_message = models.TextField(blank=True, null=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.phone} ({self.name}) - {self.status}"
+
+

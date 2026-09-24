@@ -152,10 +152,10 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
                         </div>
                         {/* Share Button for Template */}
                         <div className="absolute -right-4 top-0 z-20">
-                            <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                            <ShareButton slug={profile?.shop_name || username} title={`Profil Toko @${profile?.shop_name || username}`} type="seller" />
                         </div>
                     </div>
-                    <h2 className="text-lg font-bold opacity-80 mb-4">@{username}</h2>
+                    <h2 className="text-lg font-bold opacity-80 mb-4">@{profile?.shop_name || username}</h2>
                     <div className="w-16 h-1 rounded-full mb-6 mx-auto opacity-30" style={{ backgroundColor: profileTextColor }}></div>
                     <p className="text-sm leading-relaxed font-serif italic max-w-[280px] mx-auto px-4">{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
                 </header>
@@ -188,10 +188,10 @@ export const KetenanganSenja = ({ profile, username, products, courses, isPrevie
                     <div className="w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/20 group hover:scale-105 transition-transform relative">
                         <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                         <div className="absolute -right-2 -bottom-2 z-20 scale-75 origin-bottom-right">
-                            <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                            <ShareButton slug={profile?.shop_name || username} title={`Profil Toko @${profile?.shop_name || username}`} type="seller" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase">@{username}</h1>
+                    <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase">@{profile?.shop_name || username}</h1>
                     <p className="text-sm font-medium italic leading-relaxed px-10">"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
                 </header>
 
@@ -218,7 +218,7 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
                     <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="Shop Hero" />
                     <div className={`absolute inset-0 transition-all bg-stone-900/30 backdrop-blur-[1px]`}></div>
                     <div className="absolute bottom-16 left-10 text-left z-20">
-                        <h1 className="text-4xl text-white font-serif italic mb-2 drop-shadow-xl">@{username}</h1>
+                        <h1 className="text-4xl text-white font-serif italic mb-2 drop-shadow-xl">@{profile?.shop_name || username}</h1>
                     </div>
                 </div>
 
@@ -227,7 +227,7 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
                         <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border-4 border-stone-50 shadow-md relative">
                             <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="A" />
                             <div className="absolute -right-4 -bottom-4 z-20 scale-75">
-                                <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                                <ShareButton slug={profile?.shop_name || username} title={`Profil Toko @${profile?.shop_name || username}`} type="seller" />
                             </div>
                         </div>
                         <p className="text-lg leading-relaxed italic font-serif" style={{ color: '#5d5c4b' }}>

@@ -1408,6 +1408,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         from .whatsapp_service import blast_messages, get_default_device_id
         active_device_id = device_id or get_default_device_id()
+        campaign_title = request.data.get('title') or request.data.get('campaign_title')
+        scheduled_at = request.data.get('scheduled_at') or None
         result = blast_messages(
             phone_list=phone_list,
             message_template=message_template,
@@ -1418,12 +1420,17 @@ class UserViewSet(viewsets.ModelViewSet):
             min_delay=min_delay,
             max_delay=max_delay,
             created_by_user_id=request.user.id,
-            device_id=active_device_id
+            device_id=active_device_id,
+            campaign_title=campaign_title,
+            campaign_source='custom_broadcast',
+            scheduled_at=scheduled_at
         )
 
         return Response({
             "success": True,
             "total_recipients": len(phone_list),
+            "status": result.get('status', 'queued'),
+            "scheduled_at": result.get('scheduled_at'),
             "message": result.get('message', f"Broadcast WhatsApp dimasukkan ke antrian ({len(phone_list)} nomor)."),
             "details": result
         })
@@ -1520,6 +1527,275 @@ class UserViewSet(viewsets.ModelViewSet):
         from barakah_app.blast_queue import cancel_blast_task
         ok = cancel_blast_task(task_id, user_id=request.user.id, is_superuser=request.user.is_superuser)
         return Response({"success": ok, "message": "Antrian blasting berhasil dibatalkan."})
+
+    @action(detail=False, methods=['get'])
+    def blast_history(self, request):
+        """
+        List all WhatsApp blasting sessions with delivery stats, timestamps, and status for CRM history tab.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"sessions": [], "total": 0})
+
+        from accounts.models import WhatsAppBlastSession
+        from django.db.models import Q
+
+        qs = WhatsAppBlastSession.objects.all().select_related('created_by')
+        if not request.user.is_superuser:
+            qs = qs.filter(Q(created_by=request.user) | Q(created_by__isnull=True))
+
+        # Filter by status
+        status_filter = request.query_params.get('status')
+        if status_filter and status_filter != 'all':
+            if status_filter == 'failed':
+                qs = qs.filter(failed_count__gt=0)
+            else:
+                qs = qs.filter(status=status_filter)
+
+        # Search query
+        search_query = request.query_params.get('search', '').strip()
+        if search_query:
+            qs = qs.filter(
+                Q(title__icontains=search_query) |
+                Q(message_template__icontains=search_query) |
+                Q(task_id__icontains=search_query) |
+                Q(recipients__phone__icontains=search_query) |
+                Q(recipients__name__icontains=search_query)
+            ).distinct()
+
+        total = qs.count()
+        scheduled_count = WhatsAppBlastSession.objects.filter(status='scheduled').count()
+
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 15))
+        offset = (page - 1) * page_size
+        sessions = qs[offset:offset + page_size]
+
+        results = []
+        for s in sessions:
+            results.append({
+                'id': s.id,
+                'task_id': s.task_id,
+                'title': s.title or f"Broadcast #{s.id}",
+                'campaign_source': s.campaign_source,
+                'status': s.status,
+                'total_recipients': s.total_recipients,
+                'success_count': s.success_count,
+                'failed_count': s.failed_count,
+                'scheduled_at': s.scheduled_at.isoformat() if s.scheduled_at else None,
+                'created_at': s.created_at.isoformat() if s.created_at else None,
+                'completed_at': s.completed_at.isoformat() if s.completed_at else None,
+                'created_by_name': getattr(getattr(s.created_by, 'profile', None), 'name_full', None) or (s.created_by.username if s.created_by else 'Sistem/Admin'),
+                'device_id': s.device_id,
+                'has_image': s.has_image,
+                'image_filename': s.image_filename,
+                'message_preview': s.message_template[:140] + ('...' if len(s.message_template) > 140 else ''),
+                'message_template': s.message_template
+            })
+
+        return Response({
+            'total': total,
+            'scheduled_count': scheduled_count,
+            'page': page,
+            'page_size': page_size,
+            'sessions': results
+        })
+
+    @action(detail=False, methods=['get'])
+    def blast_session_detail(self, request):
+        """
+        Get comprehensive details of a single WhatsApp blasting session,
+        including all recipient statuses (success, failed, pending), timestamps, and error messages.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.query_params.get('id') or request.query_params.get('session_id')
+        if not session_id:
+            return Response({"error": "session_id parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        from accounts.models import WhatsAppBlastSession
+        from django.db.models import Q
+
+        session = WhatsAppBlastSession.objects.filter(id=session_id).select_related('created_by').first()
+        if not session:
+            return Response({"error": "Sesi broadcast tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        rec_qs = session.recipients.all()
+        status_filter = request.query_params.get('status', 'all')
+        if status_filter in ['success', 'failed', 'pending']:
+            rec_qs = rec_qs.filter(status=status_filter)
+
+        search = request.query_params.get('search', '').strip()
+        if search:
+            rec_qs = rec_qs.filter(Q(phone__icontains=search) | Q(name__icontains=search))
+
+        recipients_list = []
+        for r in rec_qs:
+            recipients_list.append({
+                'id': r.id,
+                'phone': r.phone,
+                'name': r.name,
+                'status': r.status,
+                'error_message': r.error_message,
+                'sent_at': r.sent_at.isoformat() if r.sent_at else None,
+                'retry_count': r.retry_count,
+                'message': r.message
+            })
+
+        return Response({
+            'session': {
+                'id': session.id,
+                'task_id': session.task_id,
+                'title': session.title,
+                'campaign_source': session.campaign_source,
+                'status': session.status,
+                'total_recipients': session.total_recipients,
+                'success_count': session.success_count,
+                'failed_count': session.failed_count,
+                'scheduled_at': session.scheduled_at.isoformat() if session.scheduled_at else None,
+                'created_at': session.created_at.isoformat() if session.created_at else None,
+                'completed_at': session.completed_at.isoformat() if session.completed_at else None,
+                'created_by_name': getattr(getattr(session.created_by, 'profile', None), 'name_full', None) or (session.created_by.username if session.created_by else 'Admin'),
+                'device_id': session.device_id,
+                'has_image': session.has_image,
+                'image_filename': session.image_filename,
+                'message_template': session.message_template
+            },
+            'recipients': recipients_list,
+            'total_filtered_recipients': len(recipients_list)
+        })
+
+    @action(detail=False, methods=['post'])
+    def retry_failed_blast(self, request):
+        """
+        Re-blast WhatsApp messages to recipients who previously failed in a blasting session,
+        or re-blast selected recipient numbers from that session.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.data.get('session_id')
+        retry_mode = request.data.get('retry_mode', 'failed')  # 'failed' | 'all' | 'custom'
+        recipient_ids = request.data.get('recipient_ids', [])
+        custom_message = request.data.get('message', '').strip()
+        custom_device_id = request.data.get('device_id') or None
+        min_delay = float(request.data.get('min_delay', 1.0))
+        max_delay = float(request.data.get('max_delay', 4.0))
+
+        if not session_id:
+            return Response({"error": "session_id wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from accounts.models import WhatsAppBlastSession
+        session = WhatsAppBlastSession.objects.filter(id=session_id).first()
+        if not session:
+            return Response({"error": "Sesi broadcast tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        rec_qs = session.recipients.all()
+        if retry_mode == 'failed':
+            rec_qs = rec_qs.filter(status='failed')
+        elif retry_mode == 'custom' and recipient_ids:
+            rec_qs = rec_qs.filter(id__in=recipient_ids)
+
+        targets = list(rec_qs)
+        if not targets:
+            return Response({"error": "Tidak ada nomor penerima yang memenuhi kriteria untuk dikirim ulang."}, status=status.HTTP_400_BAD_REQUEST)
+
+        phone_list = [t.phone for t in targets]
+        placeholder_data_list = [{'name': t.name, 'phone': t.phone, 'number': t.phone} for t in targets]
+        message_to_send = custom_message or session.message_template
+
+        from .whatsapp_service import blast_messages, get_default_device_id
+        active_device_id = custom_device_id or session.device_id or get_default_device_id()
+
+        campaign_title = f"Blast Ulang (Gagal #{session.id}) - {len(phone_list)} Nomor"
+        result = blast_messages(
+            phone_list=phone_list,
+            message_template=message_to_send,
+            placeholder_data_list=placeholder_data_list,
+            delay_seconds=2.5,
+            min_delay=min_delay,
+            max_delay=max_delay,
+            created_by_user_id=request.user.id,
+            device_id=active_device_id,
+            campaign_title=campaign_title,
+            campaign_source='retry_failed'
+        )
+
+        return Response({
+            "success": True,
+            "total_retried": len(phone_list),
+            "message": f"Blast ulang berhasil dimasukkan ke antrian ({len(phone_list)} nomor).",
+            "details": result
+        })
+
+    @action(detail=False, methods=['post'])
+    def trigger_scheduled_blast_now(self, request):
+        """Immediately trigger a scheduled WhatsApp blast without waiting for scheduled time."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response({"error": "session_id wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from barakah_app.blast_queue import trigger_scheduled_session_now
+        ok, msg = trigger_scheduled_session_now(session_id, user_id=request.user.id, is_superuser=request.user.is_superuser)
+        if not ok:
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"success": True, "message": msg})
+
+    @action(detail=False, methods=['post'])
+    def reschedule_blast(self, request):
+        """Update scheduled time for a scheduled WhatsApp blast."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.data.get('session_id')
+        new_scheduled_at = request.data.get('scheduled_at')
+        if not session_id or not new_scheduled_at:
+            return Response({"error": "session_id dan scheduled_at wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from barakah_app.blast_queue import reschedule_blast_session
+        ok, msg = reschedule_blast_session(session_id, new_scheduled_at, user_id=request.user.id, is_superuser=request.user.is_superuser)
+        if not ok:
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"success": True, "message": msg})
+
+    @action(detail=False, methods=['post'])
+    def cancel_scheduled_blast(self, request):
+        """Cancel a scheduled WhatsApp blast."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response({"error": "session_id wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from barakah_app.blast_queue import cancel_scheduled_blast_session
+        ok, msg = cancel_scheduled_blast_session(session_id, user_id=request.user.id, is_superuser=request.user.is_superuser)
+        if not ok:
+            return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"success": True, "message": msg})
+
+    @action(detail=False, methods=['delete', 'post'])
+    def delete_blast_session(self, request):
+        """Delete a blast session history record."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        session_id = request.data.get('session_id') or request.query_params.get('session_id') or request.data.get('id')
+        if not session_id:
+            return Response({"error": "session_id wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from accounts.models import WhatsAppBlastSession
+        deleted_count, _ = WhatsAppBlastSession.objects.filter(id=session_id).delete()
+        if deleted_count == 0:
+            return Response({"error": "Sesi tidak ditemukan atau sudah dihapus."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"success": True, "message": "Riwayat sesi blasting berhasil dihapus."})
 
     @action(detail=False, methods=['post', 'delete'])
     def bulk_delete(self, request):

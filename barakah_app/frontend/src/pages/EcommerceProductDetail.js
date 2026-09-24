@@ -563,16 +563,22 @@ const EcommerceProductDetail = () => {
                           <div 
                             className="flex items-center gap-2 font-bold text-green-700 hover:bg-green-50 p-1.5 rounded-xl transition-all cursor-pointer border border-transparent hover:border-green-100"
                             onClick={() => {
-                              setSelectedUserId(product.seller);
-                              setIsProfileModalOpen(true);
+                              const targetStore = product.seller_shop_name || product.seller_name;
+                              if (targetStore) {
+                                navigate(`/store/${targetStore}`);
+                              } else {
+                                setSelectedUserId(product.seller);
+                                setIsProfileModalOpen(true);
+                              }
                             }}
+                            title={`Kunjungi Toko ${product.seller_shop_name || (product.seller_name ? `@${product.seller_name}` : '')}`}
                           >
                             <img 
-                              src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
-                              alt={product.seller_name} 
+                              src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller_shop_name || product.seller_name || 'Store')}&background=random`} 
+                              alt={product.seller_shop_name || product.seller_name} 
                               className="w-6 h-6 rounded-full object-cover border-2 border-white shadow-sm" 
                             />
-                            <span>@{product.seller_name}</span>
+                            <span>@{product.seller_shop_name || product.seller_name}</span>
                           </div>
                         </div>
                     </div>
@@ -731,8 +737,8 @@ const EcommerceProductDetail = () => {
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
               <img 
-                src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
-                alt={product.seller_name} 
+                src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller_shop_name || product.seller_name || 'Store')}&background=random`} 
+                alt={product.seller_shop_name || product.seller_name} 
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-100 shadow-sm" 
               />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center text-white shadow-xs" title="Official Toko">
@@ -742,7 +748,7 @@ const EcommerceProductDetail = () => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-gray-900 leading-tight">
-                  Toko {product.seller_shop_name || `@${product.seller_name}`}
+                  Toko {product.seller_shop_name || (product.seller_name ? `@${product.seller_name}` : '')}
                 </h2>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Official Toko

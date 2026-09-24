@@ -629,21 +629,22 @@ const EcommerceMainPage = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (product.seller_name) {
-                    navigate(`/store/${product.seller_shop_name || product.seller_name}`);
+                  const targetStore = product.seller_shop_name || product.seller_name;
+                  if (targetStore) {
+                    navigate(`/store/${targetStore}`);
                   } else {
                     setSelectedUserId(product.seller);
                     setIsProfileModalOpen(true);
                   }
                 }}
-                title={`Kunjungi Toko ${product.seller_shop_name || `@${product.seller_name}`}`}
+                title={`Kunjungi Toko ${product.seller_shop_name || (product.seller_name ? `@${product.seller_name}` : '')}`}
               >
                 <img 
-                  src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
-                  alt={product.seller_name} 
+                  src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller_shop_name || product.seller_name || 'Store')}&background=random`} 
+                  alt={product.seller_shop_name || product.seller_name} 
                   className="w-4 h-4 rounded-full object-cover border border-emerald-100 shrink-0" 
                 />
-                <span className="text-[10px] font-bold text-emerald-700 truncate">@{product.seller_name}</span>
+                <span className="text-[10px] font-bold text-emerald-700 truncate">@{product.seller_shop_name || product.seller_name}</span>
               </div>
             </div>
           </div>

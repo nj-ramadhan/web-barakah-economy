@@ -310,9 +310,10 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type, device_i
     return {'success': False, 'message': f'Internal error sending {endpoint}: {last_error}'}
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=2.5, min_delay=1.0, max_delay=4.0, created_by_user_id=None, device_id=None):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=2.5, min_delay=1.0, max_delay=4.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
     """
     Send WhatsApp messages to multiple recipients efficiently via background queue by default.
+    Supports scheduled execution if scheduled_at is provided.
     """
     if use_queue:
         from barakah_app.blast_queue import enqueue_whatsapp_blast
@@ -326,7 +327,10 @@ def blast_messages(phone_list, message_template, placeholder_data_list=None, fil
             min_delay=min_delay,
             max_delay=max_delay,
             created_by_user_id=created_by_user_id,
-            device_id=device_id
+            device_id=device_id,
+            campaign_title=campaign_title,
+            campaign_source=campaign_source,
+            scheduled_at=scheduled_at
         )
 
     results = {'total': len(phone_list), 'success': 0, 'failed': 0, 'details': []}

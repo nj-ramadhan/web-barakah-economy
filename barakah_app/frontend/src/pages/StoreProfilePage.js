@@ -630,7 +630,7 @@ const StoreProfilePage = () => {
 
                     <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
                       <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                        @{profile.username || username}
+                        @{profile.shop_name || profile.username || username}
                       </p>
                     </div>
                   </div>
