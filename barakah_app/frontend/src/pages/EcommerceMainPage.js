@@ -518,6 +518,9 @@ const EcommerceMainPage = () => {
     const effectiveStock = getEffectiveStock(product);
     const inStock = effectiveStock > 0;
     const sellerCity = product.seller_city_name || 'Indonesia';
+    const showSoldCount = product?.seller_show_sold_count !== undefined && product?.seller_show_sold_count !== null 
+      ? Boolean(product.seller_show_sold_count) 
+      : true;
 
     return (
       <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group ${!inStock ? 'opacity-75' : ''}`}>
@@ -601,17 +604,19 @@ const EcommerceMainPage = () => {
                 <span className="text-gray-400">
                   stok: {inStock ? effectiveStock : 'habis'}
                 </span>
-                <span 
-                  className={`font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                    (product.sold_count || 0) > 0 
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                      : 'text-gray-400'
-                  }`}
-                  title={`${product.store_sold_count || 0} terjual di toko, ${product.charity_sold_count || 0} lewat program charity/waqaf`}
-                >
-                  <span className="material-icons text-[11px]">shopping_bag</span>
-                  {product.sold_count || 0} terjual
-                </span>
+                {showSoldCount && (
+                  <span 
+                    className={`font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                      (product.sold_count || 0) > 0 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                        : 'text-gray-400'
+                    }`}
+                    title={`${product.store_sold_count || 0} terjual di toko, ${product.charity_sold_count || 0} lewat program charity/waqaf`}
+                  >
+                    <span className="material-icons text-[11px]">shopping_bag</span>
+                    {product.sold_count || 0} terjual
+                  </span>
+                )}
               </div>
             </div>
           

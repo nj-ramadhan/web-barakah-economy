@@ -50,7 +50,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         if self.action in ['list', 'retrieve', 'promotion']:
             return [IsAuthenticatedOrReadOnly()]
-        if self.action in ['add_testimoni_admin', 'update_sold_count']:
+        if self.action in ['add_testimoni_admin', 'update_sold_count', 'bulk_update_stock']:
             return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly(), IsOwnerOrAdmin()]
     
@@ -639,6 +639,80 @@ class ProductViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_200_OK)
         except (ValueError, TypeError):
             return Response({'error': 'Format angka tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post', 'patch'], permission_classes=[IsAuthenticated], url_path='bulk-stock-update')
+    def bulk_update_stock(self, request):
+        """
+        Bulk update product stock for seller:
+        Payload:
+        {
+            "items": [
+                {
+                    "product_id": 1,
+                    "stock": 10,
+                    "variations": [
+                        { "id": 101, "stock": 5 },
+                        { "id": 102, "stock": 5 }
+                    ]
+                },
+                ...
+            ]
+        }
+        """
+        user = request.user
+        items = request.data.get('items', [])
+        if not isinstance(items, list) or len(items) == 0:
+            return Response({'error': 'Daftar items untuk update stok diperlukan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        is_admin = bool(user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin')
+        updated_products = []
+
+        for item in items:
+            product_id = item.get('product_id') or item.get('id')
+            if not product_id:
+                continue
+
+            try:
+                if is_admin:
+                    product = Product.objects.get(id=product_id)
+                else:
+                    product = Product.objects.get(id=product_id, seller=user)
+            except Product.DoesNotExist:
+                continue
+
+            variations_data = item.get('variations')
+            if variations_data and isinstance(variations_data, list):
+                for v_item in variations_data:
+                    v_id = v_item.get('id')
+                    if not v_id:
+                        continue
+                    new_v_stock = v_item.get('stock')
+                    if new_v_stock is not None:
+                        try:
+                            clean_stock = max(0, int(new_v_stock))
+                            product.variations.filter(id=v_id).update(stock=clean_stock)
+                        except (ValueError, TypeError):
+                            pass
+                product.sync_variations()
+            else:
+                new_stock = item.get('stock')
+                if new_stock is not None:
+                    try:
+                        clean_stock = max(0, int(new_stock))
+                        product.stock = clean_stock
+                        product.save(update_fields=['stock'])
+                    except (ValueError, TypeError):
+                        pass
+
+            updated_products.append(product)
+
+        serializer = ProductSerializer(updated_products, many=True)
+        return Response({
+            'status': 'success',
+            'message': f'Berhasil memperbarui stok {len(updated_products)} produk.',
+            'count': len(updated_products),
+            'products': serializer.data
+        }, status=status.HTTP_200_OK)
 
     def _compress_image(self, uploaded_file):
         """Compress uploaded review image if large to ensure fast database & storage."""

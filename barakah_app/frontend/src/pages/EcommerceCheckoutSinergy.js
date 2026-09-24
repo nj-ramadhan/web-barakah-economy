@@ -66,11 +66,24 @@ const EcommerceCheckoutSinergy = () => {
                 });
 
                 const rawItems = cartRes.data || [];
-                const selectedItems = rawItems.filter(it => it.is_selected);
-                const items = selectedItems.length > 0 ? selectedItems : rawItems;
+                const locationSelectedIds = location.state?.selectedCartItemIds || (() => {
+                    try {
+                        const saved = sessionStorage.getItem('selected_cart_item_ids');
+                        return saved ? JSON.parse(saved) : null;
+                    } catch (e) { return null; }
+                })();
+
+                let items = rawItems;
+                if (Array.isArray(locationSelectedIds) && locationSelectedIds.length > 0) {
+                    const filtered = rawItems.filter(it => locationSelectedIds.includes(it.id));
+                    items = filtered.length > 0 ? filtered : rawItems.filter(it => it.is_selected);
+                } else {
+                    const selectedItems = rawItems.filter(it => it.is_selected);
+                    items = selectedItems.length > 0 ? selectedItems : rawItems;
+                }
 
                 if (items.length === 0) {
-                    navigate('/store', { replace: true });
+                    navigate('/keranjang', { replace: true });
                     return;
                 }
 
@@ -390,10 +403,15 @@ const EcommerceCheckoutSinergy = () => {
     // Group items by seller for UI
     const sellerGroups = {};
     cartItems.forEach(item => {
-        const s_id = item.product?.seller_id || "0";
+        const s_id = String(item.product?.seller_id || item.product?.seller || "0");
         if (!sellerGroups[s_id]) {
+            const storeName = item.product?.seller_shop_name || item.product?.seller_name || (s_id === "0" ? "Toko Resmi Barakah" : `Toko #${s_id}`);
             sellerGroups[s_id] = {
                 items: [],
+                seller_id: s_id,
+                store_name: storeName,
+                seller_city_name: item.product?.seller_city_name || '',
+                seller_avatar: item.product?.seller_avatar || '',
                 total_original_price: 0,
                 total_promo_discount: 0,
                 total_price: 0
@@ -457,7 +475,23 @@ const EcommerceCheckoutSinergy = () => {
 
                     return (
                         <div key={s_id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-                            <h3 className="font-bold text-gray-800 text-sm mb-4 pb-2 border-b border-gray-100">Pesanan dari Seller/Toko #{s_id === "0" ? "Barakah" : s_id}</h3>
+                            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-bold text-xs shrink-0">
+                                        <span className="material-icons text-base">storefront</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 text-sm">{group.store_name}</h3>
+                                        <p className="text-[10px] text-gray-400 font-medium">Toko Terverifikasi Barakah</p>
+                                    </div>
+                                </div>
+                                {group.seller_city_name && (
+                                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
+                                        <span className="material-icons text-[12px] text-slate-500">location_on</span>
+                                        {group.seller_city_name}
+                                    </span>
+                                )}
+                            </div>
                             <div className="space-y-4 mb-4">
                                 {group.items.map(item => {
                                     const origUnit = getItemOriginalPrice(item);

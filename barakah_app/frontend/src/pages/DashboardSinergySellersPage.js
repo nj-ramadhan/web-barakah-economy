@@ -9,6 +9,7 @@ import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency, parseCurrency } from '../utils/formatters';
 import CKEditorComponent from '../components/common/CKEditor';
 import ProductPromoModal from '../components/modals/ProductPromoModal';
+import QuickStockEditModal from '../components/modals/QuickStockEditModal';
 import { getNextDateFromDays } from '../utils/dateUtils';
 
 const DashboardSinergySellersPage = () => {
@@ -21,6 +22,7 @@ const DashboardSinergySellersPage = () => {
     const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'low_stock' | 'out_of_stock' | 'preorder' | 'promo'
     const [storeUrlCopied, setStoreUrlCopied] = useState(false);
     const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+    const [isQuickStockModalOpen, setIsQuickStockModalOpen] = useState(false);
     const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [description, setDescription] = useState('');
@@ -685,6 +687,16 @@ const DashboardSinergySellersPage = () => {
                             <span className="material-icons text-sm">local_activity</span> 
                             <span>{t('seller.create_voucher', 'Buat Voucher')}</span>
                         </button>
+                        <button 
+                            type="button"
+                            onClick={() => setIsQuickStockModalOpen(true)} 
+                            className="flex-1 sm:flex-initial bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/90 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap active:scale-95 shadow-2xs"
+                            title="Edit stok cepat banyak produk sekaligus dalam bentuk list"
+                        >
+                            <span className="material-icons text-sm text-emerald-600">inventory_2</span> 
+                            <span>{t('seller.quick_stock_edit', 'Edit Stok Cepat')}</span>
+                            <span className="bg-emerald-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">List</span>
+                        </button>
                         <button onClick={() => { 
                             setActiveTab('add'); 
                             setEditingProduct(null); 
@@ -912,15 +924,20 @@ const DashboardSinergySellersPage = () => {
 
                                         {/* Stock & Sold Row */}
                                         <div className="flex justify-between items-center text-xs mt-2.5 pt-2 border-t border-gray-100">
-                                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                                                isOutOfStock 
-                                                    ? 'bg-rose-50 text-rose-700 border border-rose-200' 
-                                                    : isLowStock 
-                                                    ? 'bg-amber-50 text-amber-700 border border-amber-200' 
-                                                    : 'bg-slate-100 text-slate-700'
-                                            }`}>
-                                                {t('store.stock', 'Stok')}: {stock} {p.unit || 'pcs'}
-                                            </span>
+                                            <div 
+                                                onClick={() => setIsQuickStockModalOpen(true)}
+                                                className={`px-2 py-0.5 rounded-md text-[11px] font-bold cursor-pointer hover:opacity-80 transition flex items-center gap-1 ${
+                                                    isOutOfStock 
+                                                        ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                                                        : isLowStock 
+                                                        ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                }`}
+                                                title="Klik untuk membuka Edit Stok Cepat"
+                                            >
+                                                <span>{t('store.stock', 'Stok')}: {stock} {p.unit || 'pcs'}</span>
+                                                <span className="material-icons text-[12px] text-gray-400">edit</span>
+                                            </div>
                                             
                                             <span 
                                                 className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]"
@@ -2158,6 +2175,14 @@ const DashboardSinergySellersPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Quick Bulk Stock Edit Modal (List) */}
+            <QuickStockEditModal
+                isOpen={isQuickStockModalOpen}
+                onClose={() => setIsQuickStockModalOpen(false)}
+                products={products}
+                onSuccess={fetchDashboardData}
+            />
 
             <NavigationButton />
         </div>

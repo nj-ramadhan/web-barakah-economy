@@ -559,9 +559,11 @@ const DesktopLandingPage = () => {
                                                 </div>
                                                 <div className="flex justify-between items-center text-xs text-gray-400 mt-2">
                                                     <span>Stok: {getProductStock(product) > 0 ? getProductStock(product) : 'Habis'}</span>
-                                                    <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 text-[11px]">
-                                                        {product.sold_count || 0} terjual
-                                                    </span>
+                                                    {product.seller_show_sold_count !== false && (
+                                                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 text-[11px]">
+                                                            {product.sold_count || 0} terjual
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
