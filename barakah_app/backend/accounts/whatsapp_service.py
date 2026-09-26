@@ -310,7 +310,7 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type, device_i
     return {'success': False, 'message': f'Internal error sending {endpoint}: {last_error}'}
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=2.5, min_delay=1.0, max_delay=4.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=4.0, min_delay=4.0, max_delay=7.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
     """
     Send WhatsApp messages to multiple recipients efficiently via background queue by default.
     Supports scheduled execution if scheduled_at is provided.

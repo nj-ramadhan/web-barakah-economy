@@ -76,8 +76,8 @@ const DashboardBroadcastWAPage = () => {
     const textareaRef = useRef(null);
 
     // Queue & Anti-Ban Settings
-    const [minDelay, setMinDelay] = useState(1.0);
-    const [maxDelay, setMaxDelay] = useState(4.0);
+    const [minDelay, setMinDelay] = useState(4);
+    const [maxDelay, setMaxDelay] = useState(7);
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState('');
     const [deviceStatusLoading, setDeviceStatusLoading] = useState(false);
@@ -413,16 +413,19 @@ const DashboardBroadcastWAPage = () => {
 
         const scheduledTimeStr = isScheduled ? formatIndonesianDateTime(new Date(scheduledDateTime).toISOString()) : '';
 
+        const activeMinDelay = Math.max(4, parseFloat(minDelay) || 4);
+        const activeMaxDelay = Math.max(activeMinDelay, parseFloat(maxDelay) || 7);
+
         const confirmMsg = isScheduled
             ? `Konfirmasi Jadwal Broadcast WA:\n` +
               `• Jumlah Penerima: ${finalRecipients.length} nomor\n` +
               `• Jadwal Kirim: ${scheduledTimeStr} WIB\n` +
-              `• Antrean Anti-Ban: Jeda acak ${minDelay} s.d ${maxDelay} detik/pesan\n` +
+              `• Antrean Anti-Ban: Jeda acak ${activeMinDelay} s.d ${activeMaxDelay} detik/pesan\n` +
               `• Lampiran Gambar: ${imageFile ? 'Ya (' + imageFile.name + ')' : 'Tidak'}\n\n` +
               `Simpan dan jadwalkan pengiriman broadcast ini?`
             : `Konfirmasi Kirim Broadcast:\n` +
               `• Jumlah Penerima: ${finalRecipients.length} nomor\n` +
-              `• Antrean Anti-Ban: Jeda acak ${minDelay} s.d ${maxDelay} detik/pesan\n` +
+              `• Antrean Anti-Ban: Jeda acak ${activeMinDelay} s.d ${activeMaxDelay} detik/pesan\n` +
               `• Lampiran Gambar: ${imageFile ? 'Ya (' + imageFile.name + ')' : 'Tidak'}\n\n` +
               `Yakin ingin memulai antrean pengiriman broadcast sekarang?`;
 
@@ -437,8 +440,8 @@ const DashboardBroadcastWAPage = () => {
                 message: message.trim(),
                 image_base64: imageBase64,
                 filename: imageFile ? imageFile.name : 'broadcast.jpg',
-                min_delay: parseFloat(minDelay) || 1.0,
-                max_delay: parseFloat(maxDelay) || 4.0,
+                min_delay: activeMinDelay,
+                max_delay: activeMaxDelay,
                 device_id: selectedDevice || null,
                 scheduled_at: isScheduled ? new Date(scheduledDateTime).toISOString() : null
             };
@@ -1282,7 +1285,7 @@ const DashboardBroadcastWAPage = () => {
                                             <span>Jeda Acak Antrean</span>
                                         </span>
                                         <span className="text-xs font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-full border border-emerald-300">
-                                            {minDelay}s ~ {maxDelay}s
+                                            {minDelay || 4}s ~ {maxDelay || 7}s
                                         </span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1290,29 +1293,65 @@ const DashboardBroadcastWAPage = () => {
                                             <label className="text-[10px] text-gray-500 font-bold block mb-1">Min (detik):</label>
                                             <input
                                                 type="number"
-                                                min="0.5"
-                                                max="10"
-                                                step="0.5"
+                                                min="4"
+                                                max="60"
+                                                step="1"
                                                 value={minDelay}
-                                                onChange={(e) => setMinDelay(Math.max(0.5, parseFloat(e.target.value) || 1))}
-                                                className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold"
+                                                onChange={(e) => {
+                                                    const raw = e.target.value;
+                                                    if (raw === '') {
+                                                        setMinDelay('');
+                                                        return;
+                                                    }
+                                                    const val = parseFloat(raw);
+                                                    const safeMin = isNaN(val) ? 4 : Math.max(4, val);
+                                                    setMinDelay(safeMin);
+                                                    if (safeMin > (parseFloat(maxDelay) || safeMin)) {
+                                                        setMaxDelay(safeMin);
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    const val = parseFloat(minDelay);
+                                                    const safeMin = isNaN(val) || val < 4 ? 4 : val;
+                                                    setMinDelay(safeMin);
+                                                    if (safeMin > (parseFloat(maxDelay) || safeMin)) {
+                                                        setMaxDelay(safeMin);
+                                                    }
+                                                }}
+                                                className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[10px] text-gray-500 font-bold block mb-1">Max (detik):</label>
                                             <input
                                                 type="number"
-                                                min="1"
-                                                max="20"
-                                                step="0.5"
+                                                min={minDelay || 4}
+                                                max="120"
+                                                step="1"
                                                 value={maxDelay}
-                                                onChange={(e) => setMaxDelay(Math.max(1, parseFloat(e.target.value) || 4))}
-                                                className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold"
+                                                onChange={(e) => {
+                                                    const raw = e.target.value;
+                                                    if (raw === '') {
+                                                        setMaxDelay('');
+                                                        return;
+                                                    }
+                                                    const val = parseFloat(raw);
+                                                    const currentMin = parseFloat(minDelay) || 4;
+                                                    const safeMax = isNaN(val) ? currentMin : Math.max(currentMin, val);
+                                                    setMaxDelay(safeMax);
+                                                }}
+                                                onBlur={() => {
+                                                    const currentMin = parseFloat(minDelay) || 4;
+                                                    const val = parseFloat(maxDelay);
+                                                    const safeMax = isNaN(val) || val < currentMin ? Math.max(currentMin, 7) : val;
+                                                    setMaxDelay(safeMax);
+                                                }}
+                                                className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-emerald-800/80 mt-2">
-                                        🛡️ Pesan akan dikirim dengan jeda acak per nomor untuk meniru interaksi manusia alami.
+                                        🛡️ Pesan akan dikirim dengan jeda acak per nomor untuk meniru interaksi manusia alami (minimal batas aman 4 detik).
                                     </p>
                                 </div>
 
@@ -1508,7 +1547,7 @@ const DashboardBroadcastWAPage = () => {
                                         {sendTimingMode === 'scheduled' ? (
                                             scheduledDateTime ? `Dijadwalkan untuk: ${formatIndonesianDateTime(new Date(scheduledDateTime).toISOString())}` : 'Belum memilih waktu jadwal'
                                         ) : (
-                                            `Estimasi durasi antrean: ~${Math.max(1, Math.round((finalRecipients.length * ((minDelay + maxDelay) / 2)) / 60 * 10) / 10)} menit`
+                                            `Estimasi durasi antrean: ~${Math.max(1, Math.round((finalRecipients.length * (((parseFloat(minDelay) || 4) + (parseFloat(maxDelay) || 7)) / 2)) / 60 * 10) / 10)} menit`
                                         )}
                                     </p>
                                 </div>

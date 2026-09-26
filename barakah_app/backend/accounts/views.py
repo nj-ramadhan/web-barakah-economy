@@ -1328,8 +1328,8 @@ class UserViewSet(viewsets.ModelViewSet):
         image_base64 = request.data.get('image_base64')
         filename = request.data.get('filename', 'broadcast.jpg')
         device_id = request.data.get('device_id') or None
-        min_delay = float(request.data.get('min_delay', 1.0))
-        max_delay = float(request.data.get('max_delay', 4.0))
+        min_delay = max(4.0, float(request.data.get('min_delay', 4.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 7.0)))
 
         if not raw_numbers or not message_template:
             return Response(
@@ -1679,8 +1679,8 @@ class UserViewSet(viewsets.ModelViewSet):
         recipient_ids = request.data.get('recipient_ids', [])
         custom_message = request.data.get('message', '').strip()
         custom_device_id = request.data.get('device_id') or None
-        min_delay = float(request.data.get('min_delay', 1.0))
-        max_delay = float(request.data.get('max_delay', 4.0))
+        min_delay = max(4.0, float(request.data.get('min_delay', 4.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 7.0)))
 
         if not session_id:
             return Response({"error": "session_id wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)

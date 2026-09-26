@@ -222,9 +222,9 @@ def _dispatch_session_to_queue(session):
     file_data_base64 = payload.get('file_data_base64')
     filename = payload.get('filename') or session.image_filename or 'image.jpg'
     device_id = payload.get('device_id') or session.device_id
-    min_delay = float(payload.get('min_delay', 1.0))
-    max_delay = float(payload.get('max_delay', 4.0))
-    delay_seconds = float(payload.get('delay_seconds', 2.5))
+    min_delay = max(4.0, float(payload.get('min_delay', 4.0)))
+    max_delay = max(min_delay, float(payload.get('max_delay', 7.0)))
+    delay_seconds = float(payload.get('delay_seconds', 4.0))
 
     task = BlastTask(
         task_type='whatsapp',
@@ -335,10 +335,10 @@ def _process_task(task):
                 break
 
             if idx > 0:
-                # Random jitter delay to prevent anti-spam bot detection (default 1.0 ~ 4.0s random)
+                # Random jitter delay to prevent anti-spam bot detection (minimum safe 4.0s, default 4.0 ~ 7.0s)
                 if task.task_type == 'whatsapp':
-                    min_d = float(task.extra_data.get('min_delay', 1.0))
-                    max_d = float(task.extra_data.get('max_delay', 4.0))
+                    min_d = max(4.0, float(task.extra_data.get('min_delay', 4.0)))
+                    max_d = max(min_d, float(task.extra_data.get('max_delay', 7.0)))
                     if min_d > max_d:
                         min_d, max_d = max_d, min_d
                     actual_delay = random.uniform(min_d, max_d)
@@ -460,7 +460,7 @@ def _process_task(task):
     logger.info(f"Completed BlastTask {task_id} ({task.task_type}): {task_data['success_count']} success, {task_data['failed_count']} failed out of {len(task.items)}.")
 
 
-def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=2.5, min_delay=1.0, max_delay=4.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
+def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=4.0, min_delay=4.0, max_delay=7.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
     """
     Enqueue a WhatsApp message blast task to run asynchronously in background,
     or schedule it for future delivery if scheduled_at is provided.
