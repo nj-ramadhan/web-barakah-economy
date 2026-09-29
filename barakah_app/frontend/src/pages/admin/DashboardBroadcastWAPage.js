@@ -76,8 +76,8 @@ const DashboardBroadcastWAPage = () => {
     const textareaRef = useRef(null);
 
     // Queue & Anti-Ban Settings
-    const [minDelay, setMinDelay] = useState(4);
-    const [maxDelay, setMaxDelay] = useState(7);
+    const [minDelay, setMinDelay] = useState(15);
+    const [maxDelay, setMaxDelay] = useState(30);
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState('');
     const [deviceStatusLoading, setDeviceStatusLoading] = useState(false);
@@ -413,8 +413,8 @@ const DashboardBroadcastWAPage = () => {
 
         const scheduledTimeStr = isScheduled ? formatIndonesianDateTime(new Date(scheduledDateTime).toISOString()) : '';
 
-        const activeMinDelay = Math.max(4, parseFloat(minDelay) || 4);
-        const activeMaxDelay = Math.max(activeMinDelay, parseFloat(maxDelay) || 7);
+        const activeMinDelay = Math.max(10, parseFloat(minDelay) || 15);
+        const activeMaxDelay = Math.max(activeMinDelay, parseFloat(maxDelay) || 30);
 
         const confirmMsg = isScheduled
             ? `Konfirmasi Jadwal Broadcast WA:\n` +
@@ -1145,6 +1145,26 @@ const DashboardBroadcastWAPage = () => {
 
                                 <span className="text-gray-300 mx-1">|</span>
 
+                                <span className="text-[10px] font-black uppercase text-indigo-700 px-1">Spintax (Anti-Ban):</span>
+                                <button
+                                    type="button"
+                                    onClick={() => insertIntoMessage("{Halo|Hai|Assalamu'alaikum}")}
+                                    className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-mono font-bold border border-indigo-200 shadow-xs transition"
+                                    title="Pilihan sapaan acak per nomor agar teks tidak ber-hash identik"
+                                >
+                                    {'{Halo|Hai|Salam}'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => insertIntoMessage("{Kak|Bapak/Ibu|Sahabat BAE}")}
+                                    className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-mono font-bold border border-indigo-200 shadow-xs transition"
+                                    title="Pilihan panggilan acak per nomor"
+                                >
+                                    {'{Kak|Bapak/Ibu}'}
+                                </button>
+
+                                <span className="text-gray-300 mx-1">|</span>
+
                                 <span className="text-[10px] font-black uppercase text-gray-400 px-1">Format:</span>
                                 <button
                                     type="button"
@@ -1285,16 +1305,55 @@ const DashboardBroadcastWAPage = () => {
                                             <span>Jeda Acak Antrean</span>
                                         </span>
                                         <span className="text-xs font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-full border border-emerald-300">
-                                            {minDelay || 4}s ~ {maxDelay || 7}s
+                                            {minDelay || 15}s ~ {maxDelay || 30}s
                                         </span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
+
+                                    {/* Preset Speed Buttons */}
+                                    <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMinDelay(20); setMaxDelay(40); }}
+                                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 ${
+                                                minDelay === 20 && maxDelay === 40
+                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                                    : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
+                                            }`}
+                                        >
+                                            <span>🛡️ Aman (20-40s)</span>
+                                            <span className="text-[9px] bg-emerald-700 text-emerald-100 px-1 py-0.2 rounded font-normal">Saran</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMinDelay(15); setMaxDelay(25); }}
+                                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                                                minDelay === 15 && maxDelay === 25
+                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                                    : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
+                                            }`}
+                                        >
+                                            ⏱️ Standar (15-25s)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMinDelay(10); setMaxDelay(15); }}
+                                            className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                                                minDelay === 10 && maxDelay === 15
+                                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                                    : 'bg-white text-amber-800 border-amber-200 hover:bg-amber-50'
+                                            }`}
+                                        >
+                                            ⚡ Cepat (10-15s)
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 mt-1">
                                         <div>
                                             <label className="text-[10px] text-gray-500 font-bold block mb-1">Min (detik):</label>
                                             <input
                                                 type="number"
-                                                min="4"
-                                                max="60"
+                                                min="10"
+                                                max="120"
                                                 step="1"
                                                 value={minDelay}
                                                 onChange={(e) => {
@@ -1304,7 +1363,7 @@ const DashboardBroadcastWAPage = () => {
                                                         return;
                                                     }
                                                     const val = parseFloat(raw);
-                                                    const safeMin = isNaN(val) ? 4 : Math.max(4, val);
+                                                    const safeMin = isNaN(val) ? 10 : Math.max(10, val);
                                                     setMinDelay(safeMin);
                                                     if (safeMin > (parseFloat(maxDelay) || safeMin)) {
                                                         setMaxDelay(safeMin);
@@ -1312,10 +1371,10 @@ const DashboardBroadcastWAPage = () => {
                                                 }}
                                                 onBlur={() => {
                                                     const val = parseFloat(minDelay);
-                                                    const safeMin = isNaN(val) || val < 4 ? 4 : val;
+                                                    const safeMin = isNaN(val) || val < 10 ? 10 : val;
                                                     setMinDelay(safeMin);
                                                     if (safeMin > (parseFloat(maxDelay) || safeMin)) {
-                                                        setMaxDelay(safeMin);
+                                                        setMaxDelay(Math.max(safeMin, 30));
                                                     }
                                                 }}
                                                 className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold focus:ring-emerald-500 focus:border-emerald-500"
@@ -1325,8 +1384,8 @@ const DashboardBroadcastWAPage = () => {
                                             <label className="text-[10px] text-gray-500 font-bold block mb-1">Max (detik):</label>
                                             <input
                                                 type="number"
-                                                min={minDelay || 4}
-                                                max="120"
+                                                min={minDelay || 10}
+                                                max="180"
                                                 step="1"
                                                 value={maxDelay}
                                                 onChange={(e) => {
@@ -1336,23 +1395,36 @@ const DashboardBroadcastWAPage = () => {
                                                         return;
                                                     }
                                                     const val = parseFloat(raw);
-                                                    const currentMin = parseFloat(minDelay) || 4;
+                                                    const currentMin = parseFloat(minDelay) || 10;
                                                     const safeMax = isNaN(val) ? currentMin : Math.max(currentMin, val);
                                                     setMaxDelay(safeMax);
                                                 }}
                                                 onBlur={() => {
-                                                    const currentMin = parseFloat(minDelay) || 4;
+                                                    const currentMin = parseFloat(minDelay) || 10;
                                                     const val = parseFloat(maxDelay);
-                                                    const safeMax = isNaN(val) || val < currentMin ? Math.max(currentMin, 7) : val;
+                                                    const safeMax = isNaN(val) || val < currentMin ? Math.max(currentMin, 30) : val;
                                                     setMaxDelay(safeMax);
                                                 }}
                                                 className="w-full p-2 text-xs rounded-xl border border-gray-300 bg-white font-bold focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-emerald-800/80 mt-2">
-                                        🛡️ Pesan akan dikirim dengan jeda acak per nomor untuk meniru interaksi manusia alami (minimal batas aman 4 detik).
-                                    </p>
+
+                                    {/* High Risk Warning if delay < 15s */}
+                                    {parseFloat(minDelay) < 15 && (
+                                        <div className="mt-2.5 p-2 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-1.5 text-[11px] text-amber-900 leading-snug">
+                                            <span className="material-icons text-amber-600 text-sm mt-0.5">warning</span>
+                                            <div>
+                                                <strong className="block font-black">Risiko Terdeteksi Robot / Logout:</strong>
+                                                Jeda di bawah 15 detik sangat rawan membuat sesi WhatsApp Web terputus (logout otomatis) karena WhatsApp mendeteksi aliran pesan tidak wajar. Disarankan minimal <strong>15–30 detik</strong>.
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="text-[10px] text-emerald-800/80 mt-2.5 space-y-1">
+                                        <p>🛡️ <strong>Random Jitter:</strong> Jeda acak berbeda tiap nomor meniru pola mengetik manusia.</p>
+                                        <p>⏸️ <strong>Auto Cooldown:</strong> Antrean otomatis istirahat 45–75 detik setiap 10 nomor terkirim untuk mendinginkan sesi.</p>
+                                    </div>
                                 </div>
 
                                 {/* Multi-device Selector */}

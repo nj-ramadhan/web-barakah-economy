@@ -57,17 +57,27 @@ class UserAdminSerializer(serializers.ModelSerializer):
     meeting_attendance_summary = serializers.SerializerMethodField()
 
     def get_meeting_attendance_summary(self, obj):
+        bulk_meetings = self.context.get('bulk_meetings')
+        if bulk_meetings is not None:
+            return bulk_meetings.get(obj.id, {
+                'present': 0, 'absent': 0, 'total': 0, 'total_present': 0, 'total_absent': 0, 'attendance_rate': 0
+            })
+        if self.context.get('is_list_view'):
+            return {'present': 0, 'absent': 0, 'total': 0, 'total_present': 0, 'total_absent': 0, 'attendance_rate': 0}
         return obj.get_meeting_attendance_summary()
 
     def get_accessible_menus(self, obj):
+        if self.context.get('is_list_view'):
+            return []
         if not obj:
             return []
         return obj.get_all_accessible_menus()
 
     def get_event_attendance_detail(self, obj):
+        if self.context.get('is_list_view'):
+            return []
         from events.models import EventRegistration, EventAttendance
         from django.utils import timezone
-        import json
         
         now = timezone.now()
         registrations = EventRegistration.objects.filter(user=obj).select_related('event')
@@ -94,14 +104,19 @@ class UserAdminSerializer(serializers.ModelSerializer):
                 'date': event.start_date.strftime('%d %b %Y') if event.start_date else '-'
             })
             
-        # Update the JSON field in the model for persistence/export
-        # if obj.event_attendance_json != details:
-        #     obj.event_attendance_json = details
-        #     obj.save(update_fields=['event_attendance_json'])
-            
         return details
 
     def get_activities(self, obj):
+        bulk_activities = self.context.get('bulk_activities')
+        if bulk_activities is not None:
+            return bulk_activities.get(obj.id, {
+                'charity': [],
+                'events': [],
+                'sinergy': [],
+                'courses': [],
+                'digital_products': []
+            })
+
         from donations.models import Donation
         from events.models import EventRegistration
         from orders.models import OrderItem

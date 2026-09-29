@@ -7,8 +7,32 @@ import uuid
 import os
 import tempfile
 import base64
+import re
 
 logger = logging.getLogger('barakah_app')
+
+
+def parse_spintax(text):
+    """
+    Parse Spintax format: {Halo|Hai|Assalamu'alaikum}.
+    Supports nested spintax. Only resolves curly braces containing a pipe (|),
+    leaving normal template variables like {name} and {phone} untouched if not already replaced.
+    """
+    if not text or not isinstance(text, str):
+        return text
+    pattern = re.compile(r'\{([^{}]+)\}')
+    max_loops = 10
+    loop = 0
+    while loop < max_loops:
+        matches = [m for m in pattern.finditer(text) if '|' in m.group(1)]
+        if not matches:
+            break
+        for m in reversed(matches):
+            choices = m.group(1).split('|')
+            chosen = random.choice(choices).strip()
+            text = text[:m.start()] + chosen + text[m.end():]
+        loop += 1
+    return text
 
 # Thread-safe FIFO Queue & Active Task Tracker
 _blast_queue = queue.Queue()
@@ -222,9 +246,9 @@ def _dispatch_session_to_queue(session):
     file_data_base64 = payload.get('file_data_base64')
     filename = payload.get('filename') or session.image_filename or 'image.jpg'
     device_id = payload.get('device_id') or session.device_id
-    min_delay = max(4.0, float(payload.get('min_delay', 4.0)))
-    max_delay = max(min_delay, float(payload.get('max_delay', 7.0)))
-    delay_seconds = float(payload.get('delay_seconds', 4.0))
+    min_delay = max(10.0, float(payload.get('min_delay', 15.0)))
+    max_delay = max(min_delay, float(payload.get('max_delay', 30.0)))
+    delay_seconds = float(payload.get('delay_seconds', 15.0))
 
     task = BlastTask(
         task_type='whatsapp',
@@ -335,15 +359,44 @@ def _process_task(task):
                 break
 
             if idx > 0:
-                # Random jitter delay to prevent anti-spam bot detection (minimum safe 4.0s, default 4.0 ~ 7.0s)
+                # Anti-ban batch cooldown:
+                # For WhatsApp: every 10 messages, pause 45-75 seconds to cool down WhatsApp session
+                if task.task_type == 'whatsapp' and idx % 10 == 0:
+                    batch_cooldown = random.uniform(45.0, 75.0)
+                    logger.info(f"BlastTask {task_id}: Anti-ban batch cooldown active at item {idx}/{len(task.items)}. Pausing {batch_cooldown:.1f}s to cool down WhatsApp session...")
+                    task_data['current_item'] = f"Istirahat anti-ban WA ({int(batch_cooldown)}s)..."
+                    task_data['updated_at'] = time.time()
+                    time.sleep(batch_cooldown)
+
+                # For Email: every 20 emails, pause 25-45 seconds to avoid SMTP throttling and spam filters
+                if task.task_type == 'email' and idx % 20 == 0:
+                    batch_cooldown = random.uniform(25.0, 45.0)
+                    logger.info(f"BlastTask {task_id}: Anti-ban email cooldown active at item {idx}/{len(task.items)}. Pausing {batch_cooldown:.1f}s to cool down SMTP connection...")
+                    task_data['current_item'] = f"Istirahat anti-ban SMTP ({int(batch_cooldown)}s)..."
+                    task_data['updated_at'] = time.time()
+                    time.sleep(batch_cooldown)
+
+                if task_data.get('is_cancelled'):
+                    task_data['status'] = 'cancelled'
+                    task_data['updated_at'] = time.time()
+                    break
+
+                # Random jitter delay to prevent anti-spam bot detection
                 if task.task_type == 'whatsapp':
-                    min_d = max(4.0, float(task.extra_data.get('min_delay', 4.0)))
-                    max_d = max(min_d, float(task.extra_data.get('max_delay', 7.0)))
+                    min_d = max(10.0, float(task.extra_data.get('min_delay', 15.0)))
+                    max_d = max(min_d, float(task.extra_data.get('max_delay', 30.0)))
                     if min_d > max_d:
                         min_d, max_d = max_d, min_d
                     actual_delay = random.uniform(min_d, max_d)
+                    # Extra buffer for image/file upload to avoid socket flooding
+                    if temp_file_info:
+                        actual_delay += random.uniform(5.0, 10.0)
                 else:
-                    actual_delay = random.uniform(1.0, 2.5)
+                    min_d = max(2.0, float(task.extra_data.get('min_delay', 3.0)))
+                    max_d = max(min_d, float(task.extra_data.get('max_delay', 6.0)))
+                    if min_d > max_d:
+                        min_d, max_d = max_d, min_d
+                    actual_delay = random.uniform(min_d, max_d)
                 time.sleep(actual_delay)
 
             if task_data.get('is_cancelled'):
@@ -355,7 +408,9 @@ def _process_task(task):
                 if task.task_type == 'whatsapp':
                     from accounts.whatsapp_service import send_message, _send_file_internal
                     phone = item.get('phone')
-                    message = item.get('message')
+                    raw_message = item.get('message', '')
+                    # Dynamic Spintax per recipient: ensures unique wording and hash per recipient
+                    message = parse_spintax(raw_message)
                     
                     task_data['current_item'] = phone
                     task_data['updated_at'] = time.time()
@@ -379,6 +434,7 @@ def _process_task(task):
                         from accounts.models import WhatsAppBlastRecipient, WhatsAppBlastSession
                         from django.utils import timezone
                         WhatsAppBlastRecipient.objects.filter(session__task_id=task_id, phone=phone).update(
+                            message=message,
                             status='success' if is_ok else 'failed',
                             error_message=None if is_ok else str(res.get('message', 'Gagal terkirim')),
                             sent_at=timezone.now()
@@ -390,12 +446,50 @@ def _process_task(task):
                     except Exception as db_rec_err:
                         logger.error(f"Error updating WhatsAppBlastRecipient in DB: {db_rec_err}")
 
+                    # Check if device was disconnected or logged out: halt queue immediately
+                    if res.get('is_device_disconnected'):
+                        logger.error(f"BlastTask {task_id}: WhatsApp device disconnected/logged out during blast. Halting queue.")
+                        task_data['status'] = 'failed'
+                        task_data['current_item'] = 'Perangkat WA terputus/logout'
+                        task_data['updated_at'] = time.time()
+                        break
+
                 elif task.task_type == 'email':
-                    from barakah_app.utils import send_email
+                    from barakah_app.utils import send_email, render_promotional_email_html, render_standard_email_html
                     email = item.get('email')
-                    subject = item.get('subject')
-                    message = item.get('message')
+                    raw_subject = item.get('subject') or 'Pemberitahuan Barakah Economy'
+                    raw_message = item.get('message') or ''
+                    recipient_name = item.get('name') or ''
+                    
+                    # Parse Spintax per recipient so subject & body hashes vary dynamically
+                    subject = parse_spintax(raw_subject)
+                    message = parse_spintax(raw_message)
+                    
+                    is_decorated = task.extra_data.get('is_decorated', False)
                     attachments = task.extra_data.get('attachments', [])
+                    
+                    if is_decorated:
+                        html_content = render_promotional_email_html(
+                            title=task.extra_data.get('header_title') or subject,
+                            subtitle=task.extra_data.get('header_subtitle', ''),
+                            message=message,
+                            hero_image_url=task.extra_data.get('hero_image_url', ''),
+                            badge_text=task.extra_data.get('badge_text', ''),
+                            theme_color=task.extra_data.get('theme_color', '#059669'),
+                            cta_text=task.extra_data.get('cta_text', ''),
+                            cta_url=task.extra_data.get('cta_url', ''),
+                            secondary_links=task.extra_data.get('secondary_links', []),
+                            footer_text=task.extra_data.get('footer_text', ''),
+                            recipient_name=recipient_name,
+                            recipient_email=email
+                        )
+                    else:
+                        html_content = render_standard_email_html(
+                            message=message,
+                            title=subject,
+                            footer_text=task.extra_data.get('footer_text', ''),
+                            recipient_email=email
+                        )
 
                     task_data['current_item'] = email
                     task_data['updated_at'] = time.time()
@@ -405,6 +499,7 @@ def _process_task(task):
                         message=message,
                         recipient_list=[email],
                         attachments=attachments,
+                        html_message=html_content,
                         fail_silently=True
                     )
                     task_data['processed_count'] += 1
@@ -460,13 +555,17 @@ def _process_task(task):
     logger.info(f"Completed BlastTask {task_id} ({task.task_type}): {task_data['success_count']} success, {task_data['failed_count']} failed out of {len(task.items)}.")
 
 
-def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=4.0, min_delay=4.0, max_delay=7.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
+def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=15.0, min_delay=15.0, max_delay=30.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
     """
     Enqueue a WhatsApp message blast task to run asynchronously in background,
     or schedule it for future delivery if scheduled_at is provided.
     Returns task metadata immediately and records the session in DB for history/CRM.
     """
     ensure_worker_running()
+
+    min_delay = max(10.0, float(min_delay or 15.0))
+    max_delay = max(min_delay, float(max_delay or 30.0))
+    delay_seconds = max(min_delay, float(delay_seconds or 15.0))
 
     # Parse and validate scheduled_at if provided
     scheduled_dt = None
@@ -744,12 +843,38 @@ def cancel_scheduled_blast_session(session_id, user_id=None, is_superuser=False)
     return True, "Jadwal broadcast WhatsApp berhasil dibatalkan."
 
 
-def enqueue_email_blast(email_list, subject, message_template, placeholder_data_list=None, attachments=None, delay_seconds=1.5, created_by_user_id=None):
+def enqueue_email_blast(
+    email_list,
+    subject,
+    message_template,
+    placeholder_data_list=None,
+    attachments=None,
+    delay_seconds=3.5,
+    min_delay=3.0,
+    max_delay=6.0,
+    created_by_user_id=None,
+    is_decorated=False,
+    header_title='',
+    header_subtitle='',
+    hero_image_url='',
+    badge_text='',
+    theme_color='#059669',
+    cta_text='',
+    cta_url='',
+    secondary_links=None,
+    footer_text='',
+    campaign_title=None
+):
     """
-    Enqueue an Email blast task to run asynchronously in background.
+    Enqueue an Email blast task to run asynchronously in background with anti-ban safeguards.
+    Supports responsive promotional HTML decorations, attachment files/images, URL CTA, and spintax.
     Returns task metadata immediately.
     """
     ensure_worker_running()
+
+    min_delay = max(1.5, float(min_delay or 3.0))
+    max_delay = max(min_delay, float(max_delay or 6.0))
+    delay_seconds = max(min_delay, float(delay_seconds or 3.5))
 
     processed_attachments = []
     if attachments:
@@ -768,14 +893,17 @@ def enqueue_email_blast(email_list, subject, message_template, placeholder_data_
     items = []
     for i, email in enumerate(email_list):
         msg = message_template
+        recip_name = ''
         if placeholder_data_list and i < len(placeholder_data_list):
             data = placeholder_data_list[i]
             if isinstance(data, dict):
+                recip_name = data.get('name') or ''
                 for key, value in data.items():
                     msg = msg.replace(f'{{{key}}}', str(value or ''))
 
         items.append({
             'email': email,
+            'name': recip_name,
             'subject': subject,
             'message': msg
         })
@@ -785,7 +913,20 @@ def enqueue_email_blast(email_list, subject, message_template, placeholder_data_
         items=items,
         delay_seconds=delay_seconds,
         extra_data={
-            'attachments': processed_attachments
+            'attachments': processed_attachments,
+            'min_delay': min_delay,
+            'max_delay': max_delay,
+            'is_decorated': bool(is_decorated),
+            'header_title': header_title,
+            'header_subtitle': header_subtitle,
+            'hero_image_url': hero_image_url,
+            'badge_text': badge_text,
+            'theme_color': theme_color or '#059669',
+            'cta_text': cta_text,
+            'cta_url': cta_url,
+            'secondary_links': secondary_links or [],
+            'footer_text': footer_text,
+            'campaign_title': campaign_title
         },
         created_by_user_id=created_by_user_id
     )
@@ -816,5 +957,5 @@ def enqueue_email_blast(email_list, subject, message_template, placeholder_data_
         'status': 'queued',
         'total': len(items),
         'estimated_minutes': est_minutes,
-        'message': f'Blast Email berhasil dimasukkan ke antrian ({len(items)} penerima). Email dikirim bertahap di belakang layar.'
+        'message': f'Blast Email berhasil dimasukkan ke antrian ({len(items)} penerima). Email dikirim bertahap dengan jeda acak {int(min_delay)}-{int(max_delay)} detik anti-ban.'
     }

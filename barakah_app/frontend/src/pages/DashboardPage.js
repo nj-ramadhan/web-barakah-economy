@@ -794,6 +794,15 @@ const DashboardPage = () => {
                                     desc: 'Kirim pesan massal multi-nomor dengan jeda acak 1-4s anti-ban (Admin)'
                                 },
                                 {
+                                    id: 'broadcast_email',
+                                    access: isAdmin || hasAccess('broadcast_email') || hasAccess('announcements'),
+                                    to: '/dashboard/admin/broadcast-email',
+                                    icon: 'mark_email_unread',
+                                    color: 'blue',
+                                    title: 'Broadcast Email & Newsletter',
+                                    desc: 'Blasting email massal dengan dekorasi penawaran/newsletter, attachment file/gambar, live preview & anti-ban'
+                                },
+                                {
                                     id: 'whatsapp_settings',
                                     access: isAdmin,
                                     to: '/dashboard/admin/whatsapp-settings',

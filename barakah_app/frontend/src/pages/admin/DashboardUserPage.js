@@ -32,6 +32,145 @@ const AGAMA_MAP = {
 };
 const AGAMA_CHOICES = [['islam', 'Islam'], ['kristen', 'Kristen'], ['katolik', 'Katolik'], ['hindu', 'Hindu'], ['buddha', 'Buddha'], ['konghucu', 'Konghucu'], ['kepercayaan', 'Kepercayaan']];
 
+// Multi-select dropdown popover for filtering users
+const MultiSelectDropdown = ({ label, icon, options, selected, onChange }) => {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setOpen(false);
+            }
+        };
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open]);
+
+    const filteredOptions = options.filter(opt =>
+        String(opt.label).toLowerCase().includes(search.toLowerCase())
+    );
+
+    const toggleOption = (val) => {
+        const valStr = String(val);
+        if (selected.includes(valStr)) {
+            onChange(selected.filter(x => x !== valStr));
+        } else {
+            onChange([...selected, valStr]);
+        }
+    };
+
+    const isAllSelected = options.length > 0 && selected.length === options.length;
+
+    const handleToggleAll = () => {
+        if (isAllSelected) {
+            onChange([]);
+        } else {
+            onChange(options.map(opt => String(opt.value)));
+        }
+    };
+
+    const count = selected.length;
+
+    return (
+        <div className="relative inline-block" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border transition ${
+                    count > 0
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-2 ring-emerald-500/10'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                }`}
+            >
+                {icon && <span className="material-icons text-sm opacity-70">{icon}</span>}
+                <span>{label}</span>
+                {count > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-black">
+                        {count}
+                    </span>
+                )}
+                <span className="material-icons text-xs text-gray-400">
+                    {open ? 'expand_less' : 'expand_more'}
+                </span>
+            </button>
+
+            {open && (
+                <div className="absolute left-0 mt-1.5 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2.5 z-[100] animate-in fade-in zoom-in-95 space-y-2">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-gray-100 text-[11px]">
+                        <span className="font-black text-gray-800">{label}</span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleToggleAll}
+                                className="text-emerald-700 hover:underline font-bold"
+                            >
+                                {isAllSelected ? 'Reset' : 'Semua'}
+                            </button>
+                            {count > 0 && !isAllSelected && (
+                                <button
+                                    type="button"
+                                    onClick={() => onChange([])}
+                                    className="text-red-500 hover:underline"
+                                >
+                                    Hapus
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {options.length > 5 && (
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Cari..."
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                        </div>
+                    )}
+
+                    <div className="max-h-48 overflow-y-auto space-y-0.5 divide-y divide-gray-50">
+                        {filteredOptions.length === 0 ? (
+                            <p className="text-[11px] text-gray-400 p-2 text-center">Tidak ditemukan</p>
+                        ) : (
+                            filteredOptions.map(opt => {
+                                const optValStr = String(opt.value);
+                                const isChecked = selected.includes(optValStr);
+                                return (
+                                    <label
+                                        key={optValStr}
+                                        className="flex items-center gap-2 px-2 py-1.5 hover:bg-emerald-50/50 rounded-lg cursor-pointer text-xs select-none transition"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => toggleOption(opt.value)}
+                                            className="rounded text-emerald-600 w-3.5 h-3.5"
+                                        />
+                                        <span className={`flex-1 truncate ${isChecked ? 'font-bold text-emerald-900' : 'text-gray-700'}`}>
+                                            {opt.label}
+                                        </span>
+                                        {opt.badge && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                                {opt.badge}
+                                            </span>
+                                        )}
+                                    </label>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const DashboardUserPage = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
@@ -42,14 +181,16 @@ const DashboardUserPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [pageSize, setPageSize] = useState(10);
-    const [filterRole, setFilterRole] = useState('');
-    const [filterCustomRole, setFilterCustomRole] = useState('');
-    const [filterLabel, setFilterLabel] = useState('');
-    const [filterLingkup, setFilterLingkup] = useState('');
-    const [filterBidang, setFilterBidang] = useState('');
+    // Multi-select filters
+    const [filterRoles, setFilterRoles] = useState([]);
+    const [filterCustomRoles, setFilterCustomRoles] = useState([]);
+    const [filterLabels, setFilterLabels] = useState([]);
+    const [filterLingkup, setFilterLingkup] = useState([]);
+    const [filterBidang, setFilterBidang] = useState([]);
+    const [filterAgama, setFilterAgama] = useState([]);
+    const [filterVerified, setFilterVerified] = useState([]);
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
-    const [filterAgama, setFilterAgama] = useState('');
     const [sortField, setSortField] = useState('');
     const [sortDir, setSortDir] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -65,6 +206,8 @@ const DashboardUserPage = () => {
     const [blastMessage, setBlastMessage] = useState('');
     const [blasting, setBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
+    const [waMinDelay, setWaMinDelay] = useState(15);
+    const [waMaxDelay, setWaMaxDelay] = useState(30);
 
     const [showEmailBlastModal, setShowEmailBlastModal] = useState(false);
     const [emailBlastSubject, setEmailBlastSubject] = useState('');
@@ -72,6 +215,17 @@ const DashboardUserPage = () => {
     const [emailBlastAttachments, setEmailBlastAttachments] = useState([]);
     const [blastingEmail, setBlastingEmail] = useState(false);
     const [emailBlastResult, setEmailBlastResult] = useState(null);
+    const [isEmailDecorated, setIsEmailDecorated] = useState(true);
+    const [emailThemeColor, setEmailThemeColor] = useState('#059669');
+    const [emailHeaderTitle, setEmailHeaderTitle] = useState('Barakah Economy');
+    const [emailHeaderSubtitle, setEmailHeaderSubtitle] = useState('');
+    const [emailBadgeText, setEmailBadgeText] = useState('PENAWARAN SPESIAL');
+    const [emailCtaText, setEmailCtaText] = useState('Lihat Penawaran');
+    const [emailCtaUrl, setEmailCtaUrl] = useState('https://barakaheconomy.id');
+    const [emailHeroImageUrl, setEmailHeroImageUrl] = useState('');
+    const [emailMinDelay, setEmailMinDelay] = useState(3.0);
+    const [emailMaxDelay, setEmailMaxDelay] = useState(6.0);
+    const [emailModalTab, setEmailModalTab] = useState('edit'); // 'edit' | 'preview'
     const [allRoles, setAllRoles] = useState([]);
     const [allLabels, setAllLabels] = useState([]);
     const [allLingkup, setAllLingkup] = useState([]);
@@ -111,48 +265,67 @@ const DashboardUserPage = () => {
         }
     }, []);
 
-    // Debounce search query
+    const abortControllerRef = useRef(null);
+
+    // Debounce search query (350ms for snappy response)
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchQuery);
             setCurrentPage(1);
-        }, 600);
+        }, 350);
         return () => clearTimeout(handler);
     }, [searchQuery]);
 
     const fetchUsers = useCallback(async (page = 1) => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setLoading(true);
         try {
             const params = { page };
-            if (searchQuery) params.search = searchQuery;
-            if (filterRole) params.role = filterRole;
-            if (filterCustomRole) params.custom_role = filterCustomRole;
-            if (filterLabel) params.label = filterLabel;
-            if (filterLingkup) params.lingkup_tugas = filterLingkup;
-            if (filterBidang) params.bidang_tugas = filterBidang;
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (filterRoles.length) params.role = filterRoles.join(',');
+            if (filterCustomRoles.length) params.custom_role = filterCustomRoles.join(',');
+            if (filterLabels.length) params.label = filterLabels.join(',');
+            if (filterLingkup.length) params.lingkup_tugas = filterLingkup.join(',');
+            if (filterBidang.length) params.bidang_tugas = filterBidang.join(',');
+            if (filterAgama.length) params.agama = filterAgama.join(',');
+            if (filterVerified.length === 1) params.verified = filterVerified[0];
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
-            if (filterAgama) params.agama = filterAgama;
             if (sortField && sortDir) params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
             if (pageSize && pageSize !== 'all') params.page_size = pageSize;
             if (pageSize === 'all') params.page_size = 10000;
-            const response = await axios.get(`${API}/api/auth/users/`, { params, ...getAuth() });
+
+            const response = await axios.get(`${API}/api/auth/users/`, {
+                params,
+                signal: controller.signal,
+                ...getAuth()
+            });
+
             if (response.data.results) {
                 setUsers(response.data.results);
                 setTotalCount(response.data.count);
                 const ps = pageSize === 'all' ? response.data.count : parseInt(pageSize);
-                setTotalPages(Math.ceil(response.data.count / ps));
+                setTotalPages(Math.ceil(response.data.count / (ps || 1)));
             } else {
                 setUsers(response.data);
                 setTotalCount(response.data.length);
                 setTotalPages(1);
             }
-        } catch (err) { 
+        } catch (err) {
+            if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+                return; // Silently ignore cancelled requests
+            }
             console.error(err); 
             alert('Gagal mengambil data user: ' + (err.response?.data?.detail || err.message));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    }, [debouncedSearch, pageSize, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir, filterAgama]);
+    }, [debouncedSearch, pageSize, filterRoles, filterCustomRoles, filterLabels, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir, filterAgama, filterVerified]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -164,6 +337,20 @@ const DashboardUserPage = () => {
         // Initial fetch or page change
         fetchUsers(currentPage); 
     }, [currentPage, fetchUsers, pageSize]);
+
+    const handleResetAllFilters = () => {
+        setFilterRoles([]);
+        setFilterCustomRoles([]);
+        setFilterLabels([]);
+        setFilterLingkup([]);
+        setFilterBidang([]);
+        setFilterAgama([]);
+        setFilterVerified([]);
+        setFilterDateFrom('');
+        setFilterDateTo('');
+        setSearchQuery('');
+        setCurrentPage(1);
+    };
 
     const handleSort = (field) => {
         if (sortField === field) {
@@ -179,12 +366,44 @@ const DashboardUserPage = () => {
 
     const handleExportCsv = async () => {
         try {
-            const response = await axios.get(`${API}/api/auth/users/export_csv/`, { ...getAuth(), responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a'); link.href = url;
-            link.setAttribute('download', 'users_full_data.csv');
-            document.body.appendChild(link); link.click(); link.remove();
-        } catch (err) { alert('Gagal export'); }
+            const params = {};
+            if (searchQuery) params.search = searchQuery;
+            if (filterRoles.length) params.role = filterRoles.join(',');
+            if (filterCustomRoles.length) params.custom_role = filterCustomRoles.join(',');
+            if (filterLabels.length) params.label = filterLabels.join(',');
+            if (filterLingkup.length) params.lingkup_tugas = filterLingkup.join(',');
+            if (filterBidang.length) params.bidang_tugas = filterBidang.join(',');
+            if (filterAgama.length) params.agama = filterAgama.join(',');
+            if (filterVerified.length === 1) params.verified = filterVerified[0];
+            if (filterDateFrom) params.date_from = filterDateFrom;
+            if (filterDateTo) params.date_to = filterDateTo;
+            if (selectedUserIds.length > 0) params.user_ids = selectedUserIds.join(',');
+
+            const response = await axios.get(`${API}/api/auth/users/export_csv/`, {
+                params,
+                ...getAuth(),
+                responseType: 'blob'
+            });
+            const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `users_full_data_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            let errorMsg = 'Gagal export data user.';
+            if (err.response && err.response.data instanceof Blob) {
+                try {
+                    const text = await err.response.data.text();
+                    errorMsg += ` Server: ${text}`;
+                } catch (e) {}
+            } else if (err.message) {
+                errorMsg += ` ${err.message}`;
+            }
+            alert(errorMsg);
+        }
     };
 
     const handleImportCsv = async (e) => {
@@ -421,12 +640,16 @@ const DashboardUserPage = () => {
             const payload = {
                 user_ids: selectedUserIds,
                 message: blastMessage,
-                image_base64: blastImage // Send image if attached
+                image_base64: blastImage,
+                min_delay: Number(waMinDelay) || 15,
+                max_delay: Number(waMaxDelay) || 30
             };
             const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, payload, getAuth());
-            setBlastResult(res.data.details);
-            alert(`Blast berhasil dikirim ke ${res.data.details.success} nomor unik.`);
-        } catch (err) { alert('Gagal mengirim blast'); }
+            setBlastResult(res.data.details || res.data);
+            alert(res.data.message || `Antrean blast WhatsApp berhasil dibuat untuk ${selectedUserIds.length} user.`);
+        } catch (err) { 
+            alert('Gagal mengirim blast WA: ' + (err.response?.data?.error || err.message)); 
+        }
         setBlasting(false);
     };
 
@@ -447,6 +670,17 @@ const DashboardUserPage = () => {
             formData.append('subject', emailBlastSubject);
             formData.append('message', emailBlastMessage);
             formData.append('user_ids', JSON.stringify(selectedUserIds));
+            formData.append('is_decorated', isEmailDecorated ? 'true' : 'false');
+            formData.append('theme_color', emailThemeColor);
+            formData.append('header_title', emailHeaderTitle);
+            formData.append('header_subtitle', emailHeaderSubtitle);
+            formData.append('badge_text', emailBadgeText);
+            formData.append('cta_text', emailCtaText);
+            formData.append('cta_url', emailCtaUrl);
+            formData.append('hero_image_url', emailHeroImageUrl);
+            formData.append('min_delay', Number(emailMinDelay) || 3.0);
+            formData.append('max_delay', Number(emailMaxDelay) || 6.0);
+
             emailBlastAttachments.forEach(file => {
                 formData.append('attachments', file);
             });
@@ -456,11 +690,11 @@ const DashboardUserPage = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            setEmailBlastResult(res.data.details);
-            alert(`Blast email berhasil dikirim ke ${res.data.details.success} alamat email.`);
+            setEmailBlastResult(res.data.details || res.data);
+            alert(res.data.message || `Antrean blast email berhasil dijadwalkan untuk ${selectedUserIds.length} user.`);
             setShowEmailBlastModal(false);
             setEmailBlastSubject('');
-            setEmailBlastMessage('');
+            setEmailBlastMessage('Halo {name},\n\n');
             setEmailBlastAttachments([]);
         } catch (err) {
             alert('Gagal mengirim blast email: ' + (err.response?.data?.error || err.message));
@@ -602,60 +836,218 @@ const DashboardUserPage = () => {
                     </div>
                 </div>
 
-                {/* Search & Filters */}
-                <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
-                    <div className="flex flex-wrap gap-3">
-                        <div className="flex-1 min-w-[200px]">
+                {/* Search & Multi-Select Filters */}
+                <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100 space-y-3">
+                    <div className="flex flex-wrap gap-2.5 items-center">
+                        <div className="flex-1 min-w-[220px]">
                             <div className="relative">
                                 <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
-                                <input type="text" placeholder="Cari nama, email, phone..." value={searchQuery}
+                                <input 
+                                    type="text" 
+                                    placeholder="Cari nama, username, email, phone, IDM..." 
+                                    value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500" 
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <span className="material-icons text-sm">close</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
-                        <select value={pageSize} onChange={e => { setPageSize(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-green-700">
+
+                        {/* Page Size */}
+                        <select 
+                            value={pageSize} 
+                            onChange={e => { setPageSize(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 text-xs outline-none font-bold text-emerald-800"
+                        >
                             <option value="10">10 / hal</option>
+                            <option value="25">25 / hal</option>
                             <option value="50">50 / hal</option>
                             <option value="100">100 / hal</option>
                             <option value="all">Semua Data</option>
                         </select>
-                        <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Role</option>
-                            <option value="user">User</option><option value="admin">Admin</option>
-                            <option value="seller">Seller</option><option value="staff">Staff</option>
-                        </select>
-                        <select value={filterAgama} onChange={e => { setFilterAgama(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Agama</option>
-                            {AGAMA_CHOICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                        </select>
-                        <select value={filterCustomRole} onChange={e => { setFilterCustomRole(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Custom Role</option>
-                            {allRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                        </select>
-                        <select value={filterLabel} onChange={e => { setFilterLabel(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Label</option>
-                            {allLabels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                        </select>
-                        <select value={filterLingkup} onChange={e => { setFilterLingkup(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Lingkup Tugas</option>
-                            {allLingkup.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                        </select>
-                        <select value={filterBidang} onChange={e => { setFilterBidang(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
-                            <option value="">Semua Bidang Tugas</option>
-                            {allBidang.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                        </select>
-                        <input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" />
-                        <input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" />
+
+                        {/* Multi-Select: Roles */}
+                        <MultiSelectDropdown
+                            label="Role"
+                            icon="badge"
+                            options={[
+                                { value: 'user', label: 'User' },
+                                { value: 'admin', label: 'Admin' },
+                                { value: 'seller', label: 'Seller' },
+                                { value: 'staff', label: 'Staff' }
+                            ]}
+                            selected={filterRoles}
+                            onChange={(val) => { setFilterRoles(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Status Verified */}
+                        <MultiSelectDropdown
+                            label="Status Verifikasi"
+                            icon="verified"
+                            options={[
+                                { value: 'true', label: 'Terverifikasi (Member)' },
+                                { value: 'false', label: 'Belum Terverifikasi' }
+                            ]}
+                            selected={filterVerified}
+                            onChange={(val) => { setFilterVerified(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Agama */}
+                        <MultiSelectDropdown
+                            label="Agama"
+                            icon="favorite_border"
+                            options={AGAMA_CHOICES.map(([v, l]) => ({ value: v, label: l }))}
+                            selected={filterAgama}
+                            onChange={(val) => { setFilterAgama(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Custom Roles */}
+                        <MultiSelectDropdown
+                            label="Custom Role"
+                            icon="military_tech"
+                            options={allRoles.map(r => ({ value: String(r.id), label: r.name }))}
+                            selected={filterCustomRoles}
+                            onChange={(val) => { setFilterCustomRoles(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Label */}
+                        <MultiSelectDropdown
+                            label="Label"
+                            icon="label"
+                            options={allLabels.map(l => ({ value: String(l.id), label: l.name }))}
+                            selected={filterLabels}
+                            onChange={(val) => { setFilterLabels(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Lingkup Tugas */}
+                        <MultiSelectDropdown
+                            label="Lingkup Tugas"
+                            icon="work"
+                            options={allLingkup.map(l => ({ value: String(l.id), label: l.name }))}
+                            selected={filterLingkup}
+                            onChange={(val) => { setFilterLingkup(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Multi-Select: Bidang Tugas */}
+                        <MultiSelectDropdown
+                            label="Bidang Tugas"
+                            icon="assignment"
+                            options={allBidang.map(b => ({ value: String(b.id), label: b.name }))}
+                            selected={filterBidang}
+                            onChange={(val) => { setFilterBidang(val); setCurrentPage(1); }}
+                        />
+
+                        {/* Date Range */}
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1">
+                            <span className="material-icons text-gray-400 text-xs">calendar_today</span>
+                            <input 
+                                type="date" 
+                                value={filterDateFrom} 
+                                onChange={e => { setFilterDateFrom(e.target.value); setCurrentPage(1); }}
+                                className="bg-transparent text-xs outline-none text-gray-600" 
+                                title="Dari Tanggal"
+                            />
+                            <span className="text-gray-300">-</span>
+                            <input 
+                                type="date" 
+                                value={filterDateTo} 
+                                onChange={e => { setFilterDateTo(e.target.value); setCurrentPage(1); }}
+                                className="bg-transparent text-xs outline-none text-gray-600" 
+                                title="Sampai Tanggal"
+                            />
+                        </div>
+
+                        {/* Reset All Filters Button */}
+                        {(filterRoles.length > 0 || filterCustomRoles.length > 0 || filterLabels.length > 0 || 
+                          filterLingkup.length > 0 || filterBidang.length > 0 || filterAgama.length > 0 || 
+                          filterVerified.length > 0 || filterDateFrom || filterDateTo || searchQuery) && (
+                            <button
+                                type="button"
+                                onClick={handleResetAllFilters}
+                                className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition"
+                            >
+                                <span className="material-icons text-xs">filter_alt_off</span>
+                                <span>Reset Filter</span>
+                            </button>
+                        )}
                     </div>
+
+                    {/* Active Filter Tags Row */}
+                    {(filterRoles.length > 0 || filterCustomRoles.length > 0 || filterLabels.length > 0 || 
+                      filterLingkup.length > 0 || filterBidang.length > 0 || filterAgama.length > 0 || filterVerified.length > 0) && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100 text-[11px]">
+                            <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px] mr-1">Filter Aktif:</span>
+
+                            {filterRoles.map(r => (
+                                <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+                                    Role: {r}
+                                    <button type="button" onClick={() => setFilterRoles(filterRoles.filter(x => x !== r))} className="hover:text-red-600">×</button>
+                                </span>
+                            ))}
+
+                            {filterVerified.map(v => (
+                                <span key={v} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold border border-blue-200">
+                                    {v === 'true' ? 'Terverifikasi' : 'Belum Verifikasi'}
+                                    <button type="button" onClick={() => setFilterVerified(filterVerified.filter(x => x !== v))} className="hover:text-red-600">×</button>
+                                </span>
+                            ))}
+
+                            {filterAgama.map(a => (
+                                <span key={a} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold border border-amber-200">
+                                    Agama: {AGAMA_MAP[a] || a}
+                                    <button type="button" onClick={() => setFilterAgama(filterAgama.filter(x => x !== a))} className="hover:text-red-600">×</button>
+                                </span>
+                            ))}
+
+                            {filterCustomRoles.map(id => {
+                                const roleObj = allRoles.find(x => String(x.id) === id);
+                                return (
+                                    <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold border border-purple-200">
+                                        Role: {roleObj?.name || id}
+                                        <button type="button" onClick={() => setFilterCustomRoles(filterCustomRoles.filter(x => x !== id))} className="hover:text-red-600">×</button>
+                                    </span>
+                                );
+                            })}
+
+                            {filterLabels.map(id => {
+                                const labelObj = allLabels.find(x => String(x.id) === id);
+                                return (
+                                    <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-pink-50 text-pink-800 font-bold border border-pink-200">
+                                        Label: {labelObj?.name || id}
+                                        <button type="button" onClick={() => setFilterLabels(filterLabels.filter(x => x !== id))} className="hover:text-red-600">×</button>
+                                    </span>
+                                );
+                            })}
+
+                            {filterLingkup.map(id => {
+                                const obj = allLingkup.find(x => String(x.id) === id);
+                                return (
+                                    <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 font-bold border border-cyan-200">
+                                        Lingkup: {obj?.name || id}
+                                        <button type="button" onClick={() => setFilterLingkup(filterLingkup.filter(x => x !== id))} className="hover:text-red-600">×</button>
+                                    </span>
+                                );
+                            })}
+
+                            {filterBidang.map(id => {
+                                const obj = allBidang.find(x => String(x.id) === id);
+                                return (
+                                    <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 font-bold border border-indigo-200">
+                                        Bidang: {obj?.name || id}
+                                        <button type="button" onClick={() => setFilterBidang(filterBidang.filter(x => x !== id))} className="hover:text-red-600">×</button>
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Table Section */}
@@ -1314,17 +1706,68 @@ const DashboardUserPage = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900"><span className="material-icons text-green-600 align-middle mr-2">chat</span>Blast WhatsApp</h2>
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <span className="material-icons text-green-600">chat</span>
+                                <span>Blast WhatsApp Aman (Anti-Ban)</span>
+                            </h2>
                             <button onClick={() => setShowBlastModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
                         </div>
                         <div className="p-6 space-y-4">
-                            <p className="text-sm text-gray-600">Kirim pesan ke <b>{selectedUserIds.length}</b> user terpilih</p>
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700"><b>Placeholder:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}</div>
+                            <p className="text-xs text-gray-600">Kirim pesan WhatsApp ke <b>{selectedUserIds.length}</b> pengguna terpilih.</p>
 
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Pesan</label>
-                                <textarea rows="5" value={blastMessage} onChange={e => setBlastMessage(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500" placeholder="Assalamualaikum {name}, ..." />
+                            {/* Anti-ban Delay Safeguards */}
+                            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/70 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-icons text-amber-700 text-sm">shield</span>
+                                    <span className="text-xs font-black text-amber-900">Proteksi Anti-Banned Nomor WhatsApp</span>
+                                </div>
+                                <p className="text-[11px] text-amber-800 leading-relaxed">
+                                    Jeda acak antar pesan meminimalkan risiko terdeteksi robot oleh server WhatsApp.
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-amber-900 block mb-0.5">Jeda Minimum (detik)</label>
+                                        <input
+                                            type="number"
+                                            min="5"
+                                            max="120"
+                                            value={waMinDelay}
+                                            onChange={e => setWaMinDelay(e.target.value)}
+                                            className="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-amber-900 block mb-0.5">Jeda Maksimum (detik)</label>
+                                        <input
+                                            type="number"
+                                            min="10"
+                                            max="300"
+                                            value={waMaxDelay}
+                                            onChange={e => setWaMaxDelay(e.target.value)}
+                                            className="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tags & Spintax Helpers */}
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tag Personalisasi & Variasi:</span>
+                                    <div className="flex flex-wrap gap-1">
+                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {name}')} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-bold hover:bg-green-100">+{'{name}'}</button>
+                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {username}')} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold hover:bg-blue-100">+{'{username}'}</button>
+                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {phone}')} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold hover:bg-purple-100">+{'{phone}'}</button>
+                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {Halo|Hai|Assalamu\'alaikum}')} className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold hover:bg-amber-100">+Spintax Sapaan</button>
+                                    </div>
+                                </div>
+                                <textarea 
+                                    rows="5" 
+                                    value={blastMessage} 
+                                    onChange={e => setBlastMessage(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-green-500 font-sans" 
+                                    placeholder="Assalamu'alaikum {name}, kami dari Barakah Economy ingin menginformasikan..." 
+                                />
                             </div>
 
                             <div>
@@ -1332,18 +1775,18 @@ const DashboardUserPage = () => {
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1">
                                         <input type="file" accept="image/*" id="user-blast-image" className="hidden" onChange={handleImageChange} />
-                                        <label htmlFor="user-blast-image" className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-green-300 transition group">
-                                            <span className="material-icons text-gray-400 group-hover:text-green-500 transition">image</span>
-                                            <span className="text-xs font-bold text-gray-500 group-hover:text-green-700 transition">
+                                        <label htmlFor="user-blast-image" className="flex items-center justify-center gap-2 w-full p-2.5 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-green-300 transition group">
+                                            <span className="material-icons text-gray-400 group-hover:text-green-500 text-sm">image</span>
+                                            <span className="text-xs font-bold text-gray-500 group-hover:text-green-700">
                                                 {blastImage ? 'Ganti Gambar' : 'Pilih Gambar...'}
                                             </span>
                                         </label>
                                     </div>
                                     {blastImage && (
-                                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100">
+                                        <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shrink-0">
                                             <img src={blastImage} className="w-full h-full object-cover" alt="prev" />
-                                            <button onClick={() => setBlastImage(null)} className="absolute top-0 right-0 w-5 h-5 bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition">
-                                                <span className="material-icons text-[12px]">close</span>
+                                            <button onClick={() => setBlastImage(null)} className="absolute top-0 right-0 w-4 h-4 bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition">
+                                                <span className="material-icons text-[10px]">close</span>
                                             </button>
                                         </div>
                                     )}
@@ -1351,16 +1794,17 @@ const DashboardUserPage = () => {
                             </div>
 
                             {blastResult && (
-                                <div className={`p-4 rounded-xl text-sm ${blastResult.failed > 0 ? 'bg-orange-50 border border-orange-100' : 'bg-green-50 border border-green-100'}`}>
-                                    <p className="font-bold">Hasil: {blastResult.success} berhasil, {blastResult.failed} gagal dari {blastResult.total} total</p>
+                                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold">
+                                    {blastResult.message || `Antrean blast berhasil dibuat (Task ID: ${blastResult.task_id || '-'}).`}
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
-                            <button onClick={() => setShowBlastModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
+                        <div className="p-5 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
+                            <button onClick={() => setShowBlastModal(false)} className="px-5 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
                             <button onClick={handleBlast} disabled={blasting || !blastMessage.trim()}
-                                className="bg-green-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-700 transition disabled:opacity-50">
-                                {blasting ? 'Mengirim...' : 'Kirim Blast'}
+                                className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2">
+                                <span className="material-icons text-sm">{blasting ? 'hourglass_top' : 'send'}</span>
+                                <span>{blasting ? 'Memproses Antrean...' : `Kirim Blast (${selectedUserIds.length})`}</span>
                             </button>
                         </div>
                     </div>
@@ -1370,98 +1814,408 @@ const DashboardUserPage = () => {
             {/* ============ EMAIL BLAST MODAL ============ */}
             {showEmailBlastModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <span className="material-icons text-amber-500 align-middle">mail</span>
-                                Blast Email
-                            </h2>
-                            <button onClick={() => setShowEmailBlastModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <span className="material-icons">close</span>
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1">
-                            <p className="text-sm text-gray-600">Kirim email ke <b>{selectedUserIds.length}</b> user terpilih</p>
+                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Header with Tab switcher */}
+                        <div className="p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-white">
+                            <div>
+                                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                                    <span className="material-icons text-amber-500">mark_email_read</span>
+                                    <span>Blast Email Penawaran & Pengumuman</span>
+                                </h2>
+                                <p className="text-[11px] text-gray-400">Target: {selectedUserIds.length} pengguna terpilih</p>
+                            </div>
                             
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
-                                <b>Placeholder:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}
+                            <div className="flex items-center gap-2">
+                                <div className="flex bg-gray-100 p-1 rounded-xl">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmailModalTab('edit')}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                            emailModalTab === 'edit' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        <span className="material-icons text-xs">edit_note</span>
+                                        <span>Composer</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmailModalTab('preview')}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                            emailModalTab === 'preview' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        <span className="material-icons text-xs">visibility</span>
+                                        <span>Live Preview</span>
+                                    </button>
+                                </div>
+                                <button onClick={() => setShowEmailBlastModal(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                                    <span className="material-icons text-lg">close</span>
+                                </button>
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Subjek Email</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-semibold text-gray-800"
-                                    placeholder="Masukkan subjek email..."
-                                    value={emailBlastSubject}
-                                    onChange={e => setEmailBlastSubject(e.target.value)}
-                                />
-                            </div>
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 bg-gray-50/50">
+                            {emailModalTab === 'edit' ? (
+                                <>
+                                    {/* Anti-Ban Safeguards Notice */}
+                                    <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200/80 flex items-center justify-between gap-3 text-xs text-blue-900">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-blue-600 text-sm">security</span>
+                                            <span>
+                                                <b>Safeguard Anti-Spam:</b> Jeda {emailMinDelay}-{emailMaxDelay}s per email + jeda batch otomatis per 20 pengiriman.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <input 
+                                                type="number" 
+                                                step="0.5" 
+                                                min="1" 
+                                                max="30" 
+                                                value={emailMinDelay} 
+                                                onChange={e => setEmailMinDelay(e.target.value)} 
+                                                className="w-12 bg-white border border-blue-200 rounded px-1.5 py-0.5 text-[11px] text-center font-bold" 
+                                                title="Min Jeda (detik)"
+                                            />
+                                            <span>-</span>
+                                            <input 
+                                                type="number" 
+                                                step="0.5" 
+                                                min="2" 
+                                                max="60" 
+                                                value={emailMaxDelay} 
+                                                onChange={e => setEmailMaxDelay(e.target.value)} 
+                                                className="w-12 bg-white border border-blue-200 rounded px-1.5 py-0.5 text-[11px] text-center font-bold" 
+                                                title="Max Jeda (detik)"
+                                            />
+                                            <span className="text-[10px]">detik</span>
+                                        </div>
+                                    </div>
 
-                            <div>
-                                <div className="flex justify-between items-center mb-1 px-1">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block ml-1">Pesan</label>
-                                    <div className="flex gap-1">
-                                        <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {name}')} className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded hover:bg-emerald-100">+{'{name}'}</button>
-                                        <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {username}')} className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100">+{'{username}'}</button>
-                                        <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {email}')} className="text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded hover:bg-purple-100">+{'{email}'}</button>
+                                    {/* Subject Email */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Subjek Email</label>
+                                            <div className="flex gap-1 text-[10px]">
+                                                <button type="button" onClick={() => setEmailBlastSubject(p => p + ' {name}')} className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">+{'{name}'}</button>
+                                                <button type="button" onClick={() => setEmailBlastSubject(p => p + ' {Halo|Hai|Kabar Baik}')} className="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-bold">+Spintax</button>
+                                            </div>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-amber-500 font-bold text-gray-800"
+                                            placeholder="Contoh: Penawaran Eksklusif untuk {name} dari Barakah Economy"
+                                            value={emailBlastSubject}
+                                            onChange={e => setEmailBlastSubject(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* Promotional Decoration Switcher */}
+                                    <div className="p-4 bg-white rounded-2xl border border-gray-200 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-amber-500 text-lg">auto_awesome</span>
+                                                <div>
+                                                    <h4 className="text-xs font-black text-gray-900">Dekorasi Promosi & Penawaran</h4>
+                                                    <p className="text-[11px] text-gray-400">Header visual, lencana promo, warna tema, dan tombol aksi (CTA)</p>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isEmailDecorated} 
+                                                    onChange={e => setIsEmailDecorated(e.target.checked)} 
+                                                    className="sr-only peer" 
+                                                />
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                                            </label>
+                                        </div>
+
+                                        {isEmailDecorated ? (
+                                            <div className="pt-3 border-t border-gray-100 space-y-3">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Warna Tema / Aksen</label>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <input 
+                                                                type="color" 
+                                                                value={emailThemeColor} 
+                                                                onChange={e => setEmailThemeColor(e.target.value)} 
+                                                                className="w-7 h-7 rounded-lg border-0 cursor-pointer" 
+                                                            />
+                                                            <input 
+                                                                type="text" 
+                                                                value={emailThemeColor} 
+                                                                onChange={e => setEmailThemeColor(e.target.value)} 
+                                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono" 
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Badge Promo</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={emailBadgeText} 
+                                                            onChange={e => setEmailBadgeText(e.target.value)} 
+                                                            placeholder="PENAWARAN SPESIAL" 
+                                                            className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none" 
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Judul Header</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={emailHeaderTitle} 
+                                                            onChange={e => setEmailHeaderTitle(e.target.value)} 
+                                                            className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none" 
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Subjudul Header (Opsional)</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={emailHeaderSubtitle} 
+                                                            onChange={e => setEmailHeaderSubtitle(e.target.value)} 
+                                                            placeholder="Contoh: Solusi Berkah Keluarga" 
+                                                            className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none" 
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">URL Gambar Banner / Hero (Opsional)</label>
+                                                    <input 
+                                                        type="url" 
+                                                        value={emailHeroImageUrl} 
+                                                        onChange={e => setEmailHeroImageUrl(e.target.value)} 
+                                                        placeholder="https://domain.com/banner-promo.jpg" 
+                                                        className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none font-mono" 
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Label Tombol CTA</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={emailCtaText} 
+                                                            onChange={e => setEmailCtaText(e.target.value)} 
+                                                            placeholder="Lihat Penawaran" 
+                                                            className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none" 
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">URL Tautan CTA</label>
+                                                        <input 
+                                                            type="url" 
+                                                            value={emailCtaUrl} 
+                                                            onChange={e => setEmailCtaUrl(e.target.value)} 
+                                                            placeholder="https://barakaheconomy.id/..." 
+                                                            className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs outline-none font-mono" 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-[11px] text-gray-500 border border-gray-100 flex items-center gap-2">
+                                                <span className="material-icons text-sm text-gray-400">info</span>
+                                                <span>Mode Standar Aktif: Email dikirim dalam format bersih. Lampiran berkas, gambar, dan URL teks tetap terkirim secara normal.</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Message Body */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Isi Surat / Pesan</label>
+                                            <div className="flex gap-1 text-[10px]">
+                                                <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {name}')} className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">+{'{name}'}</button>
+                                                <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {username}')} className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">+{'{username}'}</button>
+                                                <button type="button" onClick={() => setEmailBlastMessage(prev => prev + ' {email}')} className="font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">+{'{email}'}</button>
+                                            </div>
+                                        </div>
+                                        <textarea 
+                                            rows="5" 
+                                            value={emailBlastMessage} 
+                                            onChange={e => setEmailBlastMessage(e.target.value)}
+                                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500" 
+                                            placeholder="Tulis pesan lengkap email..." 
+                                        />
+                                    </div>
+
+                                    {/* Attachments Section (Supported for BOTH decorated & standard) */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Lampiran Berkas / Brosur / Dokumen</label>
+                                            <span className="text-[10px] text-gray-400">Tersedia untuk semua mode</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <input 
+                                                type="file" 
+                                                multiple 
+                                                id="user-email-blast-attachments" 
+                                                className="hidden" 
+                                                onChange={handleEmailAttachmentChange} 
+                                            />
+                                            <label 
+                                                htmlFor="user-email-blast-attachments" 
+                                                className="flex items-center justify-center gap-2 w-full p-2.5 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 hover:border-amber-300 transition group"
+                                            >
+                                                <span className="material-icons text-gray-400 group-hover:text-amber-500 text-sm">attach_file</span>
+                                                <span className="text-xs font-bold text-gray-500 group-hover:text-amber-700">
+                                                    Pilih Berkas Lampiran...
+                                                </span>
+                                            </label>
+
+                                            {emailBlastAttachments.length > 0 && (
+                                                <div className="bg-white p-2 rounded-xl border border-gray-200 space-y-1 max-h-28 overflow-y-auto">
+                                                    {emailBlastAttachments.map((file, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center text-xs text-gray-700 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                                            <span className="truncate max-w-[280px] font-medium">{file.name}</span>
+                                                            <button type="button" onClick={() => handleRemoveEmailAttachment(idx)} className="text-gray-400 hover:text-red-500">
+                                                                <span className="material-icons text-sm">delete</span>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                /* Live Preview Simulator */
+                                <div className="space-y-4">
+                                    <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/50 flex items-center justify-between text-xs">
+                                        <span className="font-bold text-amber-900">Simulasi Tampilan Email di Inbox Penerima</span>
+                                        <span className="text-[10px] text-amber-700 font-bold px-2 py-0.5 rounded-full bg-amber-100">
+                                            {isEmailDecorated ? 'Mode Dekorasi Promosi' : 'Mode Standar'}
+                                        </span>
+                                    </div>
+
+                                    {/* Email Container Mockup */}
+                                    <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden max-w-lg mx-auto">
+                                        {/* Mock Email Client Header */}
+                                        <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 text-[11px] text-gray-600 flex justify-between items-center">
+                                            <div>
+                                                <p><b>Dari:</b> Barakah Economy &lt;broadcast@barakaheconomy.id&gt;</p>
+                                                <p><b>Subjek:</b> {emailBlastSubject || '(Tanpa Subjek)'}</p>
+                                            </div>
+                                            <span className="material-icons text-gray-400 text-sm">mail</span>
+                                        </div>
+
+                                        {isEmailDecorated ? (
+                                            /* Decorated View */
+                                            <div className="text-gray-800">
+                                                {/* Header Banner */}
+                                                <div 
+                                                    className="p-5 text-white text-center" 
+                                                    style={{ backgroundColor: emailThemeColor }}
+                                                >
+                                                    <h3 className="text-lg font-black tracking-wide">{emailHeaderTitle}</h3>
+                                                    {emailHeaderSubtitle && (
+                                                        <p className="text-xs opacity-90 mt-0.5">{emailHeaderSubtitle}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="p-5 space-y-4">
+                                                    {emailBadgeText && (
+                                                        <div className="text-center">
+                                                            <span 
+                                                                className="inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider text-white" 
+                                                                style={{ backgroundColor: emailThemeColor }}
+                                                            >
+                                                                {emailBadgeText}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {emailHeroImageUrl && (
+                                                        <div className="rounded-xl overflow-hidden border border-gray-100">
+                                                            <img src={emailHeroImageUrl} alt="Hero" className="w-full h-40 object-cover" />
+                                                        </div>
+                                                    )}
+
+                                                    <div className="text-xs leading-relaxed text-gray-700 whitespace-pre-wrap bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                                                        {emailBlastMessage.replace('{name}', 'Ahmad Fulan').replace('{username}', 'ahmad_fulan').replace('{email}', 'ahmad@example.com')}
+                                                    </div>
+
+                                                    {emailCtaText && (
+                                                        <div className="text-center pt-2">
+                                                            <a 
+                                                                href={emailCtaUrl || '#'} 
+                                                                target="_blank" 
+                                                                rel="noreferrer" 
+                                                                className="inline-block px-6 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition" 
+                                                                style={{ backgroundColor: emailThemeColor }}
+                                                            >
+                                                                {emailCtaText}
+                                                            </a>
+                                                        </div>
+                                                    )}
+
+                                                    {emailBlastAttachments.length > 0 && (
+                                                        <div className="pt-3 border-t border-gray-100 text-[11px] text-gray-500">
+                                                            <p className="font-bold mb-1">Lampiran ({emailBlastAttachments.length} file):</p>
+                                                            <ul className="list-disc list-inside space-y-0.5">
+                                                                {emailBlastAttachments.map((f, i) => (
+                                                                    <li key={i}>{f.name}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 text-center text-[10px] text-gray-400">
+                                                    © {new Date().getFullYear()} Barakah Economy. Pesan ini dikirim secara resmi kepada mitra terdaftar.
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Standard Clean View */
+                                            <div className="p-5 text-gray-800 space-y-3">
+                                                <div className="text-xs leading-relaxed whitespace-pre-wrap font-sans text-gray-800">
+                                                    {emailBlastMessage.replace('{name}', 'Ahmad Fulan').replace('{username}', 'ahmad_fulan').replace('{email}', 'ahmad@example.com')}
+                                                </div>
+
+                                                {emailBlastAttachments.length > 0 && (
+                                                    <div className="pt-3 border-t border-gray-100 text-[11px] text-gray-600">
+                                                        <p className="font-bold mb-1">Lampiran Berkas:</p>
+                                                        <ul className="list-disc list-inside space-y-0.5">
+                                                            {emailBlastAttachments.map((f, i) => (
+                                                                <li key={i}>{f.name}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                <div className="pt-4 border-t border-gray-100 text-[10px] text-gray-400">
+                                                    Dikirim dari Barakah Economy Management System
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <textarea 
-                                    rows="6" 
-                                    value={emailBlastMessage} 
-                                    onChange={e => setEmailBlastMessage(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500" 
-                                    placeholder="Tulis isi pesan email..." 
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Lampiran File (Opsional)</label>
-                                <div className="space-y-3">
-                                    <input 
-                                        type="file" 
-                                        multiple 
-                                        id="user-email-blast-attachments" 
-                                        className="hidden" 
-                                        onChange={handleEmailAttachmentChange} 
-                                    />
-                                    <label 
-                                        htmlFor="user-email-blast-attachments" 
-                                        className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-amber-300 transition group"
-                                    >
-                                        <span className="material-icons text-gray-400 group-hover:text-amber-500 transition">attach_file</span>
-                                        <span className="text-xs font-bold text-gray-500 group-hover:text-amber-700 transition">
-                                            Pilih File...
-                                        </span>
-                                    </label>
-
-                                    {emailBlastAttachments.length > 0 && (
-                                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 space-y-1.5 max-h-32 overflow-y-auto">
-                                            {emailBlastAttachments.map((file, idx) => (
-                                                <div key={idx} className="flex justify-between items-center text-xs font-medium text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-50">
-                                                    <span className="truncate max-w-[200px]">{file.name}</span>
-                                                    <button type="button" onClick={() => handleRemoveEmailAttachment(idx)} className="text-gray-400 hover:text-red-500 transition">
-                                                        <span className="material-icons text-sm">delete</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                            )}
 
                             {emailBlastResult && (
-                                <div className={`p-4 rounded-xl text-sm ${emailBlastResult.failed > 0 ? 'bg-orange-50 border border-orange-100' : 'bg-green-50 border border-green-100'}`}>
-                                    <p className="font-bold">Hasil: {emailBlastResult.success} berhasil, {emailBlastResult.failed} gagal dari {emailBlastResult.total} total</p>
+                                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold">
+                                    {emailBlastResult.message || `Antrean blast email berhasil dibuat (Task ID: ${emailBlastResult.task_id || '-'}).`}
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl shrink-0">
-                            <button onClick={() => setShowEmailBlastModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
-                            <button onClick={handleEmailBlast} disabled={blastingEmail || !emailBlastSubject.trim() || !emailBlastMessage.trim()}
-                                className="bg-amber-500 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-amber-600 transition disabled:opacity-50">
-                                {blastingEmail ? 'Mengirim...' : 'Kirim Blast Email'}
+
+                        {/* Footer Controls */}
+                        <div className="p-4 bg-gray-50 border-t flex justify-end gap-2.5 rounded-b-3xl shrink-0">
+                            <button onClick={() => setShowEmailBlastModal(false)} className="px-5 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
+                            <button 
+                                onClick={handleEmailBlast} 
+                                disabled={blastingEmail || !emailBlastSubject.trim() || !emailBlastMessage.trim()}
+                                className="bg-amber-600 hover:bg-amber-700 text-white px-7 py-2 rounded-xl text-xs font-black shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <span className="material-icons text-sm">{blastingEmail ? 'hourglass_top' : 'send'}</span>
+                                <span>{blastingEmail ? 'Menjadwalkan...' : `Kirim Email Blast (${selectedUserIds.length})`}</span>
                             </button>
                         </div>
                     </div>

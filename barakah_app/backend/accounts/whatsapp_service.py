@@ -179,6 +179,11 @@ def send_message(phone, message, device_id=None):
             err_msg = err_json.get('message', f"HTTP {response.status_code}")
             last_error = err_msg
 
+            is_disc = response.status_code in [401, 403] or any(
+                k in str(err_msg).lower() or k in str(err_code).lower()
+                for k in ['logged out', 'not logged in', 'device disconnected', 'session closed', 'session revoked', 'unauthorized', 'not found']
+            )
+
             # If rejected with timelock or device required error, try fallback to next candidate
             if err_code in ['WA_REACHOUT_TIMELOCK', 'DEVICE_ID_REQUIRED'] or 'timelock' in err_msg.lower():
                 logger.warning(f"Device {dev_id} hit {err_code} for {phone}, trying fallback device...")
@@ -187,6 +192,7 @@ def send_message(phone, message, device_id=None):
                 return {
                     'success': False,
                     'message': f'Gagal mengirim pesan WhatsApp: {err_msg}',
+                    'is_device_disconnected': is_disc,
                     'data': {'mode': 'text', 'http_code': response.status_code, 'api_response': err_json}
                 }
         except requests.exceptions.RequestException as e:
@@ -294,13 +300,19 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type, device_i
             err_msg = err_json.get('message', f"HTTP {response.status_code}")
             last_error = err_msg
 
+            is_disc = response.status_code in [401, 403] or any(
+                k in str(err_msg).lower() or k in str(err_code).lower()
+                for k in ['logged out', 'not logged in', 'device disconnected', 'session closed', 'session revoked', 'unauthorized', 'not found']
+            )
+
             if err_code in ['WA_REACHOUT_TIMELOCK', 'DEVICE_ID_REQUIRED'] or 'timelock' in err_msg.lower():
                 logger.warning(f"Device {dev_id} hit {err_code} for {phone} file send, trying fallback device...")
                 continue
             else:
                 return {
                     'success': False,
-                    'message': f"Gagal kirim {endpoint} ({err_msg})"
+                    'message': f"Gagal kirim {endpoint} ({err_msg})",
+                    'is_device_disconnected': is_disc
                 }
 
         except Exception as e:
@@ -310,7 +322,7 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type, device_i
     return {'success': False, 'message': f'Internal error sending {endpoint}: {last_error}'}
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=4.0, min_delay=4.0, max_delay=7.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=15.0, min_delay=15.0, max_delay=30.0, created_by_user_id=None, device_id=None, campaign_title=None, campaign_source='custom_broadcast', scheduled_at=None):
     """
     Send WhatsApp messages to multiple recipients efficiently via background queue by default.
     Supports scheduled execution if scheduled_at is provided.

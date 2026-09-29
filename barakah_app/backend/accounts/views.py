@@ -885,6 +885,137 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminBarakah]
     pagination_class = UserPagination
 
+    def _prefetch_bulk_activities(self, user_ids):
+        if not user_ids:
+            return {}
+
+        results = {uid: {'charity': [], 'events': [], 'sinergy': [], 'courses': [], 'digital_products': []} for uid in user_ids}
+
+        try:
+            from donations.models import Donation
+            from events.models import EventRegistration
+            from orders.models import OrderItem
+            from courses.models import CourseEnrollment
+            from digital_products.models import DigitalOrder
+
+            # 1. Bulk Charity
+            donations = Donation.objects.filter(donor_id__in=user_ids).exclude(payment_status='rejected').values('donor_id', 'campaign__title', 'amount', 'payment_status')
+            status_map = {'pending': 'MENUNGGU', 'verified': 'TERVERIFIKASI', 'approved': 'DISETUJUI'}
+            for d in donations:
+                uid = d['donor_id']
+                if uid in results:
+                    title = d.get('campaign__title') or 'Tanpa Judul'
+                    amt = int(d.get('amount') or 0)
+                    st = status_map.get(d.get('payment_status'), 'MENUNGGU')
+                    results[uid]['charity'].append(f"{title} (Rp {amt:,}) - {st}")
+
+            # 2. Bulk Events
+            events = EventRegistration.objects.filter(user_id__in=user_ids).exclude(status='rejected').values('user_id', 'event__title', 'status')
+            reg_status_map = {'pending': 'MENUNGGU', 'approved': 'DISETUJUI', 'rejected': 'DITOLAK'}
+            for e in events:
+                uid = e['user_id']
+                if uid in results:
+                    title = e.get('event__title') or 'Event'
+                    st = reg_status_map.get(e.get('status'), 'MENUNGGU')
+                    results[uid]['events'].append(f"{title} ({st})")
+
+            # 3. Bulk Sinergy (Orders)
+            order_items = OrderItem.objects.filter(
+                order__user_id__in=user_ids
+            ).exclude(
+                order__status__in=['Batal', 'batal', 'Rejected', 'rejected']
+            ).values('order__user_id', 'product__title', 'variation__name', 'quantity')
+            for item in order_items:
+                uid = item['order__user_id']
+                if uid in results:
+                    prod = item.get('product__title') or 'Produk'
+                    var_name = item.get('variation__name')
+                    var_str = f" ({var_name})" if var_name else ""
+                    qty = item.get('quantity') or 1
+                    results[uid]['sinergy'].append(f"{prod}{var_str} x{qty}")
+
+            # 4. Bulk Courses
+            courses = CourseEnrollment.objects.filter(
+                user_id__in=user_ids, 
+                payment_status__in=['verified', 'paid']
+            ).values('user_id', 'course__title')
+            for c in courses:
+                uid = c['user_id']
+                if uid in results and c.get('course__title'):
+                    results[uid]['courses'].append(c['course__title'])
+
+            # 5. Bulk Digital Products
+            digitals = DigitalOrder.objects.filter(
+                buyer_id__in=user_ids, 
+                payment_status='verified'
+            ).values('buyer_id', 'digital_product__title')
+            for dg in digitals:
+                uid = dg['buyer_id']
+                if uid in results and dg.get('digital_product__title'):
+                    results[uid]['digital_products'].append(dg['digital_product__title'])
+
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Error in _prefetch_bulk_activities: {str(e)}")
+
+        return results
+
+    def _prefetch_bulk_meetings(self, user_ids):
+        if not user_ids:
+            return {}
+        results = {uid: {'present': 0, 'absent': 0, 'total': 0, 'total_present': 0, 'total_absent': 0, 'attendance_rate': 0} for uid in user_ids}
+        try:
+            from meetings.models import MeetingParticipant
+            from django.db.models import Count, Q
+            counts = MeetingParticipant.objects.filter(
+                user_id__in=user_ids
+            ).values('user_id').annotate(
+                present=Count('id', filter=Q(status='present')),
+                absent=Count('id', filter=Q(status='absent')),
+                total=Count('id', filter=Q(status__in=['present', 'absent']))
+            )
+            for c in counts:
+                uid = c['user_id']
+                if uid in results:
+                    p = c['present']
+                    a = c['absent']
+                    t = p + a
+                    rate = round((p / t * 100)) if t > 0 else 0
+                    results[uid] = {
+                        'present': p,
+                        'absent': a,
+                        'total': t,
+                        'total_present': p,
+                        'total_absent': a,
+                        'attendance_rate': rate
+                    }
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Error in _prefetch_bulk_meetings: {str(e)}")
+        return results
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        users_to_serialize = page if page is not None else list(queryset)
+        user_ids = [u.id for u in users_to_serialize]
+
+        # Bulk prefetch in 6 fast batch queries instead of N x 10 separate queries
+        bulk_activities = self._prefetch_bulk_activities(user_ids)
+        bulk_meetings = self._prefetch_bulk_meetings(user_ids)
+
+        serializer_context = self.get_serializer_context()
+        serializer_context['bulk_activities'] = bulk_activities
+        serializer_context['bulk_meetings'] = bulk_meetings
+        serializer_context['is_list_view'] = True
+
+        serializer = self.get_serializer(users_to_serialize, many=True, context=serializer_context)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+
+        return Response(serializer.data)
+
     def create(self, request, *args, **kwargs):
         """Override create untuk support pembuatan user baru dengan password."""
         username = request.data.get('username')
@@ -965,35 +1096,47 @@ class UserViewSet(viewsets.ModelViewSet):
 
             qs = qs.filter(search_filter)
 
-        # Filter by role
-        role_filter = self.request.query_params.get('role', '')
-        if role_filter:
-            qs = qs.filter(role=role_filter)
+        # Filter by role (supports single, comma-separated, or list)
+        roles = self.request.query_params.getlist('role') or self.request.query_params.getlist('roles')
+        if not roles and self.request.query_params.get('role'):
+            roles = [r.strip() for r in self.request.query_params.get('role').split(',') if r.strip()]
+        if roles:
+            qs = qs.filter(role__in=roles)
 
-        # Filter by religion (agama)
-        agama_filter = self.request.query_params.get('agama', '')
-        if agama_filter:
-            qs = qs.filter(profile__agama=agama_filter)
+        # Filter by religion (agama) (supports single, comma-separated, or list)
+        agamas = self.request.query_params.getlist('agama') or self.request.query_params.getlist('agamas')
+        if not agamas and self.request.query_params.get('agama'):
+            agamas = [a.strip() for a in self.request.query_params.get('agama').split(',') if a.strip()]
+        if agamas:
+            qs = qs.filter(profile__agama__in=agamas)
 
-        # Filter by custom role
-        custom_role_filter = self.request.query_params.get('custom_role', '')
-        if custom_role_filter:
-            qs = qs.filter(custom_roles__id=custom_role_filter)
+        # Filter by custom role (supports single, comma-separated, or list)
+        custom_roles = self.request.query_params.getlist('custom_role') or self.request.query_params.getlist('custom_roles')
+        if not custom_roles and self.request.query_params.get('custom_role'):
+            custom_roles = [c.strip() for c in self.request.query_params.get('custom_role').split(',') if c.strip()]
+        if custom_roles:
+            qs = qs.filter(custom_roles__id__in=custom_roles).distinct()
 
-        # Filter by label
-        label_filter = self.request.query_params.get('label', '')
-        if label_filter:
-            qs = qs.filter(labels__id=label_filter)
+        # Filter by label (supports single, comma-separated, or list)
+        labels = self.request.query_params.getlist('label') or self.request.query_params.getlist('labels')
+        if not labels and self.request.query_params.get('label'):
+            labels = [l.strip() for l in self.request.query_params.get('label').split(',') if l.strip()]
+        if labels:
+            qs = qs.filter(labels__id__in=labels).distinct()
 
-        # Filter by lingkup tugas
-        lingkup_tugas_filter = self.request.query_params.get('lingkup_tugas', '')
-        if lingkup_tugas_filter:
-            qs = qs.filter(lingkup_tugas__id=lingkup_tugas_filter)
+        # Filter by lingkup tugas (supports single, comma-separated, or list)
+        lingkup_list = self.request.query_params.getlist('lingkup_tugas')
+        if not lingkup_list and self.request.query_params.get('lingkup_tugas'):
+            lingkup_list = [l.strip() for l in self.request.query_params.get('lingkup_tugas').split(',') if l.strip()]
+        if lingkup_list:
+            qs = qs.filter(lingkup_tugas__id__in=lingkup_list).distinct()
 
-        # Filter by bidang tugas
-        bidang_tugas_filter = self.request.query_params.get('bidang_tugas', '')
-        if bidang_tugas_filter:
-            qs = qs.filter(bidang_tugas__id=bidang_tugas_filter)
+        # Filter by bidang tugas (supports single, comma-separated, or list)
+        bidang_list = self.request.query_params.getlist('bidang_tugas')
+        if not bidang_list and self.request.query_params.get('bidang_tugas'):
+            bidang_list = [b.strip() for b in self.request.query_params.get('bidang_tugas').split(',') if b.strip()]
+        if bidang_list:
+            qs = qs.filter(bidang_tugas__id__in=bidang_list).distinct()
 
         # Filter by join date range
         date_from = self.request.query_params.get('date_from', '')
@@ -1003,12 +1146,14 @@ class UserViewSet(viewsets.ModelViewSet):
         if date_to:
             qs = qs.filter(date_joined__date__lte=date_to)
 
-        # Filter by verified status
+        # Filter by verified status (supports true, false, or comma-separated)
         verified = self.request.query_params.get('verified', '')
-        if verified == 'true':
-            qs = qs.filter(is_verified_member=True)
-        elif verified == 'false':
-            qs = qs.filter(is_verified_member=False)
+        if verified:
+            v_parts = [v.strip().lower() for v in verified.split(',') if v.strip()]
+            if 'true' in v_parts and 'false' not in v_parts:
+                qs = qs.filter(is_verified_member=True)
+            elif 'false' in v_parts and 'true' not in v_parts:
+                qs = qs.filter(is_verified_member=False)
 
         # Sorting
         ordering = self.request.query_params.get('ordering', '-date_joined')
@@ -1038,8 +1183,9 @@ class UserViewSet(viewsets.ModelViewSet):
             from digital_products.models import DigitalOrder
             from profiles.models import Profile
 
-            response = HttpResponse(content_type='text/csv')
+            response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
             response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
+            response.write('\ufeff')  # Write UTF-8 BOM for Microsoft Excel compatibility
 
             writer = csv.writer(response, delimiter=';')
             headers = [
@@ -1053,36 +1199,47 @@ class UserViewSet(viewsets.ModelViewSet):
             ]
             writer.writerow(headers)
 
-            province_map = dict(Profile.PROVINCE_CHOICES)
+            province_map = dict(getattr(Profile, 'PROVINCE_CHOICES', []))
+            agama_map = dict(getattr(Profile, 'AGAMA_CHOICES', []))
 
-            # Get all users without pagination
+            # Apply active query_params filters so export respects search/role/label filters
             queryset = self.get_queryset()
+
+            # If user explicitly selected specific user IDs
+            user_ids_param = request.query_params.get('user_ids')
+            if user_ids_param:
+                uids = [int(x.strip()) for x in user_ids_param.split(',') if x.strip().isdigit()]
+                if uids:
+                    queryset = queryset.filter(id__in=uids)
             
             for user in queryset:
                 profile = getattr(user, 'profile', None)
                 row = [
                     user.id,
-                    profile.id_m if profile else '',
+                    getattr(profile, 'id_m', '') or '',
                     user.username,
-                    profile.name_full if profile else '',
-                    profile.nickname if profile else '',
-                    profile.get_info_source_display() if profile else '',
-                    profile.referred_by if profile else '',
-                    user.email,
-                    user.phone,
-                    user.role,
-                    user.is_verified_member,
+                    getattr(profile, 'name_full', '') or '',
+                    getattr(profile, 'nickname', '') or '',
+                    (profile.get_info_source_display() if hasattr(profile, 'get_info_source_display') else getattr(profile, 'info_source', '')) if profile else '',
+                    getattr(profile, 'referred_by', '') or '',
+                    user.email or '',
+                    user.phone or '',
+                    user.role or '',
+                    'Ya' if user.is_verified_member else 'Tidak',
                     user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
                 ]
                 if profile:
-                    province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
+                    province_val = profile.address_province or ''
+                    province_display = province_map.get(province_val, province_val)
+                    agama_val = profile.agama or ''
+                    agama_display = agama_map.get(agama_val, agama_val)
 
                     row.extend([
                         profile.gender or '',
-                        profile.get_agama_display() or '',
+                        agama_display,
                         profile.birth_place or '',
-                        profile.birth_date or '',
-                        profile.registration_date or '',
+                        str(profile.birth_date or ''),
+                        str(profile.registration_date or ''),
                         profile.marital_status or '',
                         profile.segment or '',
                         profile.study_level or '',
@@ -1090,33 +1247,60 @@ class UserViewSet(viewsets.ModelViewSet):
                         profile.study_faculty or '',
                         profile.study_department or '',
                         profile.study_program or '',
-                        profile.study_semester or '',
-                        profile.study_start_year or '',
-                        profile.study_finish_year or '',
+                        str(profile.study_semester or ''),
+                        str(profile.study_start_year or ''),
+                        str(profile.study_finish_year or ''),
                         profile.address or '',
                         profile.job or '',
                         profile.work_field or '',
                         profile.work_institution or '',
                         profile.work_position or '',
-                        profile.work_salary or '',
-                        profile.address_province or '',
+                        str(profile.work_salary or ''),
+                        province_display,
                     ])
                 else:
                     row.extend([''] * 22)
                 
-                # Add custom roles, labels, lingkup tugas, bidang tugas
-                row.append(' | '.join([r.name for r in user.custom_roles.all()]))
-                row.append(' | '.join([l.name for l in user.labels.all()]))
-                row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
-                row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
+                # Add custom roles, labels, lingkup tugas, bidang tugas safely
+                try:
+                    row.append(' | '.join([r.name for r in user.custom_roles.all()]))
+                except Exception:
+                    row.append('')
+                try:
+                    row.append(' | '.join([l.name for l in user.labels.all()]))
+                except Exception:
+                    row.append('')
+                try:
+                    row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
+                except Exception:
+                    row.append('')
+                try:
+                    row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
+                except Exception:
+                    row.append('')
 
-                # Add activity detailed lists
-                donations = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
-                charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
-                event_list = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
-                order_list = OrderItem.objects.filter(order__user=user, order__status__in=['Paid', 'Completed', 'Shipped', 'Delivered']).values_list('product__title', flat=True)
-                course_list = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
-                digital_list = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
+                # Add activity detailed lists safely
+                try:
+                    donations = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
+                    charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
+                except Exception:
+                    charity_list = []
+                try:
+                    event_list = list(EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True))
+                except Exception:
+                    event_list = []
+                try:
+                    order_list = list(OrderItem.objects.filter(order__user=user, order__status__in=['Paid', 'Completed', 'Shipped', 'Delivered']).values_list('product__title', flat=True))
+                except Exception:
+                    order_list = []
+                try:
+                    course_list = list(CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True))
+                except Exception:
+                    course_list = []
+                try:
+                    digital_list = list(DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True))
+                except Exception:
+                    digital_list = []
 
                 row.extend([
                     ' | '.join(filter(None, charity_list)),
@@ -1328,8 +1512,8 @@ class UserViewSet(viewsets.ModelViewSet):
         image_base64 = request.data.get('image_base64')
         filename = request.data.get('filename', 'broadcast.jpg')
         device_id = request.data.get('device_id') or None
-        min_delay = max(4.0, float(request.data.get('min_delay', 4.0)))
-        max_delay = max(min_delay, float(request.data.get('max_delay', 7.0)))
+        min_delay = max(10.0, float(request.data.get('min_delay', 15.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 30.0)))
 
         if not raw_numbers or not message_template:
             return Response(
@@ -1416,7 +1600,7 @@ class UserViewSet(viewsets.ModelViewSet):
             placeholder_data_list=placeholder_data_list,
             file_data_base64=image_base64,
             filename=filename,
-            delay_seconds=2.5,
+            delay_seconds=15.0,
             min_delay=min_delay,
             max_delay=max_delay,
             created_by_user_id=request.user.id,
@@ -1450,14 +1634,33 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def blast_email(self, request):
-        """Send Email message blast to selected users via background queue."""
+        """Send Email message blast to selected users via background queue with optional decoration."""
+        import json
         user_ids = request.data.get('user_ids', [])
         subject = request.data.get('subject')
         message_template = request.data.get('message', '')
         attachments = request.FILES.getlist('attachments')
         
+        is_decorated = str(request.data.get('is_decorated', '')).lower() in ['true', '1']
+        header_title = request.data.get('header_title', '')
+        header_subtitle = request.data.get('header_subtitle', '')
+        hero_image_url = request.data.get('hero_image_url', '')
+        badge_text = request.data.get('badge_text', '')
+        theme_color = request.data.get('theme_color', '#059669')
+        cta_text = request.data.get('cta_text', '')
+        cta_url = request.data.get('cta_url', '')
+        footer_text = request.data.get('footer_text', '')
+        min_delay = max(1.5, float(request.data.get('min_delay', 3.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 6.0)))
+        
+        secondary_links = request.data.get('secondary_links', [])
+        if isinstance(secondary_links, str):
+            try:
+                secondary_links = json.loads(secondary_links)
+            except Exception:
+                secondary_links = []
+        
         if isinstance(user_ids, str):
-            import json
             try:
                 user_ids = json.loads(user_ids)
             except Exception:
@@ -1501,7 +1704,184 @@ class UserViewSet(viewsets.ModelViewSet):
             message_template=message_template,
             placeholder_data_list=placeholder_data_list,
             attachments=attachments,
-            created_by_user_id=request.user.id
+            delay_seconds=(min_delay + max_delay) / 2.0,
+            min_delay=min_delay,
+            max_delay=max_delay,
+            created_by_user_id=request.user.id,
+            is_decorated=is_decorated,
+            header_title=header_title,
+            header_subtitle=header_subtitle,
+            hero_image_url=hero_image_url,
+            badge_text=badge_text,
+            theme_color=theme_color,
+            cta_text=cta_text,
+            cta_url=cta_url,
+            secondary_links=secondary_links,
+            footer_text=footer_text,
+            campaign_title=header_title or subject
+        )
+
+        return Response({
+            "message": result['message'],
+            "details": result
+        })
+
+    @action(detail=False, methods=['post'])
+    def custom_blast_email(self, request):
+        """
+        Send custom email broadcast to arbitrary list of emails (comma/newline separated or list)
+        or selected members, with decoration toggle, attachment files, URL CTA, Spintax,
+        and test-send capability.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+
+        import json
+        raw_emails = request.data.get('emails', [])
+        subject = request.data.get('subject', '').strip()
+        message_template = request.data.get('message', '').strip()
+        attachments = request.FILES.getlist('attachments')
+        test_to_self = str(request.data.get('test_to_self', '')).lower() in ['true', '1']
+
+        is_decorated = str(request.data.get('is_decorated', '')).lower() in ['true', '1']
+        header_title = request.data.get('header_title', '')
+        header_subtitle = request.data.get('header_subtitle', '')
+        hero_image_url = request.data.get('hero_image_url', '')
+        badge_text = request.data.get('badge_text', '')
+        theme_color = request.data.get('theme_color', '#059669')
+        cta_text = request.data.get('cta_text', '')
+        cta_url = request.data.get('cta_url', '')
+        footer_text = request.data.get('footer_text', '')
+        min_delay = max(1.5, float(request.data.get('min_delay', 3.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 6.0)))
+        
+        secondary_links = request.data.get('secondary_links', [])
+        if isinstance(secondary_links, str):
+            try:
+                secondary_links = json.loads(secondary_links)
+            except Exception:
+                secondary_links = []
+
+        if not subject or not message_template:
+            return Response({'error': 'Subjek dan pesan email wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Handle test send directly to admin email
+        if test_to_self:
+            admin_email = request.user.email
+            if not admin_email:
+                return Response({'error': 'Akun admin Anda belum memiliki email terdaftar untuk menerima email uji coba.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            from barakah_app.utils import send_email, render_promotional_email_html, render_standard_email_html
+            from barakah_app.blast_queue import parse_spintax
+            
+            parsed_sub = parse_spintax(subject).replace('{name}', getattr(request.user, 'username', 'Admin')).replace('{email}', admin_email)
+            parsed_msg = parse_spintax(message_template).replace('{name}', getattr(request.user, 'username', 'Admin')).replace('{email}', admin_email)
+            
+            if is_decorated:
+                html_body = render_promotional_email_html(
+                    title=header_title or parsed_sub,
+                    subtitle=header_subtitle,
+                    message=parsed_msg,
+                    hero_image_url=hero_image_url,
+                    badge_text=badge_text,
+                    theme_color=theme_color,
+                    cta_text=cta_text,
+                    cta_url=cta_url,
+                    secondary_links=secondary_links,
+                    footer_text=footer_text,
+                    recipient_name=getattr(request.user, 'username', 'Admin'),
+                    recipient_email=admin_email
+                )
+            else:
+                html_body = render_standard_email_html(
+                    message=parsed_msg,
+                    title=parsed_sub,
+                    footer_text=footer_text,
+                    recipient_email=admin_email
+                )
+            
+            processed_attachments = []
+            for att in attachments:
+                if hasattr(att, 'read'):
+                    att.seek(0)
+                    processed_attachments.append((att.name, att.read(), getattr(att, 'content_type', 'application/octet-stream')))
+
+            ok = send_email(
+                subject=f"[TEST] {parsed_sub}",
+                message=parsed_msg,
+                recipient_list=[admin_email],
+                attachments=processed_attachments,
+                html_message=html_body,
+                fail_silently=False
+            )
+            if ok:
+                return Response({'message': f'Email uji coba berhasil dikirim ke {admin_email}. Silakan periksa inbox / spam.'})
+            else:
+                return Response({'error': 'Gagal mengirim email uji coba. Periksa pengaturan SMTP Email Gateway.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Parse emails if given as string
+        if isinstance(raw_emails, str):
+            import re
+            parts = re.split(r'[\r\n,; ]+', raw_emails)
+            raw_emails = [p.strip() for p in parts if p.strip()]
+
+        email_list = []
+        placeholder_data_list = []
+        seen_emails = set()
+
+        import re
+        email_regex = re.compile(r'^[\w\.-]+@([\w\.-]+)\.[a-zA-Z]{2,}$')
+
+        for item in raw_emails:
+            e_str = item.get('email') if isinstance(item, dict) else str(item)
+            c_name = item.get('name', '') if isinstance(item, dict) else ''
+            e_clean = e_str.strip().lower()
+
+            if not email_regex.match(e_clean):
+                continue
+
+            if e_clean not in seen_emails:
+                seen_emails.add(e_clean)
+                email_list.append(e_clean)
+                
+                # Check DB for user profile if name not provided
+                if not c_name:
+                    db_u = User.objects.filter(email=e_clean).select_related('profile').first()
+                    if db_u:
+                        prof = getattr(db_u, 'profile', None)
+                        c_name = prof.name_full if prof and prof.name_full else db_u.username
+
+                placeholder_data_list.append({
+                    'name': c_name or e_clean.split('@')[0],
+                    'email': e_clean,
+                    'username': c_name or e_clean.split('@')[0]
+                })
+
+        if not email_list:
+            return Response({'error': 'Tidak ada alamat email yang valid ditemukan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from barakah_app.blast_queue import enqueue_email_blast
+        result = enqueue_email_blast(
+            email_list=email_list,
+            subject=subject,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data_list,
+            attachments=attachments,
+            delay_seconds=(min_delay + max_delay) / 2.0,
+            min_delay=min_delay,
+            max_delay=max_delay,
+            created_by_user_id=request.user.id,
+            is_decorated=is_decorated,
+            header_title=header_title,
+            header_subtitle=header_subtitle,
+            hero_image_url=hero_image_url,
+            badge_text=badge_text,
+            theme_color=theme_color,
+            cta_text=cta_text,
+            cta_url=cta_url,
+            secondary_links=secondary_links,
+            footer_text=footer_text,
+            campaign_title=header_title or subject
         )
 
         return Response({

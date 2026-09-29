@@ -160,7 +160,7 @@ class Profile(models.Model):
     name_full = models.CharField(max_length=300, blank=True, null=True)
     nickname = models.CharField(max_length=150, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
-    agama = models.CharField(max_length=300, blank=True, null=True)
+    agama = models.CharField(max_length=300, choices=AGAMA_CHOICES, blank=True, null=True)
     birth_place = models.CharField(max_length=300, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     registration_date = models.DateField(blank=True, null=True)
