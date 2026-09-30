@@ -1896,23 +1896,43 @@ class UserViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'error': 'Gagal mengirim email uji coba. Periksa pengaturan SMTP Email Gateway.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Parse emails if given as string
+        # Parse emails if given as JSON string or raw delimiter-separated text
         if isinstance(raw_emails, str):
-            import re
-            parts = re.split(r'[\r\n,; ]+', raw_emails)
-            raw_emails = [p.strip() for p in parts if p.strip()]
+            raw_emails_str = raw_emails.strip()
+            parsed_json = None
+            try:
+                parsed_json = json.loads(raw_emails_str)
+            except Exception:
+                pass
+
+            if isinstance(parsed_json, list):
+                raw_emails = parsed_json
+            elif isinstance(parsed_json, dict):
+                raw_emails = [parsed_json]
+            else:
+                import re
+                parts = re.split(r'[\r\n,;]+', raw_emails_str)
+                raw_emails = [p.strip() for p in parts if p.strip()]
 
         email_list = []
         placeholder_data_list = []
         seen_emails = set()
 
         import re
-        email_regex = re.compile(r'^[\w\.-]+@([\w\.-]+)\.[a-zA-Z]{2,}$')
+        email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
         for item in raw_emails:
-            e_str = item.get('email') if isinstance(item, dict) else str(item)
-            c_name = item.get('name', '') if isinstance(item, dict) else ''
-            e_clean = e_str.strip().lower()
+            e_str = ''
+            c_name = ''
+            if isinstance(item, dict):
+                e_str = item.get('email') or item.get('address') or ''
+                c_name = item.get('name') or ''
+            else:
+                e_str = str(item)
+
+            e_clean = str(e_str).strip().lower()
+            # Clean up potential extra wrapper characters
+            e_clean = e_clean.strip('\'"[]{}()<>,; \t\r\n')
 
             if not email_regex.match(e_clean):
                 continue
