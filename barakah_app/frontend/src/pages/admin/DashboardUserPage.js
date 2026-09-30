@@ -203,11 +203,14 @@ const DashboardUserPage = () => {
     const [editCustomAgama, setEditCustomAgama] = useState('');
     const [selectedUserIds, setSelectedUserIds] = useState([]);
     const [showBlastModal, setShowBlastModal] = useState(false);
+    const [blastCampaignTitle, setBlastCampaignTitle] = useState('');
     const [blastMessage, setBlastMessage] = useState('');
     const [blasting, setBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
     const [waMinDelay, setWaMinDelay] = useState(15);
     const [waMaxDelay, setWaMaxDelay] = useState(30);
+    const [blastModalTab, setBlastModalTab] = useState('compose'); // 'compose' | 'preview'
+    const [previewSeed, setPreviewSeed] = useState(0);
 
     const [showEmailBlastModal, setShowEmailBlastModal] = useState(false);
     const [emailBlastSubject, setEmailBlastSubject] = useState('');
@@ -633,12 +636,45 @@ const DashboardUserPage = () => {
         }
     };
 
+    const insertSpintaxToBlastMessage = (snippet) => {
+        setBlastMessage(prev => {
+            if (!prev) return snippet;
+            return prev.endsWith(' ') || prev.endsWith('\n') ? prev + snippet : prev + ' ' + snippet;
+        });
+    };
+
+    const resolveSpintaxPreview = (text, userSample) => {
+        if (!text) return '';
+        let result = text;
+        const name = userSample?.profile?.name_full || userSample?.username || 'Fulan bin Fulan';
+        const username = userSample?.username || 'fulan';
+        const phone = userSample?.phone || '081234567890';
+        result = result.replace(/\{name\}/g, name)
+                       .replace(/\{username\}/g, username)
+                       .replace(/\{phone\}/g, phone);
+        
+        const pattern = /\{([^{}]+)\}/g;
+        let loops = 0;
+        while (loops < 5 && pattern.test(result)) {
+            result = result.replace(pattern, (match, p1) => {
+                if (p1.includes('|')) {
+                    const choices = p1.split('|');
+                    return choices[Math.floor(Math.random() * choices.length)].trim();
+                }
+                return match;
+            });
+            loops++;
+        }
+        return result;
+    };
+
     const handleBlast = async () => {
         if (!blastMessage.trim()) { alert('Tulis pesan terlebih dahulu'); return; }
         setBlasting(true);
         try {
             const payload = {
                 user_ids: selectedUserIds,
+                title: blastCampaignTitle.trim() || undefined,
                 message: blastMessage,
                 image_base64: blastImage,
                 min_delay: Number(waMinDelay) || 15,
@@ -646,11 +682,11 @@ const DashboardUserPage = () => {
             };
             const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, payload, getAuth());
             setBlastResult(res.data.details || res.data);
-            alert(res.data.message || `Antrean blast WhatsApp berhasil dibuat untuk ${selectedUserIds.length} user.`);
         } catch (err) { 
             alert('Gagal mengirim blast WA: ' + (err.response?.data?.error || err.message)); 
+        } finally {
+            setBlasting(false);
         }
-        setBlasting(false);
     };
 
     const handleEmailAttachmentChange = (e) => {
@@ -1704,108 +1740,343 @@ const DashboardUserPage = () => {
             {/* ============ WA BLAST MODAL ============ */}
             {showBlastModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <span className="material-icons text-green-600">chat</span>
-                                <span>Blast WhatsApp Aman (Anti-Ban)</span>
-                            </h2>
-                            <button onClick={() => setShowBlastModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
+                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+                        {/* Header */}
+                        <div className="p-5 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3 bg-gradient-to-r from-emerald-50/50 via-white to-white shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200">
+                                    <span className="material-icons text-xl">chat</span>
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
+                                        <span>Blast WhatsApp Manajemen User</span>
+                                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Anti-Banned Queue</span>
+                                    </h2>
+                                    <p className="text-[11px] text-gray-500">
+                                        Target: <b>{selectedUserIds.length}</b> akun pengguna terpilih &bull; Riwayat otomatis tercatat di Broadcast
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="flex bg-gray-100 p-1 rounded-xl">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBlastModalTab('compose')}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                            blastModalTab === 'compose' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        <span className="material-icons text-xs">edit_note</span>
+                                        <span>Tulis Pesan</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setBlastModalTab('preview');
+                                            setPreviewSeed(s => s + 1);
+                                        }}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                            blastModalTab === 'preview' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        <span className="material-icons text-xs">visibility</span>
+                                        <span>Live Preview Variasi</span>
+                                    </button>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        setShowBlastModal(false);
+                                        setBlastResult(null);
+                                    }} 
+                                    className="w-8 h-8 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex items-center justify-center transition"
+                                >
+                                    <span className="material-icons text-sm">close</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <p className="text-xs text-gray-600">Kirim pesan WhatsApp ke <b>{selectedUserIds.length}</b> pengguna terpilih.</p>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                            {/* Campaign Title Input */}
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                    Nama / Judul Broadcast (Untuk Riwayat Broadcast)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={blastCampaignTitle}
+                                        onChange={e => setBlastCampaignTitle(e.target.value)}
+                                        placeholder={`Contoh: Broadcast Info Member (${selectedUserIds.length} Penerima)`}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                                    />
+                                    <span className="absolute right-3 top-2 text-[10px] text-gray-400">Tersimpan di CRM</span>
+                                </div>
+                            </div>
 
                             {/* Anti-ban Delay Safeguards */}
-                            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/70 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="material-icons text-amber-700 text-sm">shield</span>
-                                    <span className="text-xs font-black text-amber-900">Proteksi Anti-Banned Nomor WhatsApp</span>
+                            <div className="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200/80 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-icons text-amber-600 text-sm">shield</span>
+                                        <span className="text-xs font-black text-amber-950">Proteksi Jeda Acak (Anti-Banned Otomatis)</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/60 text-amber-900">
+                                        Rekomendasi: 15 - 30 Detik
+                                    </span>
                                 </div>
                                 <p className="text-[11px] text-amber-800 leading-relaxed">
-                                    Jeda acak antar pesan meminimalkan risiko terdeteksi robot oleh server WhatsApp.
+                                    Sistem akan menjeda pengiriman pesan secara acak di antara rentang waktu ini untuk meniru perilaku manusia dan menghindari deteksi bot oleh server WhatsApp.
                                 </p>
-                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                <div className="grid grid-cols-2 gap-3 pt-1">
                                     <div>
-                                        <label className="text-[10px] font-bold text-amber-900 block mb-0.5">Jeda Minimum (detik)</label>
-                                        <input
-                                            type="number"
-                                            min="5"
-                                            max="120"
-                                            value={waMinDelay}
-                                            onChange={e => setWaMinDelay(e.target.value)}
-                                            className="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-amber-900 block mb-0.5">Jeda Maksimum (detik)</label>
+                                        <label className="text-[10px] font-bold text-amber-900 block mb-1">Jeda Minimum (detik)</label>
                                         <input
                                             type="number"
                                             min="10"
+                                            max="120"
+                                            value={waMinDelay}
+                                            onChange={e => setWaMinDelay(e.target.value)}
+                                            className="w-full bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-amber-900 block mb-1">Jeda Maksimum (detik)</label>
+                                        <input
+                                            type="number"
+                                            min="15"
                                             max="300"
                                             value={waMaxDelay}
                                             onChange={e => setWaMaxDelay(e.target.value)}
-                                            className="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none"
+                                            className="w-full bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Tags & Spintax Helpers */}
-                            <div className="space-y-1">
-                                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tag Personalisasi & Variasi:</span>
-                                    <div className="flex flex-wrap gap-1">
-                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {name}')} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-bold hover:bg-green-100">+{'{name}'}</button>
-                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {username}')} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold hover:bg-blue-100">+{'{username}'}</button>
-                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {phone}')} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold hover:bg-purple-100">+{'{phone}'}</button>
-                                        <button type="button" onClick={() => setBlastMessage(p => p + ' {Halo|Hai|Assalamu\'alaikum}')} className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold hover:bg-amber-100">+Spintax Sapaan</button>
+                            {blastModalTab === 'compose' ? (
+                                <>
+                                    {/* Spintax Explanation Box */}
+                                    <div className="p-3 bg-indigo-50/60 border border-indigo-200/70 rounded-2xl flex items-start gap-2.5">
+                                        <span className="material-icons text-indigo-600 text-base shrink-0 mt-0.5">auto_awesome</span>
+                                        <div className="text-[11px] text-indigo-900 space-y-1">
+                                            <p className="font-bold">
+                                                Apakah Spintax Bebas Diatur? <span className="text-emerald-700 font-black">Ya, Sangat Bebas!</span>
+                                            </p>
+                                            <p className="text-indigo-800 leading-relaxed text-[11px]">
+                                                Format Spintax adalah <code className="bg-indigo-100/80 px-1 py-0.5 rounded font-mono font-bold text-indigo-900">{`{Pilihan 1 | Pilihan 2 | Pilihan 3}`}</code>. Anda bebas menulis kata/kalimat apa pun dengan pemisah tanda pipa (<code className="font-bold">|</code>) di mana saja di dalam teks. Setiap penerima pesan akan mendapatkan salah satu kata tersebut secara acak agar hash pesan berbeda-beda dan aman dari blokir WhatsApp.
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                                <textarea 
-                                    rows="5" 
-                                    value={blastMessage} 
-                                    onChange={e => setBlastMessage(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-green-500 font-sans" 
-                                    placeholder="Assalamu'alaikum {name}, kami dari Barakah Economy ingin menginformasikan..." 
-                                />
-                            </div>
 
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Lampiran Gambar (Opsional)</label>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1">
-                                        <input type="file" accept="image/*" id="user-blast-image" className="hidden" onChange={handleImageChange} />
-                                        <label htmlFor="user-blast-image" className="flex items-center justify-center gap-2 w-full p-2.5 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-green-300 transition group">
-                                            <span className="material-icons text-gray-400 group-hover:text-green-500 text-sm">image</span>
-                                            <span className="text-xs font-bold text-gray-500 group-hover:text-green-700">
-                                                {blastImage ? 'Ganti Gambar' : 'Pilih Gambar...'}
+                                    {/* Tags & Spintax Helpers Toolbar */}
+                                    <div className="space-y-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                                <span className="material-icons text-xs text-amber-500">touch_app</span>
+                                                Tombol Cepat Spintax & Tag:
                                             </span>
-                                        </label>
-                                    </div>
-                                    {blastImage && (
-                                        <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shrink-0">
-                                            <img src={blastImage} className="w-full h-full object-cover" alt="prev" />
-                                            <button onClick={() => setBlastImage(null)} className="absolute top-0 right-0 w-4 h-4 bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition">
-                                                <span className="material-icons text-[10px]">close</span>
+                                            <span className="text-[10px] text-gray-400">Klik tombol untuk menyisipkan ke pesan</span>
+                                        </div>
+
+                                        {/* Row 1: Fast Spintax Buttons */}
+                                        <div className="flex flex-wrap items-center gap-1.5 p-2 bg-gray-50 border border-gray-100 rounded-2xl">
+                                            <span className="text-[10px] font-black uppercase text-emerald-800 px-1">Spintax:</span>
+                                            
+                                            <button 
+                                                type="button" 
+                                                onClick={() => insertSpintaxToBlastMessage("{Assalamu’alaikum | Assalamu’alaikum warahmatullahi wabarakatuh | Assalamu’alaikum Wr. Wb}")} 
+                                                className="px-2.5 py-1 rounded-lg bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 text-[11px] font-bold border border-emerald-300 shadow-2xs transition flex items-center gap-1"
+                                                title="Sisipkan Spintax Salam Islami acak: {Assalamu’alaikum | Assalamu’alaikum warahmatullahi wabarakatuh | Assalamu’alaikum Wr. Wb}"
+                                            >
+                                                <span>✨</span>
+                                                <span>+ Spintax Salam Islami</span>
                                             </button>
+
+                                            <button 
+                                                type="button" 
+                                                onClick={() => insertSpintaxToBlastMessage("{Halo | Hai | Salam Sejahtera | Salam Hangat}")} 
+                                                className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 transition"
+                                                title="Sisipkan Spintax Sapaan acak: {Halo | Hai | Salam Sejahtera | Salam Hangat}"
+                                            >
+                                                + Spintax Sapaan
+                                            </button>
+
+                                            <button 
+                                                type="button" 
+                                                onClick={() => insertSpintaxToBlastMessage("{Kak | Bapak/Ibu | Sahabat BAE | Rekan}")} 
+                                                className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 transition"
+                                                title="Sisipkan Spintax Panggilan acak: {Kak | Bapak/Ibu | Sahabat BAE | Rekan}"
+                                            >
+                                                + Spintax Panggilan
+                                            </button>
+
+                                            <button 
+                                                type="button" 
+                                                onClick={() => insertSpintaxToBlastMessage("{Terima kasih | Syukran katsiran | Jazakumullah khairan}")} 
+                                                className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200 transition"
+                                                title="Sisipkan Spintax Penutup acak: {Terima kasih | Syukran katsiran | Jazakumullah khairan}"
+                                            >
+                                                + Spintax Penutup
+                                            </button>
+
+                                            <div className="w-full border-t border-gray-200/60 my-0.5"></div>
+
+                                            {/* Row 2: Personalization tags */}
+                                            <span className="text-[10px] font-black uppercase text-gray-500 px-1">Tag:</span>
+                                            <button type="button" onClick={() => insertSpintaxToBlastMessage('{name}')} className="px-2 py-0.5 rounded-lg bg-green-50 text-green-700 text-[10px] font-bold hover:bg-green-100 border border-green-200">+{'{name}'}</button>
+                                            <button type="button" onClick={() => insertSpintaxToBlastMessage('{username}')} className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold hover:bg-blue-100 border border-blue-200">+{'{username}'}</button>
+                                            <button type="button" onClick={() => insertSpintaxToBlastMessage('{phone}')} className="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 text-[10px] font-bold hover:bg-purple-100 border border-purple-200">+{'{phone}'}</button>
+                                        </div>
+
+                                        <textarea 
+                                            rows="6" 
+                                            value={blastMessage} 
+                                            onChange={e => setBlastMessage(e.target.value)}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white font-sans leading-relaxed" 
+                                            placeholder="{Assalamu’alaikum | Assalamu’alaikum warahmatullahi wabarakatuh | Assalamu’alaikum Wr. Wb} {name}, kami dari Barakah Economy ingin mengabarkan informasi penting..." 
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Lampiran Gambar (Opsional)</label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1">
+                                                <input type="file" accept="image/*" id="user-blast-image" className="hidden" onChange={handleImageChange} />
+                                                <label htmlFor="user-blast-image" className="flex items-center justify-center gap-2 w-full p-2.5 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-emerald-300 transition group">
+                                                    <span className="material-icons text-gray-400 group-hover:text-emerald-500 text-sm">image</span>
+                                                    <span className="text-xs font-bold text-gray-500 group-hover:text-emerald-700">
+                                                        {blastImage ? 'Ganti Gambar Lampiran' : 'Pilih Gambar Lampiran...'}
+                                                    </span>
+                                                </label>
+                                            </div>
+                                            {blastImage && (
+                                                <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-xs shrink-0">
+                                                    <img src={blastImage} className="w-full h-full object-cover" alt="prev" />
+                                                    <button onClick={() => setBlastImage(null)} className="absolute top-0 right-0 w-4 h-4 bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
+                                                        <span className="material-icons text-[10px]">close</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                /* Live Preview Tab */
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-emerald-600 text-sm">preview</span>
+                                            <span className="text-xs font-bold text-emerald-950">Simulasi Hasil Pesan per Penerima</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewSeed(s => s + 1)}
+                                            className="px-3 py-1 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition"
+                                        >
+                                            <span className="material-icons text-xs">casino</span>
+                                            <span>Acak Ulang Variasi ({previewSeed})</span>
+                                        </button>
+                                    </div>
+
+                                    {/* WhatsApp Chat Bubble Mockup */}
+                                    <div className="bg-[#efeae2] p-4 rounded-2xl border border-gray-200 relative overflow-hidden">
+                                        <div className="max-w-[85%] bg-white rounded-2xl p-3 shadow-xs space-y-2 border border-gray-100">
+                                            {blastImage && (
+                                                <div className="rounded-xl overflow-hidden max-h-48 border border-gray-100">
+                                                    <img src={blastImage} alt="Lampiran" className="w-full h-auto object-cover" />
+                                                </div>
+                                            )}
+                                            <div className="text-xs text-gray-800 whitespace-pre-wrap font-sans leading-relaxed">
+                                                {blastMessage ? (
+                                                    resolveSpintaxPreview(blastMessage, users.find(u => selectedUserIds.includes(u.id)) || users[0])
+                                                ) : (
+                                                    <span className="text-gray-400 italic">Belum ada pesan yang ditulis...</span>
+                                                )}
+                                            </div>
+                                            <div className="text-[9px] text-gray-400 text-right flex items-center justify-end gap-1">
+                                                <span>10:30 WIB</span>
+                                                <span className="material-icons text-[12px] text-sky-500">done_all</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 text-center italic">
+                                        Klik tombol "Acak Ulang Variasi" di atas untuk melihat bagaimana kata pada Spintax berganti secara dinamis untuk tiap penerima.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Result Box with direct CRM History link */}
+                            {blastResult && (
+                                <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs space-y-2.5 shadow-xs">
+                                    <div className="flex items-center gap-2 text-emerald-950 font-black">
+                                        <span className="material-icons text-emerald-600">check_circle</span>
+                                        <span>Antrean WhatsApp Berhasil Dimasukkan!</span>
+                                    </div>
+                                    <p className="text-emerald-900 leading-relaxed">
+                                        {blastResult.message || `Antrean blast WhatsApp berhasil dibuat untuk ${selectedUserIds.length} user.`}
+                                    </p>
+                                    {blastResult.task_id && (
+                                        <div className="text-[11px] text-emerald-800 bg-white/70 px-3 py-1.5 rounded-xl border border-emerald-200 font-mono">
+                                            Task ID: <b>{blastResult.task_id}</b>
                                         </div>
                                     )}
-                                </div>
-                            </div>
-
-                            {blastResult && (
-                                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold">
-                                    {blastResult.message || `Antrean blast berhasil dibuat (Task ID: ${blastResult.task_id || '-'}).`}
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowBlastModal(false);
+                                                navigate('/dashboard/admin/broadcast-wa?tab=history');
+                                            }}
+                                            className="px-4 py-2 bg-emerald-700 text-white rounded-xl font-bold text-xs hover:bg-emerald-800 transition flex items-center gap-1.5 shadow-sm"
+                                        >
+                                            <span className="material-icons text-sm">history</span>
+                                            <span>Lihat Riwayat & Antrean di Broadcast WA ↗</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBlastResult(null)}
+                                            className="px-3 py-2 bg-white text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-100 border border-gray-200 transition"
+                                        >
+                                            Buat Lagi
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <div className="p-5 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
-                            <button onClick={() => setShowBlastModal(false)} className="px-5 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
-                            <button onClick={handleBlast} disabled={blasting || !blastMessage.trim()}
-                                className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2">
-                                <span className="material-icons text-sm">{blasting ? 'hourglass_top' : 'send'}</span>
-                                <span>{blasting ? 'Memproses Antrean...' : `Kirim Blast (${selectedUserIds.length})`}</span>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-gray-50 border-t flex flex-wrap justify-between items-center gap-2 rounded-b-3xl">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowBlastModal(false);
+                                    navigate('/dashboard/admin/broadcast-wa?tab=history');
+                                }}
+                                className="text-xs font-bold text-indigo-700 hover:text-indigo-900 hover:underline flex items-center gap-1"
+                            >
+                                <span className="material-icons text-xs">open_in_new</span>
+                                <span>Buka Riwayat Broadcast WA</span>
                             </button>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => {
+                                        setShowBlastModal(false);
+                                        setBlastResult(null);
+                                    }} 
+                                    className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-200 transition"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    onClick={handleBlast} 
+                                    disabled={blasting || !blastMessage.trim()}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-md hover:shadow-emerald-200 transition disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <span className="material-icons text-sm">{blasting ? 'hourglass_top' : 'send'}</span>
+                                    <span>{blasting ? 'Memproses Antrean...' : `Kirim Blast WA (${selectedUserIds.length})`}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

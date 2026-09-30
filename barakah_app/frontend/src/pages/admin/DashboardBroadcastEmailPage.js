@@ -168,7 +168,7 @@ export default function DashboardBroadcastEmailPage() {
             const params = { page_size: 1000 };
             if (userSearchQuery) params.search = userSearchQuery;
             if (userRoleFilter !== 'all') params.role = userRoleFilter;
-            const res = await api.get('/api/auth/users/', { params });
+            const res = await api.get('/auth/users/', { params });
             const list = res.data.results || res.data || [];
             // Filter only users with valid email
             const valid = list.filter(u => u.email && u.email.includes('@'));
@@ -190,7 +190,7 @@ export default function DashboardBroadcastEmailPage() {
     const fetchActiveTasks = useCallback(async () => {
         try {
             setLoadingTasks(true);
-            const res = await api.get('/api/auth/users/blast_queue_status/');
+            const res = await api.get('/auth/users/blast_queue_status/');
             const tasks = res.data?.tasks || [];
             // Filter or display tasks
             setActiveTasks(tasks.filter(t => t.task_type === 'email' || t.status === 'processing' || t.status === 'queued'));
@@ -332,7 +332,7 @@ export default function DashboardBroadcastEmailPage() {
                 formData.append('attachments', file);
             });
 
-            const res = await api.post('/api/auth/users/custom_blast_email/', formData, {
+            const res = await api.post('/auth/users/custom_blast_email/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setTestResult({ type: 'success', message: res.data.message || 'Email uji coba berhasil dikirim!' });
@@ -392,7 +392,7 @@ export default function DashboardBroadcastEmailPage() {
                 formData.append('attachments', file);
             });
 
-            const res = await api.post('/api/auth/users/custom_blast_email/', formData, {
+            const res = await api.post('/auth/users/custom_blast_email/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -417,7 +417,7 @@ export default function DashboardBroadcastEmailPage() {
     const handleCancelTask = async (taskId) => {
         if (!window.confirm('Batalkan pengiriman antrian email ini?')) return;
         try {
-            await api.post('/api/auth/users/cancel_blast_task/', { task_id: taskId });
+            await api.post('/auth/users/cancel_blast_task/', { task_id: taskId });
             alert('Antrian pengiriman berhasil dibatalkan.');
             fetchActiveTasks();
         } catch (err) {

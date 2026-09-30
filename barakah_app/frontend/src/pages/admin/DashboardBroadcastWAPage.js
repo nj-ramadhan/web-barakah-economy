@@ -170,6 +170,11 @@ const DashboardBroadcastWAPage = () => {
         fetchDevices();
         fetchQueueStatus();
         fetchUsersList();
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'history') {
+            setActiveMainTab('history');
+        }
     }, [fetchDevices, fetchQueueStatus]);
 
     // Auto-poll queue status every 3.5 seconds if there are active tasks
@@ -1146,6 +1151,14 @@ const DashboardBroadcastWAPage = () => {
                                 <span className="text-gray-300 mx-1">|</span>
 
                                 <span className="text-[10px] font-black uppercase text-indigo-700 px-1">Spintax (Anti-Ban):</span>
+                                <button
+                                    type="button"
+                                    onClick={() => insertIntoMessage("{Assalamu’alaikum | Assalamu’alaikum warahmatullahi wabarakatuh | Assalamu’alaikum Wr. Wb}")}
+                                    className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-mono font-bold border border-emerald-300 shadow-xs transition"
+                                    title="Pilihan salam islami acak per nomor: {Assalamu’alaikum | Assalamu’alaikum warahmatullahi wabarakatuh | Assalamu’alaikum Wr. Wb}"
+                                >
+                                    {'{Salam Islami}'}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => insertIntoMessage("{Halo|Hai|Assalamu'alaikum}")}

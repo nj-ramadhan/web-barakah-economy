@@ -1070,11 +1070,40 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(UserAdminSerializer(user).data, status=status.HTTP_201_CREATED)
 
+    def _get_query_param_list(self, *param_names):
+        """
+        Safely extract list of values from query params, handling:
+        - Multiple query params: ?param=1&param=2
+        - Comma-separated query params: ?param=1,2
+        - Combined: ?param=1,2&param=3
+        - Alternative param aliases: ?label=... or ?labels=...
+        """
+        qp = getattr(self.request, 'query_params', getattr(self.request, 'GET', {}))
+        raw_list = []
+        for name in param_names:
+            if hasattr(qp, 'getlist'):
+                raw_list.extend(qp.getlist(name))
+            val = qp.get(name) if hasattr(qp, 'get') else None
+            if val and val not in raw_list:
+                raw_list.append(val)
+
+        cleaned = []
+        for item in raw_list:
+            if isinstance(item, str):
+                for part in item.split(','):
+                    p = part.strip()
+                    if p and p not in cleaned:
+                        cleaned.append(p)
+            elif item is not None and item not in cleaned:
+                cleaned.append(item)
+        return cleaned
+
     def get_queryset(self):
         qs = super().get_queryset()
+        qp = getattr(self.request, 'query_params', getattr(self.request, 'GET', {}))
         
         # Search across multiple fields
-        search = self.request.query_params.get('search', '').strip()
+        search = (qp.get('search', '') if hasattr(qp, 'get') else '').strip()
         if search:
             phone_digits = ''.join(filter(str.isdigit, search))
             search_filter = (
@@ -1096,67 +1125,87 @@ class UserViewSet(viewsets.ModelViewSet):
 
             qs = qs.filter(search_filter)
 
-        # Filter by role (supports single, comma-separated, or list)
-        roles = self.request.query_params.getlist('role') or self.request.query_params.getlist('roles')
-        if not roles and self.request.query_params.get('role'):
-            roles = [r.strip() for r in self.request.query_params.get('role').split(',') if r.strip()]
+        # Filter by role (OR logic: user with role A OR role B)
+        roles = self._get_query_param_list('role', 'roles')
         if roles:
             qs = qs.filter(role__in=roles)
 
-        # Filter by religion (agama) (supports single, comma-separated, or list)
-        agamas = self.request.query_params.getlist('agama') or self.request.query_params.getlist('agamas')
-        if not agamas and self.request.query_params.get('agama'):
-            agamas = [a.strip() for a in self.request.query_params.get('agama').split(',') if a.strip()]
+        # Filter by religion / agama (OR logic)
+        agamas = self._get_query_param_list('agama', 'agamas')
         if agamas:
             qs = qs.filter(profile__agama__in=agamas)
 
-        # Filter by custom role (supports single, comma-separated, or list)
-        custom_roles = self.request.query_params.getlist('custom_role') or self.request.query_params.getlist('custom_roles')
-        if not custom_roles and self.request.query_params.get('custom_role'):
-            custom_roles = [c.strip() for c in self.request.query_params.get('custom_role').split(',') if c.strip()]
+        # Filter by custom role (OR logic: user with custom role A OR custom role B)
+        custom_roles = self._get_query_param_list('custom_role', 'custom_roles')
         if custom_roles:
-            qs = qs.filter(custom_roles__id__in=custom_roles).distinct()
+            cr_ids = [int(v) for v in custom_roles if str(v).isdigit()]
+            cr_names = [v for v in custom_roles if not str(v).isdigit()]
+            cr_q = Q()
+            if cr_ids:
+                cr_q |= Q(custom_roles__id__in=cr_ids)
+            if cr_names:
+                cr_q |= Q(custom_roles__name__in=cr_names) | Q(custom_roles__code__in=cr_names)
+            if cr_q:
+                qs = qs.filter(cr_q).distinct()
 
-        # Filter by label (supports single, comma-separated, or list)
-        labels = self.request.query_params.getlist('label') or self.request.query_params.getlist('labels')
-        if not labels and self.request.query_params.get('label'):
-            labels = [l.strip() for l in self.request.query_params.get('label').split(',') if l.strip()]
+        # Filter by label (OR logic: user with label A OR label B)
+        labels = self._get_query_param_list('label', 'labels')
         if labels:
-            qs = qs.filter(labels__id__in=labels).distinct()
+            label_ids = [int(v) for v in labels if str(v).isdigit()]
+            label_names = [v for v in labels if not str(v).isdigit()]
+            label_q = Q()
+            if label_ids:
+                label_q |= Q(labels__id__in=label_ids)
+            if label_names:
+                label_q |= Q(labels__name__in=label_names) | Q(labels__code__in=label_names)
+            if label_q:
+                qs = qs.filter(label_q).distinct()
 
-        # Filter by lingkup tugas (supports single, comma-separated, or list)
-        lingkup_list = self.request.query_params.getlist('lingkup_tugas')
-        if not lingkup_list and self.request.query_params.get('lingkup_tugas'):
-            lingkup_list = [l.strip() for l in self.request.query_params.get('lingkup_tugas').split(',') if l.strip()]
+        # Filter by lingkup tugas (OR logic: user with lingkup A OR lingkup B)
+        lingkup_list = self._get_query_param_list('lingkup_tugas', 'lingkup')
         if lingkup_list:
-            qs = qs.filter(lingkup_tugas__id__in=lingkup_list).distinct()
+            l_ids = [int(v) for v in lingkup_list if str(v).isdigit()]
+            l_names = [v for v in lingkup_list if not str(v).isdigit()]
+            l_q = Q()
+            if l_ids:
+                l_q |= Q(lingkup_tugas__id__in=l_ids)
+            if l_names:
+                l_q |= Q(lingkup_tugas__name__in=l_names) | Q(lingkup_tugas__code__in=l_names)
+            if l_q:
+                qs = qs.filter(l_q).distinct()
 
-        # Filter by bidang tugas (supports single, comma-separated, or list)
-        bidang_list = self.request.query_params.getlist('bidang_tugas')
-        if not bidang_list and self.request.query_params.get('bidang_tugas'):
-            bidang_list = [b.strip() for b in self.request.query_params.get('bidang_tugas').split(',') if b.strip()]
+        # Filter by bidang tugas (OR logic: user with bidang A OR bidang B)
+        bidang_list = self._get_query_param_list('bidang_tugas', 'bidang')
         if bidang_list:
-            qs = qs.filter(bidang_tugas__id__in=bidang_list).distinct()
+            b_ids = [int(v) for v in bidang_list if str(v).isdigit()]
+            b_names = [v for v in bidang_list if not str(v).isdigit()]
+            b_q = Q()
+            if b_ids:
+                b_q |= Q(bidang_tugas__id__in=b_ids)
+            if b_names:
+                b_q |= Q(bidang_tugas__name__in=b_names) | Q(bidang_tugas__code__in=b_names)
+            if b_q:
+                qs = qs.filter(b_q).distinct()
 
         # Filter by join date range
-        date_from = self.request.query_params.get('date_from', '')
-        date_to = self.request.query_params.get('date_to', '')
+        date_from = (qp.get('date_from', '') if hasattr(qp, 'get') else '').strip()
+        date_to = (qp.get('date_to', '') if hasattr(qp, 'get') else '').strip()
         if date_from:
             qs = qs.filter(date_joined__date__gte=date_from)
         if date_to:
             qs = qs.filter(date_joined__date__lte=date_to)
 
-        # Filter by verified status (supports true, false, or comma-separated)
-        verified = self.request.query_params.get('verified', '')
+        # Filter by verified status
+        verified = self._get_query_param_list('verified')
         if verified:
-            v_parts = [v.strip().lower() for v in verified.split(',') if v.strip()]
+            v_parts = [str(v).lower() for v in verified]
             if 'true' in v_parts and 'false' not in v_parts:
                 qs = qs.filter(is_verified_member=True)
             elif 'false' in v_parts and 'true' not in v_parts:
                 qs = qs.filter(is_verified_member=False)
 
         # Sorting
-        ordering = self.request.query_params.get('ordering', '-date_joined')
+        ordering = qp.get('ordering', '-date_joined') if hasattr(qp, 'get') else '-date_joined'
         allowed_orderings = [
             'username', '-username', 'email', '-email', 'role', '-role',
             'date_joined', '-date_joined', 'last_login', '-last_login',
@@ -1491,9 +1540,37 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        result = blast_messages(phone_list, message_template, placeholder_data_list, file_data_base64=image_base64, created_by_user_id=request.user.id)
+        campaign_title = request.data.get('title') or request.data.get('campaign_title')
+        if not campaign_title:
+            from django.utils import timezone
+            now_local = timezone.localtime(timezone.now()) if timezone.is_aware(timezone.now()) else timezone.now()
+            campaign_title = f"Broadcast Manajemen User ({len(phone_list)} Kontak) - {now_local.strftime('%d %b %Y, %H:%M')} WIB"
+
+        min_delay = max(10.0, float(request.data.get('min_delay', 15.0)))
+        max_delay = max(min_delay, float(request.data.get('max_delay', 30.0)))
+        device_id = request.data.get('device_id') or None
+        filename = request.data.get('filename', 'broadcast.jpg')
+
+        result = blast_messages(
+            phone_list=phone_list,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data_list,
+            file_data_base64=image_base64,
+            filename=filename,
+            use_queue=True,
+            delay_seconds=15.0,
+            min_delay=min_delay,
+            max_delay=max_delay,
+            created_by_user_id=request.user.id,
+            device_id=device_id,
+            campaign_title=campaign_title,
+            campaign_source='user_management'
+        )
         return Response({
+            "success": True,
             "message": result.get('message', f"Blast WhatsApp dimasukkan ke antrian ({len(phone_list)} nomor)."),
+            "task_id": result.get('task_id'),
+            "total_recipients": len(phone_list),
             "details": result
         })
 
