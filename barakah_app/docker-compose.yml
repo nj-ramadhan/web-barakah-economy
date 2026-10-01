@@ -38,7 +38,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     networks:
       - bae_network
     volumes:
@@ -53,7 +53,7 @@ services:
     container_name: bae_frontend
     restart: always
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     networks:
       - bae_network
 
@@ -79,9 +79,9 @@ services:
     environment:
       - MTX_PROTOCOLS=tcp
     ports:
-      - "8889:8889"   # WebRTC / WHIP endpoint (browser live streaming)
-      - "8888:8888"   # HLS output (viewers can watch HP stream)
-      - "9997:9997"   # MediaMTX API (for Django backend status check)
+      - "127.0.0.1:8889:8889"   # WebRTC / WHIP endpoint (browser live streaming via nginx)
+      - "127.0.0.1:8888:8888"   # HLS output (viewers via nginx)
+      - "127.0.0.1:9997:9997"   # MediaMTX API (internal only)
       - "8189:8189/udp" # WebRTC UDP media port (for audio/video data)
     volumes:
       - ./mediamtx.yml:/mediamtx.yml

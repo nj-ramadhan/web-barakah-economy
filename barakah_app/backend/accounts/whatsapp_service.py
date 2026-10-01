@@ -18,7 +18,7 @@ logger = logging.getLogger('accounts')
 # Config from settings/env with defaults from the PHP reference
 WA_API_URL = getattr(settings, 'WHATSAPP_API_URL', 'https://bae.dailykas.com')
 WA_API_USER = getattr(settings, 'WHATSAPP_API_USER', 'admin')
-WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'admin123')
+WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'galanmild123')
 
 _cached_device_ids = []
 _cached_device_time = 0
