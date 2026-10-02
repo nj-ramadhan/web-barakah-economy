@@ -467,13 +467,45 @@ def _process_task(task):
                     
                     is_decorated = task.extra_data.get('is_decorated', False)
                     attachments = task.extra_data.get('attachments', [])
-                    
+                    hero_image_bytes = task.extra_data.get('hero_image_bytes')
+                    hero_image_filename = task.extra_data.get('hero_image_filename')
+                    hero_image_mime = task.extra_data.get('hero_image_mime') or 'image/jpeg'
+                    hero_image_url = task.extra_data.get('hero_image_url', '')
+
+                    inline_images = []
+                    clean_hero_url = hero_image_url
+                    if hero_image_bytes:
+                        sub_type = 'jpeg'
+                        if 'png' in (hero_image_mime or '').lower() or (hero_image_filename or '').lower().endswith('.png'):
+                            sub_type = 'png'
+                        elif 'webp' in (hero_image_mime or '').lower():
+                            sub_type = 'webp'
+                        elif 'gif' in (hero_image_mime or '').lower():
+                            sub_type = 'gif'
+                        
+                        inline_images.append({
+                            'cid': 'broadcast_hero_image',
+                            'data': hero_image_bytes,
+                            'subtype': sub_type,
+                            'filename': hero_image_filename or f'hero.{sub_type}'
+                        })
+                        clean_hero_url = 'cid:broadcast_hero_image'
+
+                    # Prepare attachment summaries for visual card inside email body
+                    att_summaries = []
+                    if attachments:
+                        for att in attachments:
+                            if isinstance(att, tuple) and len(att) >= 2:
+                                fname = att[0]
+                                size_kb = len(att[1]) // 1024 if isinstance(att[1], (bytes, bytearray)) else 0
+                                att_summaries.append((fname, f"{size_kb} KB" if size_kb > 0 else ""))
+
                     if is_decorated:
                         html_content = render_promotional_email_html(
                             title=task.extra_data.get('header_title') or subject,
                             subtitle=task.extra_data.get('header_subtitle', ''),
                             message=message,
-                            hero_image_url=task.extra_data.get('hero_image_url', ''),
+                            hero_image_url=clean_hero_url,
                             badge_text=task.extra_data.get('badge_text', ''),
                             theme_color=task.extra_data.get('theme_color', '#059669'),
                             cta_text=task.extra_data.get('cta_text', ''),
@@ -481,14 +513,16 @@ def _process_task(task):
                             secondary_links=task.extra_data.get('secondary_links', []),
                             footer_text=task.extra_data.get('footer_text', ''),
                             recipient_name=recipient_name,
-                            recipient_email=email
+                            recipient_email=email,
+                            attachment_files=att_summaries
                         )
                     else:
                         html_content = render_standard_email_html(
                             message=message,
                             title=subject,
                             footer_text=task.extra_data.get('footer_text', ''),
-                            recipient_email=email
+                            recipient_email=email,
+                            attachment_files=att_summaries
                         )
 
                     task_data['current_item'] = email
@@ -500,6 +534,7 @@ def _process_task(task):
                         recipient_list=[email],
                         attachments=attachments,
                         html_message=html_content,
+                        inline_images=inline_images,
                         fail_silently=True
                     )
                     task_data['processed_count'] += 1
@@ -857,6 +892,9 @@ def enqueue_email_blast(
     header_title='',
     header_subtitle='',
     hero_image_url='',
+    hero_image_bytes=None,
+    hero_image_filename=None,
+    hero_image_mime=None,
     badge_text='',
     theme_color='#059669',
     cta_text='',
@@ -920,6 +958,9 @@ def enqueue_email_blast(
             'header_title': header_title,
             'header_subtitle': header_subtitle,
             'hero_image_url': hero_image_url,
+            'hero_image_bytes': hero_image_bytes,
+            'hero_image_filename': hero_image_filename,
+            'hero_image_mime': hero_image_mime,
             'badge_text': badge_text,
             'theme_color': theme_color or '#059669',
             'cta_text': cta_text,

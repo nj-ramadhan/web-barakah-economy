@@ -130,6 +130,8 @@ export default function DashboardBroadcastEmailPage() {
     const [badgeText, setBadgeText] = useState('PENAWARAN SPESIAL');
     const [heroImageUrl, setHeroImageUrl] = useState('');
     const [heroImageFile, setHeroImageFile] = useState(null);
+    const [uploadingHero, setUploadingHero] = useState(false);
+    const [uploadHeroError, setUploadHeroError] = useState(null);
     const [ctaText, setCtaText] = useState('Klaim Promo & Belanja Sekarang');
     const [ctaUrl, setCtaUrl] = useState('https://barakaheconomy.id/store');
     const [footerText, setFooterText] = useState('Barakah Economy • Platform Ekosistem Ekonomi Keumatan Mandiri\nEmail ini dikirim secara otomatis kepada mitra dan anggota terdaftar.');
@@ -276,15 +278,36 @@ export default function DashboardBroadcastEmailPage() {
         setAttachments(prev => prev.filter((_, i) => i !== idx));
     };
 
-    const handleHeroImageChange = (e) => {
+    const handleHeroImageChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setHeroImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setHeroImageUrl(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        setHeroImageFile(file);
+        setUploadHeroError(null);
+
+        // Immediate local preview via FileReader
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setHeroImageUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to server immediately to obtain permanent hosted URL & avoid Gmail >102KB clipping
+        setUploadingHero(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const res = await api.post('/auth/users/upload_broadcast_image/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data?.url) {
+                setHeroImageUrl(res.data.url);
+            }
+        } catch (err) {
+            console.warn('Gagal upload banner langsung, file akan diunggah saat broadcast:', err);
+            setUploadHeroError('Gambar akan diunggah dan dioptimasi otomatis saat email dikirim.');
+        } finally {
+            setUploadingHero(false);
         }
     };
 
@@ -320,6 +343,9 @@ export default function DashboardBroadcastEmailPage() {
             formData.append('is_decorated', isDecorated ? 'true' : 'false');
             formData.append('header_title', headerTitle);
             formData.append('header_subtitle', headerSubtitle);
+            if (heroImageFile) {
+                formData.append('hero_image_file', heroImageFile);
+            }
             formData.append('hero_image_url', heroImageUrl);
             formData.append('badge_text', badgeText);
             formData.append('theme_color', themeColor);
@@ -374,6 +400,9 @@ export default function DashboardBroadcastEmailPage() {
             formData.append('is_decorated', isDecorated ? 'true' : 'false');
             formData.append('header_title', headerTitle);
             formData.append('header_subtitle', headerSubtitle);
+            if (heroImageFile) {
+                formData.append('hero_image_file', heroImageFile);
+            }
             formData.append('hero_image_url', heroImageUrl);
             formData.append('badge_text', badgeText);
             formData.append('theme_color', themeColor);
@@ -889,34 +918,54 @@ export default function DashboardBroadcastEmailPage() {
 
                                         {/* Banner / Hero Image */}
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-gray-500 block">Banner / Gambar Hero Utama</label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[11px] font-bold text-gray-500 block">Banner / Gambar Hero Utama</label>
+                                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                    ✓ Anti-Potong Gmail (&lt; 100 KB)
+                                                </span>
+                                            </div>
                                             <div className="flex flex-col sm:flex-row items-center gap-3">
                                                 <input
                                                     type="text"
-                                                    value={heroImageUrl}
+                                                    value={heroImageUrl.startsWith('data:') ? 'Gambar Terpilih (Base64/File Siap Dioptimasi)' : heroImageUrl}
                                                     onChange={e => setHeroImageUrl(e.target.value)}
                                                     placeholder="Masukkan URL gambar (https://...)..."
                                                     className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none"
                                                 />
                                                 <span className="text-[11px] text-gray-400 font-bold">atau</span>
                                                 <label className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-1.5 transition">
-                                                    <span className="material-icons text-sm text-emerald-700">upload</span>
-                                                    <span>Upload File</span>
-                                                    <input type="file" accept="image/*" className="hidden" onChange={handleHeroImageChange} />
+                                                    {uploadingHero ? (
+                                                        <>
+                                                            <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-emerald-600"></div>
+                                                            <span>Mengunggah...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="material-icons text-sm text-emerald-700">upload</span>
+                                                            <span>Upload File</span>
+                                                        </>
+                                                    )}
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleHeroImageChange} disabled={uploadingHero} />
                                                 </label>
                                                 {heroImageUrl && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setHeroImageUrl('')}
+                                                        onClick={() => { setHeroImageUrl(''); setHeroImageFile(null); }}
                                                         className="text-xs text-red-500 hover:underline"
                                                     >
                                                         Hapus Gambar
                                                     </button>
                                                 )}
                                             </div>
+                                            {uploadHeroError && (
+                                                <p className="text-[10px] text-amber-600">{uploadHeroError}</p>
+                                            )}
                                             {heroImageUrl && (
-                                                <div className="mt-2 w-full max-h-36 rounded-2xl overflow-hidden border border-gray-200 bg-black/5 flex items-center justify-center">
-                                                    <img src={heroImageUrl} alt="Hero Preview" className="max-h-36 w-full object-cover" />
+                                                <div className="mt-2 w-full max-h-40 rounded-2xl overflow-hidden border border-gray-200 bg-black/5 flex items-center justify-center relative group">
+                                                    <img src={heroImageUrl} alt="Hero Preview" className="max-h-40 w-full object-cover" />
+                                                    <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                                                        {heroImageFile ? `${heroImageFile.name} (${(heroImageFile.size / 1024).toFixed(0)} KB)` : 'Gambar Banner'}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

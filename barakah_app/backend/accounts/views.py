@@ -1804,6 +1804,70 @@ class UserViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=False, methods=['post'])
+    def upload_broadcast_image(self, request):
+        """
+        Upload an image for email broadcast banners or newsletters.
+        Saves file to media/broadcast_images and returns the absolute public URL.
+        """
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
+        
+        uploaded_file = request.FILES.get('image') or request.FILES.get('file')
+        base64_data = request.data.get('base64_data') or request.data.get('image_url')
+        
+        import os, uuid, base64
+        from django.conf import settings
+        
+        media_subfolder = 'broadcast_images'
+        target_dir = os.path.join(settings.MEDIA_ROOT, media_subfolder)
+        os.makedirs(target_dir, exist_ok=True)
+        
+        saved_filename = None
+        file_bytes = b''
+        content_type = 'image/jpeg'
+        
+        if uploaded_file:
+            ext = os.path.splitext(uploaded_file.name)[1].lower() or '.jpg'
+            if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                ext = '.jpg'
+            safe_name = f"hero_{uuid.uuid4().hex[:12]}{ext}"
+            saved_filename = safe_name
+            full_path = os.path.join(target_dir, safe_name)
+            
+            with open(full_path, 'wb+') as dest:
+                for chunk in uploaded_file.chunks():
+                    dest.write(chunk)
+            
+            with open(full_path, 'rb') as f:
+                file_bytes = f.read()
+            content_type = getattr(uploaded_file, 'content_type', 'image/jpeg')
+            
+        elif base64_data and str(base64_data).startswith('data:image'):
+            hdr, encoded = str(base64_data).split(',', 1)
+            ext = '.png' if 'png' in hdr else ('.webp' if 'webp' in hdr else '.jpg')
+            content_type = hdr.split(';')[0].split(':')[1] if ':' in hdr else 'image/jpeg'
+            safe_name = f"hero_{uuid.uuid4().hex[:12]}{ext}"
+            saved_filename = safe_name
+            full_path = os.path.join(target_dir, safe_name)
+            file_bytes = base64.b64decode(encoded)
+            with open(full_path, 'wb') as dest:
+                dest.write(file_bytes)
+        else:
+            return Response({'error': 'Tidak ada file gambar atau data base64 yang valid.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        rel_url = f"{settings.MEDIA_URL}{media_subfolder}/{saved_filename}".replace('//', '/')
+        abs_url = request.build_absolute_uri(rel_url)
+        if 'barakah.cloud' in abs_url and abs_url.startswith('http://'):
+            abs_url = abs_url.replace('http://', 'https://', 1)
+            
+        return Response({
+            'url': abs_url,
+            'filename': saved_filename,
+            'size': len(file_bytes),
+            'content_type': content_type
+        })
+
+    @action(detail=False, methods=['post'])
     def custom_blast_email(self, request):
         """
         Send custom email broadcast to arbitrary list of emails (comma/newline separated or list)
@@ -1813,7 +1877,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
             return Response({"error": "Akses ditolak. Fitur ini hanya untuk Admin."}, status=status.HTTP_403_FORBIDDEN)
 
-        import json
+        import json, os, uuid, base64, mimetypes, logging
+        logger = logging.getLogger('barakah_app')
+
         raw_emails = request.data.get('emails', [])
         subject = request.data.get('subject', '').strip()
         message_template = request.data.get('message', '').strip()
@@ -1823,7 +1889,7 @@ class UserViewSet(viewsets.ModelViewSet):
         is_decorated = str(request.data.get('is_decorated', '')).lower() in ['true', '1']
         header_title = request.data.get('header_title', '')
         header_subtitle = request.data.get('header_subtitle', '')
-        hero_image_url = request.data.get('hero_image_url', '')
+        hero_image_url = request.data.get('hero_image_url', '').strip()
         badge_text = request.data.get('badge_text', '')
         theme_color = request.data.get('theme_color', '#059669')
         cta_text = request.data.get('cta_text', '')
@@ -1842,6 +1908,74 @@ class UserViewSet(viewsets.ModelViewSet):
         if not subject or not message_template:
             return Response({'error': 'Subjek dan pesan email wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Process Hero Image (from file upload or base64) to avoid Gmail clipping (>102KB) & broken proxy images
+        from django.conf import settings
+        hero_image_file = request.FILES.get('hero_image_file')
+        hero_image_bytes = None
+        hero_image_filename = None
+        hero_image_mime = 'image/jpeg'
+        clean_hero_url = hero_image_url
+        target_hero_dir = os.path.join(settings.MEDIA_ROOT, 'broadcast_images')
+        os.makedirs(target_hero_dir, exist_ok=True)
+
+        if hero_image_file:
+            ext = os.path.splitext(hero_image_file.name)[1].lower() or '.jpg'
+            safe_name = f"hero_{uuid.uuid4().hex[:12]}{ext}"
+            full_path = os.path.join(target_hero_dir, safe_name)
+            hero_image_file.seek(0)
+            file_data = hero_image_file.read()
+            with open(full_path, 'wb') as dest:
+                dest.write(file_data)
+            hero_image_bytes = file_data
+            hero_image_filename = safe_name
+            hero_image_mime = getattr(hero_image_file, 'content_type', 'image/jpeg')
+            clean_hero_url = f"https://api.barakah.cloud{settings.MEDIA_URL}broadcast_images/{safe_name}"
+
+        elif clean_hero_url.startswith('data:image'):
+            try:
+                hdr, encoded = clean_hero_url.split(',', 1)
+                ext = '.png' if 'png' in hdr else ('.webp' if 'webp' in hdr else '.jpg')
+                safe_name = f"hero_{uuid.uuid4().hex[:12]}{ext}"
+                full_path = os.path.join(target_hero_dir, safe_name)
+                decoded_data = base64.b64decode(encoded)
+                with open(full_path, 'wb') as dest:
+                    dest.write(decoded_data)
+                hero_image_bytes = decoded_data
+                hero_image_filename = safe_name
+                hero_image_mime = hdr.split(';')[0].split(':')[1] if ':' in hdr else 'image/jpeg'
+                clean_hero_url = f"https://api.barakah.cloud{settings.MEDIA_URL}broadcast_images/{safe_name}"
+            except Exception as b64_err:
+                logger.error(f"Error decoding base64 broadcast image: {b64_err}")
+
+        elif clean_hero_url and '/media/broadcast_images/' in clean_hero_url:
+            try:
+                fname = clean_hero_url.split('/media/broadcast_images/')[-1].split('?')[0]
+                loc_path = os.path.join(target_hero_dir, fname)
+                if os.path.exists(loc_path):
+                    with open(loc_path, 'rb') as f:
+                        hero_image_bytes = f.read()
+                    hero_image_filename = fname
+                    hero_image_mime = mimetypes.guess_type(fname)[0] or 'image/jpeg'
+            except Exception:
+                pass
+
+        # Process attachments into memory tuples (name, bytes, mime) so they can be attached reliably
+        processed_attachments = []
+        att_summaries = []
+        for att in attachments:
+            if hasattr(att, 'read'):
+                if hasattr(att, 'seek'):
+                    att.seek(0)
+                file_content = att.read()
+                c_type = getattr(att, 'content_type', 'application/octet-stream')
+                processed_attachments.append((att.name, file_content, c_type))
+                size_kb = len(file_content) // 1024
+                att_summaries.append((att.name, f"{size_kb} KB" if size_kb > 0 else ""))
+            elif isinstance(att, tuple) and len(att) >= 2:
+                processed_attachments.append(att)
+                size_kb = len(att[1]) // 1024 if isinstance(att[1], (bytes, bytearray)) else 0
+                att_summaries.append((att[0], f"{size_kb} KB" if size_kb > 0 else ""))
+
         # Handle test send directly to admin email
         if test_to_self:
             admin_email = request.user.email
@@ -1854,12 +1988,30 @@ class UserViewSet(viewsets.ModelViewSet):
             parsed_sub = parse_spintax(subject).replace('{name}', getattr(request.user, 'username', 'Admin')).replace('{email}', admin_email)
             parsed_msg = parse_spintax(message_template).replace('{name}', getattr(request.user, 'username', 'Admin')).replace('{email}', admin_email)
             
+            inline_images = []
+            test_hero_url = clean_hero_url
+            if hero_image_bytes:
+                sub_type = 'jpeg'
+                if 'png' in (hero_image_mime or '').lower():
+                    sub_type = 'png'
+                elif 'webp' in (hero_image_mime or '').lower():
+                    sub_type = 'webp'
+                elif 'gif' in (hero_image_mime or '').lower():
+                    sub_type = 'gif'
+                inline_images.append({
+                    'cid': 'broadcast_hero_image',
+                    'data': hero_image_bytes,
+                    'subtype': sub_type,
+                    'filename': hero_image_filename or f'hero.{sub_type}'
+                })
+                test_hero_url = 'cid:broadcast_hero_image'
+
             if is_decorated:
                 html_body = render_promotional_email_html(
                     title=header_title or parsed_sub,
                     subtitle=header_subtitle,
                     message=parsed_msg,
-                    hero_image_url=hero_image_url,
+                    hero_image_url=test_hero_url,
                     badge_text=badge_text,
                     theme_color=theme_color,
                     cta_text=cta_text,
@@ -1867,21 +2019,17 @@ class UserViewSet(viewsets.ModelViewSet):
                     secondary_links=secondary_links,
                     footer_text=footer_text,
                     recipient_name=getattr(request.user, 'username', 'Admin'),
-                    recipient_email=admin_email
+                    recipient_email=admin_email,
+                    attachment_files=att_summaries
                 )
             else:
                 html_body = render_standard_email_html(
                     message=parsed_msg,
                     title=parsed_sub,
                     footer_text=footer_text,
-                    recipient_email=admin_email
+                    recipient_email=admin_email,
+                    attachment_files=att_summaries
                 )
-            
-            processed_attachments = []
-            for att in attachments:
-                if hasattr(att, 'read'):
-                    att.seek(0)
-                    processed_attachments.append((att.name, att.read(), getattr(att, 'content_type', 'application/octet-stream')))
 
             ok = send_email(
                 subject=f"[TEST] {parsed_sub}",
@@ -1889,6 +2037,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 recipient_list=[admin_email],
                 attachments=processed_attachments,
                 html_message=html_body,
+                inline_images=inline_images,
                 fail_silently=False
             )
             if ok:
@@ -1931,7 +2080,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 e_str = str(item)
 
             e_clean = str(e_str).strip().lower()
-            # Clean up potential extra wrapper characters
             e_clean = e_clean.strip('\'"[]{}()<>,; \t\r\n')
 
             if not email_regex.match(e_clean):
@@ -1941,7 +2089,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 seen_emails.add(e_clean)
                 email_list.append(e_clean)
                 
-                # Check DB for user profile if name not provided
                 if not c_name:
                     db_u = User.objects.filter(email=e_clean).select_related('profile').first()
                     if db_u:
@@ -1963,7 +2110,7 @@ class UserViewSet(viewsets.ModelViewSet):
             subject=subject,
             message_template=message_template,
             placeholder_data_list=placeholder_data_list,
-            attachments=attachments,
+            attachments=processed_attachments,
             delay_seconds=(min_delay + max_delay) / 2.0,
             min_delay=min_delay,
             max_delay=max_delay,
@@ -1971,7 +2118,10 @@ class UserViewSet(viewsets.ModelViewSet):
             is_decorated=is_decorated,
             header_title=header_title,
             header_subtitle=header_subtitle,
-            hero_image_url=hero_image_url,
+            hero_image_url=clean_hero_url,
+            hero_image_bytes=hero_image_bytes,
+            hero_image_filename=hero_image_filename,
+            hero_image_mime=hero_image_mime,
             badge_text=badge_text,
             theme_color=theme_color,
             cta_text=cta_text,

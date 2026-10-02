@@ -17,11 +17,13 @@ def render_promotional_email_html(
     secondary_links=None,
     footer_text="",
     recipient_name="",
-    recipient_email=""
+    recipient_email="",
+    attachment_files=None
 ):
     """
     Generate responsive, highly-compatible HTML email template for promotional/newsletter emails.
     Compatible with Gmail, Apple Mail, Outlook, Yahoo, and mobile clients.
+    Guarantees lightweight payload (< 100 KB) to prevent Gmail email clipping ('Pesan dipotong').
     """
     theme_color = theme_color or '#059669'
     title = title or 'Barakah Economy'
@@ -36,13 +38,32 @@ def render_promotional_email_html(
     # Preheader snippet for inbox preview
     plain_snippet = re.sub(r'<[^>]+>', '', message)[:120]
     
+    # Clean hero image URL: If it contains huge raw base64 data URI, never embed it directly into HTML!
+    clean_hero_url = (hero_image_url or '').strip()
+    if clean_hero_url.startswith('data:image'):
+        # Auto-save base64 data into media directory to prevent email truncation
+        try:
+            import os, uuid, base64
+            from django.conf import settings
+            target_dir = os.path.join(settings.MEDIA_ROOT, 'broadcast_images')
+            os.makedirs(target_dir, exist_ok=True)
+            hdr, encoded = clean_hero_url.split(',', 1)
+            ext = '.png' if 'png' in hdr else ('.webp' if 'webp' in hdr else '.jpg')
+            fname = f"auto_{uuid.uuid4().hex[:12]}{ext}"
+            fpath = os.path.join(target_dir, fname)
+            with open(fpath, 'wb') as f:
+                f.write(base64.b64decode(encoded))
+            clean_hero_url = f"https://api.barakah.cloud{settings.MEDIA_URL}broadcast_images/{fname}"
+        except Exception:
+            clean_hero_url = 'cid:broadcast_hero_image'
+
     # Hero image tag
     hero_html = ''
-    if hero_image_url and hero_image_url.strip():
+    if clean_hero_url:
         hero_html = f'''
         <tr>
             <td align="center" style="padding: 0 0 24px 0;">
-                <img src="{html.escape(hero_image_url.strip())}" alt="{html.escape(title)}" style="max-width: 100%; width: 100%; height: auto; border-radius: 12px; display: block; object-fit: cover;" />
+                <img src="{html.escape(clean_hero_url)}" alt="{html.escape(title)}" style="max-width: 100%; width: 100%; height: auto; border-radius: 12px; display: block; object-fit: cover;" />
             </td>
         </tr>
         '''
@@ -100,6 +121,42 @@ def render_promotional_email_html(
             </tr>
             '''
 
+    # Visual Attachment Box inside body
+    attachments_html = ''
+    if attachment_files and isinstance(attachment_files, list) and len(attachment_files) > 0:
+        att_items = []
+        for att in attachment_files:
+            if isinstance(att, (list, tuple)) and len(att) >= 1:
+                name = str(att[0])
+                size_str = f" ({att[1]})" if len(att) > 1 and att[1] else ""
+            elif isinstance(att, str):
+                name = att
+                size_str = ""
+            elif hasattr(att, 'name'):
+                name = att.name
+                size_str = f" ({getattr(att, 'size', 0) // 1024} KB)" if getattr(att, 'size', 0) else ""
+            else:
+                name = str(att)
+                size_str = ""
+            att_items.append(f'<li style="margin-bottom: 5px; color: #334155;"><strong>{html.escape(name)}</strong>{html.escape(size_str)}</li>')
+        
+        if att_items:
+            attachments_html = f'''
+            <tr>
+                <td style="padding: 16px 20px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; margin-top: 16px;">
+                    <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #1e293b;">
+                        📎 Lampiran Dokumen ({len(att_items)} File):
+                    </p>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #475569;">
+                        {''.join(att_items)}
+                    </ul>
+                    <p style="margin: 6px 0 0 0; font-size: 11px; color: #94a3b8;">
+                        *File terlampir pada email ini dan dapat langsung diunduh/dilihat pada bagian lampiran.
+                    </p>
+                </td>
+            </tr>
+            '''
+
     footer_content = footer_text or "Barakah Economy &bull; Platform Ekonomi Keumatan Berkah & Mandiri<br/>Email ini dikirim secara otomatis. Jika Anda ingin berhenti berlangganan, hubungi admin pengelola."
 
     template = f'''<!DOCTYPE html>
@@ -141,6 +198,7 @@ def render_promotional_email_html(
                                 </tr>
                                 {cta_html}
                                 {links_html}
+                                {attachments_html}
                             </table>
                         </td>
                     </tr>
@@ -163,12 +221,22 @@ def render_promotional_email_html(
     return template
 
 
-def render_standard_email_html(message="", title="", footer_text="", recipient_email=""):
+def render_standard_email_html(message="", title="", footer_text="", recipient_email="", attachment_files=None):
     """Clean standard HTML wrapper that preserves styling and paragraphs without decorative cards."""
     paragraphs = [p.strip() for p in message.split('\n\n') if p.strip()]
     body_html = ''.join(f'<p style="margin: 0 0 14px 0; line-height: 1.6; color: #1e293b; font-size: 15px;">{html.escape(p).replace(chr(10), "<br/>")}</p>' for p in paragraphs)
     footer_content = footer_text or "Barakah Economy &bull; Platform Ekonomi Keumatan Berkah & Mandiri"
     
+    attachments_html = ''
+    if attachment_files and isinstance(attachment_files, list) and len(attachment_files) > 0:
+        att_items = []
+        for att in attachment_files:
+            name = att[0] if isinstance(att, (list, tuple)) else str(att)
+            size_str = f" ({att[1]})" if isinstance(att, (list, tuple)) and len(att) > 1 and att[1] else ""
+            att_items.append(f'<li><strong>{html.escape(str(name))}</strong>{html.escape(size_str)}</li>')
+        if att_items:
+            attachments_html = f'<div style="margin-top: 20px; padding: 12px 16px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; font-size: 12px; color: #475569;"><p style="margin:0 0 6px 0; font-weight:700;">📎 Lampiran ({len(att_items)} File):</p><ul style="margin:0; padding-left:18px;">{"".join(att_items)}</ul></div>'
+
     return f'''<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -179,6 +247,7 @@ def render_standard_email_html(message="", title="", footer_text="", recipient_e
 <body style="margin: 0; padding: 24px 16px; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     <div style="max-width: 600px; margin: 0 auto;">
         {body_html}
+        {attachments_html}
         <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
             {footer_content}
         </div>
@@ -187,17 +256,61 @@ def render_standard_email_html(message="", title="", footer_text="", recipient_e
 </html>'''
 
 
-def send_email(subject, message, recipient_list, from_email=None, fail_silently=False, attachments=None, html_message=None):
+def send_email(subject, message, recipient_list, from_email=None, fail_silently=False, attachments=None, html_message=None, inline_images=None):
     """
     Generic utility to send email using database settings if available,
     falling back to settings.py configuration.
-    Supports EmailMultiAlternatives for high deliverability and HTML templates.
+    Supports EmailMultiAlternatives for high deliverability, HTML templates,
+    inline CID images, and regular file attachments.
     """
+    import logging
     from django.core.mail import EmailMultiAlternatives
     from django.utils.html import strip_tags
+    from email.mime.image import MIMEImage
 
     plain_message = strip_tags(html_message or message)
     target_html = html_message if html_message else (message if ('<html' in message.lower() or '<div' in message.lower() or '<table' in message.lower() or '<p' in message.lower()) else None)
+
+    def _attach_all_parts(email_obj):
+        # 1. Attach inline CID images
+        if inline_images:
+            for img in inline_images:
+                try:
+                    cid = img.get('cid', 'broadcast_hero_image')
+                    data = img.get('data')
+                    subtype = img.get('subtype', 'jpeg')
+                    filename = img.get('filename', f"{cid}.jpg")
+                    if data:
+                        mime_img = MIMEImage(data, _subtype=subtype)
+                        mime_img.add_header('Content-ID', f"<{cid}>")
+                        mime_img.add_header('Content-Disposition', 'inline', filename=filename)
+                        email_obj.attach(mime_img)
+                except Exception as img_err:
+                    logger = logging.getLogger('barakah_app')
+                    logger.error(f"Error attaching inline image {img.get('cid')}: {img_err}")
+
+        # 2. Attach regular files
+        if attachments:
+            for attachment in attachments:
+                try:
+                    if hasattr(attachment, 'read'):
+                        if hasattr(attachment, 'seek'):
+                            attachment.seek(0)
+                        fname = getattr(attachment, 'name', 'lampiran')
+                        content = attachment.read()
+                        c_type = getattr(attachment, 'content_type', 'application/octet-stream')
+                        email_obj.attach(fname, content, c_type)
+                    elif isinstance(attachment, tuple) and len(attachment) >= 2:
+                        email_obj.attach(*attachment)
+                except Exception as att_err:
+                    logger = logging.getLogger('barakah_app')
+                    logger.error(f"Error attaching file: {att_err}")
+
+        # Ensure correct MIME type hierarchy
+        if inline_images and not attachments:
+            email_obj.mixed_subtype = 'related'
+        elif attachments:
+            email_obj.mixed_subtype = 'mixed'
 
     try:
         from digital_products.models import EmailSettings
@@ -226,16 +339,10 @@ def send_email(subject, message, recipient_list, from_email=None, fail_silently=
             if target_html:
                 email.attach_alternative(target_html, "text/html")
 
-            if attachments:
-                for attachment in attachments:
-                    if hasattr(attachment, 'read'):
-                        email.attach(attachment.name, attachment.read(), getattr(attachment, 'content_type', 'application/octet-stream'))
-                    elif isinstance(attachment, tuple) and len(attachment) >= 2:
-                        email.attach(*attachment)
+            _attach_all_parts(email)
             email.send(fail_silently=fail_silently)
             return True
     except Exception as e:
-        import logging
         logger = logging.getLogger('barakah_app')
         logger.error(f"Error sending email via custom backend: {e}")
         
@@ -251,16 +358,10 @@ def send_email(subject, message, recipient_list, from_email=None, fail_silently=
         if target_html:
             email.attach_alternative(target_html, "text/html")
 
-        if attachments:
-            for attachment in attachments:
-                if hasattr(attachment, 'read'):
-                    email.attach(attachment.name, attachment.read(), getattr(attachment, 'content_type', 'application/octet-stream'))
-                elif isinstance(attachment, tuple) and len(attachment) >= 2:
-                    email.attach(*attachment)
+        _attach_all_parts(email)
         email.send(fail_silently=fail_silently)
         return True
     except Exception as e:
-        import logging
         logger = logging.getLogger('barakah_app')
         logger.error(f"Error sending email via fallback: {e}")
         return False
