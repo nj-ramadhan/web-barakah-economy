@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getDigitalProductBySlug, toggleLikeDigitalProduct } from '../services/digitalProductApi';
+import { getDigitalProductBySlug, getDigitalProducts, toggleLikeDigitalProduct } from '../services/digitalProductApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { formatCurrency } from '../utils/formatters';
 import UserProfileModal from '../components/modals/UserProfileModal';
