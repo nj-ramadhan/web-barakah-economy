@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# Stage 1: Build React App
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -14,16 +15,25 @@ RUN npm config set fetch-retries 10 \
 # Copy source files
 COPY . .
 
-# Build argument for API URL (set in EasyPanel)
+# Build argument for API URL
 ARG REACT_APP_API_BASE_URL=https://api.barakah.cloud
 ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 
-# Build the React app
+# Build the React app (juga men-trigger prebuild version.json)
 RUN npm run build
 
-# Install serve globally for serving the build
+# Stage 2: Ultra-light Runner (hemat 90% disk VPS, image menyusut dari 1.2GB ke ~120MB)
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install lightweight serve static runner
 RUN npm install -g serve
+
+# Copy only the compiled production build
+COPY --from=builder /app/build ./build
 
 EXPOSE 3001
 
 CMD ["serve", "-s", "build", "-l", "3001"]
+

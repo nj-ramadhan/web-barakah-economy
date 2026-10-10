@@ -695,12 +695,29 @@ const Home = () => {
     <div className="body relative">
       <BrandPageLoader isVisible={loading} />
       <Helmet>
-        <meta name="description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
-        <meta property="og:title" content="BARAKAH APP" />
-        <meta property="og:description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
+        <title>Barakah Economy - Penguatan Sistem Ekonomi Islam yang Berkah</title>
+        <meta name="description" content="Platform Ekosistem Ekonomi Islam, Marketplace UMKM Halal, Donasi Crowdfunding, Kelas Online (E-Course), dan Produk Digital Berkah di Barakah Economy." />
+        <meta property="og:title" content="Barakah Economy - Ekosistem Ekonomi Syariah & Halal Marketplace" />
+        <meta property="og:description" content="Platform Penguatan Sistem Ekonomi Islam yang Barakah: UMKM Halal, Donasi, Kelas Online, & Produk Digital." />
         <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
+        <link rel="canonical" href="https://barakah.cloud/" />
+
+        {/* Schema.org WebSite Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Barakah Economy",
+            "url": "https://barakah.cloud",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://barakah.cloud/store?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
       </Helmet>
 
       <HeaderHome onSearch={handleSearch} />

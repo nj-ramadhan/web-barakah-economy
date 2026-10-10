@@ -97,6 +97,13 @@ def get_seo_response(request, metadata):
     <meta name="twitter:description" content="{clean_description}">
     <meta name="twitter:image" content="{clean_image_url}">'''
 
+        # Inject JSON-LD Schema.org structured data if provided
+        json_ld = metadata.get('json_ld')
+        if json_ld:
+            import json
+            json_ld_str = json.dumps(json_ld, ensure_ascii=False, indent=2)
+            meta_tags += f'\n    <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->\n    <script type="application/ld+json">\n{json_ld_str}\n    </script>'
+
         # Remove existing title and meta tags to avoid duplicates
         content = re.sub(r'<title>.*?</title>', '', content, flags=re.IGNORECASE)
         content = re.sub(r'<meta\s+name=["\']description["\'].*?>', '', content, flags=re.IGNORECASE)

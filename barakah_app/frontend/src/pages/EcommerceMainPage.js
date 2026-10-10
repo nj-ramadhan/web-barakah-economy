@@ -9,6 +9,8 @@ import { formatCurrency } from '../utils/formatters';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
 import ShareButton from '../components/campaigns/ShareButton';
+import MobileCategoryFilterDropdown from '../components/common/MobileCategoryFilterDropdown';
+import MobileSortDropdown from '../components/common/MobileSortDropdown';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -797,78 +799,92 @@ const EcommerceMainPage = () => {
           </div>
         </div>
 
-        {/* Category Filter Chips */}
+        {/* Category Filters: Mobile Dropdown vs Desktop Chips */}
         {categoriesList.length > 1 && (
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="material-icons text-sm text-emerald-600">category</span>
-                <span>Kategori Produk</span>
-                {selectedCategories.length > 0 && (
-                  <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-black">
-                    {selectedCategories.length} Dipilih (Bisa multi-pilih)
-                  </span>
-                )}
-              </span>
-              {selectedCategories.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleCategoryToggle('Semua')}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-bold transition flex items-center gap-1"
-                >
-                  <span className="material-icons text-sm">restart_alt</span>
-                  <span>Reset Kategori</span>
-                </button>
-              )}
-            </div>
+            {/* 1. Tampilan Khusus Mobile: Dropdown Multi-Select dengan Fitur Search Kategori */}
+            <MobileCategoryFilterDropdown
+              categories={categoriesList}
+              selectedCategories={selectedCategories}
+              onToggleCategory={handleCategoryToggle}
+              onReset={() => handleCategoryToggle('Semua')}
+              isCategorySelected={isCategorySelected}
+              getCategoryIcon={getCategoryIcon}
+              title="Kategori Produk"
+            />
 
-            <div className="flex flex-wrap gap-2 transition-all duration-500 mb-3">
-              {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => {
-                const isSelected = isCategorySelected(cat.key, cat.label);
-                return (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => handleCategoryToggle(cat.key)}
-                    className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                    } uppercase tracking-wider cursor-pointer`}
-                  >
-                    <span className="material-icons text-sm">{getCategoryIcon(cat.key)}</span>
-                    <span>{cat.label}</span>
-                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isSelected ? 'bg-emerald-800 text-white' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {cat.count}
+            {/* 2. Tampilan Khusus Desktop: Baris Chips Elegan */}
+            <div className="hidden md:block">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="material-icons text-sm text-emerald-600">category</span>
+                  <span>Kategori Produk</span>
+                  {selectedCategories.length > 0 && (
+                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-black">
+                      {selectedCategories.length} Dipilih (Bisa multi-pilih)
                     </span>
-                    {isSelected && cat.key !== 'Semua' && (
-                      <span className="material-icons text-xs ml-0.5">check</span>
+                  )}
+                </span>
+                {selectedCategories.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryToggle('Semua')}
+                    className="text-xs text-rose-600 hover:text-rose-700 font-bold transition flex items-center gap-1"
+                  >
+                    <span className="material-icons text-sm">restart_alt</span>
+                    <span>Reset Kategori</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 transition-all duration-500 mb-3">
+                {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => {
+                  const isSelected = isCategorySelected(cat.key, cat.label);
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => handleCategoryToggle(cat.key)}
+                      className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all duration-300 border flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-100 scale-105'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                      } uppercase tracking-wider cursor-pointer`}
+                    >
+                      <span className="material-icons text-sm">{getCategoryIcon(cat.key)}</span>
+                      <span>{cat.label}</span>
+                      <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isSelected ? 'bg-emerald-800 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {cat.count}
+                      </span>
+                      {isSelected && cat.key !== 'Semua' && (
+                        <span className="material-icons text-xs ml-0.5">check</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {categoriesList.length > CATEGORY_LIMIT && (
+                <div className="flex justify-center md:justify-start">
+                  <button
+                    onClick={() => setIsCategoryExpanded(!isCategoryExpanded)}
+                    className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 flex items-center gap-2 ${
+                      isCategoryExpanded 
+                        ? 'bg-gray-100 text-gray-800 border-gray-200' 
+                        : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-50'
+                    } border uppercase tracking-widest shadow-sm`}
+                  >
+                    {isCategoryExpanded ? (
+                      <>SEMBUNYIKAN KATEGORI <span className="material-icons text-sm">expand_less</span></>
+                    ) : (
+                      <>{`LIHAT SEMUA KATEGORI (${categoriesList.length})`} <span className="material-icons text-sm">expand_more</span></>
                     )}
                   </button>
-                );
-              })}
+                </div>
+              )}
             </div>
-
-            {categoriesList.length > CATEGORY_LIMIT && (
-              <div className="flex justify-center md:justify-start">
-                <button
-                  onClick={() => setIsCategoryExpanded(!isCategoryExpanded)}
-                  className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 flex items-center gap-2 ${
-                    isCategoryExpanded 
-                      ? 'bg-gray-100 text-gray-800 border-gray-200' 
-                      : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-50'
-                  } border uppercase tracking-widest shadow-sm`}
-                >
-                  {isCategoryExpanded ? (
-                    <>SEMBUNYIKAN KATEGORI <span className="material-icons text-sm">expand_less</span></>
-                  ) : (
-                    <>{`LIHAT SEMUA KATEGORI (${categoriesList.length})`} <span className="material-icons text-sm">expand_more</span></>
-                  )}
-                </button>
-              </div>
-            )}
           </div>
         )}
 
@@ -928,7 +944,23 @@ const EcommerceMainPage = () => {
 
         {/* Sort & Filter Controls Toolbar */}
         <div className="bg-white rounded-2xl p-3 md:p-4 border border-gray-200/80 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          {/* Mobile Sort Dropdown */}
+          <MobileSortDropdown
+            options={[
+              { key: 'populer', label: 'Paling Populer', icon: 'trending_up' },
+              { key: 'terlaris', label: 'Terlaris', icon: 'local_fire_department' },
+              { key: 'price_asc', label: 'Harga Terendah', icon: 'south_east' },
+              { key: 'price_desc', label: 'Harga Tertinggi', icon: 'north_east' },
+              { key: 'newest', label: 'Terbaru', icon: 'schedule' },
+              { key: 'stock', label: 'Stok Terbanyak', icon: 'inventory_2' },
+            ]}
+            currentSort={sortBy}
+            onSortChange={handleSortChange}
+            label="Urutkan"
+          />
+
+          {/* Desktop Sort Buttons */}
+          <div className="hidden md:flex items-center gap-2 flex-wrap w-full md:w-auto">
             <span className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-1 shrink-0">
               <span className="material-icons text-sm text-emerald-600">tune</span>
               Urutkan:

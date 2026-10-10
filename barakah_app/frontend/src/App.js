@@ -5,6 +5,7 @@ import GlobalPopupManager from './components/common/GlobalPopupManager';
 import GlobalStreamingPopup from './components/common/GlobalStreamingPopup';
 import GlobalBlastQueueWidget from './components/common/GlobalBlastQueueWidget';
 import GlobalActiveShippingWidget from './components/common/GlobalActiveShippingWidget';
+import AutoVersionUpdater from './components/common/AutoVersionUpdater';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -275,6 +276,7 @@ const App = () => {
 
   return (
     <Router>
+      <AutoVersionUpdater />
       <ScrollToTop />
       <NotificationHandler />
       <GlobalPopupManager />

@@ -249,13 +249,14 @@ const EcourseCourseDetail = () => {
   return (
     <div className="body">
       <Helmet>
-        <title>{course.title} | BARAKAH ECONOMY</title>
-        <meta name="description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
-        <meta property="og:title" content={course.title} />
-        <meta property="og:description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <title>{course.title} - Kelas & E-Course Online | Barakah Academy</title>
+        <meta name="description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 160) || `Ikuti kelas online ${course.title} bersama para pakar di Barakah Academy.`} />
+        <meta property="og:title" content={`${course.title} - Barakah Academy`} />
+        <meta property="og:description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 160) || `Ikuti kelas online ${course.title} bersama para pakar di Barakah Academy.`} />
         <meta property="og:image" content={getMediaUrl(course.thumbnail)} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
+        <link rel="canonical" href={window.location.href} />
 
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json">
@@ -266,13 +267,14 @@ const EcourseCourseDetail = () => {
             "description": course.description?.replace(/<[^>]+>/g, '').slice(0, 200),
             "provider": {
               "@type": "Organization",
-              "name": "Barakah Economy Academy",
-              "sameAs": window.location.origin
+              "name": "Barakah Academy",
+              "sameAs": "https://barakah.cloud/academy"
             },
             "offers": {
               "@type": "Offer",
-              "price": course.price,
+              "price": String(course.price || 0),
               "priceCurrency": "IDR",
+              "category": (!course.price || Number(course.price) <= 0) ? "Free" : "Paid",
               "availability": "https://schema.org/InStock",
               "url": window.location.href
             }

@@ -37,6 +37,25 @@ import { ThemeProvider } from './context/ThemeContext';
   }
 })();
 
+// Global error recovery for ChunkLoadError (triggered when a new version is deployed and old chunks are removed)
+window.addEventListener('error', (event) => {
+  const isChunkError = 
+    (event?.message && (event.message.includes('Loading chunk') || event.message.includes('is not a valid JavaScript MIME type'))) ||
+    (event?.error?.name === 'ChunkLoadError');
+
+  if (isChunkError) {
+    const lastReload = sessionStorage.getItem('__chunk_reload_timestamp__');
+    const now = Date.now();
+    // Cegah infinite reload loop (hanya reload jika belum pernah reload dalam 10 detik terakhir)
+    if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+      console.warn('[ChunkLoadError] Detected outdated bundle or missing chunk. Auto-refreshing to load new version...');
+      sessionStorage.setItem('__chunk_reload_timestamp__', now.toString());
+      window.location.reload(true);
+    }
+  }
+});
+
+
 // Register service worker for push notifications safely
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {

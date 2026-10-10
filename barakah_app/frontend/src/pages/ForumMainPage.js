@@ -142,8 +142,13 @@ const ForumMainPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-12 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Helmet>
-                <title>Forum Tanya Jawab - Barakah Economy</title>
-                <meta name="description" content="Forum diskusi dan tanya jawab Barakah Economy. Diskusikan berbagai topik seputar bisnis, fiqih, dan ummat." />
+                <title>Forum Tanya Jawab & Diskusi Syariah - Barakah Economy</title>
+                <meta name="description" content="Forum diskusi dan tanya jawab Barakah Economy. Diskusikan berbagai topik seputar bisnis syariah, fiqih muamalah, dan kolaborasi ummat." />
+                <meta property="og:title" content="Forum Tanya Jawab Syariah - Barakah Economy" />
+                <meta property="og:description" content="Diskusikan bisnis syariah, fiqih muamalah, dan kolaborasi ummat bersama pakar dan komunitas." />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://barakah.cloud/forum" />
+                <link rel="canonical" href="https://barakah.cloud/forum" />
             </Helmet>
 
             <HeaderHome onSearch={handleSearch} />

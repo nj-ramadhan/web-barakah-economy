@@ -167,13 +167,33 @@ const DigitalProductDetailPage = () => {
     return (
         <div className="body bg-gray-50 min-h-screen">
             <Helmet>
-                <title>{product.title} - Barakah Economy</title>
-                <meta name="description" content={product.description?.replace(/<[^>]*>?/gm, '').substring(0, 150)} />
-                <meta property="og:title" content={product.title} />
-                <meta property="og:description" content={product.description?.replace(/<[^>]*>?/gm, '').substring(0, 150)} />
+                <title>{product.title} - Produk Digital | Barakah Economy</title>
+                <meta name="description" content={product.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Download produk digital ${product.title} di Barakah Economy.`} />
+                <meta property="og:title" content={`${product.title} - Produk Digital`} />
+                <meta property="og:description" content={product.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Download produk digital ${product.title} di Barakah Economy.`} />
                 <meta property="og:image" content={getMediaUrl(product.thumbnail_url || product.thumbnail)} />
                 <meta property="og:type" content="product" />
                 <meta property="og:url" content={window.location.href} />
+                <link rel="canonical" href={window.location.href} />
+
+                {/* Schema.org JSON-LD Structured Data */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Product",
+                        "name": product.title,
+                        "description": product.description?.replace(/<[^>]*>?/gm, '').substring(0, 200),
+                        "image": [getMediaUrl(product.thumbnail_url || product.thumbnail)],
+                        "category": product.category || "Digital Product",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": String(product.price || 0),
+                            "priceCurrency": "IDR",
+                            "availability": "https://schema.org/InStock",
+                            "url": window.location.href
+                        }
+                    })}
+                </script>
             </Helmet>
 
             <Header />

@@ -73,16 +73,39 @@ def seo_product_detail(request, slug):
             first_img = product.images.first()
             if first_img and hasattr(first_img.image, 'url'):
                 img = first_img.image.url
+
+        # Google Schema.org Product Rich Snippet
+        prod_img_url = request.build_absolute_uri(img) if img else request.build_absolute_uri('/images/web-thumbnail.jpg')
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.title,
+            "description": clean_desc or product.title,
+            "image": [prod_img_url],
+            "offers": {
+                "@type": "Offer",
+                "url": request.build_absolute_uri(f"/produk/{product.slug or product.id}"),
+                "priceCurrency": "IDR",
+                "price": str(int(product.price or 0)),
+                "availability": "https://schema.org/InStock" if (getattr(product, 'stock', 1) or 0) > 0 else "https://schema.org/OutOfStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": getattr(product, 'seller_name', 'Barakah Economy')
+                }
+            }
+        }
     else:
         title = str(slug_clean).replace('-', ' ').title()
         desc = "Lihat produk unggulan di Barakah Economy."
         img = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
-        'type': 'product'
+        'type': 'product',
+        'json_ld': json_ld
     })
 
 def seo_campaign_detail(request, slug):
@@ -97,18 +120,32 @@ def seo_campaign_detail(request, slug):
         desc = clean_html(campaign.description) or f"Bantu program {campaign.title} di Barakah Economy"
         img = campaign.thumbnail.url if (campaign.thumbnail and hasattr(campaign.thumbnail, 'url')) else ''
         body = campaign.description
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "NGO",
+            "name": f"Kampanye: {campaign.title}",
+            "description": desc,
+            "image": [request.build_absolute_uri(img)] if img else [],
+            "url": request.build_absolute_uri(f"/kampanye/{campaign.slug or campaign.id}"),
+            "potentialAction": {
+                "@type": "DonateAction",
+                "target": request.build_absolute_uri(f"/kampanye/{campaign.slug or campaign.id}")
+            }
+        }
     else:
         title = str(slug).replace('-', ' ').title()
         desc = "Lihat program donasi & kebaikan di Barakah Economy."
         img = ''
         body = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
         'type': 'article',
-        'body_content': body
+        'body_content': body,
+        'json_ld': json_ld
     })
 
 def seo_article_detail(request, id_or_slug):
@@ -127,18 +164,37 @@ def seo_article_detail(request, id_or_slug):
             if first_img and hasattr(first_img.path, 'url'):
                 img = first_img.path.url
         body = article.content
+        art_img = request.build_absolute_uri(img) if img else request.build_absolute_uri('/images/web-thumbnail.jpg')
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "BlogPosting",
+            "headline": article.title,
+            "description": desc,
+            "image": [art_img],
+            "url": request.build_absolute_uri(f"/articles/{article.slug or article.id}"),
+            "author": {
+                "@type": "Organization",
+                "name": "Barakah Economy"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Barakah Economy"
+            }
+        }
     else:
         title = str(id_or_slug).replace('-', ' ').title()
         desc = "Baca artikel inspiratif di Barakah Economy."
         img = ''
         body = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
         'type': 'article',
-        'body_content': body
+        'body_content': body,
+        'json_ld': json_ld
     })
 
 def seo_course_detail(request, slug):
@@ -150,18 +206,41 @@ def seo_course_detail(request, slug):
 
     if course:
         title = course.title
-        desc = clean_html(course.description) or f"Ikuti kelas {course.title} di Barakah Economy"
+        desc = clean_html(course.description) or f"Ikuti kelas {course.title} di Barakah Academy"
         img = course.thumbnail.url if (course.thumbnail and hasattr(course.thumbnail, 'url')) else ''
+        crs_img = request.build_absolute_uri(img) if img else request.build_absolute_uri('/images/web-thumbnail.jpg')
+        is_free = not course.price or int(course.price) <= 0
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "Course",
+            "name": course.title,
+            "description": desc,
+            "image": [crs_img],
+            "provider": {
+                "@type": "Organization",
+                "name": "Barakah Academy",
+                "sameAs": request.build_absolute_uri("/academy")
+            },
+            "offers": {
+                "@type": "Offer",
+                "url": request.build_absolute_uri(f"/kelas/{course.slug or course.id}"),
+                "price": "0" if is_free else str(int(course.price or 0)),
+                "priceCurrency": "IDR",
+                "category": "Free" if is_free else "Paid"
+            }
+        }
     else:
         title = str(slug).replace('-', ' ').title()
         desc = "Lihat e-course bermanfaat di Barakah Academy."
         img = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
-        'type': 'website'
+        'type': 'website',
+        'json_ld': json_ld
     })
 
 def seo_event_detail(request, slug):
@@ -177,16 +256,31 @@ def seo_event_detail(request, slug):
         img = event.thumbnail.url if (event.thumbnail and hasattr(event.thumbnail, 'url')) else (
             event.header_image.url if (event.header_image and hasattr(event.header_image, 'url')) else ''
         )
+        evt_img = request.build_absolute_uri(img) if img else request.build_absolute_uri('/images/web-thumbnail.jpg')
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "Event",
+            "name": event.title,
+            "description": desc,
+            "image": [evt_img],
+            "eventStatus": "https://schema.org/EventScheduled",
+            "organizer": {
+                "@type": "Organization",
+                "name": "Barakah Economy"
+            }
+        }
     else:
         title = str(slug).replace('-', ' ').title()
         desc = "Lihat event & kegiatan menarik di Barakah Economy."
         img = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
-        'type': 'article'
+        'type': 'article',
+        'json_ld': json_ld
     })
 
 def seo_digital_product_detail(request, slug, username=None):
@@ -208,16 +302,34 @@ def seo_digital_product_detail(request, slug, username=None):
         title = dp.title
         desc = clean_html(dp.description) or f"Dapatkan {dp.title} di Barakah Economy"
         img = dp.thumbnail.url if (dp.thumbnail and hasattr(dp.thumbnail, 'url')) else ''
+        dp_img = request.build_absolute_uri(img) if img else request.build_absolute_uri('/images/web-thumbnail.jpg')
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": dp.title,
+            "description": desc,
+            "image": [dp_img],
+            "category": dp.category or "Digital Product",
+            "offers": {
+                "@type": "Offer",
+                "url": request.build_absolute_uri(f"/digital-products/{dp.slug or dp.id}"),
+                "price": str(int(dp.price or 0)),
+                "priceCurrency": "IDR",
+                "availability": "https://schema.org/InStock"
+            }
+        }
     else:
         title = str(slug).replace('-', ' ').title()
         desc = "Lihat produk digital di Barakah Economy."
         img = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
-        'type': 'product'
+        'type': 'product',
+        'json_ld': json_ld
     })
 
 def seo_forum_detail(request, slug):
@@ -234,18 +346,31 @@ def seo_forum_detail(request, slug):
             thread.author.profile.photo.url if (hasattr(thread.author, 'profile') and thread.author.profile.photo and hasattr(thread.author.profile.photo, 'url')) else ''
         )
         body = thread.content
+        json_ld = {
+            "@context": "https://schema.org/",
+            "@type": "DiscussionForumPosting",
+            "headline": thread.title,
+            "articleBody": desc,
+            "url": request.build_absolute_uri(f"/forum/{thread.slug or thread.id}"),
+            "author": {
+                "@type": "Person",
+                "name": thread.author.username if thread.author else "Member Barakah"
+            }
+        }
     else:
         title = str(slug).replace('-', ' ').title()
         desc = "Simak diskusi bermanfaat di Forum Barakah Economy."
         img = ''
         body = ''
+        json_ld = None
 
     return get_seo_response(request, {
         'title': title,
         'description': desc,
         'image_url': img,
         'type': 'article',
-        'body_content': body
+        'body_content': body,
+        'json_ld': json_ld
     })
 
 def seo_activity_detail(request, id_or_slug):
@@ -321,47 +446,69 @@ def sitemap_xml(request):
     urls = []
     
     # helper for sitemap entries
-    def add_url(path, lastmod=None):
-        urls.append(f"  <url>\n    <loc>{site_url}{path}</loc>\n  </url>")
+    def add_url(path, priority="0.8", changefreq="daily"):
+        urls.append(f"""  <url>
+    <loc>{site_url}{path}</loc>
+    <changefreq>{changefreq}</changefreq>
+    <priority>{priority}</priority>
+  </url>""")
 
-    # Base URLs
-    add_url('/')
-    add_url('/charity')
-    add_url('/store')
-    add_url('/sinergy')
-    add_url('/event')
-    add_url('/academy')
-    add_url('/about')
-    add_url('/hubungi-kami')
+    # Main Hub URLs
+    add_url('/', priority="1.0", changefreq="daily")
+    add_url('/store', priority="0.9", changefreq="hourly")
+    add_url('/charity', priority="0.9", changefreq="daily")
+    add_url('/sinergy', priority="0.9", changefreq="daily")
+    add_url('/event', priority="0.8", changefreq="daily")
+    add_url('/academy', priority="0.9", changefreq="daily")
+    add_url('/academy/ecourse', priority="0.9", changefreq="daily")
+    add_url('/digital-products', priority="0.9", changefreq="daily")
+    add_url('/articles', priority="0.9", changefreq="daily")
+    add_url('/forum', priority="0.9", changefreq="hourly")
+    add_url('/kegiatan', priority="0.7", changefreq="weekly")
+    add_url('/about', priority="0.6", changefreq="monthly")
+    add_url('/hubungi-kami', priority="0.6", changefreq="monthly")
 
-    # Dynamic URLs
+    # Dynamic Products
     for p in Product.objects.filter(status='approved', is_active=True):
-        add_url(f"/produk/{p.slug}")
+        add_url(f"/produk/{p.slug or p.id}", priority="0.8", changefreq="daily")
     
+    # Dynamic Campaigns
     for c in Campaign.objects.filter(approval_status='approved', is_active=True):
-        add_url(f"/kampanye/{c.slug}")
+        add_url(f"/kampanye/{c.slug or c.id}", priority="0.8", changefreq="daily")
 
+    # Dynamic Articles
     for a in Article.objects.filter(status='approved'):
-        add_url(f"/articles/{a.slug}")
-        add_url(f"/academy/articles/{a.slug}")
+        add_url(f"/articles/{a.slug or a.id}", priority="0.8", changefreq="weekly")
+        add_url(f"/academy/articles/{a.slug or a.id}", priority="0.7", changefreq="weekly")
 
+    # Dynamic Courses
     for co in Course.objects.filter(is_active=True):
-        add_url(f"/kelas/{co.slug}")
+        add_url(f"/kelas/{co.slug or co.id}", priority="0.8", changefreq="daily")
 
-    for e in Event.objects.all(): # Include all events for archival index
-        add_url(f"/event/{e.slug}")
+    # Dynamic Events
+    for e in Event.objects.all():
+        add_url(f"/event/{e.slug or e.id}", priority="0.7", changefreq="weekly")
 
+    # Dynamic Digital Products
     for d in DigitalProduct.objects.filter(is_active=True):
-        add_url(f"/digital-products/{d.slug}")
-        add_url(f"/digital-produk/{d.user.username}/{d.slug}")
+        add_url(f"/digital-products/{d.slug or d.id}", priority="0.8", changefreq="daily")
 
-    # Registered Sellers
+    # Dynamic Forum Threads
+    for t in Thread.objects.all()[:500]:
+        add_url(f"/forum/{t.slug or t.id}", priority="0.7", changefreq="daily")
+
+    # Dynamic Activities
+    for act in Activity.objects.all()[:200]:
+        add_url(f"/kegiatan/{act.id}", priority="0.6", changefreq="weekly")
+
+    # Registered Sellers / Stores
     seller_ids = set(Product.objects.filter(status='approved').values_list('seller_id', flat=True)) | \
                  set(DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True))
     for s_id in seller_ids:
         try:
             u = User.objects.get(id=s_id)
-            add_url(f"/{u.username}")
+            add_url(f"/toko/{u.username}", priority="0.7", changefreq="weekly")
+            add_url(f"/{u.username}", priority="0.6", changefreq="weekly")
         except: continue
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>

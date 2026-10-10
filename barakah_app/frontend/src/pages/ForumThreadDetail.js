@@ -375,8 +375,29 @@ const ForumThreadDetail = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-12 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <Helmet>
-                <title>{thread.title} - Forum Barakah Economy</title>
-                <meta name="description" content={thread.content.substring(0, 150) + '...'} />
+                <title>{thread.title} - Forum Diskusi Barakah Economy</title>
+                <meta name="description" content={thread.content ? thread.content.replace(/<[^>]+>/g, '').substring(0, 160) : `Diskusi forum ${thread.title} di Barakah Economy.`} />
+                <meta property="og:title" content={thread.title} />
+                <meta property="og:description" content={thread.content ? thread.content.replace(/<[^>]+>/g, '').substring(0, 160) : `Diskusi forum ${thread.title}`} />
+                <meta property="og:type" content="article" />
+                <meta property="og:url" content={window.location.href} />
+                <link rel="canonical" href={window.location.href} />
+
+                {/* Schema.org JSON-LD Structured Data */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "DiscussionForumPosting",
+                        "headline": thread.title,
+                        "articleBody": thread.content ? thread.content.replace(/<[^>]+>/g, '').substring(0, 300) : "",
+                        "url": window.location.href,
+                        "author": {
+                            "@type": "Person",
+                            "name": thread.author?.full_name || thread.author?.username || "Member Barakah"
+                        },
+                        "datePublished": thread.created_at
+                    })}
+                </script>
             </Helmet>
 
             <div className="py-6">

@@ -104,6 +104,7 @@ const ArticleDetailPage = () => {
         <meta property="og:image" content={article.images && article.images.length > 0 ? article.images[0].full_path : ''} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={window.location.href} />
+        <link rel="canonical" href={window.location.href} />
         
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json">

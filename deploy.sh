@@ -84,8 +84,6 @@ fi
 
 # 3. Migrasi database & collect static (hanya jika backend/docker berubah)
 if [ "$FORCE_BUILD" = true ] || [ "$BACKEND_CHANGED" = true ] || [ "$DOCKER_CHANGED" = true ]; then
-    echo "🗄️ Mendeteksi perubahan model..."
-    docker compose exec -T backend python manage.py makemigrations
     echo "🗄️ Menjalankan migrasi database..."
     docker compose exec -T backend python manage.py migrate --noinput
     echo "🎨 Mengumpulkan file static..."

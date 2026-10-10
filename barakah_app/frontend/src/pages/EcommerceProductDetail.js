@@ -414,13 +414,14 @@ const EcommerceProductDetail = () => {
   return (
     <div className="body">
       <Helmet>
-        <title>{product.title} | BARAKAH ECONOMY</title>
-        <meta name="description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
-        <meta property="og:title" content={product.title} />
-        <meta property="og:description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <title>{product.title} - Jual Beli Halal & Berkah | Barakah Store</title>
+        <meta name="description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 160) || `Beli ${product.title} produk halal terpercaya di Barakah Store.`} />
+        <meta property="og:title" content={`${product.title} - Barakah Store`} />
+        <meta property="og:description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 160) || `Beli ${product.title} di Barakah Store.`} />
         <meta property="og:image" content={product.thumbnail} />
-        <meta property="og:type" content="website" />
+        <meta property="og:type" content="product" />
         <meta property="og:url" content={window.location.href} />
+        <link rel="canonical" href={window.location.href} />
         
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json">
@@ -439,8 +440,8 @@ const EcommerceProductDetail = () => {
               "@type": "Offer",
               "url": window.location.href,
               "priceCurrency": "IDR",
-              "price": product.price,
-              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+              "price": String(product.discounted_price || product.price || 0),
+              "availability": (product.stock > 0 || (product.total_stock && product.total_stock > 0)) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
             },
             "aggregateRating": product.testimonies?.length > 0 ? {
               "@type": "AggregateRating",
