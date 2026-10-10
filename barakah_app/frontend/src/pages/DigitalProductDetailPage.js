@@ -308,17 +308,6 @@ const DigitalProductDetailPage = () => {
                                 </p>
                             </div>
 
-                            {/* Description */}
-                            <div className="mb-6">
-                                <h2 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                                    <span className="material-icons text-emerald-600 text-base">description</span>
-                                    Deskripsi Produk
-                                </h2>
-                                <div
-                                    className="text-xs md:text-sm text-gray-600 leading-relaxed rich-text-content whitespace-pre-wrap break-words bg-gray-50 p-4 rounded-2xl border border-gray-100"
-                                    dangerouslySetInnerHTML={{ __html: product.description || 'Tidak ada deskripsi rinci untuk produk digital ini.' }}
-                                />
-                            </div>
                         </div>
 
                         {/* Buy button for desktop */}
@@ -332,6 +321,22 @@ const DigitalProductDetailPage = () => {
                             </Link>
                         </div>
                     </div>
+                </div>
+
+                {/* Deskripsi Produk - Kontainer Terpisah di Bawah */}
+                <div className="mt-8 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-gray-100">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <span className="material-icons text-lg">description</span>
+                        </div>
+                        <h2 className="text-sm md:text-base font-bold text-gray-900 uppercase tracking-wider">
+                            Deskripsi Produk
+                        </h2>
+                    </div>
+                    <div
+                        className="text-xs md:text-sm text-gray-700 leading-relaxed rich-text-content whitespace-pre-wrap break-words"
+                        dangerouslySetInnerHTML={{ __html: product.description || '<p class="text-gray-400 italic">Tidak ada deskripsi rinci untuk produk digital ini.</p>' }}
+                    />
                 </div>
 
                 {/* Fixed buy bar for mobile */}
