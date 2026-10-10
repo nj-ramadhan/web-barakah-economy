@@ -681,7 +681,13 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class CourseDetailViewSet(APIView):
     def get(self, request, slug):
-        course = get_object_or_404(Course, slug=slug)
+        if str(slug).isdigit():
+            course = Course.objects.filter(Q(slug=slug) | Q(pk=slug)).first()
+        else:
+            course = Course.objects.filter(slug=slug).first()
+        if not course:
+            from django.http import Http404
+            raise Http404("Course not found")
         from django.db.models import F
         course.view_count = F('view_count') + 1
         course.save(update_fields=['view_count'])

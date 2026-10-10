@@ -437,7 +437,13 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Ecourse Routes */}
         <Route path="/academy" element={<ResponsiveLayout isDesktop={isDesktop}><AcademyMain /></ResponsiveLayout>} />
         <Route path="/academy/ecourse" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseMainPage /></ResponsiveLayout>} />
-        <Route path="/kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/ecourse" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseMainPage /></ResponsiveLayout>} />
+        <Route path="/kursus" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseMainPage /></ResponsiveLayout>} />
+        <Route path="/kelas" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseMainPage /></ResponsiveLayout>} />
+        <Route path="/kelas/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout>} />
+        <Route path="/ecourse/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout>} />
+        <Route path="/kursus/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout>} />
+        <Route path="/academy/ecourse/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout>} />
         <Route path="/kelas/buka/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcourseViewerPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/ikut-kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcourseJoinCoursePage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/konfirmasi-pembayaran-kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcoursePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
@@ -476,8 +482,11 @@ const LayoutWrapper = ({ isDesktop }) => {
 
         {/* Digital Product Routes (Public) */}
         <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
+        <Route path="/produk-digital" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
         <Route path="/digital-products/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
+        <Route path="/produk-digital/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
         <Route path="/digital-products/:slug/checkout" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductCheckoutPage /></ResponsiveLayout>} />
+        <Route path="/produk-digital/:slug/checkout" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductCheckoutPage /></ResponsiveLayout>} />
         <Route path="/digital-products/payment/:orderNumber" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductPaymentPage /></ResponsiveLayout>} />
 
         {/* New Lynk.id style routes */}

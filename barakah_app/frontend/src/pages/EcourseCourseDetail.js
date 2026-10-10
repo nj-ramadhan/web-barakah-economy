@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
@@ -235,74 +235,124 @@ const EcourseCourseDetail = () => {
 
       <Header />
       {/* Course Details */}
-      <div className="px-4 py-4 max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg overflow-hidden shadow">
-          <img
-            src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
-            alt={course.title}
-            className="w-full h-56 object-cover"
-            onError={(e) => {
-              e.target.src = '/placeholder-image.jpg';
-            }}
-          />
-          <div className="p-4">
-            <div className="flex justify-between items-start mb-2">
-              <h1 className="text-xl font-bold">{course.title}</h1>
-              <div className="flex-shrink-0 flex items-center gap-2">
-                <button 
-                  onClick={handleToggleLike}
-                  disabled={liking}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-90 ${isLiked ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}`}
-                >
-                  <span className={`material-icons text-[18px] ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
-                    {isLiked ? 'favorite' : 'favorite_border'}
-                  </span>
-                  <span className="text-xs font-bold">{likesCount}</span>
-                </button>
-                <ShareButton slug={course.slug} title={course.title} type="course" />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="material-icons text-green-700 text-[14px]">person</span>
+      <div className="px-4 pt-4 max-w-6xl mx-auto">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-4 overflow-x-auto whitespace-nowrap">
+          <Link to="/" className="hover:text-emerald-700 transition">Beranda</Link>
+          <span className="text-gray-300">/</span>
+          <Link to="/academy/ecourse" className="hover:text-emerald-700 transition">Academy E-Course</Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-800 font-semibold truncate max-w-[200px] md:max-w-md">{course.title}</span>
+        </div>
+
+        <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row">
+          <div className="md:w-1/2 p-4 md:p-6 bg-gray-50 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white">
+              {course.category && (
+                <div className="absolute top-3 left-3 z-10 bg-emerald-600/95 backdrop-blur-xs text-white text-[10px] font-black px-3 py-1 rounded-xl shadow uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-icons text-xs">school</span>
+                  {course.category}
                 </div>
-                <span 
-                  className="text-xs font-bold text-gray-600 hover:text-green-700 cursor-pointer"
-                  onClick={() => {
-                    setSelectedUserId(course.instructor);
-                    setIsProfileModalOpen(true);
-                  }}
+              )}
+              {(!course.price || Number(course.price) <= 0) && (
+                <div className="absolute top-3 right-14 z-10 bg-emerald-700 text-white text-[9px] font-black px-2.5 py-1 rounded-xl shadow uppercase tracking-wider">
+                  GRATIS
+                </div>
+              )}
+              <img
+                src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
+                alt={course.title}
+                className="w-full h-64 md:h-80 object-cover"
+                onError={(e) => {
+                  e.target.src = '/placeholder-image.jpg';
+                }}
+              />
+              <div className="absolute top-3 right-3 z-10">
+                <ShareButton slug={course.slug} title={course.title} type="course" variant="card-icon" />
+              </div>
+            </div>
+          </div>
+
+          <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start gap-4 mb-2">
+                <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-snug">
+                  {course.title}
+                </h1>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700">
+                    <span className="material-icons text-[16px]">school</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-400 block text-[10px]">Instruktur Kelas</span>
+                    <span 
+                      className="text-emerald-700 font-bold hover:underline cursor-pointer"
+                      onClick={() => {
+                        setSelectedUserId(course.instructor);
+                        setIsProfileModalOpen(true);
+                      }}
+                    >
+                      @{course.instructor_name}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <div className="flex items-center gap-1" title="Dilihat">
+                    <span className="material-icons text-sm text-emerald-600">visibility</span>
+                    <span className="font-semibold text-gray-600">{course.view_count || 0}</span>
+                  </div>
+                  <button 
+                    onClick={handleToggleLike}
+                    disabled={liking}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all active:scale-90 ${
+                      isLiked ? 'bg-red-50 text-red-600 border border-red-100 font-bold' : 'bg-gray-50 text-gray-500 border border-gray-200'
+                    }`}
+                  >
+                    <span className={`material-icons text-sm ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+                      {isLiked ? 'favorite' : 'favorite_border'}
+                    </span>
+                    <span>{likesCount}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Price Box */}
+              <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4 mb-6">
+                <div className="text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-0.5">
+                  Biaya Investasi Kelas
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl md:text-3xl font-black text-emerald-700">
+                    {formatIDR(course.price)}
+                  </p>
+                  <span className="text-xs text-gray-400 font-medium">/ akses penuh seumur hidup</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              {!isEnrolled ? (
+                <button
+                  onClick={handleEnroll}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all transform active:scale-95"
                 >
-                  @{course.instructor_name}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 opacity-60">
-                <span className="material-icons text-[16px]">visibility</span>
-                <span className="text-xs font-medium">{course.view_count || 0} orang telah melihat</span>
-              </div>
+                  <span className="material-icons text-base">school</span>
+                  IKUTI KELAS SEKARANG • {formatIDR(course.price)}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate(`/kelas/buka/${course.slug || course.id}`)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all transform active:scale-95"
+                >
+                  <span className="material-icons text-base">play_circle</span>
+                  MULAI BELAJAR
+                </button>
+              )}
             </div>
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-black text-green-700">
-                {formatIDR(course.price)}
-              </span>
-            </div>
-            {!isEnrolled && (
-              <button
-                onClick={handleEnroll}
-                className="block w-full text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-              >
-                IKUTI KELAS
-              </button>
-            )}
-            {isEnrolled && (
-              <button
-                onClick={() => navigate(`/kelas/buka/${course.slug || course.id}`)}
-                className="block w-full text-center bg-green-600 text-white py-2 rounded-md text-sm font-bold hover:bg-green-700 shadow-md transition"
-              >
-                MULAI BELAJAR
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -310,28 +360,36 @@ const EcourseCourseDetail = () => {
       {/* Tab Navigation & Content Container */}
       <div className="max-w-6xl mx-auto mb-20 px-4">
         {/* Tab Navigation */}
-        <div className="mt-4">
-          <div className="flex justify-around bg-white border-b rounded-t-lg">
+        <div className="mt-6">
+          <div className="flex justify-around bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden p-1">
             <button
-              className={`py-3 px-4 text-sm font-bold ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              className={`py-3 px-4 text-xs md:text-sm font-bold rounded-xl transition ${
+                activeTab === 'description' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-emerald-700'
+              }`}
               onClick={() => setActiveTab('description')}
             >
               Keterangan
             </button>
             <button
-              className={`py-3 px-4 text-sm font-bold ${activeTab === 'students' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              className={`py-3 px-4 text-xs md:text-sm font-bold rounded-xl transition ${
+                activeTab === 'students' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-emerald-700'
+              }`}
               onClick={() => setActiveTab('students')}
             >
               Peserta ({course.student_count || 0})
             </button>
             <button
-              className={`py-3 px-4 text-sm font-bold ${activeTab === 'materials' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              className={`py-3 px-4 text-xs md:text-sm font-bold rounded-xl transition ${
+                activeTab === 'materials' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-emerald-700'
+              }`}
               onClick={() => setActiveTab('materials')}
             >
               Materi ({course.material_count || 0})
             </button>
             <button
-              className={`py-3 px-4 text-sm font-bold ${activeTab === 'reviews' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              className={`py-3 px-4 text-xs md:text-sm font-bold rounded-xl transition ${
+                activeTab === 'reviews' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-emerald-700'
+              }`}
               onClick={() => setActiveTab('reviews')}
             >
               Review
