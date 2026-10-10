@@ -121,7 +121,54 @@ const EcourseCourseDetail = () => {
       }
     };
     fetchCourseDetails();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [slug]);
+
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+
+  useEffect(() => {
+    if (!course) return;
+    const fetchRecommendations = async () => {
+      try {
+        setLoadingRecommendations(true);
+        const res = await axios.get(`${baseUrl}/api/courses/`);
+        const all = res.data || [];
+        const currentCourseId = String(course.id);
+        const currentCourseSlug = String(course.slug || '');
+        const currentCategory = String(course.category || '').toLowerCase().trim();
+
+        const others = all.filter(c => String(c.id) !== currentCourseId && String(c.slug || '') !== currentCourseSlug);
+
+        const sameCategory = others.filter(c => {
+          if (!currentCategory || !c.category) return false;
+          return String(c.category).toLowerCase().trim() === currentCategory;
+        });
+
+        const diffCategory = others.filter(c => {
+          if (!currentCategory || !c.category) return true;
+          return String(c.category).toLowerCase().trim() !== currentCategory;
+        });
+
+        const shuffle = (arr) => {
+          const copy = [...arr];
+          for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+          }
+          return copy;
+        };
+
+        const result = [...shuffle(sameCategory), ...shuffle(diffCategory)].slice(0, 8);
+        setRecommendedCourses(result);
+      } catch (err) {
+        console.error('Error fetching recommended courses:', err);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+    fetchRecommendations();
+  }, [course?.id, course?.slug, course?.category, baseUrl]);
 
   useEffect(() => {
     const checkEnrollment = async () => {
@@ -584,6 +631,112 @@ const EcourseCourseDetail = () => {
             )}
           </div>
         </div>
+
+        {/* Rekomendasi Kelas Lainnya */}
+        {recommendedCourses.length > 0 && (
+          <div className="mt-14 pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                <h2 className="text-base md:text-xl font-black text-gray-900 tracking-tight">
+                  Rekomendasi Kelas Lainnya
+                </h2>
+              </div>
+              <Link 
+                to="/academy/ecourse" 
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+              >
+                <span>Lihat Semua Kelas</span>
+                <span className="material-icons text-sm">chevron_right</span>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              {recommendedCourses.map((rec) => {
+                const recSlug = rec.slug || rec.id;
+                const isFree = !rec.price || Number(rec.price) <= 0;
+
+                return (
+                  <div 
+                    key={rec.id} 
+                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group"
+                  >
+                    <div className="relative">
+                      {rec.category && (
+                        <div className="absolute top-2 left-2 z-10 bg-emerald-600/95 backdrop-blur-xs text-white text-[9px] font-black px-2.5 py-1 rounded-xl shadow uppercase tracking-wider flex items-center gap-1">
+                          <span className="material-icons text-[11px]">school</span>
+                          {rec.category}
+                        </div>
+                      )}
+                      {isFree && (
+                        <div className="absolute top-2 right-10 z-10 bg-emerald-700 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase">
+                          GRATIS
+                        </div>
+                      )}
+                      <Link to={`/kelas/${recSlug}`}>
+                        <img
+                          src={getMediaUrl(rec.thumbnail) || '/placeholder-image.jpg'}
+                          alt={rec.title}
+                          className="w-full h-36 md:h-44 object-cover group-hover:scale-105 transition-transform duration-300 bg-gray-50"
+                          onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                        />
+                      </Link>
+                      <div className="absolute top-2 right-2 z-10">
+                        <ShareButton
+                          slug={recSlug}
+                          title={rec.title}
+                          type="course"
+                          price={rec.price}
+                          description={rec.description}
+                          variant="card-icon"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 flex flex-col flex-1 justify-between">
+                      <div>
+                        <div className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1">
+                          <span className="material-icons text-[12px] text-emerald-600 shrink-0">school</span>
+                          <span className="truncate max-w-[130px]" title={rec.instructor_name}>
+                            @{rec.instructor_name}
+                          </span>
+                        </div>
+
+                        <h3 className="text-xs md:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[36px] text-gray-800 hover:text-emerald-700 transition-colors">
+                          <Link to={`/kelas/${recSlug}`}>
+                            {rec.title}
+                          </Link>
+                        </h3>
+
+                        <div className="mb-2">
+                          <p className="text-emerald-700 font-bold text-sm">
+                            {formatIDR(rec.price)}
+                          </p>
+                          <div className="flex items-center justify-between text-[10px] mt-0.5 text-gray-400">
+                            <span>{rec.material_count ? `${rec.material_count} materi` : 'Akses Penuh'}</span>
+                            {rec.student_count > 0 && (
+                              <span className="font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                                {rec.student_count} peserta
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/kelas/${recSlug}`}
+                        className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-2 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] border border-emerald-200 mt-2"
+                      >
+                        <span>Lihat Kelas</span>
+                        <span className="material-icons text-xs">arrow_forward</span>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
 

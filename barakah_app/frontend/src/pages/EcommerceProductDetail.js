@@ -98,7 +98,54 @@ const EcommerceProductDetail = () => {
     };
 
     fetchProductDetail();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [slug]);
+
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+
+  useEffect(() => {
+    if (!product) return;
+    const fetchRecommendations = async () => {
+      try {
+        setLoadingRecommendations(true);
+        const res = await axios.get(`${baseUrl}/api/products/`);
+        const all = res.data || [];
+        const currentProdId = String(product.id);
+        const currentProdSlug = String(product.slug || '');
+        const currentCategory = String(product.category || '').toLowerCase().trim();
+
+        const others = all.filter(p => String(p.id) !== currentProdId && String(p.slug || '') !== currentProdSlug);
+
+        const sameCategory = others.filter(p => {
+          if (!currentCategory || !p.category) return false;
+          return String(p.category).toLowerCase().trim() === currentCategory;
+        });
+
+        const diffCategory = others.filter(p => {
+          if (!currentCategory || !p.category) return true;
+          return String(p.category).toLowerCase().trim() !== currentCategory;
+        });
+
+        const shuffle = (arr) => {
+          const copy = [...arr];
+          for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+          }
+          return copy;
+        };
+
+        const result = [...shuffle(sameCategory), ...shuffle(diffCategory)].slice(0, 8);
+        setRecommendedProducts(result);
+      } catch (err) {
+        console.error('Error fetching recommended products:', err);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+    fetchRecommendations();
+  }, [product?.id, product?.slug, product?.category, baseUrl]);
 
   const [isAddingCart, setIsAddingCart] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
@@ -1068,6 +1115,135 @@ const EcommerceProductDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Rekomendasi Produk Lainnya */}
+        {recommendedProducts.length > 0 && (
+          <div className="mt-14 pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                <h2 className="text-base md:text-xl font-black text-gray-900 tracking-tight">
+                  Rekomendasi Produk Lainnya
+                </h2>
+              </div>
+              <Link 
+                to="/ecommerce" 
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+              >
+                <span>Lihat Semua Produk</span>
+                <span className="material-icons text-sm">chevron_right</span>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              {recommendedProducts.map((rec) => {
+                const inStock = (rec.total_stock !== undefined ? rec.total_stock : rec.stock) > 0;
+                const sellerCity = rec.seller_city_name || 'Indonesia';
+                const recSlug = rec.slug || rec.id;
+
+                return (
+                  <div 
+                    key={rec.id} 
+                    className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group ${!inStock ? 'opacity-75' : ''}`}
+                  >
+                    <div className="relative">
+                      {rec.active_promotion && (
+                        <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1">
+                          <span className="material-icons text-[11px]">local_fire_department</span>
+                          {rec.promo_discount_percentage ? `-${rec.promo_discount_percentage}%` : 'PROMO'}
+                        </div>
+                      )}
+                      {rec.is_preorder && (
+                        <div className={`absolute ${rec.active_promotion ? 'top-8' : 'top-2'} left-2 z-10 bg-amber-500/95 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow uppercase tracking-wider`}>
+                          PO
+                        </div>
+                      )}
+                      {!inStock && (
+                        <div className="absolute top-2 right-10 z-10 bg-gray-900/80 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase">
+                          Habis
+                        </div>
+                      )}
+                      <Link to={`/produk/${recSlug}`}>
+                        <img
+                          src={getMediaUrl(rec.thumbnail) || '/placeholder-image.jpg'}
+                          alt={rec.title}
+                          className="w-full h-36 md:h-44 object-cover group-hover:scale-105 transition-transform duration-300 bg-gray-50"
+                          onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                        />
+                      </Link>
+                      <div className="absolute top-2 right-2 z-10">
+                        <ShareButton
+                          slug={recSlug}
+                          title={rec.title}
+                          type="product"
+                          price={rec.discounted_price || rec.price}
+                          description={rec.description}
+                          variant="card-icon"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 flex flex-col flex-1 justify-between">
+                      <div>
+                        <div className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1">
+                          <span className="material-icons text-[12px] text-emerald-600 shrink-0">location_on</span>
+                          <span className="truncate max-w-[130px]" title={sellerCity}>
+                            {sellerCity}
+                          </span>
+                        </div>
+
+                        <h3 className="text-xs md:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[36px] text-gray-800 hover:text-emerald-700 transition-colors">
+                          <Link to={`/produk/${recSlug}`}>
+                            {rec.title}
+                          </Link>
+                        </h3>
+
+                        <div className="mb-2">
+                          {rec.active_promotion && rec.discounted_price ? (
+                            <div>
+                              <div className="flex items-baseline gap-1.5">
+                                <p className="text-emerald-700 font-bold text-sm">
+                                  Rp {formatCurrency(rec.discounted_price)}
+                                </p>
+                                <span className="text-gray-400 line-through text-[11px] font-semibold">
+                                  Rp {formatCurrency(rec.price)}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-400 block">/ {rec.unit || 'pcs'}</span>
+                            </div>
+                          ) : (
+                            <p className="text-emerald-700 font-bold text-sm">
+                              {rec.min_price && rec.max_price && rec.min_price !== rec.max_price
+                                ? `Rp ${formatCurrency(rec.min_price)} ~ ${formatCurrency(rec.max_price)}`
+                                : formatIDR(rec.price)
+                              } <span className="text-[10px] text-gray-400">/ {rec.unit || 'pcs'}</span>
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between text-[10px] mt-0.5 text-gray-400">
+                            <span>stok: {inStock ? (rec.total_stock !== undefined ? rec.total_stock : rec.stock) : 'habis'}</span>
+                            {rec.sold_count > 0 && (
+                              <span className="font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                                {rec.sold_count} terjual
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/produk/${recSlug}`}
+                        className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-2 rounded-xl font-bold flex items-center justify-center gap-1 transition-all text-[11px] border border-emerald-200 mt-2"
+                      >
+                        <span>Lihat Detail</span>
+                        <span className="material-icons text-xs">arrow_forward</span>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <NavigationButton />
