@@ -1300,7 +1300,7 @@ const StoreProfilePage = () => {
                   {digitalProducts.map(prod => (
                     <Link
                       key={prod.id}
-                      to={`/digital-produk/${username}/${prod.slug}`}
+                      to={`/digital-products/${prod.slug}`}
                       className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition group flex flex-col"
                     >
                       <div className="aspect-square relative overflow-hidden bg-slate-100">

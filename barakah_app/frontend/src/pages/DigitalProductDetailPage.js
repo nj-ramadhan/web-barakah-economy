@@ -259,8 +259,9 @@ const DigitalProductDetailPage = () => {
                                     <div className="text-xs">
                                         <span className="text-gray-400 block text-[10px]">Kreator Produk</span>
                                         <Link
-                                            to={`/digital-produk/${product.seller_name}`}
+                                            to={`/store/${product.seller_name}`}
                                             className="text-emerald-700 font-bold hover:underline"
+                                            title={`Kunjungi Toko @${product.seller_name}`}
                                         >
                                             @{product.seller_name}
                                         </Link>
@@ -425,9 +426,13 @@ const DigitalProductDetailPage = () => {
                                             <div>
                                                 <div className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1">
                                                     <span className="material-icons text-[12px] text-emerald-600 shrink-0">verified</span>
-                                                    <span className="truncate max-w-[130px]" title={rec.seller_name}>
+                                                    <Link
+                                                        to={`/store/${rec.seller_name}`}
+                                                        className="truncate max-w-[130px] hover:text-emerald-700 hover:underline"
+                                                        title={`Kunjungi Toko @${rec.seller_name}`}
+                                                    >
                                                         @{rec.seller_name}
-                                                    </span>
+                                                    </Link>
                                                 </div>
 
                                                 <h3 className="text-xs md:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[36px] text-gray-800 hover:text-emerald-700 transition-colors">

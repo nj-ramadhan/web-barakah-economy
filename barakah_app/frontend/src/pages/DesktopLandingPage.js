@@ -734,7 +734,7 @@ const DesktopLandingPage = () => {
                                 {popularSellers.map((seller) => (
                                     <Link
                                         key={seller.username}
-                                        to={`/digital-produk/${seller.username}`}
+                                        to={`/store/${seller.username}`}
                                         className="flex-shrink-0 w-32 text-center group"
                                     >
                                         <SellerAvatar seller={seller} getMediaUrl={getMediaUrl} />

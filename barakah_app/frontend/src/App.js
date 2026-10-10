@@ -491,16 +491,16 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/produk-digital/:slug/checkout" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductCheckoutPage /></ResponsiveLayout>} />
         <Route path="/digital-products/payment/:orderNumber" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductPaymentPage /></ResponsiveLayout>} />
 
-        {/* New Lynk.id style routes */}
-        <Route path="/digital-produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+        {/* New Lynk.id style routes & store profile aliases */}
+        <Route path="/digital-produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/digital-produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
         {/* Alias routes to support legacy underscore format and prevent blank page */}
-        <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+        <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/digital_produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
         {/* Catch-all username route for store profile (e.g. /myusername) */}
-        <Route path="/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+        <Route path="/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
 
 
         {/* Dashboard Routes (Private) */}

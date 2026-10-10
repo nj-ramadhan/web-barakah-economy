@@ -972,7 +972,7 @@ const ProfileEditPage = () => {
             </div>
 
             <div className="flex justify-center mt-4 text-center">
-              <button type="button" onClick={() => navigate(`/digital-produk/${profile.username}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
+              <button type="button" onClick={() => navigate(`/store/${profile.username}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
                 <span className="material-icons">storefront</span>
                 Lihat Toko Saya
               </button>

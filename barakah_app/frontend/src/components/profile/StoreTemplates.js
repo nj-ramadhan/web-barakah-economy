@@ -27,7 +27,7 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
     const isCourse = !!item.instructor_name || item.student_count !== undefined;
     const targetPath = isCourse
         ? `/kelas/${item.slug}`
-        : `/digital-produk/${username}/${item.slug}`;
+        : `/digital-products/${item.slug}`;
 
     const CardWrapper = isPreview ? 'div' : Link;
     const wrapperProps = isPreview ? {} : { to: targetPath };

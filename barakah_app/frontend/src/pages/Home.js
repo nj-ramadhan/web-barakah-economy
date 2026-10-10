@@ -1809,7 +1809,7 @@ const Home = () => {
           {popularSellers.map((seller) => (
             <Link
               key={seller.username}
-              to={`/digital-produk/${seller.username}`}
+              to={`/store/${seller.username}`}
               className="flex-shrink-0 w-28 text-center"
             >
               <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-green-500 p-0.5 mb-2">

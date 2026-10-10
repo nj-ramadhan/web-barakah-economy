@@ -414,9 +414,22 @@ const DigitalProductListPage = () => {
         <div className="p-3.5 flex flex-col flex-1 justify-between">
           <div>
             {/* Creator / Seller Badge */}
-            <div className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1">
+            <div 
+              className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1 cursor-pointer hover:text-emerald-700 transition"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (product.seller_name) {
+                  navigate(`/store/${product.seller_name}`);
+                } else if (product.user) {
+                  setSelectedUserId(product.user);
+                  setIsProfileModalOpen(true);
+                }
+              }}
+              title={`Kunjungi Toko @${product.seller_name}`}
+            >
               <span className="material-icons text-[12px] text-emerald-600 shrink-0">verified</span>
-              <span className="truncate max-w-[130px] md:max-w-[160px]" title={`Kreator: @${product.seller_name}`}>
+              <span className="truncate max-w-[130px] md:max-w-[160px]">
                 Kreator: @{product.seller_name}
               </span>
             </div>
@@ -459,13 +472,13 @@ const DigitalProductListPage = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (product.seller_name) {
-                    navigate(`/digital-produk/${product.seller_name}`);
+                    navigate(`/store/${product.seller_name}`);
                   } else if (product.user) {
                     setSelectedUserId(product.user);
                     setIsProfileModalOpen(true);
                   }
                 }}
-                title={`Kunjungi Kreator @${product.seller_name}`}
+                title={`Kunjungi Toko @${product.seller_name}`}
               >
                 <img
                   src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller_name || 'Kreator')}&background=random`}
@@ -933,7 +946,7 @@ const DigitalProductListPage = () => {
               {popularSellers.map((seller) => (
                 <Link
                   key={seller.username}
-                  to={`/digital-produk/${seller.username}`}
+                  to={`/store/${seller.username}`}
                   className="flex flex-col items-center gap-2 min-w-[84px] group"
                 >
                   <div className="w-16 h-16 rounded-full border-2 border-emerald-100 p-0.5 group-hover:border-emerald-500 transition-colors">
