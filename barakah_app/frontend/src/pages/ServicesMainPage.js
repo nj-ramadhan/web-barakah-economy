@@ -8,6 +8,11 @@ import ShareButton from '../components/campaigns/ShareButton';
 import { getServices, toggleLikeService } from '../services/serviceApi';
 import { formatCurrency } from '../utils/formatters';
 
+const formatIDR = (val) => {
+  if (!val || Number(val) === 0) return 'Gratis';
+  return 'Rp ' + formatCurrency(val);
+};
+
 const SERVICE_CATEGORIES = [
   { key: 'all', label: 'Semua Jasa', icon: 'handyman' },
   { key: 'elektronik_it', label: 'Elektronik & IT', icon: 'devices' },
