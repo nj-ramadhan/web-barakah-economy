@@ -7,7 +7,7 @@ import {
     updateLandingPage,
     getLandingPageQuota
 } from '../services/landingPageApi';
-import { getMediaUrl } from '../utils/mediaUrl';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const formatIDR = (val) => {
     const num = Number(val) || 0;
