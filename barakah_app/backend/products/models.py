@@ -541,12 +541,13 @@ class LandingPage(models.Model):
     button_color = models.CharField(max_length=50, default='#10b981', help_text="Warna tombol CTA")
     button_text_color = models.CharField(max_length=50, default='#ffffff', help_text="Warna teks tombol CTA")
 
-    # Dynamic JSON Sections (Carousel, Keunggulan, Testimoni, FAQ, Galeri, Paragraf)
+    # Dynamic JSON Sections (Carousel, Keunggulan, Testimoni, FAQ, Galeri, Paragraf, Urutan Drag & Drop)
     carousel_images = models.JSONField(default=list, blank=True, help_text="Daftar URL gambar carousel")
     features = models.JSONField(default=list, blank=True, help_text="List keunggulan [{title, description, icon}]")
     testimonials = models.JSONField(default=list, blank=True, help_text="List ulasan [{name, review, rating, avatar}]")
     faq_items = models.JSONField(default=list, blank=True, help_text="List tanya jawab [{question, answer}]")
     paragraphs = models.JSONField(default=list, blank=True, help_text="List paragraf / narasi copywriting [{headline, content}]")
+    sections_order = models.JSONField(default=list, blank=True, help_text="Urutan blok komponen landing page (drag & drop)")
 
     # Meta & Status
     views_count = models.PositiveIntegerField(default=0)

@@ -426,7 +426,7 @@ class LandingPageSerializer(serializers.ModelSerializer):
             'font_family', 'font_family_display',
             'primary_color', 'secondary_color', 'background_color',
             'text_color', 'button_color', 'button_text_color',
-            'carousel_images', 'features', 'testimonials', 'faq_items', 'paragraphs',
+            'carousel_images', 'features', 'testimonials', 'faq_items', 'paragraphs', 'sections_order',
             'views_count', 'is_active', 'is_published', 'published_at',
             'expires_at', 'is_expired', 'days_remaining',
             'created_at', 'updated_at', 'public_url'

@@ -118,6 +118,7 @@ import WhatsNewPage from './pages/WhatsNewPage';
 import WhatsNewPopup from './components/whatsnew/WhatsNewPopup';
 import PublicLandingPageView from './pages/PublicLandingPageView';
 import DashboardLandingPagesPage from './pages/DashboardLandingPagesPage';
+import DashboardLandingPagesBuilderPage from './pages/DashboardLandingPagesBuilderPage';
 import DashboardAdminLandingPageSettingsPage from './pages/admin/DashboardAdminLandingPageSettingsPage';
 
 
@@ -569,6 +570,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/meetings/manage/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/landing-pages" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardLandingPagesPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/landing-pages/builder" element={<PrivateRoute><DashboardLandingPagesBuilderPage /></PrivateRoute>} />
+        <Route path="/dashboard/landing-pages/builder/:slug" element={<PrivateRoute><DashboardLandingPagesBuilderPage /></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />

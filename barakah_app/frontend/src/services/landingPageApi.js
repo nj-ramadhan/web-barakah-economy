@@ -15,9 +15,13 @@ const getAuthHeaders = (isMultipart = false) => {
     return { headers };
 };
 
-// --- PUBLIC ---
+// --- PUBLIC & SELLER DETAIL ---
 export const getPublicLandingPage = (slug) => {
     return axios.get(`${API_BASE}/api/landing-pages/${slug}/`);
+};
+
+export const getLandingPageDetail = (slug) => {
+    return axios.get(`${API_BASE}/api/landing-pages/${slug}/`, getAuthHeaders());
 };
 
 // --- SELLER / USER CRUD ---
