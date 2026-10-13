@@ -116,7 +116,7 @@ const DashboardAdminServiceApprovalPage = () => {
               <span className="text-slate-600 font-semibold">Persetujuan Jasa (Admin)</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-              <span className="material-icons text-indigo-600">verified</span>
+              <span className="material-icons text-emerald-600">verified</span>
               <span>Persetujuan Produk Jasa</span>
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -179,7 +179,7 @@ const DashboardAdminServiceApprovalPage = () => {
             onClick={() => setActiveTab('all')}
             className={`py-3 px-4 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
               activeTab === 'all'
-                ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50 rounded-t-2xl'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-2xl'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -191,7 +191,7 @@ const DashboardAdminServiceApprovalPage = () => {
         {/* CONTENT */}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+            <div className="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
             <p className="text-xs font-bold text-slate-500 animate-pulse">Memuat data pengajuan...</p>
           </div>
         ) : services.length === 0 ? (
@@ -242,7 +242,7 @@ const DashboardAdminServiceApprovalPage = () => {
                         <span className={`px-2.5 py-0.5 rounded-lg border text-[10px] font-bold ${statusColor}`}>
                           {statusText}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-semibold text-[10px]">
+                        <span className="px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold text-[10px]">
                           {item.category_display || 'Jasa'}
                         </span>
                         <span className="text-[11px] text-slate-400">
@@ -257,7 +257,7 @@ const DashboardAdminServiceApprovalPage = () => {
                       {/* Seller Detail */}
                       <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
                         <img
-                          src={getMediaUrl(item.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_name)}&background=6366f1&color=fff`}
+                          src={getMediaUrl(item.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_name)}&background=059669&color=fff`}
                           alt={item.seller_name}
                           className="w-5 h-5 rounded-full object-cover"
                         />

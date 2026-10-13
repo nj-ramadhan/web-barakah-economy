@@ -588,10 +588,10 @@ const DashboardPage = () => {
 
                                 <Link
                                     to="/dashboard/services"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
                                 >
-                                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                        <span className="material-icons text-indigo-700">handyman</span>
+                                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-icons text-emerald-700">handyman</span>
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-bold text-gray-800 text-sm">Produk Jasa Saya</h3>
@@ -1000,7 +1000,7 @@ const DashboardPage = () => {
                                     access: isAdmin || hasAccess('service_approval') || hasAccess('admin_panel') || hasAccess('all_products'),
                                     to: '/dashboard/admin/service-approval',
                                     icon: 'verified',
-                                    color: 'indigo',
+                                    color: 'emerald',
                                     title: 'Persetujuan Jasa',
                                     desc: 'Verifikasi dan moderasi produk jasa dari user (Admin)'
                                 },

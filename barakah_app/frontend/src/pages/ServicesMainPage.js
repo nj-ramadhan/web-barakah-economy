@@ -141,16 +141,16 @@ const ServicesMainPage = () => {
       <Header />
 
       {/* HERO BANNER SECTION */}
-      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-emerald-950 text-white relative overflow-hidden py-7 sm:py-9 px-4">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.22),transparent_50%)] pointer-events-none"></div>
+      <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 text-white relative overflow-hidden py-7 sm:py-9 px-4">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.2),transparent_50%)] pointer-events-none"></div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           <div className="max-w-xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-[11px] font-bold tracking-wide uppercase mb-3">
-              <span className="material-icons text-sm text-indigo-400">handyman</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-[11px] font-bold tracking-wide uppercase mb-3">
+              <span className="material-icons text-sm text-emerald-400">handyman</span>
               <span>Barakah Services Marketplace</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Katalog <span className="text-indigo-400">Produk Jasa</span> & Keahlian Profesional
+              Katalog <span className="text-emerald-400">Produk Jasa</span> & Keahlian Profesional
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
               Solusi berbagai kebutuhan Anda dari para praktisi dan mitra terpercaya. Tarif jelas, konsultasi mudah & transaksi langsung tanpa perantara.
@@ -160,17 +160,17 @@ const ServicesMainPage = () => {
           {/* CTA POST JASA UNTUK USER */}
           <div className="w-full md:w-auto bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-5 flex flex-col items-center md:items-start gap-3 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-black shadow-md">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md">
                 <span className="material-icons text-2xl">work</span>
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-bold text-white">Tawarkan Jasa Anda</h4>
-                <p className="text-[11px] text-indigo-200">Promosikan keahlian Anda ke ribuan pengguna</p>
+                <p className="text-[11px] text-emerald-200">Promosikan keahlian Anda ke ribuan pengguna</p>
               </div>
             </div>
             <Link
               to="/dashboard/services"
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md text-center transition transform active:scale-95 flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-md text-center transition transform active:scale-95 flex items-center justify-center gap-1.5"
             >
               <span className="material-icons text-sm">add_circle</span>
               <span>Kelola Jasa Saya</span>
@@ -187,13 +187,13 @@ const ServicesMainPage = () => {
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1">
-              <span className="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-600 text-lg">search</span>
+              <span className="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-600 text-lg">search</span>
               <input
                 type="text"
                 placeholder="Cari jasa (misal: servis AC, desain logo, guru les, catering, dll)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition"
               />
               {searchQuery && (
                 <button
@@ -213,7 +213,7 @@ const ServicesMainPage = () => {
                 <select
                   value={sortBy}
                   onChange={handleSortChange}
-                  className="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                  className="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
                 >
                   <option value="terbaru">Jasa Terbaru</option>
                   <option value="populer">Paling Banyak Dilihat</option>
@@ -228,7 +228,7 @@ const ServicesMainPage = () => {
                   type="button"
                   onClick={() => handleToggleView('grid')}
                   className={`p-1.5 rounded-lg transition ${
-                    viewMode === 'grid' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-400 hover:text-slate-600'
+                    viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-400 hover:text-slate-600'
                   }`}
                   title="Tampilan Grid"
                 >
@@ -238,7 +238,7 @@ const ServicesMainPage = () => {
                   type="button"
                   onClick={() => handleToggleView('blocks')}
                   className={`p-1.5 rounded-lg transition ${
-                    viewMode === 'blocks' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-400 hover:text-slate-600'
+                    viewMode === 'blocks' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-400 hover:text-slate-600'
                   }`}
                   title="Tampilan List / Blocks"
                 >
@@ -259,11 +259,11 @@ const ServicesMainPage = () => {
                   onClick={() => handleCategorySelect(cat.key)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition active:scale-95 ${
                     isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-sm shadow-indigo-200'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-sm shadow-emerald-200'
                       : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
                   }`}
                 >
-                  <span className={`material-icons text-sm ${isActive ? 'text-indigo-200' : 'text-indigo-600'}`}>
+                  <span className={`material-icons text-sm ${isActive ? 'text-emerald-200' : 'text-emerald-600'}`}>
                     {cat.icon}
                   </span>
                   <span>{cat.label}</span>
@@ -276,7 +276,7 @@ const ServicesMainPage = () => {
         {/* SECTION HEADER */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-5 bg-gradient-to-b from-indigo-500 to-emerald-600 rounded-full"></span>
+            <span className="w-2 h-5 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full"></span>
             <h2 className="text-base sm:text-lg font-bold text-slate-900">
               Daftar Produk Jasa ({services.length})
             </h2>
@@ -286,7 +286,7 @@ const ServicesMainPage = () => {
         {/* LOADING STATE */}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+            <div className="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
             <p className="text-xs font-bold text-slate-500 animate-pulse">Memuat produk jasa...</p>
           </div>
         ) : error ? (
@@ -301,7 +301,7 @@ const ServicesMainPage = () => {
           </div>
         ) : services.length === 0 ? (
           <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center my-6 shadow-xs max-w-md mx-auto">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <span className="material-icons text-3xl">handyman</span>
             </div>
             <h3 className="text-sm font-bold text-slate-800 mb-1">Belum Ada Produk Jasa</h3>
@@ -310,7 +310,7 @@ const ServicesMainPage = () => {
             </p>
             <Link
               to="/dashboard/services"
-              className="px-5 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow hover:bg-indigo-700 transition"
+              className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow hover:bg-emerald-700 transition"
             >
               Tambah Jasa Pertama Anda
             </Link>
@@ -344,7 +344,7 @@ const ServicesMainPage = () => {
                           onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
                         />
                       </Link>
-                      <div className="absolute top-2 left-2 bg-indigo-600/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow uppercase">
+                      <div className="absolute top-2 left-2 bg-emerald-700/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow uppercase">
                         {item.category_display || 'Jasa'}
                       </div>
                       <div className="absolute top-2 right-2">
@@ -362,16 +362,16 @@ const ServicesMainPage = () => {
                       <div>
                         {/* Lokasi & Seller */}
                         <div className="flex items-center gap-2 text-slate-500 text-[11px] mb-1.5">
-                          <span className="material-icons text-xs text-indigo-600">location_on</span>
+                          <span className="material-icons text-xs text-emerald-600">location_on</span>
                           <span className="truncate max-w-[130px] font-medium">{item.seller_city || 'Indonesia'}</span>
                           <span className="text-slate-300">•</span>
-                          <Link to={storeUrl} className="font-bold text-indigo-700 hover:underline truncate max-w-[130px]">
+                          <Link to={storeUrl} className="font-bold text-emerald-700 hover:underline truncate max-w-[130px]">
                             @{item.seller_shop_name || item.seller_name}
                           </Link>
                         </div>
 
                         {/* Title */}
-                        <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-indigo-700 transition line-clamp-2 mb-2">
+                        <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-emerald-700 transition line-clamp-2 mb-2">
                           <Link to={`/jasa/${item.slug || item.id}`}>
                             {item.title}
                           </Link>
@@ -431,7 +431,7 @@ const ServicesMainPage = () => {
                   className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
                 >
                   <div className="relative overflow-hidden bg-slate-100">
-                    <div className="absolute top-2 left-2 z-10 bg-indigo-600/90 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase tracking-wider">
+                    <div className="absolute top-2 left-2 z-10 bg-emerald-700/90 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase tracking-wider">
                       {item.category_display || 'Jasa'}
                     </div>
                     <Link to={`/jasa/${item.slug || item.id}`}>
@@ -457,12 +457,12 @@ const ServicesMainPage = () => {
                     <div>
                       {/* Lokasi Kota */}
                       <div className="flex items-center gap-1 text-slate-500 text-[10px] font-medium mb-1">
-                        <span className="material-icons text-[12px] text-indigo-600 shrink-0">location_on</span>
+                        <span className="material-icons text-[12px] text-emerald-600 shrink-0">location_on</span>
                         <span className="truncate max-w-[130px]">{item.seller_city || 'Indonesia'}</span>
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-xs sm:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[34px] sm:min-h-[40px] text-slate-800 group-hover:text-indigo-700 transition-colors">
+                      <h3 className="text-xs sm:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[34px] sm:min-h-[40px] text-slate-800 group-hover:text-emerald-700 transition-colors">
                         <Link to={`/jasa/${item.slug || item.id}`}>
                           {item.title}
                         </Link>
@@ -481,7 +481,7 @@ const ServicesMainPage = () => {
                       {/* Profil Penyedia Jasa */}
                       <div className="flex items-center gap-2 mb-3 pt-1 border-t border-slate-50">
                         <div className="flex items-center text-slate-400 text-[10px] gap-1" title="Dilihat">
-                          <span className="material-icons text-[12px] text-indigo-500">visibility</span>
+                          <span className="material-icons text-[12px] text-emerald-600">visibility</span>
                           <span className="font-semibold text-slate-600">{item.views_count || 0}</span>
                         </div>
                         <button
@@ -495,15 +495,15 @@ const ServicesMainPage = () => {
                         </button>
                         <Link
                           to={storeUrl}
-                          className="flex items-center gap-1 ml-auto hover:bg-indigo-50 px-1 py-0.5 rounded transition truncate max-w-[90px] sm:max-w-[110px]"
+                          className="flex items-center gap-1 ml-auto hover:bg-emerald-50 px-1 py-0.5 rounded transition truncate max-w-[90px] sm:max-w-[110px]"
                           title={`Kunjungi Toko ${item.seller_shop_name || item.seller_name}`}
                         >
                           <img
-                            src={getMediaUrl(item.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_shop_name || item.seller_name || 'User')}&background=6366f1&color=fff`}
+                            src={getMediaUrl(item.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_shop_name || item.seller_name || 'User')}&background=059669&color=fff`}
                             alt={item.seller_name}
                             className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
                           />
-                          <span className="text-[9px] font-bold text-indigo-700 truncate">@{item.seller_shop_name || item.seller_name}</span>
+                          <span className="text-[9px] font-bold text-emerald-700 truncate">@{item.seller_shop_name || item.seller_name}</span>
                         </Link>
                       </div>
                     </div>

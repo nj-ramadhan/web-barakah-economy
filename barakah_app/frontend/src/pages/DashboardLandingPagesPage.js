@@ -612,7 +612,7 @@ const DashboardLandingPagesPage = () => {
                                         </Link>
                                         <button
                                             onClick={() => handleOpenRenewal(lp)}
-                                            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-2xs"
                                             title="Perpanjang Masa Aktif Landing Page"
                                         >
                                             <span className="material-icons text-sm">update</span>
@@ -1263,7 +1263,7 @@ const DashboardLandingPagesPage = () => {
             {showRenewalModal && renewingPage && (
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
-                        <div className="w-14 h-14 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <span className="material-icons text-3xl">update</span>
                         </div>
                         <h3 className="text-lg font-black text-slate-900 text-center">Perpanjang Masa Aktif Landing Page</h3>
@@ -1294,7 +1294,7 @@ const DashboardLandingPagesPage = () => {
                                                 onClick={() => setRenewalMonths(opt.m)}
                                                 className={`py-2 rounded-xl text-xs font-bold border transition ${
                                                     renewalMonths === opt.m
-                                                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                                                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -1305,12 +1305,12 @@ const DashboardLandingPagesPage = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-purple-50 p-4 rounded-2xl border border-purple-100 flex items-center justify-between">
+                            <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
                                 <div>
-                                    <span className="text-xs font-bold text-purple-950 block">Total Tagihan:</span>
-                                    <span className="text-[11px] text-purple-700">Durasi +{renewalMonths * 30} Hari</span>
+                                    <span className="text-xs font-bold text-emerald-950 block">Total Tagihan:</span>
+                                    <span className="text-[11px] text-emerald-700">Durasi +{renewalMonths * 30} Hari</span>
                                 </div>
-                                <span className="text-lg font-black text-purple-700">
+                                <span className="text-lg font-black text-emerald-700">
                                     {formatIDR((quota?.subscription_price_monthly || 25000) * renewalMonths)}
                                 </span>
                             </div>
@@ -1329,7 +1329,7 @@ const DashboardLandingPagesPage = () => {
                                 <button
                                     onClick={handleBuyRenewal}
                                     disabled={renewing}
-                                    className="w-1/2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50"
+                                    className="w-1/2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50"
                                 >
                                     {renewing ? 'Memproses...' : 'Bayar QRIS'}
                                 </button>

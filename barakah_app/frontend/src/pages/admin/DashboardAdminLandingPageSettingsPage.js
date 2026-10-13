@@ -156,7 +156,7 @@ const DashboardAdminLandingPageSettingsPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="p-2 rounded-xl bg-purple-100 text-purple-700">
+                            <span className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
                                 <span className="material-icons text-2xl">admin_panel_settings</span>
                             </span>
                             <h1 className="text-2xl font-black text-slate-800">Manajemen Landing Page & Harga Slot</h1>
@@ -395,7 +395,7 @@ const DashboardAdminLandingPageSettingsPage = () => {
                                             <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                                                 <button
                                                     onClick={() => handleOpenEditExpiry(lp)}
-                                                    className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                                                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition flex items-center gap-1"
                                                 >
                                                     <span className="material-icons text-sm">schedule</span>
                                                     <span>Edit Masa Aktif</span>
@@ -478,7 +478,7 @@ const DashboardAdminLandingPageSettingsPage = () => {
                                         required={!expiryForm.forever}
                                         value={expiryForm.expires_at}
                                         onChange={(e) => setExpiryForm({ ...expiryForm, expires_at: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-hidden"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden"
                                     />
 
                                     {/* Quick extension shortcuts */}
@@ -487,28 +487,28 @@ const DashboardAdminLandingPageSettingsPage = () => {
                                         <button
                                             type="button"
                                             onClick={() => handleAddDaysShortcut(30)}
-                                            className="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-100"
+                                            className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-100"
                                         >
                                             +30 Hari
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleAddDaysShortcut(60)}
-                                            className="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-100"
+                                            className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-100"
                                         >
                                             +60 Hari
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleAddDaysShortcut(90)}
-                                            className="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-100"
+                                            className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-100"
                                         >
                                             +90 Hari
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleAddDaysShortcut(365)}
-                                            className="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-100"
+                                            className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-100"
                                         >
                                             +1 Tahun
                                         </button>
@@ -541,7 +541,7 @@ const DashboardAdminLandingPageSettingsPage = () => {
                                 <button
                                     type="submit"
                                     disabled={updatingExpiry}
-                                    className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition disabled:opacity-50"
+                                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition disabled:opacity-50"
                                 >
                                     {updatingExpiry ? 'Menyimpan...' : 'Simpan Perubahan'}
                                 </button>

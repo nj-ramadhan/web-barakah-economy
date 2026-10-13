@@ -62,7 +62,7 @@ const ServiceDetailPage = () => {
       <div className="body min-h-screen bg-slate-50 flex flex-col">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center my-16">
-          <div className="w-14 h-14 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+          <div className="w-14 h-14 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
           <p className="text-xs font-bold text-slate-500 animate-pulse">Memuat rincian jasa...</p>
         </div>
         <NavigationButton />
@@ -82,7 +82,7 @@ const ServiceDetailPage = () => {
           <p className="text-xs text-slate-500 mb-6">{error || 'Jasa ini tidak tersedia atau telah dihapus.'}</p>
           <button
             onClick={() => navigate('/jasa')}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition"
           >
             Lihat Katalog Jasa Lainnya
           </button>
@@ -135,7 +135,7 @@ const ServiceDetailPage = () => {
                 className="w-full h-64 sm:h-84 object-cover"
                 onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
               />
-              <div className="absolute top-3 left-3 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow">
+              <div className="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow">
                 {service.category_display || 'Jasa'}
               </div>
             </div>
@@ -147,16 +147,16 @@ const ServiceDetailPage = () => {
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                   <Link to={storeUrl} className="flex items-center gap-2.5 group">
                     <img
-                      src={getMediaUrl(service.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.seller_shop_name || service.seller_name)}&background=6366f1&color=fff`}
+                      src={getMediaUrl(service.seller_avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.seller_shop_name || service.seller_name)}&background=059669&color=fff`}
                       alt={service.seller_name}
-                      className="w-10 h-10 rounded-full object-cover border border-indigo-100 group-hover:scale-105 transition"
+                      className="w-10 h-10 rounded-full object-cover border border-emerald-100 group-hover:scale-105 transition"
                     />
                     <div>
                       <p className="text-xs text-slate-400">Penyedia Jasa:</p>
-                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition">
+                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition">
                         {service.seller_full_name || service.seller_shop_name || service.seller_name}
                       </h4>
-                      <p className="text-[10px] text-indigo-600 font-semibold">@{service.seller_shop_name || service.seller_name}</p>
+                      <p className="text-[10px] text-emerald-600 font-semibold">@{service.seller_shop_name || service.seller_name}</p>
                     </div>
                   </Link>
 
@@ -187,7 +187,7 @@ const ServiceDetailPage = () => {
 
                 <div className="flex items-center gap-4 text-xs text-slate-500 mb-4">
                   <div className="flex items-center gap-1">
-                    <span className="material-icons text-sm text-indigo-600">location_on</span>
+                    <span className="material-icons text-sm text-emerald-600">location_on</span>
                     <span>Wilayah: {service.location_city || service.seller_city || 'Seluruh Indonesia'}</span>
                   </div>
                   <div className="flex items-center gap-1">

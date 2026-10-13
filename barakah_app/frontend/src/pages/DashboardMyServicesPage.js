@@ -226,7 +226,7 @@ const DashboardMyServicesPage = () => {
             <button
               type="button"
               onClick={handleOpenAdd}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-200 transition active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-200 transition active:scale-95 flex items-center gap-1.5"
             >
               <span className="material-icons text-base">add</span>
               <span>Tambah Jasa Baru</span>
@@ -237,12 +237,12 @@ const DashboardMyServicesPage = () => {
         {/* LIST JASA USER */}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+            <div className="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin mb-4"></div>
             <p className="text-xs font-bold text-slate-500 animate-pulse">Memuat jasa Anda...</p>
           </div>
         ) : services.length === 0 ? (
           <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center my-6 shadow-xs max-w-md mx-auto">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <span className="material-icons text-3xl">handyman</span>
             </div>
             <h3 className="text-base font-bold text-slate-900 mb-1">Belum Ada Jasa yang Ditambahkan</h3>
@@ -251,7 +251,7 @@ const DashboardMyServicesPage = () => {
             </p>
             <button
               onClick={handleOpenAdd}
-              className="px-6 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-indigo-700 transition"
+              className="px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-emerald-700 transition"
             >
               + Tambah Jasa Sekarang
             </button>
@@ -298,7 +298,7 @@ const DashboardMyServicesPage = () => {
                     <div className="p-4">
                       {/* Category & City */}
                       <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-                        <span className="font-semibold text-indigo-600">{item.category_display || 'Jasa'}</span>
+                        <span className="font-semibold text-emerald-700">{item.category_display || 'Jasa'}</span>
                         <span>{item.location_city || 'Semua Wilayah'}</span>
                       </div>
 
@@ -336,7 +336,7 @@ const DashboardMyServicesPage = () => {
                   <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
                     <Link
                       to={`/jasa/${item.slug || item.id}`}
-                      className="p-2 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-200/60 transition"
+                      className="p-2 text-slate-500 hover:text-emerald-600 rounded-lg hover:bg-slate-200/60 transition"
                       title="Lihat Halaman Jasa"
                     >
                       <span className="material-icons text-lg">visibility</span>
@@ -376,7 +376,7 @@ const DashboardMyServicesPage = () => {
             
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
               <h3 className="font-extrabold text-base sm:text-lg text-slate-900 flex items-center gap-2">
-                <span className="material-icons text-indigo-600">
+                <span className="material-icons text-emerald-600">
                   {editingItem ? 'edit_note' : 'add_circle'}
                 </span>
                 <span>{editingItem ? 'Edit Produk Jasa' : 'Tambah Produk Jasa Baru'}</span>
@@ -403,7 +403,7 @@ const DashboardMyServicesPage = () => {
                   placeholder="Contoh: Servis AC & Cuci AC Rumah, Desain Logo & Branding, dsb"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
                 />
               </div>
 
@@ -415,7 +415,7 @@ const DashboardMyServicesPage = () => {
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none cursor-pointer"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -435,7 +435,7 @@ const DashboardMyServicesPage = () => {
                     placeholder="0 (jika negosiasi)"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
                   />
                   <span className="text-[10px] text-slate-400">Isi 0 jika tarif negosiasi</span>
                 </div>
@@ -447,7 +447,7 @@ const DashboardMyServicesPage = () => {
                   <select
                     value={formData.price_rate}
                     onChange={(e) => setFormData({ ...formData, price_rate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none cursor-pointer"
                   >
                     {RATE_OPTIONS.map(r => (
                       <option key={r} value={r}>{r}</option>
@@ -468,7 +468,7 @@ const DashboardMyServicesPage = () => {
                     placeholder="Contoh: 081234567890"
                     value={formData.whatsapp_number}
                     onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
                   />
                 </div>
 
@@ -481,7 +481,7 @@ const DashboardMyServicesPage = () => {
                     placeholder="Contoh: Jakarta Selatan, Surabaya, Online"
                     value={formData.location_city}
                     onChange={(e) => setFormData({ ...formData, location_city: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
                   />
                 </div>
               </div>
@@ -496,7 +496,7 @@ const DashboardMyServicesPage = () => {
                   placeholder="Halo, saya tertarik dengan jasa Anda..."
                   value={formData.whatsapp_message}
                   onChange={(e) => setFormData({ ...formData, whatsapp_message: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none"
                 />
               </div>
 
@@ -514,7 +514,7 @@ const DashboardMyServicesPage = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
                 />
               </div>
 
@@ -528,7 +528,7 @@ const DashboardMyServicesPage = () => {
                   placeholder="Jelaskan ruang lingkup jasa, portfolio, keunggulan, garansi, atau syarat pemesanan..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none leading-relaxed"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none leading-relaxed"
                 ></textarea>
               </div>
 
@@ -544,7 +544,7 @@ const DashboardMyServicesPage = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition disabled:opacity-50"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 transition disabled:opacity-50"
                 >
                   {submitting ? 'Menyimpan...' : (editingItem ? 'Simpan Perubahan' : 'Ajukan Jasa')}
                 </button>
