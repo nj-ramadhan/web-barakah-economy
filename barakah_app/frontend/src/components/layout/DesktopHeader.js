@@ -88,6 +88,7 @@ const DesktopHeader = () => {
 
     const group1 = [
         { label: t('menu.ecommerce'), to: '/store', icon: 'storefront' },
+        { label: t('menu.services', 'Jasa'), to: '/jasa', icon: 'handyman' },
         { label: t('menu.ecourse'), to: '/academy/ecourse', icon: 'school' },
         { label: t('menu.digital_products'), to: '/digital-products', icon: 'shopping_bag' },
     ];

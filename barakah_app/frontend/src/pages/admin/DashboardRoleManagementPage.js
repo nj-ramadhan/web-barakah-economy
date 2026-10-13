@@ -46,6 +46,10 @@ const MENU_OPTIONS = [
     { key: 'internal_meetings', label: 'Admin: Rapat & Manajemen Agenda Internal' },
     { key: 'maintenance', label: 'Sistem: Mode Maintenance (Perawatan Web)' },
     { key: 'zis_routine', label: 'Personal: ZIS Rutin' },
+    { key: 'landing_page_builder', label: 'Bisnis: Landing Page Builder' },
+    { key: 'admin_landing_pages', label: 'Sistem: Manajemen Landing Page & Slot (Admin)' },
+    { key: 'services', label: 'Bisnis: Produk Jasa Saya' },
+    { key: 'service_approval', label: 'Bisnis: Persetujuan Jasa (Admin)' },
 ];
 
 // All profile fields that can be set as required

@@ -464,9 +464,26 @@ const DashboardPage = () => {
                         const accessibleMenus = userProfile?.accessible_menus || [];
                         // Helper to check if user has custom role access OR if it's a default menu (for now let's make it strict per user request)
                         const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
+                        const canAccessLandingPage = isAdmin || userProfile?.is_verified_member || userRes?.is_verified_member || userProfile?.role === 'seller' || userRes?.role === 'seller' || hasAccess('landing_page_builder');
 
                         return (
                             <>
+                                {canAccessLandingPage && (
+                                    <Link
+                                        to="/dashboard/landing-pages"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-emerald-700">web</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Landing Page Builder</h3>
+                                            <p className="text-[11px] text-gray-500">Buat & kustomisasi landing page toko / produk Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
                                 {hasAccess('digital_products') && (
                                     <Link
                                         to="/dashboard/digital-products"
@@ -568,6 +585,20 @@ const DashboardPage = () => {
                                         <span className="material-icons text-gray-400">chevron_right</span>
                                     </Link>
                                 )}
+
+                                <Link
+                                    to="/dashboard/services"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
+                                >
+                                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-icons text-indigo-700">handyman</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-800 text-sm">Produk Jasa Saya</h3>
+                                        <p className="text-[11px] text-gray-500">Kelola dan tawarkan layanan keahlian Anda</p>
+                                    </div>
+                                    <span className="material-icons text-gray-400">chevron_right</span>
+                                </Link>
 
                                 {hasAccess('write_article') && (
                                     <Link
@@ -778,6 +809,15 @@ const DashboardPage = () => {
                                     color: 'green',
                                     title: 'Manajemen Partner Bisnis',
                                     desc: 'Kurasi dan kelola data usaha anggota BAE (Admin)'
+                                },
+                                {
+                                    id: 'landing_page_settings',
+                                    access: isAdmin || hasAccess('admin_landing_pages'),
+                                    to: '/dashboard/admin/landing-page-settings',
+                                    icon: 'tune',
+                                    color: 'emerald',
+                                    title: 'Pengaturan Slot Landing Page',
+                                    desc: 'Atur harga slot tambahan & pantau landing page seller (Admin)'
                                 }
                             ]
                         },
@@ -954,6 +994,15 @@ const DashboardPage = () => {
                                     title: 'Persetujuan Charity',
                                     desc: 'Verifikasi pengajuan program charity dari user (Admin)',
                                     badge: managementStats.campaign_approval
+                                },
+                                {
+                                    id: 'service_approval',
+                                    access: isAdmin || hasAccess('service_approval') || hasAccess('admin_panel') || hasAccess('all_products'),
+                                    to: '/dashboard/admin/service-approval',
+                                    icon: 'verified',
+                                    color: 'indigo',
+                                    title: 'Persetujuan Jasa',
+                                    desc: 'Verifikasi dan moderasi produk jasa dari user (Admin)'
                                 },
                                 {
                                     id: 'donations_charity',

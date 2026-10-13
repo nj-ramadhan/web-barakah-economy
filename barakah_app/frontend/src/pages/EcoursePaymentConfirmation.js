@@ -74,21 +74,33 @@ const EcoursePaymentConfirmation = () => {
   const [qrisData, setQrisData] = useState(null);
   const [generatingQris, setGeneratingQris] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+
   // Get user from localStorage
   const user = JSON.parse(localStorage.getItem('user')) || {};
 
   // Fetch course & payment config
   useEffect(() => {
     const fetchCourse = async () => {
+      setLoading(true);
+      setFetchError(false);
       try {
         const [res, configRes] = await Promise.all([
           getCourseBySlug(slug),
           getPublicPaymentConfig().catch(() => null)
         ]);
-        setCourse(res.data);
-        setPaymentConfig(configRes);
+        if (res?.data) {
+          setCourse(res.data);
+          setPaymentConfig(configRes);
+        } else {
+          setFetchError(true);
+        }
       } catch (err) {
         console.error("Error fetching course and config:", err);
+        setFetchError(true);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCourse();
@@ -244,7 +256,43 @@ const EcoursePaymentConfirmation = () => {
     }
   };
 
-  if (!course) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="body min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-28 px-4 text-center">
+          <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4" />
+          <h2 className="text-base font-bold text-slate-800">Menyiapkan Informasi Pembayaran...</h2>
+          <p className="text-xs text-slate-500 mt-1">Sedang memuat data kelas e-course...</p>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
+
+  if (fetchError || !course) {
+    return (
+      <div className="body min-h-screen bg-slate-50">
+        <Header />
+        <div className="max-w-md mx-auto py-24 px-4 text-center">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-icons text-3xl">error_outline</span>
+          </div>
+          <h2 className="text-lg font-bold text-slate-800">Kelas Tidak Ditemukan</h2>
+          <p className="text-xs text-slate-500 mt-1 mb-6">
+            Data kelas yang ingin Anda bayar tidak ditemukan atau sudah tidak aktif.
+          </p>
+          <button
+            onClick={() => navigate('/academy')}
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
+          >
+            Jelajahi Kelas Lainnya
+          </button>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
 
   const getMediaUrl = (url) => {
     if (!url) return null;

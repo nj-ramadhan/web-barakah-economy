@@ -299,6 +299,11 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             # Show all e-commerce products for the specific user
             ecommerce_products = Product.objects.filter(seller=user, is_active=True)
             
+            # Show all active & approved services for the specific user
+            from products.models import ServiceItem
+            from products.serializers import ServiceItemSerializer
+            services = ServiceItem.objects.filter(seller=user, status='approved', is_active=True)
+            
             # Fallback if ProfileSerializer is not handy, we can use a basic dict or specific fields
             profile_data = {
                 'user_id': user.id,
@@ -329,12 +334,14 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             product_serializer = DigitalProductPublicSerializer(products, many=True)
             course_serializer = CourseSerializer(courses, many=True)
             ecommerce_serializer = ProductSerializer(ecommerce_products, many=True)
+            services_serializer = ServiceItemSerializer(services, many=True, context={'request': request})
             
             return Response({
                 'profile': profile_data,
                 'products': product_serializer.data,
                 'courses': course_serializer.data,
-                'ecommerce_products': ecommerce_serializer.data
+                'ecommerce_products': ecommerce_serializer.data,
+                'services': services_serializer.data
             })
         except (User.DoesNotExist, Profile.DoesNotExist):
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)

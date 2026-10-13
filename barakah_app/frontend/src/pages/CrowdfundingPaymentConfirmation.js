@@ -226,10 +226,31 @@ const CrowdfundingPaymentConfirmation = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Redirect if no data passed
+  // Return friendly fallback if accessed without location.state
   if (!location.state) {
-    navigate('/');
-    return null;
+    return (
+      <div className="bg-gray-50 min-h-screen pb-20">
+        <Header />
+        <div className="container max-w-lg mx-auto pt-24 px-4 text-center">
+          <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons text-3xl">info</span>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Sesi Donasi Tidak Ditemukan</h2>
+            <p className="text-xs text-gray-500 mt-1 mb-6">
+              Data sesi pembayaran donasi Anda telah selesai atau halaman diakses secara langsung.
+            </p>
+            <button
+              onClick={() => navigate('/program-kebaikan')}
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
+            >
+              Kembali ke Program Kebaikan
+            </button>
+          </div>
+        </div>
+        <NavigationButton />
+      </div>
+    );
   }
 
   const {

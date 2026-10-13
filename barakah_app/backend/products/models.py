@@ -1,5 +1,7 @@
 # products/models.py
+import datetime
 from django.db import models
+from django.utils import timezone
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 
@@ -307,3 +309,295 @@ class ProductPromotion(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.product.title}"      
+
+
+class ServiceItem(models.Model):
+    SERVICE_CATEGORY_CHOICES = [
+        ('elektronik_it', 'Elektronik & IT'),
+        ('desain_kreatif', 'Desain & Kreatif'),
+        ('rumah_tukang', 'Pertukangan & Rumah Tangga'),
+        ('pendidikan_kursus', 'Pendidikan & Kursus'),
+        ('kesehatan_terapi', 'Kesehatan & Terapi'),
+        ('bisnis_legal', 'Bisnis, Keuangan & Legal'),
+        ('transportasi_logistik', 'Transportasi & Logistik'),
+        ('acara_fotografi', 'Acara & Fotografi'),
+        ('kebersihan_laundry', 'Kebersihan & Laundry'),
+        ('otomotif', 'Servis Otomotif'),
+        ('kuliner_katering', 'Katering & Jasa Kuliner'),
+        ('lainnya', 'Layanan Lainnya'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu Persetujuan'),
+        ('approved', 'Disetujui'),
+        ('rejected', 'Ditolak'),
+    ]
+
+    seller = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='services')
+    title = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
+    category = models.CharField(max_length=50, choices=SERVICE_CATEGORY_CHOICES, default='lainnya')
+    description = models.TextField(blank=True, default='')
+    thumbnail = models.ImageField(upload_to='service_images/', blank=True, null=True)
+    
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Tarif Harga")
+    price_rate = models.CharField(max_length=50, default='/jam', help_text="Satuan tarif: /jam, /hari, /proyek, /sesi, Mulai dari, dll")
+    
+    whatsapp_number = models.CharField(max_length=30, blank=True, null=True, help_text="Nomor WhatsApp untuk pesanan jasa")
+    whatsapp_message = models.TextField(blank=True, default='', help_text="Template pesan pembuka WhatsApp otomatis")
+    location_city = models.CharField(max_length=100, blank=True, null=True, help_text="Kota/Wilayah jangkauan jasa")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    views_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField('accounts.User', related_name='liked_services', blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(ServiceItem, self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.title} - {self.seller.username} ({self.status})"
+
+
+# ==============================================================================
+# LANDING PAGE BUILDER & QUOTA MANAGEMENT MODELS
+# ==============================================================================
+
+class LandingPageSlotSetting(models.Model):
+    """Pengaturan harga, kuota gratis & langganan landing page oleh admin (Singleton)."""
+    FREE_DURATION_CHOICES = [
+        ('1_month', '1 Bulan Free (30 Hari)'),
+        ('forever', 'Free Selamanya'),
+        ('custom_days', 'Kustom Jumlah Hari'),
+    ]
+
+    price_per_slot = models.DecimalField(max_digits=12, decimal_places=2, default=50000, help_text="Harga penambahan 1 slot Landing Page (Rp)")
+    free_quota = models.PositiveIntegerField(default=1, help_text="Jumlah landing page gratis pertama per user")
+    free_duration_type = models.CharField(
+        max_length=20, 
+        choices=FREE_DURATION_CHOICES, 
+        default='1_month', 
+        help_text="Durasi aktif gratis untuk LP default"
+    )
+    default_free_days = models.PositiveIntegerField(
+        default=30, 
+        help_text="Jumlah hari masa aktif jika memilih 1 bulan atau kustom hari"
+    )
+    subscription_price_monthly = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=25000, 
+        help_text="Harga langganan / perpanjangan per bulan (Rp)"
+    )
+    is_active = models.BooleanField(default=True)
+    instructions = models.TextField(
+        blank=True, 
+        default="Biaya penambahan kuota & langganan masa aktif Landing Page. Pembayaran otomatis diverifikasi via QRIS / Notifikasi Transfer Bank Barakah.",
+        help_text="Petunjuk pembayaran"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def get_settings(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+    def __str__(self):
+        return f"Setting Slot LP (Rp {self.price_per_slot:,.0f} / slot, Gratis: {self.free_quota}, Langganan: Rp {self.subscription_price_monthly:,.0f}/bln)"
+
+
+class LandingPageQuota(models.Model):
+    """Menyimpan kuota tambahan berbayar milik pengguna."""
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='lp_quota')
+    extra_slots = models.PositiveIntegerField(default=0, help_text="Jumlah slot tambahan yang telah dibeli & aktif")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def total_allowed(self):
+        setting = LandingPageSlotSetting.get_settings()
+        return setting.free_quota + self.extra_slots
+
+    def __str__(self):
+        return f"Quota LP {self.user.username}: {self.extra_slots} extra slots"
+
+
+class LandingPageSlotOrder(models.Model):
+    """Transaksi pembelian slot Landing Page atau perpanjangan masa aktif (langganan) dengan auto-sync listener."""
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu Pembayaran'),
+        ('paid', 'Lunas / Berhasil'),
+        ('cancelled', 'Dibatalkan'),
+        ('expired', 'Kadaluarsa'),
+    ]
+
+    ORDER_TYPE_CHOICES = [
+        ('slot', 'Beli Slot Ekstra'),
+        ('renewal', 'Perpanjang Masa Aktif / Langganan'),
+    ]
+
+    order_number = models.CharField(max_length=50, unique=True)
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='lp_orders')
+    order_type = models.CharField(max_length=20, choices=ORDER_TYPE_CHOICES, default='slot')
+    landing_page = models.ForeignKey('LandingPage', on_delete=models.SET_NULL, null=True, blank=True, related_name='renewal_orders')
+    duration_months = models.PositiveIntegerField(default=1, help_text="Durasi perpanjangan (bulan)")
+    slots_count = models.PositiveIntegerField(default=1)
+    base_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    unique_code = models.PositiveIntegerField(default=0)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, help_text="Total tagihan (base_amount + unique_code)")
+    payment_method = models.CharField(max_length=30, default='dynaqris')
+    payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.order_number} ({self.order_type}) - {self.user.username} (Rp {self.amount:,.0f} - {self.payment_status})"
+
+
+class LandingPage(models.Model):
+    """Landing Page Kustom buatan Seller / Pengguna dengan kontrol penuh."""
+    THEME_CHOICES = [
+        ('emerald', 'Emerald Islamic & Heritage'),
+        ('modern_dark', 'Dark Luxury Mode'),
+        ('clean_white', 'Clean Minimalist White'),
+        ('sunset_amber', 'Sunset Amber Warmth'),
+        ('ocean_blue', 'Ocean Deep Blue'),
+        ('luxury_gold', 'Royal Gold Accent'),
+        ('rose_elegance', 'Rose Elegance'),
+    ]
+
+    LAYOUT_CHOICES = [
+        ('standard', 'Standard Long-Form Sales Page'),
+        ('centered_hero', 'Hero Centered Minimalist'),
+        ('biolink_style', 'Biolink & Fast Action'),
+        ('split_banner', 'Split Banner Showcase'),
+        ('grid_showcase', 'Grid Product Showcase'),
+    ]
+
+    FONT_CHOICES = [
+        ('poppins', 'Poppins (Modern & Bersih)'),
+        ('plus-jakarta', 'Plus Jakarta Sans (Elegan & Resmi)'),
+        ('inter', 'Inter (Teknis & Standar)'),
+        ('outfit', 'Outfit (Futuristik & Trendy)'),
+        ('serif', 'Serif / Editorial (Klasik & Premium)'),
+        ('mono', 'Monospace (Unik & Modern)'),
+    ]
+
+    CTA_TYPE_CHOICES = [
+        ('whatsapp', 'Chat WhatsApp Otomatis'),
+        ('direct_link', 'Direct Link / URL Eksternal'),
+        ('checkout', 'Langsung Beli / Checkout'),
+    ]
+
+    seller = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='landing_pages')
+    title = models.CharField(max_length=200, help_text="Nama Toko atau Judul Landing Page")
+    slug = models.SlugField(max_length=220, unique=True, blank=True, help_text="URL publik: /lp/{slug}")
+    tagline = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(blank=True, default='', help_text="Deskripsi atau copywriting utama")
+
+    # Branding & Banner
+    logo = models.ImageField(upload_to='landing_pages/logos/', blank=True, null=True)
+    hero_image = models.ImageField(upload_to='landing_pages/heroes/', blank=True, null=True)
+    hero_headline = models.CharField(max_length=255, blank=True, default='')
+    hero_subheadline = models.TextField(blank=True, default='')
+
+    # Pricing & Discounts
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal Harga Produk/Jasa")
+    slash_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Harga Coret (Sebelum Diskon)")
+    badge_text = models.CharField(max_length=100, blank=True, default='', help_text="Label promo, misal: 'PROMO DISKON 50%', 'BEST SELLER'")
+
+    # Call-to-Action (CTA) & Custom Buttons
+    cta_text = models.CharField(max_length=100, default='Beli Sekarang', help_text="Teks tombol CTA utama")
+    cta_subtext = models.CharField(max_length=150, blank=True, default='', help_text="Subteks penenang, misal: 'Garansi 100% Uang Kembali'")
+    cta_type = models.CharField(max_length=50, default='whatsapp', choices=CTA_TYPE_CHOICES)
+    cta_link = models.CharField(max_length=500, blank=True, default='', help_text="Direct link tujuan (URL atau wa.me)")
+    whatsapp_number = models.CharField(max_length=30, blank=True, default='', help_text="Nomor WhatsApp (contoh: 628123456789)")
+    whatsapp_message = models.TextField(blank=True, default='', help_text="Template pesan WhatsApp pembuka otomatis")
+    
+    secondary_cta_text = models.CharField(max_length=100, blank=True, default='')
+    secondary_cta_link = models.CharField(max_length=500, blank=True, default='')
+
+    # Styling, Warna, Font, Layout & Tema
+    theme = models.CharField(max_length=50, default='emerald', choices=THEME_CHOICES)
+    layout = models.CharField(max_length=50, default='standard', choices=LAYOUT_CHOICES)
+    font_family = models.CharField(max_length=50, default='poppins', choices=FONT_CHOICES)
+    
+    primary_color = models.CharField(max_length=50, default='#10b981', help_text="Warna utama / tombol / aksen")
+    secondary_color = models.CharField(max_length=50, default='#047857', help_text="Warna sekunder / gradasi")
+    background_color = models.CharField(max_length=50, default='#f8fafc', help_text="Warna latar belakang container")
+    text_color = models.CharField(max_length=50, default='#0f172a', help_text="Warna teks utama")
+    button_color = models.CharField(max_length=50, default='#10b981', help_text="Warna tombol CTA")
+    button_text_color = models.CharField(max_length=50, default='#ffffff', help_text="Warna teks tombol CTA")
+
+    # Dynamic JSON Sections (Carousel, Keunggulan, Testimoni, FAQ, Galeri, Paragraf)
+    carousel_images = models.JSONField(default=list, blank=True, help_text="Daftar URL gambar carousel")
+    features = models.JSONField(default=list, blank=True, help_text="List keunggulan [{title, description, icon}]")
+    testimonials = models.JSONField(default=list, blank=True, help_text="List ulasan [{name, review, rating, avatar}]")
+    faq_items = models.JSONField(default=list, blank=True, help_text="List tanya jawab [{question, answer}]")
+    paragraphs = models.JSONField(default=list, blank=True, help_text="List paragraf / narasi copywriting [{headline, content}]")
+
+    # Meta & Status
+    views_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=False, help_text="Status publish (Jika False = Draft/Edit belum dihitung masa aktifnya)")
+    published_at = models.DateTimeField(null=True, blank=True, help_text="Waktu pertama kali dipublish")
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Tanggal berakhir masa aktif LP (null jika free selamanya)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def is_expired(self):
+        """Cek apakah masa aktif landing page telah habis."""
+        setting = LandingPageSlotSetting.get_settings()
+        if setting.free_duration_type == 'forever' and not self.expires_at:
+            return False
+        if not self.is_published:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return True
+        return False
+
+    @property
+    def days_remaining(self):
+        """Sisa hari aktif landing page."""
+        if not self.expires_at:
+            return None
+        diff = (self.expires_at - timezone.now()).total_seconds()
+        return max(0, int(diff // 86400))
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(LandingPage, self.title)
+
+        # Usia landing page dihitung hanya ketika diaktifkan / dipublish
+        if self.is_published:
+            setting = LandingPageSlotSetting.get_settings()
+            if not self.published_at:
+                self.published_at = timezone.now()
+            if not self.expires_at:
+                if setting.free_duration_type == 'forever':
+                    self.expires_at = None
+                else:
+                    days = setting.default_free_days if setting.free_duration_type == 'custom_days' else 30
+                    self.expires_at = timezone.now() + datetime.timedelta(days=days)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.title} (/lp/{self.slug}) - {self.seller.username}"
+

@@ -27,6 +27,10 @@ class CampaignSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.username', read_only=True, default=None)
+    organizer_name = serializers.SerializerMethodField()
+    organizer_avatar = serializers.SerializerMethodField()
+    organizer_username = serializers.CharField(source='created_by.username', read_only=True, default=None)
+    organizer_verified = serializers.SerializerMethodField()
     collab_products = serializers.PrimaryKeyRelatedField(many=True, queryset=Product.objects.all(), required=False)
     collab_products_details = serializers.SerializerMethodField()
     thumbnail = serializers.ImageField(required=False, allow_null=True)
@@ -38,11 +42,43 @@ class CampaignSerializer(serializers.ModelSerializer):
             'target_amount', 'current_amount', 'is_featured', 'is_active',
             'created_at', 'deadline', 'donations', 'updates',
             'has_unlimited_deadline', 'total_realization', 'view_count',
-            'created_by', 'created_by_username', 'approval_status', 'rejection_reason',
+            'created_by', 'created_by_username', 'organizer_name', 'organizer_avatar',
+            'organizer_username', 'organizer_verified',
+            'approval_status', 'rejection_reason',
             'likes_count', 'is_liked',
             'is_collaboration', 'collaboration_type', 'collab_products', 'collab_products_details'
         ]
         read_only_fields = ['created_by', 'approval_status', 'rejection_reason', 'current_amount']
+
+    def get_organizer_name(self, obj):
+        if obj.created_by:
+            profile = getattr(obj.created_by, 'profile', None)
+            if profile:
+                return profile.name_full or profile.shop_name or obj.created_by.username
+            return obj.created_by.username
+        return "Barakah Charity"
+
+    def get_organizer_avatar(self, obj):
+        request = self.context.get('request')
+        if obj.created_by:
+            profile = getattr(obj.created_by, 'profile', None)
+            if profile:
+                if profile.picture:
+                    try:
+                        return request.build_absolute_uri(profile.picture.url) if request else profile.picture.url
+                    except Exception:
+                        return str(profile.picture)
+                if profile.google_picture_url:
+                    return profile.google_picture_url
+        return None
+
+    def get_organizer_verified(self, obj):
+        if not obj.created_by:
+            return True
+        profile = getattr(obj.created_by, 'profile', None)
+        if profile and getattr(profile, 'nik', None):
+            return True
+        return obj.created_by.is_staff
 
     def get_has_unlimited_deadline(self, obj):
         return obj.deadline is None

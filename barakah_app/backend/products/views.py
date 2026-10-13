@@ -3,12 +3,22 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
-from .models import Product, ShopVoucher
-from .serializers import ProductSerializer, ShopVoucherSerializer
+from .models import (
+    Product, ShopVoucher, ServiceItem,
+    LandingPage, LandingPageSlotSetting, LandingPageQuota, LandingPageSlotOrder
+)
+from .serializers import (
+    ProductSerializer, ShopVoucherSerializer, ServiceItemSerializer,
+    LandingPageSerializer, LandingPageSlotSettingSerializer, LandingPageQuotaSerializer, LandingPageSlotOrderSerializer
+)
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.exceptions import PermissionDenied, ValidationError
+import random
+import datetime
+from django.utils import timezone
 
 class ShopVoucherViewSet(viewsets.ModelViewSet):
     serializer_class = ShopVoucherSerializer
@@ -1001,3 +1011,404 @@ class ProductOgImageView(APIView):
         response = HttpResponse(buffer.getvalue(), content_type='image/jpeg')
         response['Cache-Control'] = 'public, max-age=86400'
         return response
+
+
+class ServiceItemViewSet(viewsets.ModelViewSet):
+    serializer_class = ServiceItemSerializer
+    lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        if self.action in ['like']:
+            return [IsAuthenticated()]
+        if self.action in ['admin_list', 'approve', 'reject']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ServiceItem.objects.all()
+
+        is_admin = user.is_authenticated and (user.is_staff or getattr(user, 'role', '') == 'admin')
+
+        if not is_admin:
+            if self.action in ['list', 'retrieve']:
+                queryset = queryset.filter(status='approved', is_active=True)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(location_city__icontains=search) |
+                Q(seller__username__icontains=search) |
+                Q(seller__profile__name_full__icontains=search) |
+                Q(seller__profile__shop_name__icontains=search)
+            )
+
+        category = self.request.query_params.get('category')
+        if category and category != 'Semua':
+            queryset = queryset.filter(category=category)
+
+        sort = self.request.query_params.get('sort', 'terbaru')
+        if sort == 'termurah':
+            queryset = queryset.order_by('price')
+        elif sort == 'termahal':
+            queryset = queryset.order_by('-price')
+        elif sort == 'populer':
+            queryset = queryset.order_by('-views_count', '-created_at')
+        else:
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
+
+    def get_object(self):
+        lookup_value = self.kwargs.get(self.lookup_field) or self.kwargs.get('pk')
+        queryset = self.get_queryset()
+        obj = queryset.filter(slug=lookup_value).first()
+        if not obj and str(lookup_value).isdigit():
+            obj = queryset.filter(id=lookup_value).first()
+
+        # Check if owner accessing own non-approved service
+        if not obj and self.request.user.is_authenticated:
+            obj = ServiceItem.objects.filter(
+                Q(slug=lookup_value) | Q(id=lookup_value if str(lookup_value).isdigit() else 0)
+            ).filter(Q(seller=self.request.user) | Q(seller__isnull=False)).first()
+            if obj and obj.seller != self.request.user and not (self.request.user.is_staff or getattr(self.request.user, 'role', '') == 'admin'):
+                obj = None
+
+        if not obj:
+            from django.http import Http404
+            raise Http404
+
+        if self.action == 'retrieve':
+            ServiceItem.objects.filter(pk=obj.pk).update(views_count=F('views_count') + 1)
+            obj.views_count += 1
+
+        return obj
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        status_val = 'approved' if is_admin else 'pending'
+        serializer.save(seller=user, status=status_val)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = serializer.instance
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        if instance.seller != user and not is_admin:
+            raise PermissionDenied("Anda tidak memiliki izin mengedit jasa ini.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        if instance.seller != user and not is_admin:
+            raise PermissionDenied("Anda tidak memiliki izin menghapus jasa ini.")
+        instance.delete()
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_services(self, request):
+        services = ServiceItem.objects.filter(seller=request.user).order_by('-created_at')
+        serializer = self.get_serializer(services, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def admin_list(self, request):
+        status_filter = request.query_params.get('status', 'all')
+        qs = ServiceItem.objects.all().order_by('-created_at')
+        if status_filter in ['pending', 'approved', 'rejected']:
+            qs = qs.filter(status=status_filter)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def approve(self, request, slug=None):
+        service = self.get_object()
+        service.status = 'approved'
+        service.is_active = True
+        service.rejection_reason = ''
+        service.save(update_fields=['status', 'is_active', 'rejection_reason'])
+        return Response({'message': 'Jasa berhasil disetujui.', 'status': service.status})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def reject(self, request, slug=None):
+        service = self.get_object()
+        reason = request.data.get('reason', '')
+        service.status = 'rejected'
+        service.rejection_reason = reason
+        service.save(update_fields=['status', 'rejection_reason'])
+        return Response({'message': 'Jasa telah ditolak.', 'status': service.status})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, slug=None):
+        service = self.get_object()
+        user = request.user
+        if service.likes.filter(id=user.id).exists():
+            service.likes.remove(user)
+            liked = False
+        else:
+            service.likes.add(user)
+            liked = True
+        return Response({
+            'liked': liked,
+            'likes_count': service.likes.count()
+        })
+
+
+# ==============================================================================
+# LANDING PAGE BUILDER VIEWSETS & VIEWS
+# ==============================================================================
+
+class LandingPageViewSet(viewsets.ModelViewSet):
+    """
+    CRUD untuk Landing Page seller.
+    - Public: retrieve by slug (URL: /lp/{slug})
+    - Authenticated: my_pages, create (cek verifikasi & kuota), update, delete
+    """
+    serializer_class = LandingPageSerializer
+    lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action in ['retrieve', 'public_get']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if self.action in ['retrieve', 'public_get']:
+            if user and user.is_authenticated:
+                return LandingPage.objects.filter(Q(is_active=True) | Q(seller=user))
+            return LandingPage.objects.filter(is_active=True)
+        if user and user.is_authenticated:
+            if user.is_staff or getattr(user, 'role', '') == 'admin':
+                return LandingPage.objects.all().order_by('-created_at')
+            return LandingPage.objects.filter(seller=user).order_by('-created_at')
+        return LandingPage.objects.none()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        LandingPage.objects.filter(id=instance.id).update(views_count=F('views_count') + 1)
+        instance.refresh_from_db(fields=['views_count'])
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def _check_user_creation_eligibility(self, user):
+        """User must be verified or seller or have role with landing_page_builder access or admin."""
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        if is_admin:
+            return True
+        is_verified = getattr(user, 'is_verified_member', False)
+        is_seller = getattr(user, 'role', '') == 'seller'
+        has_menu = False
+        try:
+            has_menu = user.has_menu_access('landing_page_builder')
+        except Exception:
+            pass
+        return is_verified or is_seller or has_menu
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not self._check_user_creation_eligibility(user):
+            raise PermissionDenied(
+                "Pembuatan Landing Page hanya tersedia untuk akun yang sudah terverifikasi (Verified Member) atau Seller."
+            )
+
+        # Quota check
+        current_count = LandingPage.objects.filter(seller=user).count()
+        quota, _ = LandingPageQuota.objects.get_or_create(user=user)
+        total_allowed = quota.total_allowed
+
+        if current_count >= total_allowed:
+            raise ValidationError({
+                'detail': f'Batas kuota Landing Page Anda sudah penuh ({current_count}/{total_allowed}). '
+                          f'Silakan beli slot Landing Page tambahan untuk membuat lebih banyak.'
+            })
+
+        serializer.save(seller=user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = serializer.instance
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        if instance.seller != user and not is_admin:
+            raise PermissionDenied("Anda tidak memiliki izin mengedit landing page ini.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        if instance.seller != user and not is_admin:
+            raise PermissionDenied("Anda tidak memiliki izin menghapus landing page ini.")
+        instance.delete()
+
+    @action(detail=False, methods=['get'])
+    def my_pages(self, request):
+        user = request.user
+        pages = LandingPage.objects.filter(seller=user).order_by('-created_at')
+        serializer = self.get_serializer(pages, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def quota(self, request):
+        user = request.user
+        quota, _ = LandingPageQuota.objects.get_or_create(user=user)
+        serializer = LandingPageQuotaSerializer(quota)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def toggle_publish(self, request, slug=None):
+        """Toggle status publikasi LP oleh seller (ketika pertama kali dipublish, masa aktif 30 hari/setting admin baru dihitung)."""
+        lp = self.get_object()
+        user = request.user
+        if lp.seller != user and not (user.is_staff or getattr(user, 'role', '') == 'admin'):
+            raise PermissionDenied("Anda tidak memiliki izin mengubah status publikasi landing page ini.")
+        
+        lp.is_published = not lp.is_published
+        lp.save()
+        return Response(self.get_serializer(lp).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def admin_update_expiry(self, request, slug=None):
+        """Admin endpoint untuk mengubah / memperpanjang masa aktif landing page."""
+        lp = self.get_object()
+        if 'expires_at' in request.data:
+            val = request.data.get('expires_at')
+            lp.expires_at = val if val else None
+        if 'add_days' in request.data:
+            base_time = lp.expires_at if (lp.expires_at and lp.expires_at > timezone.now()) else timezone.now()
+            lp.expires_at = base_time + datetime.timedelta(days=int(request.data.get('add_days')))
+        if 'is_published' in request.data:
+            lp.is_published = bool(request.data.get('is_published'))
+        if 'is_active' in request.data:
+            lp.is_active = bool(request.data.get('is_active'))
+        lp.save()
+        return Response(self.get_serializer(lp).data)
+
+
+class LandingPageSlotOrderViewSet(viewsets.ModelViewSet):
+    """
+    Order kuota slot Landing Page tambahan atau perpanjangan masa aktif (langganan).
+    """
+    serializer_class = LandingPageSlotOrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff or getattr(user, 'role', '') == 'admin':
+            return LandingPageSlotOrder.objects.all().order_by('-created_at')
+        return LandingPageSlotOrder.objects.filter(user=user).order_by('-created_at')
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        order_type = request.data.get('order_type', 'slot')
+        setting = LandingPageSlotSetting.get_settings()
+        
+        landing_page = None
+        duration_months = 1
+        slots_count = 1
+
+        if order_type == 'renewal':
+            lp_id = request.data.get('landing_page')
+            landing_page = get_object_or_404(LandingPage, id=lp_id)
+            if landing_page.seller != user and not (user.is_staff or getattr(user, 'role', '') == 'admin'):
+                raise PermissionDenied("Anda tidak memiliki akses ke landing page ini.")
+            try:
+                duration_months = int(request.data.get('duration_months', 1))
+            except (ValueError, TypeError):
+                duration_months = 1
+            if duration_months < 1:
+                duration_months = 1
+            base_amount = setting.subscription_price_monthly * duration_months
+        else:
+            order_type = 'slot'
+            try:
+                slots_count = int(request.data.get('slots_count', 1))
+            except (ValueError, TypeError):
+                slots_count = 1
+            if slots_count < 1:
+                slots_count = 1
+            base_amount = setting.price_per_slot * slots_count
+
+        unique_code = random.randint(100, 499)
+        total_amount = base_amount + unique_code
+        prefix = "LPR" if order_type == 'renewal' else "LPO"
+        order_number = f"{prefix}-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+
+        order = LandingPageSlotOrder.objects.create(
+            order_number=order_number,
+            user=user,
+            order_type=order_type,
+            landing_page=landing_page,
+            duration_months=duration_months,
+            slots_count=slots_count,
+            base_amount=base_amount,
+            unique_code=unique_code,
+            amount=total_amount,
+            payment_method=request.data.get('payment_method', 'dynaqris'),
+            payment_status='pending'
+        )
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        order = self.get_object()
+        return Response({
+            'order_number': order.order_number,
+            'order_type': order.order_type,
+            'payment_status': order.payment_status,
+            'is_paid': order.payment_status == 'paid',
+            'amount': float(order.amount),
+            'slots_count': order.slots_count,
+            'duration_months': order.duration_months,
+            'landing_page_title': order.landing_page.title if order.landing_page else None
+        })
+
+
+class LandingPageAdminSettingView(APIView):
+    """Admin endpoint untuk melihat & mengatur harga slot LP, masa aktif free, dan harga langganan."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        setting = LandingPageSlotSetting.get_settings()
+        serializer = LandingPageSlotSettingSerializer(setting)
+        return Response(serializer.data)
+
+    def put(self, request):
+        setting = LandingPageSlotSetting.get_settings()
+        serializer = LandingPageSlotSettingSerializer(setting, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LandingPageAdminListView(APIView):
+    """Admin endpoint untuk melihat dan mengelola rekap semua landing page yang ada di sistem."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        pages = LandingPage.objects.all().order_by('-created_at')
+        serializer = LandingPageSerializer(pages, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        lp_id = request.data.get('id')
+        lp = get_object_or_404(LandingPage, id=lp_id)
+        if 'expires_at' in request.data:
+            val = request.data.get('expires_at')
+            lp.expires_at = val if val else None
+        if 'add_days' in request.data:
+            base_time = lp.expires_at if (lp.expires_at and lp.expires_at > timezone.now()) else timezone.now()
+            lp.expires_at = base_time + datetime.timedelta(days=int(request.data.get('add_days')))
+        if 'is_published' in request.data:
+            lp.is_published = bool(request.data.get('is_published'))
+        if 'is_active' in request.data:
+            lp.is_active = bool(request.data.get('is_active'))
+        lp.save()
+        return Response(LandingPageSerializer(lp, context={'request': request}).data)
+

@@ -15,6 +15,8 @@ const DigitalProductPaymentPage = () => {
     const [proofFile, setProofFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(false);
     const [order, setOrder] = useState(null);
     const [success, setSuccess] = useState(false);
     const [ocrError, setOcrError] = useState('');
@@ -34,18 +36,27 @@ const DigitalProductPaymentPage = () => {
 
     useEffect(() => {
         const fetchOrderAndConfig = async () => {
+            setLoading(true);
+            setFetchError(false);
             try {
                 const [orderRes, configRes] = await Promise.all([
                     getDigitalOrderStatus(orderNumber),
                     getPublicPaymentConfig().catch(() => null)
                 ]);
-                setOrder(orderRes.data);
-                setPaymentConfig(configRes);
-                if (configRes?.active_mode === 'dynaqris' && orderRes.data?.amount) {
-                    handleGenerateDynaQRIS(orderRes.data.amount);
+                if (orderRes?.data) {
+                    setOrder(orderRes.data);
+                    setPaymentConfig(configRes);
+                    if (configRes?.active_mode === 'dynaqris' && orderRes.data?.amount) {
+                        handleGenerateDynaQRIS(orderRes.data.amount);
+                    }
+                } else {
+                    setFetchError(true);
                 }
             } catch (err) {
                 console.error('Error fetching order and config:', err);
+                setFetchError(true);
+            } finally {
+                setLoading(false);
             }
         };
         fetchOrderAndConfig();
@@ -273,6 +284,42 @@ const DigitalProductPaymentPage = () => {
                     <button
                         onClick={() => navigate('/digital-products')}
                         className="px-8 py-3 bg-green-700 text-white rounded-xl font-bold hover:bg-green-800 transition"
+                    >
+                        Kembali ke Produk Digital
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="body min-h-screen bg-slate-50">
+                <Header />
+                <div className="flex flex-col items-center justify-center py-28 px-4 text-center">
+                    <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4" />
+                    <h2 className="text-base font-bold text-slate-800">Menyiapkan Informasi Pembayaran...</h2>
+                    <p className="text-xs text-slate-500 mt-1">Sedang memuat data tagihan pesanan #{orderNumber}.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (fetchError || !order) {
+        return (
+            <div className="body min-h-screen bg-slate-50">
+                <Header />
+                <div className="max-w-md mx-auto py-24 px-4 text-center">
+                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="material-icons text-3xl">error_outline</span>
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-800">Pesanan Tidak Ditemukan</h2>
+                    <p className="text-xs text-slate-500 mt-1 mb-6">
+                        Data pesanan #{orderNumber} tidak ditemukan atau belum tercatat di sistem.
+                    </p>
+                    <button
+                        onClick={() => navigate('/digital-products')}
+                        className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
                     >
                         Kembali ke Produk Digital
                     </button>

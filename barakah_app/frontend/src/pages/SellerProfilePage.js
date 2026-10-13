@@ -87,6 +87,7 @@ const SellerProfilePage = () => {
     const products = profileData?.products || [];
     const courses = profileData?.courses || [];
     const ecommerceProducts = profileData?.ecommerce_products || [];
+    const services = profileData?.services || [];
 
     const currentUser = safeStorage.getUser();
     const isOwnStore = Boolean(
@@ -315,6 +316,43 @@ const SellerProfilePage = () => {
                                         <h3 className="text-sm font-bold line-clamp-2 min-h-[32px]">{item.name}</h3>
                                         <p className="mt-2 text-sm font-black text-green-600">
                                             {formatIDR(item.price)}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Services Section */}
+                {services.length > 0 && (
+                    <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center' : ''}`}>
+                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : 'flex-start'} gap-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                            <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>handshake</span>
+                            Layanan Jasa
+                        </h2>
+                        <div className={`grid ${layoutStyle === 'biolink' ? 'grid-cols-1 gap-3' : layoutStyle === 'grid' ? 'grid-cols-2 lg:grid-cols-3 gap-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4'}`}>
+                            {services.map((item) => (
+                                <Link
+                                    key={item.id}
+                                    to={`/jasa/${item.slug}`}
+                                    className={`relative group rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${themeColor === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
+                                >
+                                    <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                                        <img
+                                            src={getMediaUrl(item.image) || '/placeholder-image.jpg'}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-lg shadow uppercase">
+                                            {item.category_display || item.category || 'Jasa'}
+                                        </div>
+                                    </div>
+                                    <div className="p-3">
+                                        <h3 className="text-sm font-bold line-clamp-2 min-h-[32px]">{item.title}</h3>
+                                        <p className="mt-2 text-sm font-black text-indigo-600">
+                                            {formatIDR(item.price)}
+                                            {item.price_rate_display && <span className="text-xs font-normal text-slate-500 ml-1">{item.price_rate_display}</span>}
                                         </p>
                                     </div>
                                 </Link>

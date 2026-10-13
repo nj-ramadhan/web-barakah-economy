@@ -135,12 +135,24 @@ const CrowdfundingDonationPage = () => {
     }
   }, []);
 
+  const [fetchError, setFetchError] = useState(null);
+
   useEffect(() => {
+    if (!slug) {
+      setFetchError('Slug program donasi tidak valid.');
+      setLoading(false);
+      return;
+    }
+
     // Fetch campaign details
     const fetchCampaign = async () => {
       try {
         setLoading(true);
+        setFetchError(null);
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/${slug}/`);
+        if (!response.data || !response.data.id) {
+          throw new Error('Data program tidak lengkap');
+        }
         setCampaign(response.data);
         if (response.data.is_collaboration && response.data.collaboration_type === 'waqaf' && response.data.collab_products_details?.length > 0) {
           setDonationMode('waqaf');
@@ -151,11 +163,8 @@ const CrowdfundingDonationPage = () => {
         }
       } catch (err) {
         console.error('Error fetching campaign:', err);
-        // Use placeholder data if API fails
-        setCampaign({
-          title: 'Program Donasi',
-          banner: `/images/${slug}.jpg`,
-        });
+        setCampaign(null);
+        setFetchError('Program charity tidak ditemukan atau sudah tidak aktif.');
       } finally {
         setLoading(false);
       }
@@ -495,30 +504,70 @@ const CrowdfundingDonationPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="body min-h-screen bg-slate-50 flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-sm mx-auto my-12">
+          <div className="relative mb-5">
+            <div className="w-16 h-16 rounded-full border-4 border-green-200 border-t-green-600 animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="material-icons text-green-600 text-xl">volunteer_activism</span>
+            </div>
+          </div>
+          <h3 className="text-base font-bold text-gray-800 mb-1">Menyiapkan Program Donasi...</h3>
+          <p className="text-xs text-gray-500 max-w-xs">
+            Mohon tunggu sebentar, sistem sedang memverifikasi rincian program donasi Anda.
+          </p>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
+
+  if (fetchError || !campaign) {
+    return (
+      <div className="body min-h-screen bg-slate-50 flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-sm mx-auto my-12">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center mb-4 shadow-xs">
+            <span className="material-icons text-3xl">volunteer_activism</span>
+          </div>
+          <h3 className="text-base font-bold text-gray-800 mb-1">Program Charity Tidak Ditemukan</h3>
+          <p className="text-xs text-gray-500 mb-6">
+            {fetchError || 'Program donasi ini tidak ditemukan atau sudah tidak aktif.'}
+          </p>
+          <button
+            onClick={() => navigate('/charity')}
+            className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-md shadow-green-200 transition active:scale-95 flex items-center gap-2"
+          >
+            <span className="material-icons text-sm">arrow_back</span>
+            <span>Kembali ke Halaman Charity</span>
+          </button>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
+
   return (
     <div className="body">
       <Header />
       {/* Header with program image */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 relative">
-        {loading ? (
-          <div className="w-full h-58 bg-green-500 animate-pulse"></div>
-        ) : (
-          <>
-            <img
-              src={campaign?.thumbnail || campaign?.banner || `/images/${slug}.jpg`}
-              alt={campaign?.title || 'Program Banner'}
-              className="w-full h-58 object-cover"
-              onError={(e) => {
-                e.target.src = '/images/default-campaign.jpg';
-              }}
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-              <h1 className="text-white font-bold text-xl">
-                {campaign?.title || 'Program Donasi'}
-              </h1>
-            </div>
-          </>
-        )}
+        <img
+          src={campaign.thumbnail || campaign.banner || `/images/${slug}.jpg`}
+          alt={campaign.title || 'Program Banner'}
+          className="w-full h-58 object-cover"
+          onError={(e) => {
+            e.target.src = '/images/default-campaign.jpg';
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+          <h1 className="text-white font-bold text-xl">
+            {campaign.title || 'Program Donasi'}
+          </h1>
+        </div>
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-md">

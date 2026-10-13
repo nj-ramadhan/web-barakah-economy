@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion
+from .models import (
+    Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion, ServiceItem,
+    LandingPage, LandingPageSlotSetting, LandingPageQuota, LandingPageSlotOrder
+)
 
 class TestimoniSerializer(serializers.ModelSerializer):
     can_edit = serializers.BooleanField(read_only=True)
@@ -256,3 +259,197 @@ class ShopVoucherSerializer(serializers.ModelSerializer):
         model = ShopVoucher
         fields = '__all__'
         read_only_fields = ['seller']
+
+
+class ServiceItemSerializer(serializers.ModelSerializer):
+    seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_full_name = serializers.SerializerMethodField()
+    seller_shop_name = serializers.CharField(source='seller.profile.shop_name', read_only=True, default='')
+    seller_avatar = serializers.SerializerMethodField()
+    seller_city = serializers.SerializerMethodField()
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    effective_whatsapp = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceItem
+        fields = [
+            'id', 'seller', 'seller_name', 'seller_full_name', 'seller_shop_name', 'seller_avatar', 'seller_city',
+            'title', 'slug', 'category', 'category_display', 'description', 'thumbnail',
+            'price', 'price_rate', 'whatsapp_number', 'effective_whatsapp', 'whatsapp_message',
+            'location_city', 'status', 'status_display', 'rejection_reason',
+            'is_active', 'views_count', 'likes_count', 'is_liked', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['seller', 'slug', 'status', 'rejection_reason', 'views_count', 'created_at', 'updated_at']
+
+    def get_seller_full_name(self, obj):
+        profile = getattr(obj.seller, 'profile', None)
+        return getattr(profile, 'name_full', None) or obj.seller.username
+
+    def get_seller_avatar(self, obj):
+        request = self.context.get('request')
+        profile = getattr(obj.seller, 'profile', None)
+        if profile and profile.picture:
+            try:
+                return request.build_absolute_uri(profile.picture.url) if request else profile.picture.url
+            except Exception:
+                return str(profile.picture)
+        if profile and profile.google_picture_url:
+            return profile.google_picture_url
+        return None
+
+    def get_seller_city(self, obj):
+        if obj.location_city:
+            return obj.location_city
+        profile = getattr(obj.seller, 'profile', None)
+        return getattr(profile, 'address_city_name', None) or 'Indonesia'
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
+
+    def get_effective_whatsapp(self, obj):
+        if obj.whatsapp_number:
+            return obj.whatsapp_number
+        profile = getattr(obj.seller, 'profile', None)
+        return getattr(profile, 'phone', None) or getattr(obj.seller, 'phone_number', '')
+
+
+# ==============================================================================
+# LANDING PAGE SERIALIZERS
+# ==============================================================================
+
+class LandingPageSlotSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LandingPageSlotSetting
+        fields = [
+            'id', 'price_per_slot', 'free_quota', 'free_duration_type',
+            'default_free_days', 'subscription_price_monthly',
+            'is_active', 'instructions', 'updated_at'
+        ]
+
+
+class LandingPageQuotaSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    free_quota = serializers.SerializerMethodField()
+    price_per_slot = serializers.SerializerMethodField()
+    subscription_price_monthly = serializers.SerializerMethodField()
+    free_duration_type = serializers.SerializerMethodField()
+    default_free_days = serializers.SerializerMethodField()
+    total_allowed = serializers.ReadOnlyField()
+    used_count = serializers.SerializerMethodField()
+    can_create_more = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LandingPageQuota
+        fields = [
+            'id', 'username', 'extra_slots', 'free_quota', 'price_per_slot',
+            'subscription_price_monthly', 'free_duration_type', 'default_free_days',
+            'total_allowed', 'used_count', 'can_create_more', 'updated_at'
+        ]
+
+    def get_free_quota(self, obj):
+        return LandingPageSlotSetting.get_settings().free_quota
+
+    def get_price_per_slot(self, obj):
+        return LandingPageSlotSetting.get_settings().price_per_slot
+
+    def get_subscription_price_monthly(self, obj):
+        return LandingPageSlotSetting.get_settings().subscription_price_monthly
+
+    def get_free_duration_type(self, obj):
+        return LandingPageSlotSetting.get_settings().free_duration_type
+
+    def get_default_free_days(self, obj):
+        return LandingPageSlotSetting.get_settings().default_free_days
+
+    def get_used_count(self, obj):
+        return LandingPage.objects.filter(seller=obj.user).count()
+
+    def get_can_create_more(self, obj):
+        used = LandingPage.objects.filter(seller=obj.user).count()
+        return used < obj.total_allowed
+
+
+class LandingPageSlotOrderSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    landing_page_title = serializers.CharField(source='landing_page.title', read_only=True)
+
+    class Meta:
+        model = LandingPageSlotOrder
+        fields = [
+            'id', 'order_number', 'username', 'user_name', 'order_type',
+            'landing_page', 'landing_page_title', 'duration_months', 'slots_count',
+            'base_amount', 'unique_code', 'amount', 'payment_method',
+            'payment_status', 'paid_at', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'order_number', 'unique_code', 'amount', 'payment_status',
+            'paid_at', 'created_at', 'updated_at'
+        ]
+
+    def get_user_name(self, obj):
+        profile = getattr(obj.user, 'profile', None)
+        return getattr(profile, 'name_full', None) or obj.user.username
+
+
+class LandingPageSerializer(serializers.ModelSerializer):
+    seller_username = serializers.CharField(source='seller.username', read_only=True)
+    seller_name = serializers.SerializerMethodField()
+    seller_avatar = serializers.SerializerMethodField()
+    public_url = serializers.SerializerMethodField()
+    theme_display = serializers.CharField(source='get_theme_display', read_only=True)
+    layout_display = serializers.CharField(source='get_layout_display', read_only=True)
+    font_family_display = serializers.CharField(source='get_font_family_display', read_only=True)
+    is_expired = serializers.ReadOnlyField()
+    days_remaining = serializers.ReadOnlyField()
+
+    class Meta:
+        model = LandingPage
+        fields = [
+            'id', 'seller', 'seller_username', 'seller_name', 'seller_avatar',
+            'title', 'slug', 'tagline', 'description',
+            'logo', 'hero_image', 'hero_headline', 'hero_subheadline',
+            'price', 'slash_price', 'badge_text',
+            'cta_text', 'cta_subtext', 'cta_type', 'cta_link',
+            'whatsapp_number', 'whatsapp_message',
+            'secondary_cta_text', 'secondary_cta_link',
+            'theme', 'theme_display', 'layout', 'layout_display',
+            'font_family', 'font_family_display',
+            'primary_color', 'secondary_color', 'background_color',
+            'text_color', 'button_color', 'button_text_color',
+            'carousel_images', 'features', 'testimonials', 'faq_items', 'paragraphs',
+            'views_count', 'is_active', 'is_published', 'published_at',
+            'expires_at', 'is_expired', 'days_remaining',
+            'created_at', 'updated_at', 'public_url'
+        ]
+        read_only_fields = ['seller', 'slug', 'views_count', 'published_at', 'created_at', 'updated_at']
+
+    def get_seller_name(self, obj):
+        profile = getattr(obj.seller, 'profile', None)
+        return getattr(profile, 'name_full', None) or obj.seller.username
+
+    def get_seller_avatar(self, obj):
+        request = self.context.get('request')
+        profile = getattr(obj.seller, 'profile', None)
+        if profile and profile.picture:
+            try:
+                return request.build_absolute_uri(profile.picture.url) if request else profile.picture.url
+            except Exception:
+                return str(profile.picture)
+        if profile and profile.google_picture_url:
+            return profile.google_picture_url
+        return None
+
+    def get_public_url(self, obj):
+        return f"/lp/{obj.slug}"
+
+

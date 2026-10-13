@@ -96,9 +96,13 @@ import DashboardRoleManagementPage from './pages/admin/DashboardRoleManagementPa
 import DashboardKaderisasiPage from './pages/admin/DashboardKaderisasiPage';
 import DashboardLiveStreamingPage from './pages/admin/DashboardLiveStreamingPage';
 import DashboardAdminCampaignApprovalPage from './pages/admin/DashboardAdminCampaignApprovalPage';
+import DashboardAdminServiceApprovalPage from './pages/admin/DashboardAdminServiceApprovalPage';
 import DashboardAdminArticleManagementPage from './pages/admin/DashboardAdminArticleManagementPage';
 import DashboardAdminCampaignManagementPage from './pages/admin/DashboardAdminCampaignManagementPage';
 import DashboardMyCampaignsPage from './pages/DashboardMyCampaignsPage';
+import DashboardMyServicesPage from './pages/DashboardMyServicesPage';
+import ServicesMainPage from './pages/ServicesMainPage';
+import ServiceDetailPage from './pages/ServiceDetailPage';
 import DashboardMyEventsPage from './pages/DashboardMyEventsPage';
 import DashboardArticleEditorPage from './pages/DashboardArticleEditorPage';
 import ZISSubmissionPage from './pages/ZISSubmissionPage';
@@ -112,6 +116,9 @@ import DashboardBroadcastEmailPage from './pages/admin/DashboardBroadcastEmailPa
 import DashboardWhatsAppSettingsPage from './pages/admin/DashboardWhatsAppSettingsPage';
 import WhatsNewPage from './pages/WhatsNewPage';
 import WhatsNewPopup from './components/whatsnew/WhatsNewPopup';
+import PublicLandingPageView from './pages/PublicLandingPageView';
+import DashboardLandingPagesPage from './pages/DashboardLandingPagesPage';
+import DashboardAdminLandingPageSettingsPage from './pages/admin/DashboardAdminLandingPageSettingsPage';
 
 
 import ForumMainPage from './pages/ForumMainPage';
@@ -411,6 +418,12 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/ecommerce/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
 
+        {/* Produk Jasa (Services) Routes */}
+        <Route path="/jasa" element={<ResponsiveLayout isDesktop={isDesktop}><ServicesMainPage /></ResponsiveLayout>} />
+        <Route path="/jasa/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><ServiceDetailPage /></ResponsiveLayout>} />
+        <Route path="/services" element={<ResponsiveLayout isDesktop={isDesktop}><ServicesMainPage /></ResponsiveLayout>} />
+        <Route path="/services/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><ServiceDetailPage /></ResponsiveLayout>} />
+
         {/* Store (Toko Pribadi) & Marketplace Store Routes */}
         <Route path="/store" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/store/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
@@ -499,6 +512,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
         <Route path="/digital_produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
+        {/* Landing Page Builder Public Route */}
+        <Route path="/lp/:slug" element={<PublicLandingPageView />} />
+
         {/* Catch-all username route for store profile (e.g. /myusername) */}
         <Route path="/:username" element={<ResponsiveLayout isDesktop={isDesktop}><StoreProfilePage /></ResponsiveLayout>} />
 
@@ -526,9 +542,11 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/incoming-funds" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminIncomingFundsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/forum" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminForumPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/roles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/landing-page-settings" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminLandingPageSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/live-streaming" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardLiveStreamingPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/kaderisasi" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardKaderisasiPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaign-approval" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignApprovalPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/service-approval" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminServiceApprovalPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminArticleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/photo-framer" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminPhotoFramerPage /></ResponsiveLayout></PrivateRoute>} />
@@ -538,6 +556,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/business-data/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><BusinessDataFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/business-data/edit/:id" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><BusinessDataFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/services" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyServicesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/sinergy/seller" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellersPage /></ResponsiveLayout></PrivateRoute>} />
@@ -549,6 +568,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/meetings/edit/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/meetings/manage/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/landing-pages" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardLandingPagesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />

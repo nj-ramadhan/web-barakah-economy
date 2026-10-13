@@ -403,6 +403,30 @@ const EcommerceCheckoutPage = () => {
     } catch (error) { }
   };
 
+  if (!cartItems || cartItems.length === 0) {
+    return (
+      <div className="body bg-gray-50 min-h-screen">
+        <Header />
+        <div className="container mx-auto px-4 py-20 max-w-md text-center">
+          <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-icons text-3xl">shopping_cart</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-800">Keranjang Belanja Kosong</h2>
+          <p className="text-xs text-gray-500 mt-1 mb-6">
+            Pilih produk terlebih dahulu sebelum melanjutkan ke proses checkout.
+          </p>
+          <button
+            onClick={() => navigate('/store')}
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
+          >
+            Mulai Belanja
+          </button>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
+
   return (
     <div className="body bg-gray-50 min-h-screen">
       <Header />

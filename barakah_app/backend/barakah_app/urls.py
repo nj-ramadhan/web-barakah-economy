@@ -5,7 +5,14 @@ from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import SimpleRouter
+from products.views import (
+    ServiceItemViewSet, LandingPageViewSet, LandingPageSlotOrderViewSet,
+    LandingPageAdminSettingView, LandingPageAdminListView
+)
 router = SimpleRouter()
+router.register(r'services', ServiceItemViewSet, basename='service')
+router.register(r'landing-pages/orders', LandingPageSlotOrderViewSet, basename='lp-order')
+router.register(r'landing-pages', LandingPageViewSet, basename='landing-page')
 
 from barakah_app.seo_views import (
     robots_txt, sitemap_xml, seo_product_detail, 
@@ -65,7 +72,8 @@ urlpatterns = [
     path('api/profiles/', include('profiles.urls')),
     path('api/streaming/', include('streaming.urls')),
     path('api/', include(router.urls)),
-
+    path('api/landing-pages/admin-settings/', LandingPageAdminSettingView.as_view()),
+    path('api/landing-pages/admin-all/', LandingPageAdminListView.as_view()),
     path('api/', include('article.urls')),
     path('api/site-content/', include('site_content.urls')),
     path('api/chat/', include('chat.urls')),

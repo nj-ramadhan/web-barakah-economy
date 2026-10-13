@@ -428,6 +428,20 @@ const EcommerceCheckoutSinergy = () => {
         sellerGroups[s_id].total_price += (finalPrice * item.quantity);
     });
 
+    if (loading) {
+        return (
+            <div className="body bg-gray-50 min-h-screen">
+                <Header />
+                <div className="flex flex-col items-center justify-center py-28 px-4 text-center">
+                    <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4" />
+                    <h2 className="text-base font-bold text-slate-800">Menyiapkan Checkout...</h2>
+                    <p className="text-xs text-slate-500 mt-1">Sedang memuat data keranjang dan alamat pengiriman Anda.</p>
+                </div>
+                <NavigationButton />
+            </div>
+        );
+    }
+
     return (
         <div className="body bg-gray-50 min-h-screen">
             <Helmet><title>Checkout Store - Barakah Economy</title></Helmet>

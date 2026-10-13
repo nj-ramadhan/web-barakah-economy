@@ -37,6 +37,10 @@ MENU_CHOICES = [
     ('my_events', 'Personal: Event Barakah'),
     ('internal_meetings', 'Admin: Rapat & Manajemen Rapat'),
     ('zis_routine', 'Personal: ZIS Rutin'),
+    ('landing_page_builder', 'Bisnis: Landing Page Builder'),
+    ('admin_landing_pages', 'Sistem: Manajemen Landing Page & Slot (Admin)'),
+    ('services', 'Bisnis: Produk Jasa Saya'),
+    ('service_approval', 'Bisnis: Persetujuan Jasa (Admin)'),
 ]
 
 class RoleForm(forms.ModelForm):

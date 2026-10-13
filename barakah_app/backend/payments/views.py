@@ -206,6 +206,12 @@ class GenerateDynaQRISView(APIView):
                         crs_obj.admin_fee = max(Decimal('0'), diff)
                         crs_obj.amount = final_amount
                         crs_obj.save(update_fields=['admin_fee', 'amount'])
+                    elif transaction_type in ['landing_page', 'lp_slot', 'lp_order']:
+                        from products.models import LandingPageSlotOrder
+                        lpo = LandingPageSlotOrder.objects.filter(Q(id=int(clean_ref) if clean_ref.isdigit() else 0) | Q(order_number=clean_ref)).first()
+                        if lpo:
+                            lpo.amount = final_amount
+                            lpo.save(update_fields=['amount'])
             except Exception as sync_err:
                 logger.error(f"Failed to synchronize {transaction_type} record with generated amount {final_amount}: {sync_err}")
                 logger.error(f"Error syncing final DynaQRIS amount {final_amount} for {transaction_type} #{reference_id}: {sync_err}")
@@ -389,6 +395,19 @@ class CheckDynaQRISStatusView(APIView):
                     'status': 'pending',
                     'verified': False
                 }
+        elif transaction_type in ['landing_page', 'lp_slot', 'lp_order']:
+            from products.models import LandingPageSlotOrder
+            lp_order = None
+            if str(reference_id).isdigit():
+                lp_order = LandingPageSlotOrder.objects.filter(id=int(reference_id)).first()
+            if not lp_order:
+                lp_order = LandingPageSlotOrder.objects.filter(order_number=reference_id).first()
+            if lp_order:
+                status_result = {
+                    'status': lp_order.payment_status,
+                    'verified': lp_order.payment_status == 'paid',
+                    'order_number': lp_order.order_number
+                }
 
         return Response(status_result)
 
@@ -473,6 +492,23 @@ class CheckDynaQRISStatusView(APIView):
                 return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diverifikasi!'})
             else:
                 return Response({'error': 'Transaksi donasi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+        elif transaction_type in ['landing_page', 'lp_slot', 'lp_order']:
+            from products.models import LandingPageSlotOrder, LandingPageQuota
+            lp_order = None
+            if str(reference_id).isdigit():
+                lp_order = LandingPageSlotOrder.objects.filter(id=int(reference_id)).first()
+            if not lp_order:
+                lp_order = LandingPageSlotOrder.objects.filter(order_number=reference_id).first()
+            if lp_order:
+                lp_order.payment_status = 'paid'
+                lp_order.paid_at = timezone.now()
+                lp_order.save()
+                quota, _ = LandingPageQuota.objects.get_or_create(user=lp_order.user)
+                quota.extra_slots += lp_order.slots_count
+                quota.save()
+                return Response({'success': True, 'message': 'Pembayaran Slot Landing Page berhasil diverifikasi! Kuota aktif.'})
+            else:
+                return Response({'error': 'Pesanan slot LP tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'error': 'Transaksi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -1030,6 +1066,46 @@ class AndroidNotificationWebhookView(APIView):
                     "amount": float(amt),
                     "extracted_amounts": [float(a) for a in extracted_amounts],
                     "message": f"Donasi #{donation.id} ({donation.donor_name or 'Donatur'}) berhasil diverifikasi otomatis via Webhook!"
+                })
+
+            # 6. Match active pending Landing Page Order (Slot Ekstra atau Perpanjangan/Langganan)
+            from products.models import LandingPageSlotOrder, LandingPageQuota, LandingPage
+            import datetime
+            lp_order = LandingPageSlotOrder.objects.filter(
+                payment_status__in=['pending', 'unpaid', ''],
+                amount=amt
+            ).order_by('-created_at').first()
+            if lp_order:
+                lp_order.payment_status = 'paid'
+                lp_order.paid_at = timezone.now()
+                lp_order.payment_method = 'dynaqris'
+                lp_order.save()
+
+                if lp_order.order_type == 'renewal' and lp_order.landing_page:
+                    lp = lp_order.landing_page
+                    months = lp_order.duration_months or 1
+                    days_to_add = months * 30
+                    base_time = lp.expires_at if (lp.expires_at and lp.expires_at > timezone.now()) else timezone.now()
+                    lp.expires_at = base_time + datetime.timedelta(days=days_to_add)
+                    lp.is_published = True
+                    lp.save()
+                    msg = f"Pembayaran Perpanjangan Masa Aktif Landing Page '{lp.title}' #{lp_order.order_number} ({lp_order.user.username}) berhasil diverifikasi otomatis via Webhook! Masa aktif bertambah +{days_to_add} hari."
+                else:
+                    quota, _ = LandingPageQuota.objects.get_or_create(user=lp_order.user)
+                    quota.extra_slots += lp_order.slots_count
+                    quota.save()
+                    msg = f"Pembayaran Tambah Slot Landing Page #{lp_order.order_number} ({lp_order.user.username}) berhasil diverifikasi otomatis via Webhook! Kuota bertambah +{lp_order.slots_count} slot."
+
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "landing_page",
+                    "order_type": lp_order.order_type,
+                    "reference_id": lp_order.id,
+                    "order_number": lp_order.order_number,
+                    "amount": float(amt),
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": msg
                 })
 
         return Response({

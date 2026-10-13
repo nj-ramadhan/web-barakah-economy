@@ -262,6 +262,26 @@ const CrowdfundingCampaignDetail = () => {
           </div>
           <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
             <div>
+              {/* Penyelenggara / Penggagas Campaign */}
+              <div className="flex items-center gap-2.5 mb-3 bg-emerald-50/70 border border-emerald-100 px-3.5 py-2 rounded-xl">
+                <img
+                  src={campaign.organizer_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(campaign.organizer_name || 'Barakah')}&background=059669&color=fff`}
+                  alt={campaign.organizer_name || 'Penyelenggara'}
+                  className="w-8 h-8 rounded-full object-cover border border-emerald-300 shadow-xs"
+                />
+                <div>
+                  <p className="text-[10px] text-gray-500 leading-tight">Digagas / Diselenggarakan oleh:</p>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-emerald-900">
+                      {campaign.organizer_name || 'Barakah Charity Official'}
+                    </span>
+                    {campaign.organizer_verified && (
+                      <span className="material-icons text-amber-500 text-xs" title="Penyelenggara Terverifikasi">verified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{campaign.title}</h1>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-lg font-semibold text-green-700">
