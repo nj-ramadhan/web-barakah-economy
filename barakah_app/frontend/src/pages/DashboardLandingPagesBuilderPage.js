@@ -5,8 +5,13 @@ import {
     getLandingPageDetail,
     createLandingPage,
     updateLandingPage,
-    getLandingPageQuota
+    getLandingPageQuota,
+    getLinkableItems
 } from '../services/landingPageApi';
+import { getProducts } from '../services/productApi';
+import { getMyDigitalProducts } from '../services/digitalProductApi';
+import { getMyCourses } from '../services/ecourseApi';
+import { getMyServices } from '../services/serviceApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 
 const formatIDR = (val) => {
@@ -123,6 +128,18 @@ const DashboardLandingPagesBuilderPage = () => {
         secondary_cta_text: 'Konsultasi Gratis',
         secondary_cta_link: '',
 
+        // Header Navigasi Sticky (Top Bar Preview)
+        show_header_nav: true,
+        header_title: '',
+        header_tagline: '',
+        header_cta_text: '',
+        header_cta_link: '',
+
+        // Tautkan Produk (Opsional: store, digital, ecourse, service)
+        linked_product_type: '',
+        linked_product_id: null,
+        linked_product_data: null,
+
         // Styling
         theme: 'emerald',
         layout: 'standard',
@@ -173,6 +190,130 @@ const DashboardLandingPagesBuilderPage = () => {
     // Active accordion in preview
     const [activeFaqIdx, setActiveFaqIdx] = useState(null);
 
+    // Linkable products state (Opsional)
+    const [linkableItems, setLinkableItems] = useState({
+        store_products: [],
+        digital_products: [],
+        ecourses: [],
+        services: []
+    });
+    const [loadingLinkables, setLoadingLinkables] = useState(false);
+    const [showLinkProductModal, setShowLinkProductModal] = useState(false);
+    const [linkableFilterTab, setLinkableFilterTab] = useState('all');
+    const [linkableSearch, setLinkableSearch] = useState('');
+
+    // DOM Refs for smooth auto-scroll & focus
+    const inspectorRef = useRef(null);
+    const sidebarScrollRef = useRef(null);
+
+    // Smooth focus & select block editor
+    const handleSelectBlockForEditing = (blockId) => {
+        setActiveBlockId(blockId);
+        setSidebarTab('blocks');
+        setTimeout(() => {
+            if (inspectorRef.current) {
+                inspectorRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const firstInput = inspectorRef.current.querySelector('input[type="text"], input[type="number"], textarea');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }
+        }, 100);
+    };
+
+    // Load Seller's linkable products (store, digital, ecourse, service)
+    useEffect(() => {
+        const fetchLinkables = async () => {
+            setLoadingLinkables(true);
+            try {
+                const res = await getLinkableItems();
+                if (res.data) {
+                    setLinkableItems({
+                        store_products: res.data.store_products || [],
+                        digital_products: res.data.digital_products || [],
+                        ecourses: res.data.ecourses || [],
+                        services: res.data.services || []
+                    });
+                }
+            } catch (err) {
+                console.warn('Backend endpoint my_linkable_items failed or pending, fetching direct fallbacks...', err);
+                try {
+                    const [resP, resD, resC, resS] = await Promise.allSettled([
+                        getProducts({ manage: 'true' }),
+                        getMyDigitalProducts(),
+                        getMyCourses(),
+                        getMyServices()
+                    ]);
+
+                    const pItems = (resP.status === 'fulfilled' ? (resP.value?.data?.results || resP.value?.data || []) : []).map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        slug: p.slug,
+                        price: p.price || '0',
+                        description: p.description || '',
+                        thumbnail: p.thumbnail ? getMediaUrl(p.thumbnail) : null,
+                        type: 'store',
+                        type_label: 'Toko Fisik / Store',
+                        public_url: `/p/${p.slug}`
+                    }));
+
+                    const dItems = (resD.status === 'fulfilled' ? (resD.value?.data || []) : []).map(dp => ({
+                        id: dp.id,
+                        title: dp.title,
+                        slug: dp.slug,
+                        price: dp.price,
+                        original_price: dp.original_price || 0,
+                        description: dp.description || '',
+                        thumbnail: dp.cover_image ? getMediaUrl(dp.cover_image) : null,
+                        type: 'digital',
+                        type_label: 'Produk Digital',
+                        public_url: `/digital-products/${dp.slug}`
+                    }));
+
+                    const cItems = (resC.status === 'fulfilled' ? (resC.value?.data || []) : []).map(c => ({
+                        id: c.id,
+                        title: c.title,
+                        slug: c.slug,
+                        price: c.price,
+                        original_price: c.discount || 0,
+                        description: c.description || '',
+                        thumbnail: c.thumbnail ? getMediaUrl(c.thumbnail) : null,
+                        type: 'ecourse',
+                        type_label: 'Kelas Digital / E-Course',
+                        public_url: `/ecourse/${c.slug}`
+                    }));
+
+                    const sItems = (resS.status === 'fulfilled' ? (resS.value?.data || []) : []).map(s => ({
+                        id: s.id,
+                        title: s.title,
+                        slug: s.slug,
+                        price: s.price,
+                        rate: s.price_rate,
+                        description: s.description || '',
+                        thumbnail: s.thumbnail ? getMediaUrl(s.thumbnail) : null,
+                        whatsapp_number: s.whatsapp_number,
+                        type: 'service',
+                        type_label: 'Jasa & Layanan',
+                        public_url: `/jasa/${s.slug}`
+                    }));
+
+                    setLinkableItems({
+                        store_products: pItems,
+                        digital_products: dItems,
+                        ecourses: cItems,
+                        services: sItems
+                    });
+                } catch (fallbackErr) {
+                    console.error('Error in fallback linkables loader:', fallbackErr);
+                }
+            } finally {
+                setLoadingLinkables(false);
+            }
+        };
+
+        fetchLinkables();
+    }, []);
+
     // Fetch existing data if editing
     useEffect(() => {
         if (!isEditing) return;
@@ -201,6 +342,19 @@ const DashboardLandingPagesBuilderPage = () => {
                     whatsapp_message: data.whatsapp_message || '',
                     secondary_cta_text: data.secondary_cta_text || '',
                     secondary_cta_link: data.secondary_cta_link || '',
+
+                    // Header Nav
+                    show_header_nav: data.show_header_nav !== undefined ? Boolean(data.show_header_nav) : true,
+                    header_title: data.header_title || '',
+                    header_tagline: data.header_tagline || '',
+                    header_cta_text: data.header_cta_text || '',
+                    header_cta_link: data.header_cta_link || '',
+
+                    // Linked product
+                    linked_product_type: data.linked_product_type || '',
+                    linked_product_id: data.linked_product_id || null,
+                    linked_product_data: data.linked_product_data || null,
+
                     theme: data.theme || 'emerald',
                     layout: data.layout || 'standard',
                     font_family: data.font_family || 'plus-jakarta',
@@ -316,6 +470,57 @@ const DashboardLandingPagesBuilderPage = () => {
         }
     };
 
+    // PRODUCT LINKING ACTIONS (Opsional)
+    const handleSelectLinkedProduct = (item, type) => {
+        const itemSnapshot = {
+            id: item.id,
+            title: item.title,
+            slug: item.slug,
+            price: item.price,
+            original_price: item.original_price || item.discount || item.slash_price || 0,
+            description: item.description,
+            thumbnail: item.thumbnail,
+            public_url: item.public_url || (type === 'store' ? `/p/${item.slug}` : type === 'digital' ? `/digital-products/${item.slug}` : type === 'ecourse' ? `/ecourse/${item.slug}` : `/jasa/${item.slug}`),
+            type: type
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            linked_product_type: type,
+            linked_product_id: item.id,
+            linked_product_data: itemSnapshot
+        }));
+        setShowLinkProductModal(false);
+        showNotification(`Berhasil menautkan produk: "${item.title}"`);
+    };
+
+    const handleApplyLinkedProductData = () => {
+        const item = formData.linked_product_data;
+        if (!item) return;
+
+        setFormData(prev => ({
+            ...prev,
+            title: item.title || prev.title,
+            hero_headline: item.title || prev.hero_headline,
+            hero_subheadline: item.description ? item.description.replace(/<[^>]*>?/gm, '').substring(0, 160) : prev.hero_subheadline,
+            price: item.price ? String(Math.round(Number(item.price))) : prev.price,
+            slash_price: item.original_price ? String(Math.round(Number(item.original_price))) : prev.slash_price,
+            cta_link: item.public_url || prev.cta_link
+        }));
+
+        showNotification('Informasi produk berhasil diterapkan ke teks landing page!');
+    };
+
+    const handleUnlinkProduct = () => {
+        setFormData(prev => ({
+            ...prev,
+            linked_product_type: '',
+            linked_product_id: null,
+            linked_product_data: null
+        }));
+        showNotification('Tautan produk berhasil dilepas.');
+    };
+
     // SAVE & PUBLISH HANDLER
     const handleSave = async (publishOverride) => {
         if (!formData.title.trim()) {
@@ -345,6 +550,19 @@ const DashboardLandingPagesBuilderPage = () => {
             payload.append('whatsapp_message', formData.whatsapp_message || '');
             payload.append('secondary_cta_text', formData.secondary_cta_text || '');
             payload.append('secondary_cta_link', formData.secondary_cta_link || '');
+            
+            // Header Nav & Linked Product
+            payload.append('show_header_nav', formData.show_header_nav ? 'true' : 'false');
+            payload.append('header_title', formData.header_title || '');
+            payload.append('header_tagline', formData.header_tagline || '');
+            payload.append('header_cta_text', formData.header_cta_text || '');
+            payload.append('header_cta_link', formData.header_cta_link || '');
+            payload.append('linked_product_type', formData.linked_product_type || '');
+            if (formData.linked_product_id) {
+                payload.append('linked_product_id', String(formData.linked_product_id));
+            }
+            payload.append('linked_product_data', JSON.stringify(formData.linked_product_data || {}));
+
             payload.append('theme', formData.theme || 'emerald');
             payload.append('layout', formData.layout || 'standard');
             payload.append('font_family', formData.font_family || 'plus-jakarta');
@@ -616,7 +834,7 @@ const DashboardLandingPagesBuilderPage = () => {
         return (
             <div
                 key={sectionId}
-                onClick={() => { setActiveBlockId(sectionId); setSidebarTab('blocks'); }}
+                onClick={() => handleSelectBlockForEditing(sectionId)}
                 className={`relative group transition-all duration-200 cursor-pointer rounded-2xl ${
                     isCurrentActive
                         ? 'ring-2 ring-emerald-500 shadow-md ring-offset-2'
@@ -632,27 +850,31 @@ const DashboardLandingPagesBuilderPage = () => {
                 </div>
 
                 {/* Floating Quick Action Toolbar */}
-                <div className="absolute -top-3 right-3 z-30 opacity-0 group-hover:opacity-100 flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-md transition">
+                <div className="absolute -top-3.5 right-3 z-30 opacity-0 group-hover:opacity-100 flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-1.5 py-1 shadow-lg transition">
                     <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); setActiveBlockId(sectionId); setSidebarTab('blocks'); }}
-                        className="p-1 hover:bg-slate-100 rounded text-slate-600"
-                        title="Edit Blok"
+                        onClick={(e) => { e.stopPropagation(); handleSelectBlockForEditing(sectionId); }}
+                        className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition"
+                        title="Edit Tulisan & Konten Blok"
                     >
                         <span className="material-icons text-xs">edit</span>
+                        <span>Edit Tulisan</span>
                     </button>
+                    <div className="h-3 w-px bg-slate-200 mx-0.5"></div>
                     <button
                         type="button"
+                        disabled={sectionsOrder.indexOf(sectionId) === 0}
                         onClick={(e) => { e.stopPropagation(); handleMoveBlock(sectionsOrder.indexOf(sectionId), 'up'); }}
-                        className="p-1 hover:bg-slate-100 rounded text-slate-600"
+                        className="p-1 hover:bg-slate-100 rounded text-slate-500 disabled:opacity-20"
                         title="Geser ke Atas"
                     >
                         <span className="material-icons text-xs">arrow_upward</span>
                     </button>
                     <button
                         type="button"
+                        disabled={sectionsOrder.indexOf(sectionId) === sectionsOrder.length - 1}
                         onClick={(e) => { e.stopPropagation(); handleMoveBlock(sectionsOrder.indexOf(sectionId), 'down'); }}
-                        className="p-1 hover:bg-slate-100 rounded text-slate-600"
+                        className="p-1 hover:bg-slate-100 rounded text-slate-500 disabled:opacity-20"
                         title="Geser ke Bawah"
                     >
                         <span className="material-icons text-xs">arrow_downward</span>
@@ -682,7 +904,7 @@ const DashboardLandingPagesBuilderPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans select-none">
+        <div className="h-screen max-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans select-none overflow-hidden">
             <Helmet>
                 <title>{isEditing ? `Edit: ${formData.title}` : 'Landing Page Builder Studio'} - Barakah Economy</title>
             </Helmet>
@@ -698,7 +920,7 @@ const DashboardLandingPagesBuilderPage = () => {
             )}
 
             {/* TOP BAR / STUDIO APP BAR (OrderOnline Style) */}
-            <header className="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between z-40 sticky top-0 shadow-2xs">
+            <header className="h-14 shrink-0 bg-white border-b border-slate-200 px-4 flex items-center justify-between z-40 sticky top-0 shadow-2xs">
                 {/* Left: Back & Title */}
                 <div className="flex items-center gap-3">
                     <button
@@ -788,13 +1010,13 @@ const DashboardLandingPagesBuilderPage = () => {
             </header>
 
             {/* MAIN WORKSPACE: 2-COLUMN (SIDEBAR BUILDER + CANVAS LIVE PREVIEW) */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden min-h-0">
                 
                 {/* LEFT COLUMN: BUILDER STUDIO & CONTROLS PANEL */}
-                <aside className="w-full sm:w-[420px] bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-56px)] shrink-0 z-20">
+                <aside className="w-full sm:w-[420px] bg-white border-r border-slate-200 flex flex-col h-full shrink-0 z-20 sticky top-0 overflow-hidden">
                     
                     {/* Top 3 Navigation Tabs */}
-                    <div className="flex border-b border-slate-200 bg-slate-50/50">
+                    <div className="flex border-b border-slate-200 bg-slate-50/50 shrink-0">
                         <button
                             type="button"
                             onClick={() => { setSidebarTab('blocks'); }}
@@ -836,11 +1058,144 @@ const DashboardLandingPagesBuilderPage = () => {
                     </div>
 
                     {/* Scrollable Content inside Sidebar */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div ref={sidebarScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                         
                         {/* TAB 1: BLOCKS & DRAG-AND-DROP REORDER */}
                         {sidebarTab === 'blocks' && (
                             <div>
+                                {/* FITUR TAUTKAN PRODUK (OPSIONAL) */}
+                                <div className="bg-gradient-to-br from-emerald-50/80 to-teal-50/40 p-3.5 rounded-2xl border border-emerald-200/80 mb-4 shadow-2xs">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="material-icons text-emerald-600 text-sm">link</span>
+                                            <h4 className="text-xs font-black text-slate-800">Tautkan Produk (Opsional)</h4>
+                                        </div>
+                                        {formData.linked_product_id ? (
+                                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                                Terhubung
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                                                Opsional
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {formData.linked_product_id && formData.linked_product_data ? (
+                                        <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-2">
+                                            <div className="flex items-start gap-2.5">
+                                                {formData.linked_product_data.thumbnail ? (
+                                                    <img
+                                                        src={formData.linked_product_data.thumbnail}
+                                                        alt={formData.linked_product_data.title}
+                                                        className="w-12 h-12 rounded-lg object-cover border border-slate-100 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                                        <span className="material-icons text-base">shopping_bag</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="inline-block text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded mb-0.5">
+                                                        {formData.linked_product_type === 'store' && 'Toko Fisik / Store'}
+                                                        {formData.linked_product_type === 'digital' && 'Produk Digital'}
+                                                        {formData.linked_product_type === 'ecourse' && 'Kelas Digital / E-Course'}
+                                                        {formData.linked_product_type === 'service' && 'Jasa & Layanan'}
+                                                    </span>
+                                                    <h5 className="text-xs font-bold text-slate-800 truncate" title={formData.linked_product_data.title}>
+                                                        {formData.linked_product_data.title}
+                                                    </h5>
+                                                    <p className="text-xs font-extrabold text-emerald-600">
+                                                        {formatIDR(formData.linked_product_data.price)}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleApplyLinkedProductData}
+                                                    className="flex-1 py-1 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition shadow-2xs"
+                                                    title="Otomatis salin Judul, Harga, dan Deskripsi produk ini ke Landing Page"
+                                                >
+                                                    <span className="material-icons text-xs">auto_awesome</span>
+                                                    <span>Terapkan Info ke Halaman</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowLinkProductModal(true)}
+                                                    className="py-1 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition"
+                                                >
+                                                    Ganti
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUnlinkProduct}
+                                                    className="py-1 px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold transition"
+                                                >
+                                                    Lepas
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-[11px] text-slate-500 mb-2.5 leading-snug">
+                                                Tautkan produk dari <strong>Toko Fisik</strong>, <strong>Produk Digital</strong>, <strong>Kelas Digital</strong>, atau <strong>Jasa</strong> Anda untuk isi otomatis data dan checkout langsung.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowLinkProductModal(true)}
+                                                className="w-full py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs"
+                                            >
+                                                <span className="material-icons text-sm">add_link</span>
+                                                <span>Pilih Produk untuk Ditautkan</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* HEADER NAVIGASI ATAS QUICK CARD */}
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 mb-4 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+                                            <span className="material-icons text-base">web_asset</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-1.5">
+                                                <h4 className="text-xs font-bold text-slate-800">Header Navigasi Atas (Sticky)</h4>
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                                                    formData.show_header_nav ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                                                }`}>
+                                                    {formData.show_header_nav ? 'Aktif' : 'Disembunyikan'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400">Bar sticky nama toko & tombol WhatsApp atas</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectBlockForEditing('header_nav')}
+                                            className="px-2 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200 hover:border-emerald-300 rounded-lg text-[10px] font-bold flex items-center gap-1 transition"
+                                            title="Edit teks nama toko, tagline, dan tombol header"
+                                        >
+                                            <span className="material-icons text-xs">edit</span>
+                                            <span>Edit Teks</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, show_header_nav: !prev.show_header_nav }))}
+                                            className="p-1 text-slate-400 hover:text-slate-700"
+                                            title={formData.show_header_nav ? 'Sembunyikan Header' : 'Munculkan Header'}
+                                        >
+                                            <span className="material-icons text-sm">
+                                                {formData.show_header_nav ? 'visibility' : 'visibility_off'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <h3 className="font-bold text-xs text-slate-800">Tata Letak Komponen (Drag & Drop)</h3>
@@ -919,13 +1274,82 @@ const DashboardLandingPagesBuilderPage = () => {
 
                                 {/* ACTIVE BLOCK INSPECTOR (FORM PROPERTIES) */}
                                 {activeBlockId && (
-                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                    <div ref={inspectorRef} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 scroll-mt-6">
                                         <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200">
                                             <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
                                                 <span className="material-icons text-sm text-emerald-600">tune</span>
-                                                <span>Edit Properti: {AVAILABLE_BLOCKS.find(b => b.id === activeBlockId)?.name}</span>
+                                                <span>Edit Properti: {activeBlockId === 'header_nav' ? 'Header Navigasi Atas (Sticky)' : AVAILABLE_BLOCKS.find(b => b.id === activeBlockId)?.name}</span>
                                             </h4>
                                         </div>
+
+                                        {/* HEADER NAV INSPECTOR */}
+                                        {activeBlockId === 'header_nav' && (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-800 block">Tampilkan Header Sticky</span>
+                                                        <span className="text-[10px] text-slate-400">Munculkan bar navigasi di bagian paling atas</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, show_header_nav: !formData.show_header_nav })}
+                                                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                                                            formData.show_header_nav
+                                                                ? 'bg-emerald-600 text-white shadow-xs'
+                                                                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                                        }`}
+                                                    >
+                                                        {formData.show_header_nav ? 'Aktif' : 'Disembunyikan'}
+                                                    </button>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Toko di Header</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.header_title}
+                                                        onChange={(e) => setFormData({ ...formData, header_title: e.target.value })}
+                                                        placeholder={formData.title || "Toko Berkah Utama"}
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                    <p className="text-[10px] text-slate-400 mt-1">Kosongkan jika ingin otomatis mengikuti Nama Toko utama</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Tagline / Subteks di Header</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.header_tagline}
+                                                        onChange={(e) => setFormData({ ...formData, header_tagline: e.target.value })}
+                                                        placeholder={formData.tagline || "100% Produk Berkualitas dan Bergaransi Resmi"}
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Teks Tombol Header</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.header_cta_text}
+                                                        onChange={(e) => setFormData({ ...formData, header_cta_text: e.target.value })}
+                                                        placeholder={formData.cta_text || "Pesan Sekarang via WhatsApp"}
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">URL / Link Tombol Header (Opsional)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.header_cta_link}
+                                                        onChange={(e) => setFormData({ ...formData, header_cta_link: e.target.value })}
+                                                        placeholder="https://... atau direct order link"
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                    <p className="text-[10px] text-slate-400 mt-1">Jika kosong, tombol akan membuka chat WhatsApp pemesanan secara otomatis.</p>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* HERO SECTION INSPECTOR */}
                                         {activeBlockId === 'hero' && (
@@ -1284,6 +1708,161 @@ const DashboardLandingPagesBuilderPage = () => {
                                                 </button>
                                             </div>
                                         )}
+
+                                        {/* GALLERY INSPECTOR */}
+                                        {activeBlockId === 'gallery' && (
+                                            <div className="space-y-3">
+                                                <p className="text-[11px] text-slate-500">
+                                                    Atur gambar galeri atau carousel foto produk Anda.
+                                                </p>
+
+                                                {formData.carousel_images && formData.carousel_images.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {formData.carousel_images.map((imgUrl, i) => (
+                                                            <div key={i} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
+                                                                <img src={imgUrl} alt={`Foto ${i + 1}`} className="w-10 h-10 rounded-lg object-cover border shrink-0" />
+                                                                <span className="text-xs text-slate-600 truncate flex-1">{imgUrl}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const updated = formData.carousel_images.filter((_, idx) => idx !== i);
+                                                                        setFormData({ ...formData, carousel_images: updated });
+                                                                    }}
+                                                                    className="p-1 text-rose-500 hover:text-rose-700"
+                                                                    title="Hapus Foto"
+                                                                >
+                                                                    <span className="material-icons text-xs">delete</span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 bg-white rounded-xl border border-dashed border-slate-300 text-center text-xs text-slate-400">
+                                                        Belum ada foto galeri khusus. Gambar default akan ditampilkan.
+                                                    </div>
+                                                )}
+
+                                                <div className="space-y-2 pt-2 border-t border-slate-200">
+                                                    <label className="block text-[11px] font-bold text-slate-700">Tambah URL Gambar Galeri</label>
+                                                    <div className="flex gap-1.5">
+                                                        <input
+                                                            type="url"
+                                                            id="new-gallery-url"
+                                                            placeholder="https://..."
+                                                            className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const input = document.getElementById('new-gallery-url');
+                                                                if (input && input.value.trim()) {
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        carousel_images: [...(formData.carousel_images || []), input.value.trim()]
+                                                                    });
+                                                                    input.value = '';
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                                                        >
+                                                            + Tambah
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* TRUST BADGES INSPECTOR */}
+                                        {activeBlockId === 'trust_badges' && (
+                                            <div className="space-y-3">
+                                                <p className="text-[11px] text-slate-500">
+                                                    Sesuaikan poin jaminan mutu, garansi, dan keamanan untuk meningkatkan keyakinan pembeli.
+                                                </p>
+
+                                                {formData.trust_badges && formData.trust_badges.map((b, i) => (
+                                                    <div key={i} className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center gap-2">
+                                                        <select
+                                                            value={b.icon}
+                                                            onChange={(e) => {
+                                                                const updated = [...formData.trust_badges];
+                                                                updated[i].icon = e.target.value;
+                                                                setFormData({ ...formData, trust_badges: updated });
+                                                            }}
+                                                            className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                                        >
+                                                            <option value="verified">Centang (Verified)</option>
+                                                            <option value="security">Perisai (Security)</option>
+                                                            <option value="payments">Uang/COD (Payments)</option>
+                                                            <option value="bolt">Kilat Cepat (Bolt)</option>
+                                                            <option value="local_shipping">Pengiriman (Shipping)</option>
+                                                            <option value="support_agent">CS (Support 24h)</option>
+                                                            <option value="lock">Gembok (Aman)</option>
+                                                        </select>
+
+                                                        <input
+                                                            type="text"
+                                                            value={b.title}
+                                                            onChange={(e) => {
+                                                                const updated = [...formData.trust_badges];
+                                                                updated[i].title = e.target.value;
+                                                                setFormData({ ...formData, trust_badges: updated });
+                                                            }}
+                                                            placeholder="Nama Jaminan..."
+                                                            className="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                                                        />
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updated = formData.trust_badges.filter((_, idx) => idx !== i);
+                                                                setFormData({ ...formData, trust_badges: updated });
+                                                            }}
+                                                            className="p-1 text-rose-500 hover:text-rose-700"
+                                                            title="Hapus Lencana"
+                                                        >
+                                                            <span className="material-icons text-xs">delete</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({
+                                                        ...formData,
+                                                        trust_badges: [...(formData.trust_badges || []), { title: 'Jaminan Baru', icon: 'verified' }]
+                                                    })}
+                                                    className="w-full py-2 bg-white border border-dashed border-emerald-300 text-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-50"
+                                                >
+                                                    + Tambah Lencana Garansi
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* FOOTER INSPECTOR */}
+                                        {activeBlockId === 'footer' && (
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Toko di Footer</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.title}
+                                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                                        placeholder="Nama Toko"
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Tagline Penutup Footer</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.tagline}
+                                                        onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                                                        placeholder="Tagline Penutup..."
+                                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1459,30 +2038,97 @@ const DashboardLandingPagesBuilderPage = () => {
                             </div>
                         )}
 
-                        {/* Top Store Header */}
-                        <div className="p-3 bg-white border-b border-slate-100 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md bg-white/90">
-                            <div className="flex items-center gap-2">
-                                {previewLogo ? (
-                                    <img src={previewLogo} alt="Logo" className="w-7 h-7 rounded-lg object-cover" />
-                                ) : (
-                                    <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black flex items-center justify-center text-xs">
-                                        {formData.title?.charAt(0) || 'B'}
-                                    </div>
-                                )}
-                                <div>
-                                    <p className="text-xs font-bold text-slate-800 leading-tight truncate max-w-[150px]">{formData.title}</p>
-                                    <p className="text-[9px] text-slate-400 truncate max-w-[150px]">{formData.tagline}</p>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                className="px-3 py-1 rounded-lg text-[10px] font-bold text-white shadow-xs"
-                                style={{ backgroundColor: formData.button_color || '#059669' }}
+                        {/* Top Store Header (Sticky, Editable, Dismissible) */}
+                        {formData.show_header_nav !== false ? (
+                            <div 
+                                onClick={() => handleSelectBlockForEditing('header_nav')}
+                                className={`group relative p-3 bg-white/95 backdrop-blur-md border-b flex items-center justify-between sticky top-0 z-20 cursor-pointer transition ${
+                                    activeBlockId === 'header_nav'
+                                        ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                                        : 'border-slate-200 hover:border-emerald-300'
+                                }`}
                             >
-                                {formData.cta_text || 'Beli'}
-                            </button>
-                        </div>
+                                {/* Quick Action overlay on hover / active */}
+                                <div className="absolute top-2 right-2 hidden group-hover:flex items-center gap-1 z-30 bg-white/95 backdrop-blur-xs px-1.5 py-0.5 rounded-lg shadow-sm border border-slate-200">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSelectBlockForEditing('header_nav');
+                                        }}
+                                        className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded flex items-center gap-1 transition"
+                                        title="Edit Teks Header"
+                                    >
+                                        <span className="material-icons text-xs">edit</span>
+                                        <span>Edit Tulisan</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFormData(prev => ({ ...prev, show_header_nav: false }));
+                                            showNotification('Header navigasi atas disembunyikan');
+                                        }}
+                                        className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded text-[10px] transition"
+                                        title="Sembunyikan / Hapus Header dari Halaman"
+                                    >
+                                        <span className="material-icons text-xs">delete</span>
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {previewLogo ? (
+                                        <img src={previewLogo} alt="Logo" className="w-7 h-7 rounded-lg object-cover" />
+                                    ) : (
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black flex items-center justify-center text-xs">
+                                            {(formData.header_title || formData.title || 'T').charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800 leading-tight truncate max-w-[150px]">
+                                            {formData.header_title || formData.title || 'Toko Berkah Utama'}
+                                        </p>
+                                        <p className="text-[9px] text-slate-400 truncate max-w-[150px]">
+                                            {formData.header_tagline || formData.tagline || '100% Produk Berkualitas dan Bergaransi Resmi'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="px-3 py-1 rounded-lg text-[10px] font-bold text-white shadow-xs transition hover:brightness-105"
+                                    style={{ 
+                                        backgroundColor: formData.button_color || '#059669',
+                                        color: formData.button_text_color || '#ffffff'
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSelectBlockForEditing('header_nav');
+                                    }}
+                                >
+                                    {formData.header_cta_text || formData.cta_text || 'Pesan Sekarang via WhatsApp'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="p-2.5 bg-slate-100 border-b border-dashed border-slate-300 flex items-center justify-between text-xs text-slate-500">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="material-icons text-sm text-slate-400">visibility_off</span>
+                                    <span className="text-[11px] font-medium">Header navigasi atas disembunyikan</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData(prev => ({ ...prev, show_header_nav: true }));
+                                        handleSelectBlockForEditing('header_nav');
+                                        showNotification('Header navigasi atas diaktifkan');
+                                    }}
+                                    className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-2xs transition"
+                                >
+                                    <span className="material-icons text-xs">add</span>
+                                    <span>Munculkan Header</span>
+                                </button>
+                            </div>
+                        )}
 
                         {/* Canvas Sections Rendering (Following sectionsOrder) */}
                         <div className="p-3 sm:p-5 space-y-3 bg-slate-50 min-h-[600px]">
@@ -1548,6 +2194,194 @@ const DashboardLandingPagesBuilderPage = () => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL CATALOG: TAUTKAN PRODUK DARI STORE / DIGITAL / KELAS / JASA (OPSIONAL) */}
+            {showLinkProductModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                        {/* Header */}
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="material-icons text-emerald-600 text-xl">link</span>
+                                    <h3 className="font-extrabold text-base text-slate-900">Tautkan Produk (Opsional)</h3>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Pilih produk untuk dihubungkan ke landing page. Anda dapat otomatis mengisi teks judul, harga & deskripsi.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowLinkProductModal(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+
+                        {/* Search & Category Tabs */}
+                        <div className="space-y-3 mb-4">
+                            <div className="relative">
+                                <span className="material-icons absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                                <input
+                                    type="text"
+                                    value={linkableSearch}
+                                    onChange={(e) => setLinkableSearch(e.target.value)}
+                                    placeholder="Cari berdasarkan nama produk, kelas, atau jasa..."
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                                {[
+                                    { key: 'all', label: 'Semua Produk' },
+                                    { key: 'store', label: `Toko Fisik (${linkableItems.store_products?.length || 0})` },
+                                    { key: 'digital', label: `Produk Digital (${linkableItems.digital_products?.length || 0})` },
+                                    { key: 'ecourse', label: `Kelas Digital (${linkableItems.ecourses?.length || 0})` },
+                                    { key: 'service', label: `Jasa Layanan (${linkableItems.services?.length || 0})` }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => setLinkableFilterTab(tab.key)}
+                                        className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition ${
+                                            linkableFilterTab === tab.key
+                                                ? 'bg-emerald-600 text-white shadow-xs'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* List Items */}
+                        <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[220px]">
+                            {loadingLinkables ? (
+                                <div className="text-center py-12 text-slate-400 text-xs">
+                                    <span className="material-icons animate-spin text-2xl text-emerald-600 block mb-2">sync</span>
+                                    Memuat daftar produk Anda...
+                                </div>
+                            ) : (() => {
+                                const allItems = [
+                                    ...(linkableItems.store_products || []),
+                                    ...(linkableItems.digital_products || []),
+                                    ...(linkableItems.ecourses || []),
+                                    ...(linkableItems.services || [])
+                                ];
+
+                                const filtered = allItems.filter(item => {
+                                    const matchTab = linkableFilterTab === 'all' || item.type === linkableFilterTab;
+                                    const matchSearch = !linkableSearch.trim() || item.title?.toLowerCase().includes(linkableSearch.toLowerCase());
+                                    return matchTab && matchSearch;
+                                });
+
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div className="text-center py-12 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                            <span className="material-icons text-3xl text-slate-300 block mb-1">inventory_2</span>
+                                            <p className="text-xs font-bold text-slate-600">Tidak ada produk ditemukan</p>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">
+                                                Pastikan Anda telah membuat produk di Toko, Produk Digital, Kelas Digital, atau Jasa terlebih dahulu.
+                                            </p>
+                                        </div>
+                                    );
+                                }
+
+                                return filtered.map(item => {
+                                    const isSelected = formData.linked_product_id === item.id && formData.linked_product_type === item.type;
+
+                                    return (
+                                        <div
+                                            key={`${item.type}-${item.id}`}
+                                            className={`p-3 rounded-2xl border flex items-center justify-between gap-3 transition ${
+                                                isSelected
+                                                    ? 'bg-emerald-50/70 border-emerald-500 shadow-2xs'
+                                                    : 'bg-white border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                {item.thumbnail ? (
+                                                    <img
+                                                        src={item.thumbnail}
+                                                        alt={item.title}
+                                                        className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                                                        <span className="material-icons text-xl">
+                                                            {item.type === 'store' ? 'storefront' : item.type === 'digital' ? 'download' : item.type === 'ecourse' ? 'school' : 'handshake'}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
+                                                            item.type === 'store'
+                                                                ? 'bg-blue-50 text-blue-700'
+                                                                : item.type === 'digital'
+                                                                ? 'bg-purple-50 text-purple-700'
+                                                                : item.type === 'ecourse'
+                                                                ? 'bg-amber-50 text-amber-700'
+                                                                : 'bg-emerald-50 text-emerald-700'
+                                                        }`}>
+                                                            {item.type_label || item.type}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="text-xs font-bold text-slate-900 truncate" title={item.title}>
+                                                        {item.title}
+                                                    </h4>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-xs font-extrabold text-emerald-700">
+                                                            {formatIDR(item.price)}
+                                                        </span>
+                                                        {item.original_price && Number(item.original_price) > Number(item.price) && (
+                                                            <span className="text-[10px] text-slate-400 line-through">
+                                                                {formatIDR(item.original_price)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSelectLinkedProduct(item, item.type)}
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center gap-1 ${
+                                                    isSelected
+                                                        ? 'bg-emerald-600 text-white shadow-xs'
+                                                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                                }`}
+                                            >
+                                                <span className="material-icons text-sm">
+                                                    {isSelected ? 'check_circle' : 'add_link'}
+                                                </span>
+                                                <span>{isSelected ? 'Terpilih' : 'Pilih Produk'}</span>
+                                            </button>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="pt-3 border-t border-slate-100 mt-4 flex justify-between items-center text-xs">
+                            <span className="text-slate-400 text-[11px]">
+                                Menautkan produk adalah opsional untuk mempermudah isi data secara instan.
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowLinkProductModal(false)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition"
+                            >
+                                Tutup
+                            </button>
                         </div>
                     </div>
                 </div>

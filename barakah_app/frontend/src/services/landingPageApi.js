@@ -33,6 +33,10 @@ export const getLandingPageQuota = () => {
     return axios.get(`${API_BASE}/api/landing-pages/quota/`, getAuthHeaders());
 };
 
+export const getLinkableItems = () => {
+    return axios.get(`${API_BASE}/api/landing-pages/my_linkable_items/`, getAuthHeaders());
+};
+
 export const createLandingPage = (formData) => {
     return axios.post(`${API_BASE}/api/landing-pages/`, formData, getAuthHeaders(true));
 };

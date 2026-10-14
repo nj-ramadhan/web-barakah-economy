@@ -1258,6 +1258,105 @@ class LandingPageViewSet(viewsets.ModelViewSet):
         serializer = LandingPageQuotaSerializer(quota)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def my_linkable_items(self, request):
+        """Ambil daftar produk yang dimiliki pengguna untuk ditautkan ke landing page."""
+        user = request.user
+        from products.models import Product, ServiceItem
+        from digital_products.models import DigitalProduct
+        from courses.models import Course
+
+        store_items = []
+        for p in Product.objects.filter(seller=user).order_by('-id')[:50]:
+            thumb = None
+            if p.thumbnail:
+                try:
+                    thumb = request.build_absolute_uri(p.thumbnail.url)
+                except Exception:
+                    thumb = str(p.thumbnail)
+            store_items.append({
+                'id': p.id,
+                'title': p.title,
+                'slug': p.slug,
+                'price': str(getattr(p, 'price', 0) or 0),
+                'description': p.description or '',
+                'thumbnail': thumb,
+                'type': 'store',
+                'type_label': 'Toko Fisik / Store',
+                'public_url': f'/p/{p.slug}'
+            })
+
+        digital_items = []
+        for dp in DigitalProduct.objects.filter(user=user).order_by('-id')[:50]:
+            thumb = None
+            if dp.cover_image:
+                try:
+                    thumb = request.build_absolute_uri(dp.cover_image.url)
+                except Exception:
+                    thumb = str(dp.cover_image)
+            digital_items.append({
+                'id': dp.id,
+                'title': dp.title,
+                'slug': dp.slug,
+                'price': str(dp.price),
+                'original_price': str(dp.original_price or 0),
+                'description': dp.description or '',
+                'thumbnail': thumb,
+                'type': 'digital',
+                'type_label': 'Produk Digital',
+                'public_url': f'/digital-products/{dp.slug}'
+            })
+
+        course_items = []
+        for c in Course.objects.filter(instructor=user).order_by('-id')[:50]:
+            thumb = None
+            if c.thumbnail:
+                try:
+                    thumb = request.build_absolute_uri(c.thumbnail.url)
+                except Exception:
+                    thumb = str(c.thumbnail)
+            course_items.append({
+                'id': c.id,
+                'title': c.title,
+                'slug': c.slug,
+                'price': str(c.price),
+                'original_price': str(c.discount or 0),
+                'description': c.description or '',
+                'thumbnail': thumb,
+                'type': 'ecourse',
+                'type_label': 'Kelas Digital / E-Course',
+                'public_url': f'/ecourse/{c.slug}'
+            })
+
+        service_items = []
+        for s in ServiceItem.objects.filter(seller=user).order_by('-id')[:50]:
+            thumb = None
+            if s.thumbnail:
+                try:
+                    thumb = request.build_absolute_uri(s.thumbnail.url)
+                except Exception:
+                    thumb = str(s.thumbnail)
+            service_items.append({
+                'id': s.id,
+                'title': s.title,
+                'slug': s.slug,
+                'price': str(s.price),
+                'rate': s.price_rate,
+                'description': s.description or '',
+                'thumbnail': thumb,
+                'whatsapp_number': s.whatsapp_number,
+                'type': 'service',
+                'type_label': 'Jasa & Layanan',
+                'public_url': f'/jasa/{s.slug}'
+            })
+
+        return Response({
+            'store_products': store_items,
+            'digital_products': digital_items,
+            'ecourses': course_items,
+            'services': service_items
+        })
+
     @action(detail=True, methods=['post'])
     def toggle_publish(self, request, slug=None):
         """Toggle status publikasi LP oleh seller (ketika pertama kali dipublish, masa aktif 30 hari/setting admin baru dihitung)."""

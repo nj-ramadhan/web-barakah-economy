@@ -529,6 +529,18 @@ class LandingPage(models.Model):
     secondary_cta_text = models.CharField(max_length=100, blank=True, default='')
     secondary_cta_link = models.CharField(max_length=500, blank=True, default='')
 
+    # Header Navigasi Sticky (Bisa sembunyikan/delete atau edit teks & URL)
+    show_header_nav = models.BooleanField(default=True, help_text="Tampilkan bar header navigasi sticky di atas")
+    header_title = models.CharField(max_length=200, blank=True, default='', help_text="Judul nama toko di bar header")
+    header_tagline = models.CharField(max_length=255, blank=True, default='', help_text="Tagline penjelas di bar header")
+    header_cta_text = models.CharField(max_length=100, blank=True, default='', help_text="Teks tombol di bar header")
+    header_cta_link = models.CharField(max_length=500, blank=True, default='', help_text="URL / Tautan aksi tombol header")
+
+    # Linked Product (Opsional: Store, Digital, E-Course, Jasa)
+    linked_product_type = models.CharField(max_length=50, blank=True, default='', help_text="Jenis produk terpaut (store, digital, ecourse, service)")
+    linked_product_id = models.PositiveIntegerField(null=True, blank=True, help_text="ID produk yang ditautkan")
+    linked_product_data = models.JSONField(default=dict, blank=True, help_text="Snapshot metadata produk tertaut")
+
     # Styling, Warna, Font, Layout & Tema
     theme = models.CharField(max_length=50, default='emerald', choices=THEME_CHOICES)
     layout = models.CharField(max_length=50, default='standard', choices=LAYOUT_CHOICES)

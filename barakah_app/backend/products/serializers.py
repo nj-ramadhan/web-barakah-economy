@@ -422,6 +422,8 @@ class LandingPageSerializer(serializers.ModelSerializer):
             'cta_text', 'cta_subtext', 'cta_type', 'cta_link',
             'whatsapp_number', 'whatsapp_message',
             'secondary_cta_text', 'secondary_cta_link',
+            'show_header_nav', 'header_title', 'header_tagline', 'header_cta_text', 'header_cta_link',
+            'linked_product_type', 'linked_product_id', 'linked_product_data',
             'theme', 'theme_display', 'layout', 'layout_display',
             'font_family', 'font_family_display',
             'primary_color', 'secondary_color', 'background_color',

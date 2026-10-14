@@ -587,35 +587,43 @@ const PublicLandingPageView = () => {
             )}
 
             {/* Top Minimal Navigation Bar */}
-            <header className="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-slate-100 shadow-2xs">
-                <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        {page.logo ? (
-                            <img
-                                src={getMediaUrl(page.logo)}
-                                alt={page.title}
-                                className="w-9 h-9 rounded-xl object-cover shadow-xs border border-slate-100"
-                            />
-                        ) : (
-                            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-black flex items-center justify-center text-sm shadow-xs">
-                                {page.title?.charAt(0)?.toUpperCase() || 'B'}
+            {page.show_header_nav !== false && (
+                <header className="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-slate-100 shadow-2xs">
+                    <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {page.logo ? (
+                                <img
+                                    src={getMediaUrl(page.logo)}
+                                    alt={page.header_title || page.title}
+                                    className="w-9 h-9 rounded-xl object-cover shadow-xs border border-slate-100"
+                                />
+                            ) : (
+                                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-black flex items-center justify-center text-sm shadow-xs">
+                                    {(page.header_title || page.title)?.charAt(0)?.toUpperCase() || 'B'}
+                                </div>
+                            )}
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-800 leading-tight">
+                                    {page.header_title || page.title}
+                                </h2>
+                                {(page.header_tagline || page.tagline) && (
+                                    <p className="text-[11px] text-slate-500 line-clamp-1">
+                                        {page.header_tagline || page.tagline}
+                                    </p>
+                                )}
                             </div>
-                        )}
-                        <div>
-                            <h2 className="text-sm font-bold text-slate-800 leading-tight">{page.title}</h2>
-                            {page.tagline && <p className="text-[11px] text-slate-500 line-clamp-1">{page.tagline}</p>}
                         </div>
+                        <a
+                            href={page.header_cta_link || ctaHref}
+                            target={(page.header_cta_link && page.header_cta_link.startsWith('http')) || isExternal ? '_blank' : '_self'}
+                            rel="noopener noreferrer"
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow-md active:scale-95 ${theme.btnPrimary}`}
+                        >
+                            {page.header_cta_text || page.cta_text || 'Beli Sekarang'}
+                        </a>
                     </div>
-                    <a
-                        href={ctaHref}
-                        target={isExternal ? '_blank' : '_self'}
-                        rel={isExternal ? 'noopener noreferrer' : undefined}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow-md active:scale-95 ${theme.btnPrimary}`}
-                    >
-                        {page.cta_text || 'Beli Sekarang'}
-                    </a>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* DYNAMIC SECTIONS RENDERED ACCORDING TO USER CONFIGURATION */}
             {sectionsOrder.map((sectionId) => {
