@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { getPublicLandingPage } from '../services/landingPageApi';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { safeStorage } from '../utils/storageUtils';
 import '../styles/Body.css';
 
 const formatIDR = (val) => {
@@ -173,8 +174,35 @@ const PublicLandingPageView = () => {
         );
     }
 
-    const currentUser = JSON.parse(localStorage.getItem('user'));
-    const isOwnerOrAdmin = currentUser && (currentUser.id === page.seller || currentUser.username === page.seller_username || currentUser.role === 'admin' || currentUser.username === 'admin');
+    const currentUser = safeStorage.getUser();
+    const isOwnerOrAdmin = currentUser && (
+        currentUser.id === page.seller ||
+        currentUser.username === page.seller_username ||
+        currentUser.role === 'admin' ||
+        currentUser.username === 'admin' ||
+        currentUser.is_staff === true
+    );
+
+    // Jika landing page belum dipublikasikan dan pengunjung bukan pemilik/admin
+    if (!page.is_published && !isOwnerOrAdmin) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-4">
+                    <span className="material-icons text-4xl">edit_note</span>
+                </div>
+                <h1 className="text-2xl font-black text-slate-800">Landing Page Dalam Draf</h1>
+                <p className="text-sm text-slate-500 mt-2 max-w-md leading-relaxed">
+                    Halaman <strong>"{page.title}"</strong> ini saat ini masih dalam tahap draf (belum dipublikasikan untuk umum oleh pemiliknya).
+                </p>
+                <Link
+                    to="/"
+                    className="mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-lg transition"
+                >
+                    Kembali ke Beranda
+                </Link>
+            </div>
+        );
+    }
 
     if (page.is_expired) {
         return (

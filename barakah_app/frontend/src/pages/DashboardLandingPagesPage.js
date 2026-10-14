@@ -89,10 +89,13 @@ const DashboardLandingPagesPage = () => {
                 getMyLandingPages(),
                 getLandingPageQuota()
             ]);
-            setPages(pagesRes.data || []);
+            const rawPages = pagesRes.data;
+            const pagesList = Array.isArray(rawPages) ? rawPages : (rawPages?.results || []);
+            setPages(pagesList);
             setQuota(quotaRes.data || null);
         } catch (err) {
             console.error("Error loading landing pages/quota:", err);
+            setPages([]);
         } finally {
             setLoading(false);
         }

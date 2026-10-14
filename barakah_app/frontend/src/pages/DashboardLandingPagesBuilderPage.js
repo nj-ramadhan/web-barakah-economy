@@ -6,7 +6,8 @@ import {
     createLandingPage,
     updateLandingPage,
     getLandingPageQuota,
-    getLinkableItems
+    getLinkableItems,
+    uploadLandingPageGalleryImage
 } from '../services/landingPageApi';
 import { getProducts } from '../services/productApi';
 import { getMyDigitalProducts } from '../services/digitalProductApi';
@@ -93,6 +94,8 @@ const DashboardLandingPagesBuilderPage = () => {
     const [loading, setLoading] = useState(isEditing);
     const [saving, setSaving] = useState(false);
     const [notification, setNotification] = useState(null);
+    const [uploadingGallery, setUploadingGallery] = useState(false);
+    const galleryFileInputRef = useRef(null);
 
     // Section Order for Drag & Drop
     const [sectionsOrder, setSectionsOrder] = useState(DEFAULT_SECTIONS_ORDER);
@@ -239,7 +242,7 @@ const DashboardLandingPagesBuilderPage = () => {
                 console.warn('Backend endpoint my_linkable_items failed or pending, fetching direct fallbacks...', err);
                 try {
                     const [resP, resD, resC, resS] = await Promise.allSettled([
-                        getProducts({ manage: 'true' }),
+                        getProducts({ manage: 'true', mine: 'true' }),
                         getMyDigitalProducts(),
                         getMyCourses(),
                         getMyServices()
@@ -468,6 +471,72 @@ const DashboardLandingPagesBuilderPage = () => {
             setFormData(prev => ({ ...prev, hero_image: file }));
             setPreviewHero(URL.createObjectURL(file));
         }
+    };
+
+    // Gallery / Carousel Photo Upload Handlers
+    const handleGalleryUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        // Reset input value so same files can be re-selected if needed
+        e.target.value = '';
+
+        // Validate formats & sizes (JPG, PNG, WebP maks 5MB)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        const validFiles = [];
+        for (const f of files) {
+            if (!allowedTypes.includes(f.type)) {
+                showNotification(`Format file "${f.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`, 'error');
+                return;
+            }
+            if (f.size > 5 * 1024 * 1024) {
+                showNotification(`Ukuran file "${f.name}" melebihi batas 5MB.`, 'error');
+                return;
+            }
+            validFiles.push(f);
+        }
+
+        if (validFiles.length === 0) return;
+
+        setUploadingGallery(true);
+        try {
+            const uploadPayload = new FormData();
+            validFiles.forEach(f => uploadPayload.append('images', f));
+
+            const res = await uploadLandingPageGalleryImage(uploadPayload);
+            const newUrls = res.data?.urls || (res.data?.url ? [res.data.url] : []);
+
+            if (newUrls.length > 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    carousel_images: [...(prev.carousel_images || []), ...newUrls]
+                }));
+                showNotification(`${newUrls.length} foto berhasil diunggah ke galeri produk!`);
+            } else {
+                showNotification('Tidak ada URL gambar yang diterima.', 'error');
+            }
+        } catch (err) {
+            console.error('Gallery upload error:', err);
+            const msg = err.response?.data?.error || err.response?.data?.detail || 'Gagal mengunggah foto galeri.';
+            showNotification(msg, 'error');
+        } finally {
+            setUploadingGallery(false);
+        }
+    };
+
+    const handleMoveGalleryImage = (index, direction) => {
+        const list = [...(formData.carousel_images || [])];
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= list.length) return;
+        const temp = list[index];
+        list[index] = list[targetIndex];
+        list[targetIndex] = temp;
+        setFormData({ ...formData, carousel_images: list });
+    };
+
+    const handleDeleteGalleryImage = (index) => {
+        const updated = (formData.carousel_images || []).filter((_, idx) => idx !== index);
+        setFormData({ ...formData, carousel_images: updated });
     };
 
     // PRODUCT LINKING ACTIONS (Opsional)
@@ -716,21 +785,66 @@ const DashboardLandingPagesBuilderPage = () => {
                 );
                 break;
 
-            case 'gallery':
+            case 'gallery': {
+                const galleryList = Array.isArray(formData.carousel_images) ? formData.carousel_images : [];
                 content = (
                     <div className="my-5 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-                        <h3 className="text-sm font-black text-slate-800 text-center mb-2.5">Galeri Produk</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="h-28 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                <span className="material-icons text-2xl">image</span>
-                            </div>
-                            <div className="h-28 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                <span className="material-icons text-2xl">photo_library</span>
-                            </div>
+                        <div className="flex items-center justify-between mb-2.5 px-0.5">
+                            <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                                <span className="material-icons text-emerald-600 text-base">collections</span>
+                                Galeri Foto Produk ({galleryList.length})
+                            </h3>
+                            {galleryList.length > 0 && (
+                                <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">
+                                    Slider Carousel
+                                </span>
+                            )}
                         </div>
+                        {galleryList.length > 0 ? (
+                            <div className="space-y-2">
+                                <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-100 border border-slate-200 shadow-inner">
+                                    <img
+                                        src={getMediaUrl(galleryList[0])}
+                                        alt="Preview Galeri Utama"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <span className="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold shadow-xs">
+                                        Foto Cover (1 / {galleryList.length})
+                                    </span>
+                                </div>
+                                {galleryList.length > 1 && (
+                                    <div className="grid grid-cols-4 gap-1.5 pt-1">
+                                        {galleryList.slice(0, 4).map((imgUrl, idx) => (
+                                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                                <img
+                                                    src={getMediaUrl(imgUrl)}
+                                                    alt={`Thumb ${idx + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                {idx === 0 && (
+                                                    <div className="absolute inset-0 border-2 border-emerald-500 rounded-lg pointer-events-none" />
+                                                )}
+                                                {idx === 3 && galleryList.length > 4 && (
+                                                    <div className="absolute inset-0 bg-black/60 text-white text-[11px] font-black flex items-center justify-center">
+                                                        +{galleryList.length - 3}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="p-6 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center">
+                                <span className="material-icons text-3xl text-slate-300 block mb-1">add_photo_alternate</span>
+                                <p className="text-xs font-bold text-slate-500">Belum ada foto galeri produk</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Upload foto dari file perangkat di panel inspector sisi kanan</p>
+                            </div>
+                        )}
                     </div>
                 );
                 break;
+            }
 
             case 'paragraphs':
                 content = (
@@ -1709,66 +1823,145 @@ const DashboardLandingPagesBuilderPage = () => {
                                             </div>
                                         )}
 
-                                        {/* GALLERY INSPECTOR */}
+                                        {/* GALLERY INSPECTOR (UPLOAD GAMBAR, BUKAN URL) */}
                                         {activeBlockId === 'gallery' && (
-                                            <div className="space-y-3">
-                                                <p className="text-[11px] text-slate-500">
-                                                    Atur gambar galeri atau carousel foto produk Anda.
-                                                </p>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-slate-800">Galeri & Slider Foto Produk</h4>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                                        Upload foto produk langsung dari file HP atau komputer Anda.
+                                                    </p>
+                                                </div>
 
+                                                {/* Hidden File Input */}
+                                                <input
+                                                    type="file"
+                                                    ref={galleryFileInputRef}
+                                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                                    multiple
+                                                    onChange={handleGalleryUpload}
+                                                    className="hidden"
+                                                />
+
+                                                {/* Upload Trigger Dropzone */}
+                                                <div
+                                                    onClick={() => !uploadingGallery && galleryFileInputRef.current?.click()}
+                                                    className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition select-none ${
+                                                        uploadingGallery
+                                                            ? 'border-emerald-400 bg-emerald-50/50 cursor-wait'
+                                                            : 'border-emerald-300 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500 hover:shadow-xs'
+                                                    }`}
+                                                >
+                                                    {uploadingGallery ? (
+                                                        <div className="py-2">
+                                                            <span className="material-icons animate-spin text-2xl text-emerald-600 block mb-1">sync</span>
+                                                            <p className="text-xs font-bold text-emerald-700">Mengunggah foto...</p>
+                                                            <p className="text-[10px] text-emerald-600 mt-0.5">Menyimpan gambar ke server</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="py-1">
+                                                            <div className="w-10 h-10 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mb-2 shadow-xs">
+                                                                <span className="material-icons text-xl">cloud_upload</span>
+                                                            </div>
+                                                            <p className="text-xs font-bold text-slate-800">+ Upload Foto Galeri</p>
+                                                            <p className="text-[10px] text-slate-500 mt-0.5">
+                                                                Klik untuk memilih file foto (Bisa pilih sekaligus, JPG/PNG/WebP maks 5MB)
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* List Foto Terupload */}
                                                 {formData.carousel_images && formData.carousel_images.length > 0 ? (
                                                     <div className="space-y-2">
-                                                        {formData.carousel_images.map((imgUrl, i) => (
-                                                            <div key={i} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
-                                                                <img src={imgUrl} alt={`Foto ${i + 1}`} className="w-10 h-10 rounded-lg object-cover border shrink-0" />
-                                                                <span className="text-xs text-slate-600 truncate flex-1">{imgUrl}</span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const updated = formData.carousel_images.filter((_, idx) => idx !== i);
-                                                                        setFormData({ ...formData, carousel_images: updated });
-                                                                    }}
-                                                                    className="p-1 text-rose-500 hover:text-rose-700"
-                                                                    title="Hapus Foto"
+                                                        <div className="flex items-center justify-between">
+                                                            <label className="text-[11px] font-bold text-slate-700">
+                                                                Daftar Foto Galeri ({formData.carousel_images.length})
+                                                            </label>
+                                                            <span className="text-[10px] text-slate-400">Urutkan / Hapus</span>
+                                                        </div>
+
+                                                        <div className="space-y-2 max-h-[340px] overflow-y-auto pr-0.5">
+                                                            {formData.carousel_images.map((imgUrl, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className={`flex items-center gap-2.5 p-2 bg-white rounded-xl border transition ${
+                                                                        i === 0 ? 'border-emerald-300 ring-1 ring-emerald-200' : 'border-slate-200'
+                                                                    }`}
                                                                 >
-                                                                    <span className="material-icons text-xs">delete</span>
-                                                                </button>
-                                                            </div>
-                                                        ))}
+                                                                    {/* Thumbnail */}
+                                                                    <div className="relative shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                                                                        <img
+                                                                            src={getMediaUrl(imgUrl)}
+                                                                            alt={`Foto ${i + 1}`}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                        {i === 0 && (
+                                                                            <span className="absolute bottom-0 inset-x-0 bg-emerald-600 text-white text-[8px] font-black text-center py-0.5">
+                                                                                COVER
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Label & Details */}
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="text-xs font-bold text-slate-800">
+                                                                                Foto {i + 1}
+                                                                            </span>
+                                                                            {i === 0 && (
+                                                                                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                                                                    Utama
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="text-[10px] text-slate-400 truncate block mt-0.5">
+                                                                            {imgUrl.split('/').pop() || imgUrl}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* Reorder and Delete Actions */}
+                                                                    <div className="flex items-center gap-0.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleMoveGalleryImage(i, -1)}
+                                                                            disabled={i === 0}
+                                                                            className={`p-1 rounded text-slate-500 ${
+                                                                                i === 0 ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 hover:text-slate-800'
+                                                                            }`}
+                                                                            title="Pindahkan ke atas"
+                                                                        >
+                                                                            <span className="material-icons text-sm">arrow_upward</span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleMoveGalleryImage(i, 1)}
+                                                                            disabled={i === formData.carousel_images.length - 1}
+                                                                            className={`p-1 rounded text-slate-500 ${
+                                                                                i === formData.carousel_images.length - 1 ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 hover:text-slate-800'
+                                                                            }`}
+                                                                            title="Pindahkan ke bawah"
+                                                                        >
+                                                                            <span className="material-icons text-sm">arrow_downward</span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteGalleryImage(i)}
+                                                                            className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded"
+                                                                            title="Hapus Foto"
+                                                                        >
+                                                                            <span className="material-icons text-sm">delete</span>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="p-3 bg-white rounded-xl border border-dashed border-slate-300 text-center text-xs text-slate-400">
-                                                        Belum ada foto galeri khusus. Gambar default akan ditampilkan.
+                                                    <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                                                        Belum ada foto yang diunggah. Klik area upload di atas untuk menambahkan foto produk Anda.
                                                     </div>
                                                 )}
-
-                                                <div className="space-y-2 pt-2 border-t border-slate-200">
-                                                    <label className="block text-[11px] font-bold text-slate-700">Tambah URL Gambar Galeri</label>
-                                                    <div className="flex gap-1.5">
-                                                        <input
-                                                            type="url"
-                                                            id="new-gallery-url"
-                                                            placeholder="https://..."
-                                                            className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const input = document.getElementById('new-gallery-url');
-                                                                if (input && input.value.trim()) {
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        carousel_images: [...(formData.carousel_images || []), input.value.trim()]
-                                                                    });
-                                                                    input.value = '';
-                                                                }
-                                                            }}
-                                                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
-                                                        >
-                                                            + Tambah
-                                                        </button>
-                                                    </div>
-                                                </div>
                                             </div>
                                         )}
 
@@ -2208,10 +2401,14 @@ const DashboardLandingPagesBuilderPage = () => {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="material-icons text-emerald-600 text-xl">link</span>
-                                    <h3 className="font-extrabold text-base text-slate-900">Tautkan Produk (Opsional)</h3>
+                                    <h3 className="font-extrabold text-base text-slate-900">Tautkan Produk Anda</h3>
+                                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <span className="material-icons text-[12px]">verified_user</span>
+                                        Hanya Produk Anda
+                                    </span>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Pilih produk untuk dihubungkan ke landing page. Anda dapat otomatis mengisi teks judul, harga & deskripsi.
+                                    Pilih produk milik akun Anda sendiri (Toko Fisik, Produk Digital, Kelas Digital, atau Jasa). Anda hanya dapat menautkan produk milik Anda sendiri.
                                 </p>
                             </div>
                             <button

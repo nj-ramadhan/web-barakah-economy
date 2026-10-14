@@ -435,6 +435,34 @@ class LandingPageSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['seller', 'slug', 'views_count', 'published_at', 'created_at', 'updated_at']
 
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        linked_type = attrs.get('linked_product_type')
+        linked_id = attrs.get('linked_product_id')
+
+        if linked_type and linked_id and user and user.is_authenticated:
+            from products.models import Product, ServiceItem
+            from digital_products.models import DigitalProduct
+            from courses.models import Course
+
+            is_owner = False
+            if linked_type == 'store':
+                is_owner = Product.objects.filter(id=linked_id, seller=user).exists()
+            elif linked_type == 'digital':
+                is_owner = DigitalProduct.objects.filter(id=linked_id, user=user).exists()
+            elif linked_type == 'ecourse':
+                is_owner = Course.objects.filter(id=linked_id, instructor=user).exists()
+            elif linked_type == 'service':
+                is_owner = ServiceItem.objects.filter(id=linked_id, seller=user).exists()
+
+            if not is_owner:
+                raise serializers.ValidationError({
+                    'linked_product_id': 'Produk yang ditautkan harus milik akun Anda sendiri. Anda tidak dapat menautkan produk milik pengguna lain.'
+                })
+
+        return super().validate(attrs)
+
     def get_seller_name(self, obj):
         profile = getattr(obj.seller, 'profile', None)
         return getattr(profile, 'name_full', None) or obj.seller.username

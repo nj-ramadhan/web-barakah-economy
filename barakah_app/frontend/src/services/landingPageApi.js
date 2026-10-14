@@ -1,97 +1,93 @@
-import axios from 'axios';
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
-
-const getAuthHeaders = (isMultipart = false) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = user?.access;
-    const headers = {};
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    if (isMultipart) {
-        headers['Content-Type'] = 'multipart/form-data';
-    }
-    return { headers };
-};
+import api from './api';
 
 // --- PUBLIC & SELLER DETAIL ---
 export const getPublicLandingPage = (slug) => {
-    return axios.get(`${API_BASE}/api/landing-pages/${slug}/`);
+    return api.get(`/landing-pages/${slug}/`);
 };
 
 export const getLandingPageDetail = (slug) => {
-    return axios.get(`${API_BASE}/api/landing-pages/${slug}/`, getAuthHeaders());
+    return api.get(`/landing-pages/${slug}/`);
 };
 
 // --- SELLER / USER CRUD ---
 export const getMyLandingPages = () => {
-    return axios.get(`${API_BASE}/api/landing-pages/my_pages/`, getAuthHeaders());
+    return api.get(`/landing-pages/my_pages/`);
 };
 
 export const getLandingPageQuota = () => {
-    return axios.get(`${API_BASE}/api/landing-pages/quota/`, getAuthHeaders());
+    return api.get(`/landing-pages/quota/`);
 };
 
 export const getLinkableItems = () => {
-    return axios.get(`${API_BASE}/api/landing-pages/my_linkable_items/`, getAuthHeaders());
+    return api.get(`/landing-pages/my_linkable_items/`);
+};
+
+export const uploadLandingPageGalleryImage = (formData) => {
+    return api.post(`/landing-pages/upload_gallery_image/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
 };
 
 export const createLandingPage = (formData) => {
-    return axios.post(`${API_BASE}/api/landing-pages/`, formData, getAuthHeaders(true));
+    return api.post(`/landing-pages/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
 };
 
 export const updateLandingPage = (slug, formData) => {
-    return axios.patch(`${API_BASE}/api/landing-pages/${slug}/`, formData, getAuthHeaders(true));
+    return api.patch(`/landing-pages/${slug}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
 };
 
 export const deleteLandingPage = (slug) => {
-    return axios.delete(`${API_BASE}/api/landing-pages/${slug}/`, getAuthHeaders());
+    return api.delete(`/landing-pages/${slug}/`);
 };
 
 // --- SELLER ACTIONS ---
 export const togglePublishLandingPage = (slug) => {
-    return axios.post(`${API_BASE}/api/landing-pages/${slug}/toggle_publish/`, {}, getAuthHeaders());
+    return api.post(`/landing-pages/${slug}/toggle_publish/`);
 };
 
 // --- SLOT & RENEWAL ORDERS ---
 export const createLandingPageSlotOrder = (slotsCount = 1, paymentMethod = 'dynaqris') => {
-    return axios.post(
-        `${API_BASE}/api/landing-pages/orders/`,
-        { order_type: 'slot', slots_count: slotsCount, payment_method: paymentMethod },
-        getAuthHeaders()
-    );
+    return api.post(`/landing-pages/orders/`, {
+        order_type: 'slot',
+        slots_count: slotsCount,
+        payment_method: paymentMethod
+    });
 };
 
 export const createLandingPageRenewalOrder = (landingPageId, durationMonths = 1, paymentMethod = 'dynaqris') => {
-    return axios.post(
-        `${API_BASE}/api/landing-pages/orders/`,
-        { order_type: 'renewal', landing_page: landingPageId, duration_months: durationMonths, payment_method: paymentMethod },
-        getAuthHeaders()
-    );
+    return api.post(`/landing-pages/orders/`, {
+        order_type: 'renewal',
+        landing_page: landingPageId,
+        duration_months: durationMonths,
+        payment_method: paymentMethod
+    });
 };
 
 export const getLandingPageSlotOrderStatus = (orderId) => {
-    return axios.get(`${API_BASE}/api/landing-pages/orders/${orderId}/status/`, getAuthHeaders());
+    return api.get(`/landing-pages/orders/${orderId}/status/`);
 };
 
 // --- ADMIN ---
 export const getLandingPageAdminSettings = () => {
-    return axios.get(`${API_BASE}/api/landing-pages/admin-settings/`, getAuthHeaders());
+    return api.get(`/landing-pages/admin-settings/`);
 };
 
 export const updateLandingPageAdminSettings = (data) => {
-    return axios.put(`${API_BASE}/api/landing-pages/admin-settings/`, data, getAuthHeaders());
+    return api.put(`/landing-pages/admin-settings/`, data);
 };
 
 export const getLandingPageAdminAll = () => {
-    return axios.get(`${API_BASE}/api/landing-pages/admin-all/`, getAuthHeaders());
+    return api.get(`/landing-pages/admin-all/`);
 };
 
 export const updateLandingPageAdminItem = (data) => {
-    return axios.patch(`${API_BASE}/api/landing-pages/admin-all/`, data, getAuthHeaders());
+    return api.patch(`/landing-pages/admin-all/`, data);
 };
 
 export const adminSetLandingPageExpiry = (slug, data) => {
-    return axios.post(`${API_BASE}/api/landing-pages/${slug}/admin_update_expiry/`, data, getAuthHeaders());
+    return api.post(`/landing-pages/${slug}/admin_update_expiry/`, data);
 };

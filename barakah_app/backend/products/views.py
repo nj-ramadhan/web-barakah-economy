@@ -131,6 +131,10 @@ class ProductViewSet(viewsets.ModelViewSet):
                     return queryset.filter(status__iexact='approved', is_active=True)
                 return queryset.none()
                 
+            # If specifically requesting only seller's own products (e.g. for landing page linking)
+            if self.request.query_params.get('mine') == 'true' or self.request.query_params.get('my_products_only') == 'true':
+                return queryset.filter(seller=user)
+
             # Superusers, Admins, or Staff see everything
             if user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin':
                 return queryset
@@ -1180,6 +1184,8 @@ class LandingPageViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if self.action in ['retrieve', 'public_get']:
             if user and user.is_authenticated:
+                if user.is_staff or getattr(user, 'role', '') == 'admin':
+                    return LandingPage.objects.all()
                 return LandingPage.objects.filter(Q(is_active=True) | Q(seller=user))
             return LandingPage.objects.filter(is_active=True)
         if user and user.is_authenticated:
@@ -1187,6 +1193,46 @@ class LandingPageViewSet(viewsets.ModelViewSet):
                 return LandingPage.objects.all().order_by('-created_at')
             return LandingPage.objects.filter(seller=user).order_by('-created_at')
         return LandingPage.objects.none()
+
+    def get_object(self):
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs.get(lookup_url_kwarg)
+        if not lookup_value:
+            from django.http import Http404
+            raise Http404
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # 1. Cek berdasarkan ID jika angka
+        if str(lookup_value).isdigit():
+            obj = queryset.filter(pk=int(lookup_value)).first()
+            if obj:
+                self.check_object_permissions(self.request, obj)
+                return obj
+
+        # 2. Cek slug exact atau case-insensitive
+        obj = queryset.filter(slug__iexact=str(lookup_value)).first()
+        if obj:
+            self.check_object_permissions(self.request, obj)
+            return obj
+
+        # 3. Cek versi slugify jika terdapat spasi atau karakter khusus
+        from django.utils.text import slugify
+        slugified = slugify(lookup_value)
+        if slugified:
+            obj = queryset.filter(slug__iexact=slugified).first()
+            if obj:
+                self.check_object_permissions(self.request, obj)
+                return obj
+
+        # 4. Fallback pencarian berdasarkan judul (title)
+        obj = queryset.filter(title__iexact=str(lookup_value)).first()
+        if obj:
+            self.check_object_permissions(self.request, obj)
+            return obj
+
+        from django.http import Http404
+        raise Http404("Landing Page tidak ditemukan.")
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1209,6 +1255,60 @@ class LandingPageViewSet(viewsets.ModelViewSet):
             pass
         return is_verified or is_seller or has_menu
 
+    def _validate_linked_product_ownership(self, user, validated_data):
+        """Pastikan produk yang ditautkan ke Landing Page adalah milik user sendiri."""
+        linked_type = validated_data.get('linked_product_type')
+        linked_id = validated_data.get('linked_product_id')
+        if not linked_type or not linked_id:
+            return
+
+        from products.models import Product, ServiceItem
+        from digital_products.models import DigitalProduct
+        from courses.models import Course
+
+        is_owner = False
+        if linked_type == 'store':
+            is_owner = Product.objects.filter(id=linked_id, seller=user).exists()
+        elif linked_type == 'digital':
+            is_owner = DigitalProduct.objects.filter(id=linked_id, user=user).exists()
+        elif linked_type == 'ecourse':
+            is_owner = Course.objects.filter(id=linked_id, instructor=user).exists()
+        elif linked_type == 'service':
+            is_owner = ServiceItem.objects.filter(id=linked_id, seller=user).exists()
+
+        if not is_owner:
+            raise ValidationError({
+                'detail': 'Anda hanya dapat menautkan produk milik Anda sendiri. Tidak dapat menautkan produk pengguna lain.'
+            })
+
+    def _handle_uploaded_carousel_files(self, landing_page):
+        """Simpan file gambar galeri/carousel yang diunggah secara multipart."""
+        import os
+        import uuid
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+
+        files = self.request.FILES.getlist('carousel_images_files') or self.request.FILES.getlist('gallery_images')
+        if not files:
+            return
+
+        current_images = list(landing_page.carousel_images or [])
+        for file_obj in files:
+            ext = os.path.splitext(file_obj.name)[1].lower()
+            if ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif'] and file_obj.size <= 5 * 1024 * 1024:
+                safe_name = os.path.basename(file_obj.name).replace(' ', '_')
+                filename = f"landing_pages/gallery/{uuid.uuid4().hex[:10]}_{safe_name}"
+                saved_path = default_storage.save(filename, ContentFile(file_obj.read()))
+                file_url = default_storage.url(saved_path)
+                try:
+                    full_url = self.request.build_absolute_uri(file_url)
+                except Exception:
+                    full_url = file_url
+                current_images.append(full_url)
+
+        landing_page.carousel_images = current_images
+        landing_page.save(update_fields=['carousel_images'])
+
     def perform_create(self, serializer):
         user = self.request.user
         if not self._check_user_creation_eligibility(user):
@@ -1227,7 +1327,9 @@ class LandingPageViewSet(viewsets.ModelViewSet):
                           f'Silakan beli slot Landing Page tambahan untuk membuat lebih banyak.'
             })
 
-        serializer.save(seller=user)
+        self._validate_linked_product_ownership(user, serializer.validated_data)
+        lp = serializer.save(seller=user)
+        self._handle_uploaded_carousel_files(lp)
 
     def perform_update(self, serializer):
         user = self.request.user
@@ -1235,7 +1337,9 @@ class LandingPageViewSet(viewsets.ModelViewSet):
         is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
         if instance.seller != user and not is_admin:
             raise PermissionDenied("Anda tidak memiliki izin mengedit landing page ini.")
-        serializer.save()
+        self._validate_linked_product_ownership(user, serializer.validated_data)
+        lp = serializer.save()
+        self._handle_uploaded_carousel_files(lp)
 
     def perform_destroy(self, instance):
         user = self.request.user
@@ -1355,6 +1459,53 @@ class LandingPageViewSet(viewsets.ModelViewSet):
             'digital_products': digital_items,
             'ecourses': course_items,
             'services': service_items
+        })
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def upload_gallery_image(self, request):
+        """Upload one or more gallery images for landing page builder."""
+        import os
+        import uuid
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+
+        files = request.FILES.getlist('images')
+        if not files and 'image' in request.FILES:
+            files = [request.FILES['image']]
+
+        if not files:
+            return Response({'error': 'Tidak ada file gambar yang diunggah.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        uploaded_urls = []
+        for file_obj in files:
+            ext = os.path.splitext(file_obj.name)[1].lower()
+            if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                return Response(
+                    {'error': f'Format file {file_obj.name} tidak didukung. Gunakan JPG, PNG, atau WebP.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if file_obj.size > 5 * 1024 * 1024:
+                return Response(
+                    {'error': f'Ukuran file {file_obj.name} melebihi 5MB.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            safe_name = os.path.basename(file_obj.name).replace(' ', '_')
+            filename = f"landing_pages/gallery/{uuid.uuid4().hex[:10]}_{safe_name}"
+            saved_path = default_storage.save(filename, ContentFile(file_obj.read()))
+            file_url = default_storage.url(saved_path)
+
+            try:
+                full_url = request.build_absolute_uri(file_url)
+            except Exception:
+                full_url = file_url
+            uploaded_urls.append(full_url)
+
+        return Response({
+            'success': True,
+            'urls': uploaded_urls,
+            'url': uploaded_urls[0] if uploaded_urls else None
         })
 
     @action(detail=True, methods=['post'])

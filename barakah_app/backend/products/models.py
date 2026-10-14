@@ -408,7 +408,9 @@ class LandingPageSlotSetting(models.Model):
 
     @classmethod
     def get_settings(cls):
-        obj, _ = cls.objects.get_or_create(id=1)
+        obj = cls.objects.first()
+        if not obj:
+            obj = cls.objects.create()
         return obj
 
     def __str__(self):
