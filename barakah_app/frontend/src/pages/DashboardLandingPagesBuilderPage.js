@@ -44,6 +44,42 @@ const FONT_OPTIONS = [
     { key: 'mono', label: 'Monospace (Unik & Modern)', class: 'font-mono' },
 ];
 
+// Pilihan Ikon Populer Material Icons
+const POPULAR_ICONS = [
+    { name: 'verified', label: 'Terverifikasi' },
+    { name: 'check_circle', label: 'Centang Sukses' },
+    { name: 'star', label: 'Bintang Kualitas' },
+    { name: 'local_shipping', label: 'Pengiriman Cepat' },
+    { name: 'support_agent', label: 'CS 24/7 Ramah' },
+    { name: 'security', label: 'Keamanan Terjamin' },
+    { name: 'payments', label: 'Bisa COD / Bayar Mudah' },
+    { name: 'bolt', label: 'Kilat & Cepat' },
+    { name: 'thumb_up', label: 'Rekomendasi Terbaik' },
+    { name: 'eco', label: 'Alami & Halal' },
+    { name: 'health_and_safety', label: 'Kesehatan & BPOM' },
+    { name: 'diamond', label: 'Mewah & Premium' },
+    { name: 'favorite', label: 'Favorit Pembeli' },
+    { name: 'inventory_2', label: 'Stok Terjamin' },
+    { name: 'card_giftcard', label: 'Bonus & Hadiah' },
+    { name: 'workspace_premium', label: 'Sertifikat Resmi' },
+    { name: 'shield', label: 'Garansi Proteksi' },
+    { name: 'auto_awesome', label: 'Kualitas Istimewa' },
+    { name: 'shopping_bag', label: 'Kemasan Rapi' },
+    { name: 'credit_card', label: 'Transaksi Aman' },
+    { name: 'schedule', label: 'Tepat Waktu' },
+    { name: 'lock', label: 'Privasi Terjaga' },
+    { name: 'emoji_events', label: 'Produk Terlaris' },
+    { name: 'sentiment_very_satisfied', label: 'Pelanggan Puas' },
+    { name: 'chat', label: 'Konsultasi Mudah' },
+    { name: 'rocket_launch', label: 'Hasil Maksimal' },
+    { name: 'savings', label: 'Hemat Biaya' },
+    { name: 'speed', label: 'Respon Cepat' },
+    { name: 'redeem', label: 'Voucher Promo' },
+    { name: 'spa', label: 'Segar & Rileks' },
+    { name: 'alarm', label: 'Waktu Terbatas' },
+    { name: 'military_tech', label: 'Mutu Juara' }
+];
+
 // Definisi Blok Standar Landing Page
 const AVAILABLE_BLOCKS = [
     { id: 'hero', name: 'Hero Banner & Judul', icon: 'view_headline', desc: 'Banner utama, headline, subheadline & CTA pertama' },
@@ -70,6 +106,223 @@ const DEFAULT_SECTIONS_ORDER = [
     'trust_badges',
     'footer'
 ];
+
+// Komponen Kustomisasi Font, Ukuran & Warna per Section
+const SectionStyleControls = ({ sectionId, styles, onUpdate }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const s = styles || {};
+
+    const PRESET_BG_COLORS = [
+        { label: 'Default', value: '' },
+        { label: 'Putih', value: '#ffffff' },
+        { label: 'Abu Lembut', value: '#f8fafc' },
+        { label: 'Emerald Lembut', value: '#ecfdf5' },
+        { label: 'Biru Langit', value: '#f0f9ff' },
+        { label: 'Kuning Hangat', value: '#fefce8' },
+        { label: 'Gelap Mewah', value: '#0f172a' },
+    ];
+
+    const hasCustomStyles = Boolean(s.font_size_title || s.font_size_body || (s.font_family && s.font_family !== 'default') || s.bg_color || s.text_color || s.title_color);
+
+    return (
+        <div className="mt-4 pt-3 border-t border-slate-200">
+            <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition text-left ${
+                    isExpanded
+                        ? 'bg-emerald-50/70 border-emerald-300 text-emerald-900'
+                        : hasCustomStyles
+                            ? 'bg-amber-50/60 border-amber-300 text-amber-900'
+                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+            >
+                <div className="flex items-center gap-2">
+                    <span className="material-icons text-sm text-emerald-600">palette</span>
+                    <div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold">Desain, Font & Warna Khusus Section</span>
+                            {hasCustomStyles && (
+                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-600 text-white">
+                                    Kustom
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-slate-400">Atur font, ukuran huruf, warna latar & teks untuk blok ini</p>
+                    </div>
+                </div>
+                <span className="material-icons text-xs text-slate-500">
+                    {isExpanded ? 'expand_less' : 'expand_more'}
+                </span>
+            </button>
+
+            {isExpanded && (
+                <div className="mt-2.5 p-3.5 bg-white rounded-xl border border-slate-200 space-y-3.5 shadow-2xs">
+                    {/* Ukuran Font Judul */}
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            Ukuran Font Judul / Headline
+                        </label>
+                        <div className="grid grid-cols-4 gap-1">
+                            {[
+                                { key: 'sm', label: 'Kecil' },
+                                { key: 'normal', label: 'Normal' },
+                                { key: 'lg', label: 'Besar' },
+                                { key: 'xl', label: 'Ekstra' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => onUpdate(sectionId, 'font_size_title', opt.key)}
+                                    className={`py-1 px-1.5 text-[10px] font-bold rounded-lg border transition ${(s.font_size_title || 'normal') === opt.key ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'}`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Ukuran Font Isi / Deskripsi */}
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            Ukuran Font Teks / Deskripsi
+                        </label>
+                        <div className="grid grid-cols-3 gap-1">
+                            {[
+                                { key: 'sm', label: 'Kecil (12px)' },
+                                { key: 'normal', label: 'Normal (14px)' },
+                                { key: 'lg', label: 'Besar (16px)' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => onUpdate(sectionId, 'font_size_body', opt.key)}
+                                    className={`py-1 px-1.5 text-[10px] font-bold rounded-lg border transition ${(s.font_size_body || 'normal') === opt.key ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'}`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Jenis Font Section */}
+                    <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                            Jenis Font (Font Family) Section
+                        </label>
+                        <select
+                            value={s.font_family || 'default'}
+                            onChange={(e) => onUpdate(sectionId, 'font_family', e.target.value)}
+                            className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                        >
+                            <option value="default">Default (Ikuti Font Tema Halaman)</option>
+                            <option value="poppins">Poppins (Modern & Bersih)</option>
+                            <option value="plus-jakarta">Plus Jakarta Sans (Elegan)</option>
+                            <option value="inter">Inter (Teknis & Standar)</option>
+                            <option value="outfit">Outfit (Futuristik & Trendy)</option>
+                            <option value="serif">Serif (Klasik & Mewah)</option>
+                            <option value="mono">Monospace (Unik & Modern)</option>
+                        </select>
+                    </div>
+
+                    {/* Warna Background Section */}
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-bold text-slate-700">Warna Latar Belakang (Background)</label>
+                            {s.bg_color && (
+                                <button
+                                    type="button"
+                                    onClick={() => onUpdate(sectionId, 'bg_color', '')}
+                                    className="text-[10px] text-rose-500 hover:underline"
+                                >
+                                    Reset
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                            {PRESET_BG_COLORS.map(p => (
+                                <button
+                                    key={p.label}
+                                    type="button"
+                                    onClick={() => onUpdate(sectionId, 'bg_color', p.value)}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${s.bg_color === p.value ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="color"
+                                value={s.bg_color || '#ffffff'}
+                                onChange={(e) => onUpdate(sectionId, 'bg_color', e.target.value)}
+                                className="w-7 h-7 rounded border border-slate-300 cursor-pointer p-0.5"
+                            />
+                            <input
+                                type="text"
+                                placeholder="#hex color kustom"
+                                value={s.bg_color || ''}
+                                onChange={(e) => onUpdate(sectionId, 'bg_color', e.target.value)}
+                                className="flex-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-mono"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Warna Judul & Teks */}
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="text-[11px] font-bold text-slate-700">Warna Judul</label>
+                                {s.title_color && (
+                                    <button type="button" onClick={() => onUpdate(sectionId, 'title_color', '')} className="text-[9px] text-rose-500">Reset</button>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    type="color"
+                                    value={s.title_color || '#0f172a'}
+                                    onChange={(e) => onUpdate(sectionId, 'title_color', e.target.value)}
+                                    className="w-6 h-6 rounded border border-slate-300 cursor-pointer p-0.5"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Warna Judul"
+                                    value={s.title_color || ''}
+                                    onChange={(e) => onUpdate(sectionId, 'title_color', e.target.value)}
+                                    className="w-full px-1.5 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-mono"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="text-[11px] font-bold text-slate-700">Warna Teks</label>
+                                {s.text_color && (
+                                    <button type="button" onClick={() => onUpdate(sectionId, 'text_color', '')} className="text-[9px] text-rose-500">Reset</button>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    type="color"
+                                    value={s.text_color || '#334155'}
+                                    onChange={(e) => onUpdate(sectionId, 'text_color', e.target.value)}
+                                    className="w-6 h-6 rounded border border-slate-300 cursor-pointer p-0.5"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Warna Teks"
+                                    value={s.text_color || ''}
+                                    onChange={(e) => onUpdate(sectionId, 'text_color', e.target.value)}
+                                    className="w-full px-1.5 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-mono"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const DashboardLandingPagesBuilderPage = () => {
     const { slug } = useParams();
@@ -182,6 +435,9 @@ const DashboardLandingPagesBuilderPage = () => {
             { title: 'Pengiriman Cepat', icon: 'bolt' }
         ],
 
+        // Section Styles (font size, font family, warna background & teks per section)
+        section_styles: {},
+
         // Status
         is_published: true
     });
@@ -189,6 +445,19 @@ const DashboardLandingPagesBuilderPage = () => {
     // Image previews
     const [previewLogo, setPreviewLogo] = useState(null);
     const [previewHero, setPreviewHero] = useState(null);
+
+    // Icon Picker Modal State
+    const [iconPicker, setIconPicker] = useState({
+        isOpen: false,
+        targetType: '', // 'feature' | 'trust_badge'
+        targetIndex: 0,
+        currentIcon: 'verified',
+        searchQuery: ''
+    });
+
+    // Upload loading state for specific items
+    const [uploadingAvatarIdx, setUploadingAvatarIdx] = useState(null);
+    const [uploadingParagraphIdx, setUploadingParagraphIdx] = useState(null);
 
     // Active accordion in preview
     const [activeFaqIdx, setActiveFaqIdx] = useState(null);
@@ -376,12 +645,13 @@ const DashboardLandingPagesBuilderPage = () => {
                     ],
                     testimonials: Array.isArray(data.testimonials) ? data.testimonials : [],
                     faq_items: Array.isArray(data.faq_items) ? data.faq_items : [],
-                    trust_badges: [
+                    trust_badges: Array.isArray(data.trust_badges) && data.trust_badges.length > 0 ? data.trust_badges : [
                         { title: '100% Asli', icon: 'verified' },
                         { title: 'Garansi Uang Kembali', icon: 'security' },
                         { title: 'Bisa COD', icon: 'payments' },
                         { title: 'Pengiriman Cepat', icon: 'bolt' }
                     ],
+                    section_styles: data.section_styles || (data.linked_product_data && data.linked_product_data.section_styles) || {},
                     is_published: data.is_published
                 });
 
@@ -539,6 +809,154 @@ const DashboardLandingPagesBuilderPage = () => {
         setFormData({ ...formData, carousel_images: updated });
     };
 
+    // Testimonial Avatar Upload Handler
+    const handleTestimonialAvatarUpload = async (e, index) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            showNotification('Format foto avatar harus JPG, PNG, atau WebP.', 'error');
+            return;
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            showNotification('Ukuran foto avatar maksimal 3MB.', 'error');
+            return;
+        }
+
+        setUploadingAvatarIdx(index);
+        try {
+            const uploadPayload = new FormData();
+            uploadPayload.append('image', file);
+            const res = await uploadLandingPageGalleryImage(uploadPayload);
+            const url = res.data?.url || (res.data?.urls && res.data.urls[0]);
+            if (url) {
+                const updated = [...formData.testimonials];
+                updated[index].avatar = url;
+                setFormData(prev => ({ ...prev, testimonials: updated }));
+                showNotification('Foto avatar testimoni berhasil diunggah!');
+            }
+        } catch (err) {
+            console.error('Avatar upload error:', err);
+            showNotification('Gagal mengunggah foto avatar pembeli.', 'error');
+        } finally {
+            setUploadingAvatarIdx(null);
+        }
+    };
+
+    // Paragraph Story Image Upload Handler
+    const handleParagraphImageUpload = async (e, index) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+            showNotification('Format gambar narasi harus JPG, PNG, atau WebP.', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('Ukuran gambar narasi maksimal 5MB.', 'error');
+            return;
+        }
+
+        setUploadingParagraphIdx(index);
+        try {
+            const uploadPayload = new FormData();
+            uploadPayload.append('image', file);
+            const res = await uploadLandingPageGalleryImage(uploadPayload);
+            const url = res.data?.url || (res.data?.urls && res.data.urls[0]);
+            if (url) {
+                const updated = [...formData.paragraphs];
+                updated[index].image = url;
+                setFormData(prev => ({ ...prev, paragraphs: updated }));
+                showNotification('Foto ilustrasi cerita berhasil diunggah!');
+            }
+        } catch (err) {
+            console.error('Paragraph image upload error:', err);
+            showNotification('Gagal mengunggah foto ilustrasi narasi.', 'error');
+        } finally {
+            setUploadingParagraphIdx(null);
+        }
+    };
+
+    // Icon Picker Handlers
+    const handleOpenIconPicker = (targetType, targetIndex, currentIcon) => {
+        setIconPicker({
+            isOpen: true,
+            targetType,
+            targetIndex,
+            currentIcon: currentIcon || 'verified',
+            searchQuery: ''
+        });
+    };
+
+    const handleSelectIcon = (iconName) => {
+        if (!iconName) return;
+        if (iconPicker.targetType === 'feature') {
+            const updated = [...formData.features];
+            if (updated[iconPicker.targetIndex]) {
+                updated[iconPicker.targetIndex].icon = iconName;
+                setFormData(prev => ({ ...prev, features: updated }));
+            }
+        } else if (iconPicker.targetType === 'trust_badge') {
+            const updated = [...(formData.trust_badges || [])];
+            if (updated[iconPicker.targetIndex]) {
+                updated[iconPicker.targetIndex].icon = iconName;
+                setFormData(prev => ({ ...prev, trust_badges: updated }));
+            }
+        }
+        setIconPicker(prev => ({ ...prev, isOpen: false }));
+        showNotification(`Ikon "${iconName}" berhasil dipilih.`);
+    };
+
+    // Section Style Updater
+    const handleUpdateSectionStyle = (sectionId, key, value) => {
+        setFormData(prev => ({
+            ...prev,
+            section_styles: {
+                ...(prev.section_styles || {}),
+                [sectionId]: {
+                    ...(prev.section_styles?.[sectionId] || {}),
+                    [key]: value
+                }
+            }
+        }));
+    };
+
+    // Section Style Helper for Live Preview
+    const getSectionStyleHelper = (sectionId) => {
+        const s = formData.section_styles?.[sectionId] || {};
+        const titleSize = s.font_size_title === 'sm' ? 'text-base sm:text-lg' :
+                          s.font_size_title === 'lg' ? 'text-2xl sm:text-3xl' :
+                          s.font_size_title === 'xl' ? 'text-3xl sm:text-4xl' :
+                          'text-xl sm:text-2xl';
+        const bodySize = s.font_size_body === 'sm' ? 'text-[11px] sm:text-xs' :
+                         s.font_size_body === 'lg' ? 'text-sm sm:text-base' :
+                         'text-xs sm:text-sm';
+        const fontFamily = s.font_family === 'poppins' ? 'font-[Poppins]' :
+                           s.font_family === 'plus-jakarta' ? 'font-[Plus_Jakarta_Sans,sans-serif]' :
+                           s.font_family === 'inter' ? 'font-sans' :
+                           s.font_family === 'outfit' ? 'font-[Outfit,sans-serif]' :
+                           s.font_family === 'serif' ? 'font-serif' :
+                           s.font_family === 'mono' ? 'font-mono' : '';
+
+        return {
+            titleSize,
+            bodySize,
+            fontFamily,
+            containerStyle: {
+                backgroundColor: s.bg_color || undefined,
+                color: s.text_color || undefined
+            },
+            titleStyle: {
+                color: s.title_color || undefined
+            },
+            textStyle: {
+                color: s.text_color || undefined
+            }
+        };
+    };
+
     // PRODUCT LINKING ACTIONS (Opsional)
     const handleSelectLinkedProduct = (item, type) => {
         const itemSnapshot = {
@@ -650,6 +1068,8 @@ const DashboardLandingPagesBuilderPage = () => {
             payload.append('paragraphs', JSON.stringify(formData.paragraphs || []));
             payload.append('testimonials', JSON.stringify(formData.testimonials || []));
             payload.append('faq_items', JSON.stringify(formData.faq_items || []));
+            payload.append('trust_badges', JSON.stringify(formData.trust_badges || []));
+            payload.append('section_styles', JSON.stringify(formData.section_styles || {}));
 
             if (formData.logo instanceof File) {
                 payload.append('logo', formData.logo);
@@ -680,23 +1100,35 @@ const DashboardLandingPagesBuilderPage = () => {
     const renderSectionPreview = (sectionId) => {
         const isCurrentActive = activeBlockId === sectionId;
         const currentTheme = THEME_OPTIONS.find(t => t.key === formData.theme) || THEME_OPTIONS[0];
+        const st = getSectionStyleHelper(sectionId);
 
         let content = null;
 
         switch (sectionId) {
             case 'hero':
                 content = (
-                    <div className="relative py-10 px-5 text-center text-white overflow-hidden rounded-2xl"
-                         style={{ background: `linear-gradient(135deg, ${formData.secondary_color || '#064e3b'} 0%, ${formData.primary_color || '#059669'} 100%)` }}>
+                    <div
+                        className={`relative py-10 px-5 text-center text-white overflow-hidden rounded-2xl ${st.fontFamily}`}
+                        style={{
+                            background: st.containerStyle.backgroundColor || `linear-gradient(135deg, ${formData.secondary_color || '#064e3b'} 0%, ${formData.primary_color || '#059669'} 100%)`,
+                            color: st.containerStyle.color || '#ffffff'
+                        }}
+                    >
                         {formData.badge_text && (
                             <span className="inline-block px-3 py-1 bg-amber-400 text-amber-950 font-black text-[11px] rounded-full uppercase tracking-wider mb-4 shadow-sm">
                                 {formData.badge_text}
                             </span>
                         )}
-                        <h1 className="text-2xl sm:text-3xl font-black leading-tight mb-3">
+                        <h1
+                            className={`${st.titleSize} font-black leading-tight mb-3`}
+                            style={st.titleStyle}
+                        >
                             {formData.hero_headline || 'Judul Utama Penawaran Anda'}
                         </h1>
-                        <p className="text-xs sm:text-sm opacity-90 max-w-lg mx-auto leading-relaxed mb-6 font-medium">
+                        <p
+                            className={`${st.bodySize} opacity-90 max-w-lg mx-auto leading-relaxed mb-6 font-medium`}
+                            style={st.textStyle}
+                        >
                             {formData.hero_subheadline || 'Subheadline penjelas manfaat produk yang memikat calon pelanggan.'}
                         </p>
 
@@ -722,8 +1154,11 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'pricing':
                 content = (
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs text-center my-4">
-                        <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest block mb-1">
+                    <div
+                        className={`p-5 rounded-2xl border border-slate-200 shadow-xs text-center my-4 ${st.fontFamily}`}
+                        style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}
+                    >
+                        <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#065f46' }}>
                             Penawaran Spesial Terbatas
                         </span>
                         <div className="flex items-center justify-center gap-3 my-2">
@@ -732,12 +1167,12 @@ const DashboardLandingPagesBuilderPage = () => {
                                     {formatIDR(formData.slash_price)}
                                 </span>
                             )}
-                            <span className="text-2xl font-black text-emerald-700">
+                            <span className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#047857' }}>
                                 {Number(formData.price) > 0 ? formatIDR(formData.price) : 'Hubungi Kami'}
                             </span>
                         </div>
                         {formData.cta_subtext && (
-                            <p className="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1 mt-1">
+                            <p className={`${st.bodySize} font-medium flex items-center justify-center gap-1 mt-1`} style={st.textStyle.color ? st.textStyle : { color: '#64748b' }}>
                                 <span className="material-icons text-xs text-emerald-600">verified</span>
                                 {formData.cta_subtext}
                             </p>
@@ -748,7 +1183,7 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'cta_button':
                 content = (
-                    <div className="my-4 text-center">
+                    <div className={`my-4 text-center ${st.fontFamily}`} style={st.containerStyle}>
                         <button
                             type="button"
                             className="w-full py-3.5 px-6 rounded-2xl font-black text-sm shadow-md transition transform active:scale-95 flex items-center justify-center gap-2"
@@ -770,14 +1205,16 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'features':
                 content = (
-                    <div className="my-5">
-                        <h3 className="text-sm font-black text-slate-800 text-center mb-3">Keunggulan & Manfaat</h3>
+                    <div className={`my-5 p-3 rounded-2xl ${st.fontFamily}`} style={st.containerStyle}>
+                        <h3 className={`${st.titleSize} font-black text-center mb-3`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
+                            Keunggulan & Manfaat
+                        </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             {formData.features.map((f, i) => (
                                 <div key={i} className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs text-center">
                                     <span className="material-icons text-xl text-emerald-600 mb-1">{f.icon || 'verified'}</span>
-                                    <h4 className="font-bold text-xs text-slate-800">{f.title || 'Fitur Unggulan'}</h4>
-                                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{f.description || 'Deskripsi singkat manfaat.'}</p>
+                                    <h4 className="font-bold text-xs text-slate-800" style={st.titleStyle}>{f.title || 'Fitur Unggulan'}</h4>
+                                    <p className={`${st.bodySize} text-slate-500 mt-0.5 leading-snug`} style={st.textStyle}>{f.description || 'Deskripsi singkat manfaat.'}</p>
                                 </div>
                             ))}
                         </div>
@@ -788,9 +1225,9 @@ const DashboardLandingPagesBuilderPage = () => {
             case 'gallery': {
                 const galleryList = Array.isArray(formData.carousel_images) ? formData.carousel_images : [];
                 content = (
-                    <div className="my-5 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+                    <div className={`my-5 p-3.5 rounded-2xl border border-slate-200 shadow-2xs ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}>
                         <div className="flex items-center justify-between mb-2.5 px-0.5">
-                            <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <h3 className={`${st.titleSize} font-extrabold flex items-center gap-1.5`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
                                 <span className="material-icons text-emerald-600 text-base">collections</span>
                                 Galeri Foto Produk ({galleryList.length})
                             </h3>
@@ -848,11 +1285,20 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'paragraphs':
                 content = (
-                    <div className="my-5 space-y-3">
+                    <div className={`my-5 space-y-3 ${st.fontFamily}`} style={st.containerStyle}>
                         {formData.paragraphs.map((p, i) => (
                             <div key={i} className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-                                <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 mb-1.5">{p.headline}</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{p.content}</p>
+                                {p.image && (
+                                    <div className="mb-3 rounded-xl overflow-hidden max-h-56 border border-slate-200">
+                                        <img src={getMediaUrl(p.image)} alt={p.headline || 'Ilustrasi'} className="w-full h-auto object-cover" />
+                                    </div>
+                                )}
+                                <h4 className={`${st.titleSize} font-extrabold mb-1.5`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
+                                    {p.headline}
+                                </h4>
+                                <p className={`${st.bodySize} leading-relaxed whitespace-pre-line`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
+                                    {p.content}
+                                </p>
                             </div>
                         ))}
                     </div>
@@ -861,8 +1307,10 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'testimonials':
                 content = (
-                    <div className="my-5">
-                        <h3 className="text-sm font-black text-slate-800 text-center mb-3">Apa Kata Mereka?</h3>
+                    <div className={`my-5 p-3 rounded-2xl ${st.fontFamily}`} style={st.containerStyle}>
+                        <h3 className={`${st.titleSize} font-black text-center mb-3`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
+                            Apa Kata Mereka?
+                        </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {formData.testimonials.map((t, i) => (
                                 <div key={i} className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -871,12 +1319,18 @@ const DashboardLandingPagesBuilderPage = () => {
                                             <span key={idx} className="material-icons text-xs">star</span>
                                         ))}
                                     </div>
-                                    <p className="text-xs text-slate-600 italic leading-snug mb-2">"{t.review}"</p>
+                                    <p className={`${st.bodySize} italic leading-snug mb-2`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
+                                        "{t.review}"
+                                    </p>
                                     <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center">
-                                            {t.name?.charAt(0) || 'U'}
+                                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0 border border-slate-200">
+                                            {t.avatar ? (
+                                                <img src={getMediaUrl(t.avatar)} alt={t.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                t.name?.charAt(0) || 'U'
+                                            )}
                                         </div>
-                                        <span className="text-xs font-bold text-slate-800">{t.name}</span>
+                                        <span className="text-xs font-bold text-slate-800" style={st.titleStyle}>{t.name}</span>
                                     </div>
                                 </div>
                             ))}
@@ -887,8 +1341,10 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'faq':
                 content = (
-                    <div className="my-5 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-                        <h3 className="text-sm font-black text-slate-800 text-center mb-3">Pertanyaan Sering Diajukan</h3>
+                    <div className={`my-5 p-4 rounded-2xl border border-slate-200 shadow-2xs ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}>
+                        <h3 className={`${st.titleSize} font-black text-center mb-3`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
+                            Pertanyaan Sering Diajukan
+                        </h3>
                         <div className="space-y-2">
                             {formData.faq_items.map((item, idx) => (
                                 <div key={idx} className="border border-slate-100 rounded-xl overflow-hidden">
@@ -897,13 +1353,13 @@ const DashboardLandingPagesBuilderPage = () => {
                                         onClick={(e) => { e.stopPropagation(); setActiveFaqIdx(activeFaqIdx === idx ? null : idx); }}
                                         className="w-full p-2.5 text-left text-xs font-bold text-slate-800 flex justify-between items-center bg-slate-50/60 hover:bg-slate-50"
                                     >
-                                        <span>{item.question}</span>
+                                        <span style={st.titleStyle}>{item.question}</span>
                                         <span className="material-icons text-sm text-slate-400">
                                             {activeFaqIdx === idx ? 'expand_less' : 'expand_more'}
                                         </span>
                                     </button>
                                     {activeFaqIdx === idx && (
-                                        <div className="p-2.5 text-xs text-slate-600 bg-white leading-relaxed border-t border-slate-100">
+                                        <div className={`p-2.5 ${st.bodySize} bg-white leading-relaxed border-t border-slate-100`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
                                             {item.answer}
                                         </div>
                                     )}
@@ -916,10 +1372,10 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'trust_badges':
                 content = (
-                    <div className="my-4 py-3 px-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                    <div className={`my-4 py-3 px-4 rounded-2xl border text-center ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ecfdf5', borderColor: '#a7f3d0' }}>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {formData.trust_badges.map((b, i) => (
-                                <div key={i} className="flex items-center justify-center gap-1.5 text-emerald-800 font-bold text-[11px]">
+                                <div key={i} className="flex items-center justify-center gap-1.5 font-bold text-[11px]" style={st.textStyle.color ? st.textStyle : { color: '#065f46' }}>
                                     <span className="material-icons text-sm text-emerald-600">{b.icon}</span>
                                     <span>{b.title}</span>
                                 </div>
@@ -931,9 +1387,9 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'footer':
                 content = (
-                    <div className="py-6 text-center text-xs text-slate-400 border-t border-slate-200 mt-6">
-                        <p className="font-bold text-slate-600">{formData.title}</p>
-                        <p className="text-[10px] mt-1">{formData.tagline}</p>
+                    <div className={`py-6 text-center text-xs border-t border-slate-200 mt-6 ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { color: '#94a3b8' }}>
+                        <p className={`${st.titleSize} font-bold`} style={st.titleStyle.color ? st.titleStyle : { color: '#475569' }}>{formData.title}</p>
+                        <p className={`${st.bodySize} mt-1`} style={st.textStyle}>{formData.tagline}</p>
                         <p className="text-[9px] text-slate-400 mt-3">Powered by Barakah Economy Landing Page</p>
                     </div>
                 );
@@ -1507,6 +1963,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                         className="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 cursor-pointer"
                                                     />
                                                 </div>
+                                                <SectionStyleControls
+                                                    sectionId="hero"
+                                                    styles={formData.section_styles?.hero}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1541,6 +2002,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
                                                     />
                                                 </div>
+                                                <SectionStyleControls
+                                                    sectionId="pricing"
+                                                    styles={formData.section_styles?.pricing}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1601,6 +2067,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
                                                     />
                                                 </div>
+                                                <SectionStyleControls
+                                                    sectionId="cta_button"
+                                                    styles={formData.section_styles?.cta_button}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1622,17 +2093,28 @@ const DashboardLandingPagesBuilderPage = () => {
                                                                 Hapus
                                                             </button>
                                                         </div>
-                                                        <input
-                                                            type="text"
-                                                            value={feat.title}
-                                                            onChange={(e) => {
-                                                                const updated = [...formData.features];
-                                                                updated[i].title = e.target.value;
-                                                                setFormData({ ...formData, features: updated });
-                                                            }}
-                                                            placeholder="Judul Keunggulan"
-                                                            className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
-                                                        />
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenIconPicker('feature', i, feat.icon || 'verified')}
+                                                                className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs flex items-center gap-1.5 hover:bg-slate-100 text-slate-700 shrink-0 font-medium"
+                                                                title="Pilih Ikon"
+                                                            >
+                                                                <span className="material-icons text-base text-emerald-600">{feat.icon || 'verified'}</span>
+                                                                <span className="text-[10px] text-slate-500">Ikon</span>
+                                                            </button>
+                                                            <input
+                                                                type="text"
+                                                                value={feat.title}
+                                                                onChange={(e) => {
+                                                                    const updated = [...formData.features];
+                                                                    updated[i].title = e.target.value;
+                                                                    setFormData({ ...formData, features: updated });
+                                                                }}
+                                                                placeholder="Judul Keunggulan"
+                                                                className="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"
+                                                            />
+                                                        </div>
                                                         <textarea
                                                             rows={2}
                                                             value={feat.description}
@@ -1656,6 +2138,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                 >
                                                     + Tambah Poin Keunggulan
                                                 </button>
+                                                <SectionStyleControls
+                                                    sectionId="features"
+                                                    styles={formData.section_styles?.features}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1699,6 +2186,49 @@ const DashboardLandingPagesBuilderPage = () => {
                                                             placeholder="Isi narasi copywriting..."
                                                             className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs leading-relaxed"
                                                         />
+
+                                                        {/* Upload Gambar Ilustrasi Paragraf */}
+                                                        <div className="pt-2 border-t border-slate-100">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <label className="text-[10px] font-bold text-slate-600">Foto / Ilustrasi (Opsional)</label>
+                                                                {p.image && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const updated = [...formData.paragraphs];
+                                                                            updated[i].image = '';
+                                                                            setFormData({ ...formData, paragraphs: updated });
+                                                                        }}
+                                                                        className="text-[9px] text-rose-500 hover:underline"
+                                                                    >
+                                                                        Hapus Foto
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            {p.image ? (
+                                                                <div className="relative rounded-lg overflow-hidden h-28 border border-slate-200 bg-slate-100">
+                                                                    <img src={getMediaUrl(p.image)} alt="Ilustrasi Paragraf" className="w-full h-full object-cover" />
+                                                                </div>
+                                                            ) : (
+                                                                <label className={`w-full py-2 px-3 border border-dashed rounded-lg flex items-center justify-center gap-2 cursor-pointer transition text-xs ${
+                                                                    uploadingParagraphIdx === i ? 'bg-emerald-50 border-emerald-400 text-emerald-700' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
+                                                                }`}>
+                                                                    <span className="material-icons text-base text-emerald-600">
+                                                                        {uploadingParagraphIdx === i ? 'sync' : 'add_photo_alternate'}
+                                                                    </span>
+                                                                    <span className="text-[11px] font-medium">
+                                                                        {uploadingParagraphIdx === i ? 'Mengunggah gambar...' : '+ Upload Gambar Ilustrasi'}
+                                                                    </span>
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        onChange={(e) => handleParagraphImageUpload(e, i)}
+                                                                        className="hidden"
+                                                                        disabled={uploadingParagraphIdx === i}
+                                                                    />
+                                                                </label>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))}
                                                 <button
@@ -1711,6 +2241,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                 >
                                                     + Tambah Paragraf Cerita
                                                 </button>
+                                                <SectionStyleControls
+                                                    sectionId="paragraphs"
+                                                    styles={formData.section_styles?.paragraphs}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1753,18 +2288,59 @@ const DashboardLandingPagesBuilderPage = () => {
                                                             placeholder="Isi ulasan / testimoni pembeli..."
                                                             className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
                                                         />
+
+                                                        {/* Upload Foto Avatar Pembeli */}
+                                                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                                                                {t.avatar ? (
+                                                                    <img src={getMediaUrl(t.avatar)} alt={t.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <span className="material-icons text-slate-400 text-base">person</span>
+                                                                )}
+                                                            </div>
+                                                            <label className={`cursor-pointer px-2 py-1 rounded-lg border text-[10px] font-bold transition ${
+                                                                uploadingAvatarIdx === i ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                                                            }`}>
+                                                                {uploadingAvatarIdx === i ? 'Mengunggah...' : (t.avatar ? 'Ganti Foto' : '+ Upload Foto')}
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    onChange={(e) => handleTestimonialAvatarUpload(e, i)}
+                                                                    className="hidden"
+                                                                    disabled={uploadingAvatarIdx === i}
+                                                                />
+                                                            </label>
+                                                            {t.avatar && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const updated = [...formData.testimonials];
+                                                                        updated[i].avatar = '';
+                                                                        setFormData({ ...formData, testimonials: updated });
+                                                                    }}
+                                                                    className="text-[10px] text-rose-500 hover:underline"
+                                                                >
+                                                                    Hapus
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))}
                                                 <button
                                                     type="button"
                                                     onClick={() => setFormData({
                                                         ...formData,
-                                                        testimonials: [...formData.testimonials, { name: 'Pelanggan Setia', review: 'Produk sangat bagus dan sesuai harapan!', rating: 5 }]
+                                                        testimonials: [...formData.testimonials, { name: 'Pelanggan Setia', review: 'Produk sangat bagus dan sesuai harapan!', rating: 5, avatar: '' }]
                                                     })}
                                                     className="w-full py-2 bg-white border border-dashed border-emerald-300 text-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-50"
                                                 >
                                                     + Tambah Testimoni
                                                 </button>
+                                                <SectionStyleControls
+                                                    sectionId="testimonials"
+                                                    styles={formData.section_styles?.testimonials}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1820,6 +2396,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                 >
                                                     + Tambah FAQ
                                                 </button>
+                                                <SectionStyleControls
+                                                    sectionId="faq"
+                                                    styles={formData.section_styles?.faq}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1962,6 +2543,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                         Belum ada foto yang diunggah. Klik area upload di atas untuk menambahkan foto produk Anda.
                                                     </div>
                                                 )}
+                                                <SectionStyleControls
+                                                    sectionId="gallery"
+                                                    styles={formData.section_styles?.gallery}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -1974,23 +2560,15 @@ const DashboardLandingPagesBuilderPage = () => {
 
                                                 {formData.trust_badges && formData.trust_badges.map((b, i) => (
                                                     <div key={i} className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center gap-2">
-                                                        <select
-                                                            value={b.icon}
-                                                            onChange={(e) => {
-                                                                const updated = [...formData.trust_badges];
-                                                                updated[i].icon = e.target.value;
-                                                                setFormData({ ...formData, trust_badges: updated });
-                                                            }}
-                                                            className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenIconPicker('trust_badge', i, b.icon || 'verified')}
+                                                            className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs flex items-center gap-1.5 hover:bg-slate-100 text-slate-700 shrink-0 font-medium"
+                                                            title="Ganti Ikon Lencana"
                                                         >
-                                                            <option value="verified">Centang (Verified)</option>
-                                                            <option value="security">Perisai (Security)</option>
-                                                            <option value="payments">Uang/COD (Payments)</option>
-                                                            <option value="bolt">Kilat Cepat (Bolt)</option>
-                                                            <option value="local_shipping">Pengiriman (Shipping)</option>
-                                                            <option value="support_agent">CS (Support 24h)</option>
-                                                            <option value="lock">Gembok (Aman)</option>
-                                                        </select>
+                                                            <span className="material-icons text-base text-emerald-600">{b.icon || 'verified'}</span>
+                                                            <span className="text-[10px] text-slate-500">Ikon</span>
+                                                        </button>
 
                                                         <input
                                                             type="text"
@@ -2028,6 +2606,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                 >
                                                     + Tambah Lencana Garansi
                                                 </button>
+                                                <SectionStyleControls
+                                                    sectionId="trust_badges"
+                                                    styles={formData.section_styles?.trust_badges}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
 
@@ -2054,6 +2637,11 @@ const DashboardLandingPagesBuilderPage = () => {
                                                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
                                                     />
                                                 </div>
+                                                <SectionStyleControls
+                                                    sectionId="footer"
+                                                    styles={formData.section_styles?.footer}
+                                                    onUpdate={handleUpdateSectionStyle}
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -2576,6 +3164,96 @@ const DashboardLandingPagesBuilderPage = () => {
                                 type="button"
                                 onClick={() => setShowLinkProductModal(false)}
                                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL ICON PICKER */}
+            {iconPicker.isOpen && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                            <div>
+                                <h3 className="font-extrabold text-base text-slate-900">Pilih Ikon</h3>
+                                <p className="text-xs text-slate-500">Pilih ikon yang sesuai atau cari Material Icon</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIconPicker(prev => ({ ...prev, isOpen: false }))}
+                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+
+                        {/* Search Bar & Custom Input */}
+                        <div className="space-y-2 mb-4">
+                            <div className="relative">
+                                <span className="material-icons absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                                <input
+                                    type="text"
+                                    value={iconPicker.searchQuery}
+                                    onChange={(e) => setIconPicker(prev => ({ ...prev, searchQuery: e.target.value }))}
+                                    placeholder="Cari ikon (misal: star, verified, bolt)..."
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                            </div>
+                            {iconPicker.searchQuery && !POPULAR_ICONS.some(i => i.name === iconPicker.searchQuery.trim().toLowerCase()) && (
+                                <div className="flex items-center justify-between p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-xs">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-icons text-emerald-700">{iconPicker.searchQuery.trim().toLowerCase()}</span>
+                                        <span className="text-emerald-900 font-bold">Gunakan ikon kustom: "{iconPicker.searchQuery.trim().toLowerCase()}"</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectIcon(iconPicker.searchQuery.trim().toLowerCase())}
+                                        className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 text-xs shadow-xs"
+                                    >
+                                        Pilih Ini
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Popular Icons Grid */}
+                        <div className="grid grid-cols-4 gap-2.5 overflow-y-auto pr-1 max-h-[50vh]">
+                            {POPULAR_ICONS.filter(item => 
+                                !iconPicker.searchQuery || 
+                                item.name.toLowerCase().includes(iconPicker.searchQuery.toLowerCase()) || 
+                                item.label.toLowerCase().includes(iconPicker.searchQuery.toLowerCase())
+                            ).map(item => {
+                                const isCurrent = iconPicker.currentIcon === item.name;
+                                return (
+                                    <button
+                                        key={item.name}
+                                        type="button"
+                                        onClick={() => handleSelectIcon(item.name)}
+                                        className={`p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition group ${
+                                            isCurrent
+                                                ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/20'
+                                                : 'bg-slate-50/60 hover:bg-white border-slate-200 hover:border-emerald-300 hover:shadow-xs text-slate-700'
+                                        }`}
+                                    >
+                                        <span className={`material-icons text-2xl mb-1.5 transition group-hover:scale-110 ${isCurrent ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                            {item.name}
+                                        </span>
+                                        <span className="text-[10px] font-bold line-clamp-1 leading-tight">{item.label}</span>
+                                        <span className="text-[8px] text-slate-400 font-mono truncate max-w-full mt-0.5">{item.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="pt-3 border-t border-slate-100 mt-4 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setIconPicker(prev => ({ ...prev, isOpen: false }))}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition text-xs"
                             >
                                 Tutup
                             </button>

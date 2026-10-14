@@ -265,44 +265,92 @@ const PublicLandingPageView = () => {
         ? page.sections_order
         : DEFAULT_SECTIONS_ORDER;
 
+    // Helper Section Custom Styling (font size, font family, colors)
+    const getSectionStyle = (sectionId) => {
+        const s = (page.section_styles || (page.linked_product_data && page.linked_product_data.section_styles) || {})[sectionId] || {};
+        const titleSize = s.font_size_title === 'sm' ? 'text-xl sm:text-2xl' :
+                          s.font_size_title === 'lg' ? 'text-3xl sm:text-5xl' :
+                          s.font_size_title === 'xl' ? 'text-4xl sm:text-6xl' :
+                          'text-2xl sm:text-4xl';
+        const bodySize = s.font_size_body === 'sm' ? 'text-xs sm:text-sm' :
+                         s.font_size_body === 'lg' ? 'text-base sm:text-lg' :
+                         'text-sm sm:text-base';
+        const fontFamily = s.font_family === 'poppins' ? 'font-[Poppins]' :
+                           s.font_family === 'plus-jakarta' ? 'font-[Plus_Jakarta_Sans,sans-serif]' :
+                           s.font_family === 'inter' ? 'font-sans' :
+                           s.font_family === 'outfit' ? 'font-[Outfit,sans-serif]' :
+                           s.font_family === 'serif' ? 'font-serif' :
+                           s.font_family === 'mono' ? 'font-mono' : '';
+
+        return {
+            titleSize,
+            bodySize,
+            fontFamily,
+            containerStyle: {
+                backgroundColor: s.bg_color || undefined,
+                color: s.text_color || undefined
+            },
+            titleStyle: {
+                color: s.title_color || undefined
+            },
+            textStyle: {
+                color: s.text_color || undefined
+            }
+        };
+    };
+
     // Render Section Blocks
-    const renderHero = () => (
-        <section key="hero" className={`relative overflow-hidden ${theme.heroBg} ${theme.heroText} py-14 px-4 sm:px-6`}>
-            <div className="max-w-3xl mx-auto text-center relative z-10">
-                {page.badge_text && (
-                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-5 shadow-xs">
-                        <span className={theme.badgeBg + ' px-3 py-1 rounded-full text-xs font-bold'}>
-                            {page.badge_text}
-                        </span>
+    const renderHero = () => {
+        const st = getSectionStyle('hero');
+        return (
+            <section
+                key="hero"
+                className={`relative overflow-hidden ${st.containerStyle.backgroundColor ? '' : theme.heroBg} ${theme.heroText} py-14 px-4 sm:px-6 ${st.fontFamily}`}
+                style={{
+                    backgroundColor: st.containerStyle.backgroundColor || undefined,
+                    color: st.containerStyle.color || undefined
+                }}
+            >
+                <div className="max-w-3xl mx-auto text-center relative z-10">
+                    {page.badge_text && (
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-5 shadow-xs">
+                            <span className={theme.badgeBg + ' px-3 py-1 rounded-full text-xs font-bold'}>
+                                {page.badge_text}
+                            </span>
+                        </div>
+                    )}
+                    <h1 className={`${st.titleSize} font-black tracking-tight leading-tight mb-4`} style={st.titleStyle}>
+                        {page.hero_headline || page.title}
+                    </h1>
+                    <p className={`${st.bodySize} opacity-90 max-w-2xl mx-auto leading-relaxed mb-6 font-normal`} style={st.textStyle}>
+                        {page.hero_subheadline || page.tagline || page.description}
+                    </p>
+                </div>
+                {page.hero_image && (
+                    <div className="max-w-3xl mx-auto mt-6 relative z-10">
+                        <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-white/10">
+                            <img
+                                src={getMediaUrl(page.hero_image)}
+                                alt={page.title}
+                                className="w-full h-auto max-h-[460px] object-cover"
+                            />
+                        </div>
                     </div>
                 )}
-                <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight mb-4">
-                    {page.hero_headline || page.title}
-                </h1>
-                <p className="text-sm sm:text-base opacity-90 max-w-2xl mx-auto leading-relaxed mb-6 font-normal">
-                    {page.hero_subheadline || page.tagline || page.description}
-                </p>
-            </div>
-            {page.hero_image && (
-                <div className="max-w-3xl mx-auto mt-6 relative z-10">
-                    <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 bg-white/10">
-                        <img
-                            src={getMediaUrl(page.hero_image)}
-                            alt={page.title}
-                            className="w-full h-auto max-h-[460px] object-cover"
-                        />
-                    </div>
-                </div>
-            )}
-        </section>
-    );
+            </section>
+        );
+    };
 
     const renderPricing = () => {
         if (!Number(page.price) && !Number(page.slash_price)) return null;
+        const st = getSectionStyle('pricing');
         return (
-            <section key="pricing" className="text-center my-6">
-                <div className="inline-block bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-lg text-center max-w-md w-full">
-                    <span className="text-[11px] uppercase tracking-widest text-emerald-600 block mb-1 font-black">
+            <section key="pricing" className={`text-center my-6 ${st.fontFamily}`}>
+                <div
+                    className="inline-block p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-lg text-center max-w-md w-full"
+                    style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}
+                >
+                    <span className="text-[11px] uppercase tracking-widest block mb-1 font-black" style={st.titleStyle.color ? st.titleStyle : { color: '#059669' }}>
                         Penawaran Spesial Terbatas
                     </span>
                     <div className="flex items-center justify-center gap-3 my-2">
@@ -311,12 +359,12 @@ const PublicLandingPageView = () => {
                                 {formatIDR(page.slash_price)}
                             </span>
                         )}
-                        <span className="text-3xl sm:text-4xl font-black text-emerald-700">
+                        <span className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#047857' }}>
                             {Number(page.price) > 0 ? formatIDR(page.price) : 'Hubungi Kami'}
                         </span>
                     </div>
                     {page.cta_subtext && (
-                        <p className="text-xs text-slate-500 font-medium flex items-center justify-center gap-1.5 mt-2">
+                        <p className={`${st.bodySize} font-medium flex items-center justify-center gap-1.5 mt-2`} style={st.textStyle.color ? st.textStyle : { color: '#64748b' }}>
                             <span className="material-icons text-sm text-emerald-600">verified_user</span>
                             {page.cta_subtext}
                         </p>
@@ -326,45 +374,49 @@ const PublicLandingPageView = () => {
         );
     };
 
-    const renderCtaButton = () => (
-        <section key="cta_button" className="my-6 text-center max-w-md mx-auto px-4">
-            <a
-                href={ctaHref}
-                target={isExternal ? '_blank' : '_self'}
-                rel={isExternal ? 'noopener noreferrer' : undefined}
-                className={`w-full py-4 px-8 rounded-2xl text-base font-black shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 ${theme.btnPrimary}`}
-                style={{
-                    backgroundColor: page.button_color || undefined,
-                }}
-            >
-                {page.cta_type === 'whatsapp' && (
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.634.078-1.782-.397-1.378-.57-2.28-1.954-2.35-2.046-.07-.092-.556-.741-.556-1.412 0-.671.353-.999.478-1.135.125-.136.273-.17.364-.17.091 0 .182.001.261.005.084.004.197-.032.308.234.113.272.387.944.421 1.013.034.069.057.149.011.239-.046.091-.069.148-.137.227-.069.079-.145.176-.208.236-.069.068-.141.142-.061.28.08.137.354.584.76 1.026.523.567.965.742 1.102.81.137.069.217.057.297-.034.08-.092.342-.398.433-.535.091-.137.183-.114.308-.068.125.045.798.376.935.445.137.069.228.102.262.16.034.057.034.331-.11.736z"/>
-                    </svg>
-                )}
-                <span>{page.cta_text || 'Beli Sekarang'}</span>
-                <span className="material-icons text-xl">arrow_forward</span>
-            </a>
-            {page.secondary_cta_text && (
+    const renderCtaButton = () => {
+        const st = getSectionStyle('cta_button');
+        return (
+            <section key="cta_button" className={`my-6 text-center max-w-md mx-auto px-4 ${st.fontFamily}`}>
                 <a
-                    href={page.secondary_cta_link || '#'}
-                    className="mt-3 inline-block text-xs font-bold text-slate-500 hover:text-emerald-700 underline"
+                    href={ctaHref}
+                    target={isExternal ? '_blank' : '_self'}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                    className={`w-full py-4 px-8 rounded-2xl text-base font-black shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 ${theme.btnPrimary}`}
+                    style={{
+                        backgroundColor: page.button_color || undefined,
+                    }}
                 >
-                    {page.secondary_cta_text}
+                    {page.cta_type === 'whatsapp' && (
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.634.078-1.782-.397-1.378-.57-2.28-1.954-2.35-2.046-.07-.092-.556-.741-.556-1.412 0-.671.353-.999.478-1.135.125-.136.273-.17.364-.17.091 0 .182.001.261.005.084.004.197-.032.308.234.113.272.387.944.421 1.013.034.069.057.149.011.239-.046.091-.069.148-.137.227-.069.079-.145.176-.208.236-.069.068-.141.142-.061.28.08.137.354.584.76 1.026.523.567.965.742 1.102.81.137.069.217.057.297-.034.08-.092.342-.398.433-.535.091-.137.183-.114.308-.068.125.045.798.376.935.445.137.069.228.102.262.16.034.057.034.331-.11.736z"/>
+                        </svg>
+                    )}
+                    <span>{page.cta_text || 'Beli Sekarang'}</span>
+                    <span className="material-icons text-xl">arrow_forward</span>
                 </a>
-            )}
-        </section>
-    );
+                {page.secondary_cta_text && (
+                    <a
+                        href={page.secondary_cta_link || '#'}
+                        className="mt-3 inline-block text-xs font-bold text-slate-500 hover:text-emerald-700 underline"
+                    >
+                        {page.secondary_cta_text}
+                    </a>
+                )}
+            </section>
+        );
+    };
 
     const renderFeatures = () => {
         if (features.length === 0) return null;
+        const st = getSectionStyle('features');
         return (
-            <section key="features" className="space-y-6 my-6">
+            <section key="features" className={`space-y-6 my-6 p-4 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
                 <div className="text-center">
-                    <span className="text-xs uppercase font-extrabold tracking-widest text-emerald-600 block mb-1">
+                    <span className="text-xs uppercase font-extrabold tracking-widest block mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#059669' }}>
                         Kenapa Memilih Kami
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                    <h2 className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
                         Keunggulan Utama
                     </h2>
                 </div>
@@ -378,8 +430,8 @@ const PublicLandingPageView = () => {
                                 <span className="material-icons text-2xl">{feat.icon || 'check_circle'}</span>
                             </div>
                             <div>
-                                <h4 className="font-bold text-sm text-slate-900 mb-1">{feat.title}</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">{feat.description}</p>
+                                <h4 className="font-bold text-sm mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>{feat.title}</h4>
+                                <p className={`${st.bodySize} text-slate-500 leading-relaxed`} style={st.textStyle}>{feat.description}</p>
                             </div>
                         </div>
                     ))}
@@ -390,8 +442,9 @@ const PublicLandingPageView = () => {
 
     const renderGallery = () => {
         if (carousel.length === 0) return null;
+        const st = getSectionStyle('gallery');
         return (
-            <section key="gallery" className="space-y-4 my-6">
+            <section key="gallery" className={`space-y-4 my-6 p-4 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
                 <div className="relative rounded-3xl overflow-hidden shadow-lg border border-slate-100 aspect-video bg-black/5">
                     <img
                         src={getMediaUrl(carousel[carouselIdx])}
@@ -432,16 +485,22 @@ const PublicLandingPageView = () => {
 
     const renderParagraphs = () => {
         if (paragraphs.length === 0) return null;
+        const st = getSectionStyle('paragraphs');
         return (
-            <section key="paragraphs" className="space-y-6 my-6">
+            <section key="paragraphs" className={`space-y-6 my-6 ${st.fontFamily}`} style={st.containerStyle}>
                 {paragraphs.map((p, idx) => (
                     <div key={idx} className={`p-6 sm:p-8 rounded-3xl border shadow-sm ${theme.cardBg} ${theme.cardBorder}`}>
+                        {p.image && (
+                            <div className="mb-4 rounded-2xl overflow-hidden max-h-96 border border-slate-200">
+                                <img src={getMediaUrl(p.image)} alt={p.headline || 'Ilustrasi'} className="w-full h-auto object-cover" />
+                            </div>
+                        )}
                         {p.headline && (
-                            <h3 className="text-xl sm:text-2xl font-bold mb-3 text-slate-900 leading-snug">
+                            <h3 className={`${st.titleSize} font-bold mb-3 leading-snug`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
                                 {p.headline}
                             </h3>
                         )}
-                        <p className="text-slate-600 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                        <p className={`${st.bodySize} leading-relaxed whitespace-pre-line`} style={st.textStyle.color ? st.textStyle : { color: '#334155' }}>
                             {p.content}
                         </p>
                     </div>
@@ -452,13 +511,14 @@ const PublicLandingPageView = () => {
 
     const renderTestimonials = () => {
         if (testimonials.length === 0) return null;
+        const st = getSectionStyle('testimonials');
         return (
-            <section key="testimonials" className="space-y-6 my-6">
+            <section key="testimonials" className={`space-y-6 my-6 p-4 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
                 <div className="text-center">
-                    <span className="text-xs uppercase font-extrabold tracking-widest text-amber-600 block mb-1">
+                    <span className="text-xs uppercase font-extrabold tracking-widest block mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#d97706' }}>
                         Bukti Kepuasan
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                    <h2 className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
                         Apa Kata Mereka?
                     </h2>
                 </div>
@@ -474,7 +534,7 @@ const PublicLandingPageView = () => {
                                         <span key={i} className="material-icons text-base">star</span>
                                     ))}
                                 </div>
-                                <p className="text-xs sm:text-sm text-slate-600 italic leading-relaxed mb-4">
+                                <p className={`${st.bodySize} italic leading-relaxed mb-4`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
                                     "{testi.review}"
                                 </p>
                             </div>
@@ -483,7 +543,7 @@ const PublicLandingPageView = () => {
                                     <img
                                         src={getMediaUrl(testi.avatar)}
                                         alt={testi.name}
-                                        className="w-10 h-10 rounded-full object-cover"
+                                        className="w-10 h-10 rounded-full object-cover border border-slate-200"
                                     />
                                 ) : (
                                     <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs">
@@ -491,7 +551,7 @@ const PublicLandingPageView = () => {
                                     </div>
                                 )}
                                 <div>
-                                    <h5 className="font-bold text-xs text-slate-900">{testi.name}</h5>
+                                    <h5 className="font-bold text-xs" style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>{testi.name}</h5>
                                     <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
                                         <span className="material-icons text-[12px]">verified</span> Pembeli Terverifikasi
                                     </span>
@@ -506,13 +566,14 @@ const PublicLandingPageView = () => {
 
     const renderFaq = () => {
         if (faqs.length === 0) return null;
+        const st = getSectionStyle('faq');
         return (
-            <section key="faq" className="space-y-4 my-6">
+            <section key="faq" className={`space-y-4 my-6 p-4 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
                 <div className="text-center mb-6">
-                    <span className="text-xs uppercase font-extrabold tracking-widest text-slate-500 block mb-1">
+                    <span className="text-xs uppercase font-extrabold tracking-widest block mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#64748b' }}>
                         Pertanyaan Umum
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                    <h2 className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
                         Sering Ditanyakan (FAQ)
                     </h2>
                 </div>
@@ -526,7 +587,8 @@ const PublicLandingPageView = () => {
                             >
                                 <button
                                     onClick={() => setActiveFaq(isOpen ? null : idx)}
-                                    className="w-full p-4.5 text-left font-bold text-sm text-slate-900 flex items-center justify-between gap-3"
+                                    className="w-full p-4.5 text-left font-bold text-sm flex items-center justify-between gap-3"
+                                    style={st.titleStyle}
                                 >
                                     <span>{faq.question}</span>
                                     <span className={`material-icons text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-emerald-600' : ''}`}>
@@ -534,7 +596,7 @@ const PublicLandingPageView = () => {
                                     </span>
                                 </button>
                                 {isOpen && (
-                                    <div className="px-4.5 pb-4.5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                                    <div className={`px-4.5 pb-4.5 ${st.bodySize} leading-relaxed border-t border-slate-100 pt-3`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
                                         {faq.answer}
                                     </div>
                                 )}
@@ -555,11 +617,16 @@ const PublicLandingPageView = () => {
                 { icon: 'local_shipping', title: 'Pengiriman Cepat' },
                 { icon: 'support_agent', title: 'Customer Support Ramah' }
             ];
+        const st = getSectionStyle('trust_badges');
         return (
-            <section key="trust_badges" className="my-6 py-4 px-6 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-center">
+            <section
+                key="trust_badges"
+                className={`my-6 py-4 px-6 rounded-2xl border text-center ${st.fontFamily}`}
+                style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ecfdf5', borderColor: '#a7f3d0' }}
+            >
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {badges.map((b, i) => (
-                        <div key={i} className="flex items-center justify-center gap-2 text-emerald-800 font-bold text-xs">
+                        <div key={i} className="flex items-center justify-center gap-2 font-bold text-xs" style={st.textStyle.color ? st.textStyle : { color: '#065f46' }}>
                             <span className="material-icons text-emerald-600 text-base">{b.icon || 'verified'}</span>
                             <span>{b.title}</span>
                         </div>
@@ -569,11 +636,16 @@ const PublicLandingPageView = () => {
         );
     };
 
-    const renderFooter = () => (
-        <footer key="footer" className="text-center text-xs text-slate-400 py-6 border-t border-slate-200 my-6">
-            <p>© {new Date().getFullYear()} {page.title}. Diberdayakan oleh <Link to="/" className="text-emerald-600 font-bold hover:underline">Barakah Economy</Link></p>
-        </footer>
-    );
+    const renderFooter = () => {
+        const st = getSectionStyle('footer');
+        return (
+            <footer key="footer" className={`text-center text-xs py-6 border-t border-slate-200 my-6 ${st.fontFamily}`} style={st.containerStyle}>
+                <p className={`${st.titleSize} font-bold`} style={st.titleStyle.color ? st.titleStyle : { color: '#475569' }}>{page.title}</p>
+                {page.tagline && <p className={`${st.bodySize} mt-1`} style={st.textStyle}>{page.tagline}</p>}
+                <p className="text-[10px] text-slate-400 mt-2">© {new Date().getFullYear()} {page.title}. Diberdayakan oleh <Link to="/" className="text-emerald-600 font-bold hover:underline">Barakah Economy</Link></p>
+            </footer>
+        );
+    };
 
     const renderSectionById = (id) => {
         switch (id) {

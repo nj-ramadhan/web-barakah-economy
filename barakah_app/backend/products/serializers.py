@@ -428,12 +428,23 @@ class LandingPageSerializer(serializers.ModelSerializer):
             'font_family', 'font_family_display',
             'primary_color', 'secondary_color', 'background_color',
             'text_color', 'button_color', 'button_text_color',
-            'carousel_images', 'features', 'testimonials', 'faq_items', 'paragraphs', 'sections_order',
+            'carousel_images', 'features', 'testimonials', 'faq_items', 'paragraphs',
+            'trust_badges', 'sections_order', 'section_styles',
             'views_count', 'is_active', 'is_published', 'published_at',
             'expires_at', 'is_expired', 'days_remaining',
             'created_at', 'updated_at', 'public_url'
         ]
         read_only_fields = ['seller', 'slug', 'views_count', 'published_at', 'created_at', 'updated_at']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Fallback to linked_product_data if fields are stored inside JSON
+        linked_data = getattr(instance, 'linked_product_data', {}) or {}
+        if not ret.get('section_styles') and isinstance(linked_data, dict):
+            ret['section_styles'] = linked_data.get('section_styles', {})
+        if not ret.get('trust_badges') and isinstance(linked_data, dict):
+            ret['trust_badges'] = linked_data.get('trust_badges', [])
+        return ret
 
     def validate(self, attrs):
         request = self.context.get('request')
@@ -461,6 +472,23 @@ class LandingPageSerializer(serializers.ModelSerializer):
                     'linked_product_id': 'Produk yang ditautkan harus milik akun Anda sendiri. Anda tidak dapat menautkan produk milik pengguna lain.'
                 })
 
+        import json
+        for json_field in ['section_styles', 'trust_badges', 'features', 'testimonials', 'faq_items', 'paragraphs', 'sections_order', 'carousel_images', 'linked_product_data']:
+            if json_field in attrs and isinstance(attrs[json_field], str):
+                try:
+                    attrs[json_field] = json.loads(attrs[json_field])
+                except Exception:
+                    pass
+
+        # Dual backup into linked_product_data for section_styles & trust_badges
+        linked_data = attrs.get('linked_product_data') or (self.instance.linked_product_data if self.instance else {})
+        if isinstance(linked_data, dict):
+            if 'section_styles' in attrs:
+                linked_data['section_styles'] = attrs['section_styles']
+            if 'trust_badges' in attrs:
+                linked_data['trust_badges'] = attrs['trust_badges']
+            attrs['linked_product_data'] = linked_data
+
         return super().validate(attrs)
 
     def get_seller_name(self, obj):
@@ -481,5 +509,6 @@ class LandingPageSerializer(serializers.ModelSerializer):
 
     def get_public_url(self, obj):
         return f"/lp/{obj.slug}"
+
 
 

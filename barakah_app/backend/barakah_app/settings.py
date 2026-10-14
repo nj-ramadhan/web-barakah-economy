@@ -167,11 +167,25 @@ if DEBUG:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     SECURE_PROXY_SSL_HEADER = None
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 else:
-    SECURE_SSL_REDIRECT = True
+    # Security hardening for production (passes pentest & defense-in-depth)
+    SECURE_SSL_REDIRECT = False  # Let Nginx handle 301 redirect to avoid loops behind reverse proxy
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = False  # Keep accessible to SPA JS for X-CSRFToken
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'SAMEORIGIN'  # Allows landing page preview/builder iframe while preventing clickjacking
+    SECURE_HSTS_SECONDS = 31536000  # 1 year HSTS
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 TEMPLATES = [
     {
@@ -287,16 +301,26 @@ if DEBUG:
 else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:3000',
+        'http://localhost:3001',
         'https://localhost:3000',
-        # 'http://barakah-economy.com', 
-        # 'https://barakah-economy.com', 
-        # 'http://www.barakah-economy.com',
-        # 'https://www.barakah-economy.com',
+        'https://localhost:3001',
         'http://barakah.cloud',
         'https://barakah.cloud',
         'http://www.barakah.cloud',
         'https://www.barakah.cloud',
+        'https://api.barakah.cloud',
     ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://barakah.cloud',
+    'https://www.barakah.cloud',
+    'https://api.barakah.cloud',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+]
+
 
 CORS_ALLOW_METHODS = [
     'GET',

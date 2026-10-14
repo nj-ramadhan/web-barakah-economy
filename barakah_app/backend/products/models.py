@@ -560,8 +560,10 @@ class LandingPage(models.Model):
     features = models.JSONField(default=list, blank=True, help_text="List keunggulan [{title, description, icon}]")
     testimonials = models.JSONField(default=list, blank=True, help_text="List ulasan [{name, review, rating, avatar}]")
     faq_items = models.JSONField(default=list, blank=True, help_text="List tanya jawab [{question, answer}]")
-    paragraphs = models.JSONField(default=list, blank=True, help_text="List paragraf / narasi copywriting [{headline, content}]")
+    paragraphs = models.JSONField(default=list, blank=True, help_text="List paragraf / narasi copywriting [{headline, content, image}]")
+    trust_badges = models.JSONField(default=list, blank=True, help_text="List lencana garansi [{title, icon}]")
     sections_order = models.JSONField(default=list, blank=True, help_text="Urutan blok komponen landing page (drag & drop)")
+    section_styles = models.JSONField(default=dict, blank=True, help_text="Kustomisasi style per blok section (font, ukuran, warna)")
 
     # Meta & Status
     views_count = models.PositiveIntegerField(default=0)
