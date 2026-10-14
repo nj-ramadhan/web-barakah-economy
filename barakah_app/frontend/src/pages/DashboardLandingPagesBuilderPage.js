@@ -1341,30 +1341,60 @@ const DashboardLandingPagesBuilderPage = () => {
 
             case 'faq':
                 content = (
-                    <div className={`my-5 p-4 rounded-2xl border border-slate-200 shadow-2xs ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}>
-                        <h3 className={`${st.titleSize} font-black text-center mb-3`} style={st.titleStyle.color ? st.titleStyle : { color: '#1e293b' }}>
-                            Pertanyaan Sering Diajukan
-                        </h3>
-                        <div className="space-y-2">
-                            {formData.faq_items.map((item, idx) => (
-                                <div key={idx} className="border border-slate-100 rounded-xl overflow-hidden">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); setActiveFaqIdx(activeFaqIdx === idx ? null : idx); }}
-                                        className="w-full p-2.5 text-left text-xs font-bold text-slate-800 flex justify-between items-center bg-slate-50/60 hover:bg-slate-50"
+                    <div className={`my-5 p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs ${st.fontFamily}`} style={st.containerStyle.backgroundColor ? st.containerStyle : { backgroundColor: '#ffffff' }}>
+                        <div className="text-center mb-4">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 mb-1">
+                                <span className="material-icons text-xs text-emerald-600">help_outline</span>
+                                <span>Pertanyaan Umum</span>
+                            </div>
+                            <h3 className={`${st.titleSize} font-black tracking-tight text-slate-900`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
+                                Sering Ditanyakan (FAQ)
+                            </h3>
+                            <p className="text-[11px] text-slate-500 mt-0.5" style={st.textStyle.color ? { color: st.textStyle.color, opacity: 0.85 } : { color: '#64748b' }}>
+                                Temukan jawaban cepat seputar pemesanan dan garansi.
+                            </p>
+                        </div>
+                        <div className="space-y-2.5">
+                            {formData.faq_items.map((item, idx) => {
+                                const isOpen = activeFaqIdx === idx;
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`group rounded-xl border transition-all overflow-hidden ${
+                                            isOpen
+                                                ? 'bg-white border-emerald-500/80 shadow-xs ring-1 ring-emerald-500/15'
+                                                : 'bg-white hover:bg-slate-50/50 border-slate-200/80 shadow-2xs'
+                                        }`}
                                     >
-                                        <span style={st.titleStyle}>{item.question}</span>
-                                        <span className="material-icons text-sm text-slate-400">
-                                            {activeFaqIdx === idx ? 'expand_less' : 'expand_more'}
-                                        </span>
-                                    </button>
-                                    {activeFaqIdx === idx && (
-                                        <div className={`p-2.5 ${st.bodySize} bg-white leading-relaxed border-t border-slate-100`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
-                                            {item.answer}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setActiveFaqIdx(isOpen ? null : idx); }}
+                                            className="w-full py-3 px-3.5 text-left flex justify-between items-center gap-3 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 font-extrabold text-[10px] transition-colors ${
+                                                    isOpen ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-700'
+                                                }`}>
+                                                    {String(idx + 1).padStart(2, '0')}
+                                                </span>
+                                                <span className={`text-xs font-bold leading-snug transition-colors ${isOpen ? 'text-emerald-950 font-extrabold' : 'text-slate-800 group-hover:text-emerald-800'}`} style={st.titleStyle}>
+                                                    {item.question}
+                                                </span>
+                                            </div>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform ${isOpen ? 'bg-emerald-100 text-emerald-700 rotate-180' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+                                                <span className="material-icons text-sm">expand_more</span>
+                                            </span>
+                                        </button>
+                                        {isOpen && (
+                                            <div className={`px-3.5 pb-3.5 pt-1 border-t border-slate-100 ${st.bodySize} leading-relaxed`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
+                                                <div className="pl-8 text-xs text-slate-600 leading-relaxed" style={st.textStyle}>
+                                                    {item.answer}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 );

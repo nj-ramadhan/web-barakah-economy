@@ -568,41 +568,100 @@ const PublicLandingPageView = () => {
         if (faqs.length === 0) return null;
         const st = getSectionStyle('faq');
         return (
-            <section key="faq" className={`space-y-4 my-6 p-4 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
+            <section key="faq" className={`space-y-5 my-8 p-5 sm:p-6 rounded-3xl ${st.fontFamily}`} style={st.containerStyle}>
                 <div className="text-center mb-6">
-                    <span className="text-xs uppercase font-extrabold tracking-widest block mb-1" style={st.titleStyle.color ? st.titleStyle : { color: '#64748b' }}>
-                        Pertanyaan Umum
-                    </span>
-                    <h2 className={`${st.titleSize} font-black`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 mb-2 shadow-2xs">
+                        <span className="material-icons text-xs text-emerald-600">help_outline</span>
+                        <span>Pertanyaan Umum</span>
+                    </div>
+                    <h2 className={`${st.titleSize} font-black tracking-tight`} style={st.titleStyle.color ? st.titleStyle : { color: '#0f172a' }}>
                         Sering Ditanyakan (FAQ)
                     </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto" style={st.textStyle.color ? { color: st.textStyle.color, opacity: 0.85 } : { color: '#64748b' }}>
+                        Temukan jawaban cepat seputar pemesanan, produk, dan garansi layanan kami.
+                    </p>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                     {faqs.map((faq, idx) => {
                         const isOpen = activeFaq === idx;
                         return (
                             <div
                                 key={idx}
-                                className={`rounded-2xl border transition-all ${theme.cardBg} ${theme.cardBorder}`}
+                                className={`group rounded-2xl border transition-all duration-200 overflow-hidden ${
+                                    isOpen
+                                        ? 'bg-white border-emerald-500/80 shadow-md ring-2 ring-emerald-500/15'
+                                        : 'bg-white hover:bg-slate-50/60 border-slate-200/90 shadow-2xs hover:shadow-xs'
+                                } ${theme.cardBg && theme.cardBg.includes('slate-900') ? (isOpen ? 'bg-slate-900 border-indigo-500 ring-indigo-500/20' : 'bg-slate-900/90 border-slate-800') : ''}`}
                             >
                                 <button
+                                    type="button"
                                     onClick={() => setActiveFaq(isOpen ? null : idx)}
-                                    className="w-full p-4.5 text-left font-bold text-sm flex items-center justify-between gap-3"
-                                    style={st.titleStyle}
+                                    className="w-full py-4 px-4 sm:px-5 text-left flex items-center justify-between gap-3 sm:gap-4 transition-colors"
                                 >
-                                    <span>{faq.question}</span>
-                                    <span className={`material-icons text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-emerald-600' : ''}`}>
-                                        expand_more
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <span
+                                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-[11px] sm:text-xs transition-all duration-200 ${
+                                                isOpen
+                                                    ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/30'
+                                                    : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-700'
+                                            }`}
+                                        >
+                                            {String(idx + 1).padStart(2, '0')}
+                                        </span>
+                                        <span
+                                            className={`font-bold text-xs sm:text-sm leading-snug transition-colors ${
+                                                isOpen ? 'text-emerald-950 font-extrabold' : 'text-slate-800 group-hover:text-emerald-800'
+                                            }`}
+                                            style={st.titleStyle}
+                                        >
+                                            {faq.question}
+                                        </span>
+                                    </div>
+                                    <span
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                                            isOpen
+                                                ? 'bg-emerald-100 text-emerald-700 rotate-180 shadow-2xs'
+                                                : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200/80 group-hover:text-slate-600'
+                                        }`}
+                                    >
+                                        <span className="material-icons text-base">expand_more</span>
                                     </span>
                                 </button>
                                 {isOpen && (
-                                    <div className={`px-4.5 pb-4.5 ${st.bodySize} leading-relaxed border-t border-slate-100 pt-3`} style={st.textStyle.color ? st.textStyle : { color: '#475569' }}>
-                                        {faq.answer}
+                                    <div
+                                        className={`px-4 sm:px-5 pb-4 pt-1 border-t border-slate-100 ${st.bodySize} leading-relaxed`}
+                                        style={st.textStyle.color ? st.textStyle : { color: '#475569' }}
+                                    >
+                                        <div className="pl-10 sm:pl-11 text-slate-600 text-xs sm:text-sm leading-relaxed" style={st.textStyle}>
+                                            {faq.answer}
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         );
                     })}
+                </div>
+
+                {/* Bottom WhatsApp Help Banner */}
+                <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-2xs">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-600/30">
+                            <span className="material-icons text-xl">support_agent</span>
+                        </div>
+                        <div>
+                            <h4 className="font-extrabold text-xs sm:text-sm text-emerald-950">Masih Ada Pertanyaan?</h4>
+                            <p className="text-[11px] sm:text-xs text-emerald-800/80">Konsultasikan kebutuhan Anda langsung dengan tim kami via WhatsApp.</p>
+                        </div>
+                    </div>
+                    <a
+                        href={ctaHref}
+                        target={isExternal ? "_blank" : "_self"}
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xs shadow-emerald-600/20 transition-all shrink-0"
+                    >
+                        <span className="material-icons text-sm">chat</span>
+                        <span>Hubungi CS Kami</span>
+                    </a>
                 </div>
             </section>
         );
