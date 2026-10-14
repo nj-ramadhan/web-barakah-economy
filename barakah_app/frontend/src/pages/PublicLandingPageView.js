@@ -3,8 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { getPublicLandingPage } from '../services/landingPageApi';
 import { getMediaUrl } from '../utils/mediaUtils';
-import Header from '../components/layout/Header';
-import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
 const formatIDR = (val) => {
