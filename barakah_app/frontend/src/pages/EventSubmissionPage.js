@@ -38,6 +38,10 @@ const EventSubmissionPage = () => {
         attachment_link: '',
         attachment_file_title: '',
         attachment_link_title: '',
+        additional_info: '',
+        additional_link: '',
+        has_additional_links: false,
+        additional_links: [{ title: '', url: '' }],
         visibility: 'public',
         visible_at: '',
         registration_start_at: '',
@@ -114,6 +118,23 @@ const EventSubmissionPage = () => {
                     const res = await getEventDetail(slug);
                     const d = res.data;
 
+                    // Parse additional links
+                    let initialLinks = [];
+                    if (Array.isArray(d.additional_links) && d.additional_links.length > 0) {
+                        initialLinks = d.additional_links.map(l => (typeof l === 'string' ? { title: '', url: l } : { title: l?.title || '', url: l?.url || '' }));
+                    } else if (typeof d.additional_links === 'string' && d.additional_links.trim()) {
+                        try {
+                            const parsed = JSON.parse(d.additional_links);
+                            if (Array.isArray(parsed)) {
+                                initialLinks = parsed.map(l => (typeof l === 'string' ? { title: '', url: l } : { title: l?.title || '', url: l?.url || '' }));
+                            }
+                        } catch (e) {}
+                    }
+                    if (initialLinks.length === 0 && d.additional_link) {
+                        initialLinks = [{ title: '', url: d.additional_link }];
+                    }
+                    const hasLinks = initialLinks.length > 0;
+
                     // Populate basic info
                     setFormData({
                         title: d.title,
@@ -140,6 +161,10 @@ const EventSubmissionPage = () => {
                         attachment_link: d.attachment_link || '',
                         attachment_file_title: d.attachment_file_title || '',
                         attachment_link_title: d.attachment_link_title || '',
+                        additional_info: d.additional_info || '',
+                        additional_link: d.additional_link || '',
+                        has_additional_links: hasLinks,
+                        additional_links: initialLinks.length > 0 ? initialLinks : [{ title: '', url: '' }],
                         visibility: d.visibility || 'public',
                         visible_at: d.visible_at ? d.visible_at.substring(0, 16) : '',
                         registration_start_at: d.registration_start_at ? d.registration_start_at.substring(0, 16) : '',
@@ -438,6 +463,44 @@ const EventSubmissionPage = () => {
         }
     };
 
+    const handleToggleAdditionalLinks = () => {
+        setFormData(prev => {
+            const nextHas = !prev.has_additional_links;
+            let nextLinks = prev.additional_links && prev.additional_links.length > 0 ? prev.additional_links : [{ title: '', url: '' }];
+            return {
+                ...prev,
+                has_additional_links: nextHas,
+                additional_links: nextLinks
+            };
+        });
+    };
+
+    const addAdditionalLink = () => {
+        setFormData(prev => ({
+            ...prev,
+            additional_links: [...(prev.additional_links || []), { title: '', url: '' }]
+        }));
+    };
+
+    const updateAdditionalLink = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...(prev.additional_links || [])];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, additional_links: updated };
+        });
+    };
+
+    const removeAdditionalLink = (index) => {
+        setFormData(prev => {
+            const updated = [...(prev.additional_links || [])];
+            updated.splice(index, 1);
+            return {
+                ...prev,
+                additional_links: updated.length > 0 ? updated : [{ title: '', url: '' }]
+            };
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -556,7 +619,8 @@ const EventSubmissionPage = () => {
             const skipFields = [
                 'thumbnail', 'header_image', 'thumbnail_full', 'header_image_full', 
                 'documentation_frame_1_1', 'attachment_file', 'bib_template_image',
-                'price_variations', 'teams', 'speakers', 'sessions', 'form_fields', 'free_for_label_ids'
+                'price_variations', 'teams', 'speakers', 'sessions', 'form_fields', 'free_for_label_ids',
+                'additional_links', 'has_additional_links', 'additional_link'
             ];
             
             if (!skipFields.includes(key) && !key.startsWith('_')) {
@@ -594,6 +658,24 @@ const EventSubmissionPage = () => {
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {
             data.append('form_fields', JSON.stringify(formFields));
+        }
+
+        // Append additional_links as JSON string
+        let cleanedLinks = [];
+        if (formData.has_additional_links && Array.isArray(formData.additional_links)) {
+            cleanedLinks = formData.additional_links
+                .filter(l => l && (l.url || l.title))
+                .map(l => ({
+                    title: (l.title || '').trim(),
+                    url: (l.url || '').trim()
+                }))
+                .filter(l => l.url !== '');
+        }
+        data.append('additional_links', JSON.stringify(cleanedLinks));
+        if (cleanedLinks.length > 0) {
+            data.append('additional_link', cleanedLinks[0].url);
+        } else {
+            data.append('additional_link', '');
         }
 
         // Clean up speakers and sessions data
@@ -1817,6 +1899,126 @@ const EventSubmissionPage = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Syarat & Ketentuan (DON'T)</label>
                                     <textarea name="terms_dont" value={formData.terms_dont} onChange={handleChange} rows="4" placeholder="Yang dilarang (tiap baris jadi 1 point)" className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"></textarea>
+                                </div>
+                            </div>
+
+                            {/* Informasi & Link Tambahan Pasca Pendaftaran */}
+                            <div className="p-6 bg-gradient-to-br from-emerald-50/60 via-teal-50/40 to-blue-50/40 rounded-3xl border border-emerald-100 space-y-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                                            <span className="material-icons text-sm">contact_support</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-extrabold text-gray-900">Informasi & Link (Pasca-Pendaftaran)</h4>
+                                            <p className="text-[11px] text-gray-500">Akan otomatis ditampilkan ke peserta di WhatsApp, Email, dan Halaman Selesai Daftar.</p>
+                                        </div>
+                                    </div>
+                                    <span className="hidden sm:inline-flex px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                        Opsional
+                                    </span>
+                                </div>
+
+                                <div className="space-y-4 pt-1">
+                                    {/* Informasi Textarea */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider ml-1 flex items-center gap-1.5">
+                                            <span className="material-icons text-sm text-emerald-600">info</span>
+                                            Informasi / Petunjuk
+                                        </label>
+                                        <textarea
+                                            name="additional_info"
+                                            value={formData.additional_info}
+                                            onChange={handleChange}
+                                            rows="3"
+                                            placeholder="Contoh: Mohon membawa pakaian olahraga, kartu identitas, dan hadir 15 menit sebelum acara..."
+                                            className="w-full px-5 py-3.5 bg-white border border-emerald-100 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 transition shadow-sm"
+                                        />
+                                        <p className="text-[10px] text-gray-500 ml-1">Ditampilkan dengan label <b>Informasi :</b> kepada peserta setelah mendaftar.</p>
+                                    </div>
+
+                                    {/* Toggle Sediakan Link */}
+                                    <div className="p-4 bg-white/80 rounded-2xl border border-emerald-100 space-y-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-icons text-emerald-600 text-base">link</span>
+                                                    <label className="text-xs font-extrabold text-gray-800">Sediakan Link Pasca-Pendaftaran</label>
+                                                </div>
+                                                <p className="text-[11px] text-gray-500">Aktifkan untuk menambahkan satu atau lebih link (grup WA, Zoom, Google Drive materi, dll).</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleToggleAdditionalLinks}
+                                                className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${formData.has_additional_links ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_additional_links ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                        </div>
+
+                                        {/* Dynamic Links List */}
+                                        {formData.has_additional_links && (
+                                            <div className="pt-3 border-t border-emerald-100/60 space-y-3 animate-fade-in">
+                                                <div className="space-y-2.5">
+                                                    {(formData.additional_links || []).map((item, idx) => (
+                                                        <div key={idx} className="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-100 space-y-2 relative group">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                                                                    <span className="w-4 h-4 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-[9px] font-black">{idx + 1}</span>
+                                                                    Link #{idx + 1}
+                                                                </span>
+                                                                {(formData.additional_links || []).length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeAdditionalLink(idx)}
+                                                                        className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 hover:bg-red-50 px-2 py-0.5 rounded-lg transition"
+                                                                        title="Hapus Link ini"
+                                                                    >
+                                                                        <span className="material-icons text-sm">delete_outline</span>
+                                                                        <span className="text-[10px]">Hapus</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Judul / Label (Opsional)</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={item.title || ''}
+                                                                        onChange={e => updateAdditionalLink(idx, 'title', e.target.value)}
+                                                                        placeholder="Misal: Grup WhatsApp Peserta"
+                                                                        className="w-full px-3.5 py-2.5 bg-white border border-emerald-100 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 transition shadow-sm"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">URL / Tautan *</label>
+                                                                    <input
+                                                                        type="url"
+                                                                        value={item.url || ''}
+                                                                        onChange={e => updateAdditionalLink(idx, 'url', e.target.value)}
+                                                                        placeholder="https://chat.whatsapp.com/..."
+                                                                        className="w-full px-3.5 py-2.5 bg-white border border-emerald-100 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 transition shadow-sm"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={addAdditionalLink}
+                                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                                                    >
+                                                        <span className="material-icons text-sm">add_link</span>
+                                                        <span>Tambah Link Lainnya</span>
+                                                    </button>
+                                                    <span className="text-[10px] text-gray-400 italic">Ditampilkan di bawah label <b>Link :</b></span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

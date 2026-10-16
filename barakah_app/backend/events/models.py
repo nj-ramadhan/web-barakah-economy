@@ -116,7 +116,10 @@ class Event(models.Model):
     blast_completed_message = models.TextField(blank=True, null=True, help_text="Template pesan WhatsApp blast saat event selesai.")
     has_blasted_completed = models.BooleanField(default=False, help_text="Tandai jika blasting WhatsApp saat event selesai sudah dikirim.")
     auto_post_to_activity = models.BooleanField(default=True, help_text="Otomatis posting ke kegiatan saat event selesai")
-    
+    additional_info = models.TextField(blank=True, null=True, help_text="Informasi tambahan untuk peserta setelah pendaftaran berhasil (ditampilkan di WA, Email, dan halaman sukses).")
+    additional_link = models.URLField(max_length=500, blank=True, null=True, help_text="Tautan/Link tambahan untuk peserta setelah pendaftaran (misal grup WhatsApp, Zoom, dll).")
+    additional_links = models.JSONField(default=list, blank=True, null=True, help_text="Daftar tautan/link pasca-pendaftaran dalam format JSON [{title, url}, ...]")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -125,6 +128,21 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_additional_links_list(self):
+        """Returns list of additional link dicts [{'title': '...', 'url': '...'}]"""
+        import json
+        links = self.additional_links or []
+        if isinstance(links, str):
+            try:
+                links = json.loads(links)
+            except Exception:
+                links = []
+        if not isinstance(links, list):
+            links = []
+        if not links and self.additional_link:
+            links = [{"title": "", "url": self.additional_link}]
+        return links
 
     def save(self, *args, **kwargs):
         if self.is_online:

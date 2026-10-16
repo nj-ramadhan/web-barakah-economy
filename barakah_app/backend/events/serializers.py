@@ -382,7 +382,7 @@ class EventSerializer(serializers.ModelSerializer):
         # Clean up empty strings for numbers/dates
         mutable_data = self.calamities_cleanup(mutable_data)
         
-        for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'vouchers', 'teams']:
+        for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'vouchers', 'teams', 'additional_links']:
             if field in mutable_data and isinstance(mutable_data[field], str):
                 try:
                     stripped = mutable_data[field].strip()

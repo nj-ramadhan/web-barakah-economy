@@ -168,7 +168,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
                 
             # Parse JSON strings in multipart form data
-            for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'field_layouts']:
+            for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'field_layouts', 'additional_links']:
                 if field in data and isinstance(data[field], str):
                     stripped = data[field].strip()
                     if stripped and stripped != 'null' and stripped != 'undefined' and stripped != '':
@@ -761,12 +761,21 @@ class EventViewSet(viewsets.ModelViewSet):
             if phone:
                 formatted_phone = self._format_phone_number(phone)
                 event_url = f"{settings.FRONTEND_URL}/event/{event.slug}"
+                
+                add_info_manual = ""
+                if event.additional_info and event.additional_info.strip():
+                    add_info_manual += f"\n\n📌 *Informasi:*\n{event.additional_info.strip()}"
+                links_text = self._format_event_links_text(event)
+                if links_text:
+                    add_info_manual += links_text
+
                 whatsapp_msg = (
                     f"Halo {name},\n\n"
                     f"Anda telah didaftarkan secara manual untuk event *{event.title}*.\n\n"
                     f"🔗 *Detail Event:* {event_url}\n\n"
                     f"*Rincian Sesi:*\n{sessions_str}\n\n"
-                    f"Kode Tiket: *{registration.unique_code}*\n\n"
+                    f"Kode Tiket: *{registration.unique_code}*"
+                    f"{add_info_manual}\n\n"
                     f"Terima kasih!"
                 )
                 whatsapp_service.send_message(formatted_phone, whatsapp_msg)
@@ -777,12 +786,22 @@ class EventViewSet(viewsets.ModelViewSet):
         # Send Email
         try:
             if email:
+                extra_parts = []
+                if sessions_str:
+                    extra_parts.append(f"Jadwal Sesi:\n{sessions_str}")
+                if event.additional_info and event.additional_info.strip():
+                    extra_parts.append(f"Informasi:\n{event.additional_info.strip()}")
+                links_plain = self._format_event_links_plain(event)
+                if links_plain:
+                    extra_parts.append(links_plain)
+                extra_details_str = "\n\n".join(extra_parts) if extra_parts else None
+
                 send_status_update_email(
                     email,
                     event.title,
                     'approved',
                     is_registration=True,
-                    extra_details=f"Jadwal Sesi:\n{sessions_str}" if sessions_str else None
+                    extra_details=extra_details_str
                 )
         except Exception as e:
             print(f"Failed to send manual registration email: {e}")
@@ -1155,6 +1174,15 @@ class EventViewSet(viewsets.ModelViewSet):
                     )
 
             event_url = f"{settings.FRONTEND_URL}/event/{registration.event.slug}"
+
+            # Additional info & link for WhatsApp
+            add_info_wa = ""
+            if registration.event.additional_info and registration.event.additional_info.strip():
+                add_info_wa += f"\n\n📌 *Informasi:*\n{registration.event.additional_info.strip()}"
+            links_wa = self._format_event_links_text(registration.event)
+            if links_wa:
+                add_info_wa += links_wa
+
             wa_message = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
                 f"✅ Pendaftaran Anda diterima!\n\n"
@@ -1170,7 +1198,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"📅 Waktu: {time_str}\n"
                 f"📍 Lokasi: {registration.event.location}\n"
                 f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}"
-                f"{sessions_str}\n\n"
+                f"{sessions_str}"
+                f"{add_info_wa}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             
@@ -1304,6 +1333,14 @@ class EventViewSet(viewsets.ModelViewSet):
                 formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
                 bib_email_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
 
+            # Additional info & link for Email
+            add_info_email = ""
+            if registration.event.additional_info and registration.event.additional_info.strip():
+                add_info_email += f"\n\n📌 *Informasi:*\n{registration.event.additional_info.strip()}"
+            links_email = self._format_event_links_text(registration.event)
+            if links_email:
+                add_info_email += links_email
+
             subject = f"[E-Tiket] Konfirmasi Pendaftaran - {registration.event.title}"
             email_body = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
@@ -1320,7 +1357,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"📅 Waktu: {time_str}\n"
                 f"📍 Lokasi: {registration.event.location}\n"
                 f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}"
-                f"{sessions_email_str}\n\n"
+                f"{sessions_email_str}"
+                f"{add_info_email}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             
@@ -1393,6 +1431,62 @@ class EventViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).error(f"Gagal mengirim email QR: {e}")
+
+    def _format_event_links_text(self, event):
+        """Formats additional links as bulleted text for WA & Email."""
+        links = event.get_additional_links_list() if hasattr(event, 'get_additional_links_list') else []
+        if not links and getattr(event, 'additional_link', None):
+            links = [{'title': '', 'url': event.additional_link}]
+            
+        links_parts = []
+        for l in links:
+            if isinstance(l, dict):
+                url = (l.get('url') or '').strip()
+                title = (l.get('title') or '').strip()
+            elif isinstance(l, str):
+                url = l.strip()
+                title = ""
+            else:
+                continue
+            if url:
+                if title:
+                    links_parts.append(f"- {title}: {url}")
+                else:
+                    links_parts.append(f"- {url}" if len(links) > 1 else url)
+        
+        if not links_parts:
+            return ""
+        if len(links_parts) == 1 and not links_parts[0].startswith("- "):
+            return f"\n\n🔗 *Link:*\n{links_parts[0]}"
+        return f"\n\n🔗 *Link:*\n" + "\n".join(links_parts)
+
+    def _format_event_links_plain(self, event):
+        """Formats additional links as plain text for email extra_details."""
+        links = event.get_additional_links_list() if hasattr(event, 'get_additional_links_list') else []
+        if not links and getattr(event, 'additional_link', None):
+            links = [{'title': '', 'url': event.additional_link}]
+            
+        links_parts = []
+        for l in links:
+            if isinstance(l, dict):
+                url = (l.get('url') or '').strip()
+                title = (l.get('title') or '').strip()
+            elif isinstance(l, str):
+                url = l.strip()
+                title = ""
+            else:
+                continue
+            if url:
+                if title:
+                    links_parts.append(f"- {title}: {url}")
+                else:
+                    links_parts.append(f"- {url}" if len(links) > 1 else url)
+        
+        if not links_parts:
+            return ""
+        if len(links_parts) == 1 and not links_parts[0].startswith("- "):
+            return f"Link:\n{links_parts[0]}"
+        return f"Link:\n" + "\n".join(links_parts)
 
     def _format_phone_number(self, phone):
         if not phone: return None
@@ -3074,16 +3168,33 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
             recipient_name = registration.guest_name if not registration.user else (registration.user.profile.name_full if hasattr(registration.user, 'profile') else registration.user.username)
             
             if recipient_email:
+                extra_parts = []
+                if sessions_str:
+                    extra_parts.append(f"Jadwal Sesi:\n{sessions_str}")
+                if registration.event.additional_info and registration.event.additional_info.strip():
+                    extra_parts.append(f"Informasi:\n{registration.event.additional_info.strip()}")
+                links_plain = EventViewSet()._format_event_links_plain(registration.event)
+                if links_plain:
+                    extra_parts.append(links_plain)
+                extra_details_str = "\n\n".join(extra_parts) if extra_parts else None
+
                 send_status_update_email(
                     registration.user or recipient_email, # Can pass User object or email string if utility handles it
                     registration.event.title,
                     'approved',
                     None,
                     is_registration=True, # New flag to differentiate from Event submission
-                    extra_details=f"Jadwal Sesi:\n{sessions_str}" if sessions_str else None
+                    extra_details=extra_details_str
                 )
         except Exception as e:
             print(f"Failed to send approval email: {e}")
+
+        # Also trigger standard notifications (WhatsApp message, QR, BIB)
+        try:
+            EventViewSet()._send_registration_notifications(registration)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send notification on approval: {e}")
 
         return Response({"message": "Pendaftaran disetujui."})
 

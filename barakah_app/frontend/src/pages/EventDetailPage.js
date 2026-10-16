@@ -24,6 +24,27 @@ import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 import '../styles/Body.css';
 
+const getEventLinks = (ev) => {
+    if (!ev) return [];
+    let links = [];
+    if (Array.isArray(ev.additional_links)) {
+        links = ev.additional_links;
+    } else if (typeof ev.additional_links === 'string' && ev.additional_links.trim()) {
+        try {
+            const parsed = JSON.parse(ev.additional_links);
+            if (Array.isArray(parsed)) links = parsed;
+        } catch (e) {}
+    }
+    const normalized = links
+        .map(l => (typeof l === 'string' ? { title: '', url: l } : { title: l?.title || '', url: l?.url || '' }))
+        .filter(l => l && l.url && l.url.trim() !== '');
+
+    if (normalized.length === 0 && ev.additional_link && ev.additional_link.trim()) {
+        normalized.push({ title: '', url: ev.additional_link.trim() });
+    }
+    return normalized;
+};
+
 const EventDetailPage = () => {
     const { slug } = useParams();
     const [event, setEvent] = useState(null);
@@ -32,6 +53,8 @@ const EventDetailPage = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const [responses, setResponses] = useState({});
+
+    const eventLinks = useMemo(() => getEventLinks(event), [event]);
 
     // DynaQRIS State
     const [paymentConfig, setPaymentConfig] = useState(null);
@@ -1115,6 +1138,50 @@ const EventDetailPage = () => {
                                     <span>{event.user_registration.status === 'approved' ? 'Sudah Terdaftar (Lunas)' : 'Terdaftar (Belum Dibayar)'}</span>
                                 </div>
 
+                                {event.user_registration.status === 'approved' && (event.additional_info || eventLinks.length > 0) && (
+                                    <div className="w-full bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 text-left space-y-2.5 shadow-sm">
+                                        {event.additional_info && (
+                                            <div className="space-y-1">
+                                                <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Informasi :</p>
+                                                <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed font-medium bg-white/90 p-3 rounded-xl border border-emerald-100">
+                                                    {event.additional_info}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {eventLinks.length > 0 && (
+                                            <div className="space-y-1.5">
+                                                <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Link :</p>
+                                                <div className="space-y-1.5">
+                                                    {eventLinks.map((item, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center justify-between gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm group"
+                                                        >
+                                                            <div className="flex items-center gap-2 truncate">
+                                                                <span className="material-icons text-xs flex-shrink-0">open_in_new</span>
+                                                                <div className="flex flex-col text-left truncate">
+                                                                    {item.title ? (
+                                                                        <>
+                                                                            <span className="truncate font-bold">{item.title}</span>
+                                                                            <span className="text-[10px] text-emerald-100 font-normal truncate opacity-90">{item.url}</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="truncate">{item.url}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <span className="material-icons text-xs flex-shrink-0 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {event.user_registration.status !== 'approved' && (event.user_registration.payment_amount > 0 || event.user_registration.payment_method === 'ots') && (
                                     <button
                                         type="button"
@@ -1916,8 +1983,53 @@ const EventDetailPage = () => {
                                 )}
 
                                 {event.user_registration ? (
-                                    <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-white/20 text-center">
-                                        SUDAH DAFTAR
+                                    <div className="space-y-3">
+                                        <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-white/20 text-center">
+                                            SUDAH DAFTAR
+                                        </div>
+                                        {event.user_registration.status === 'approved' && (event.additional_info || eventLinks.length > 0) && (
+                                            <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-left space-y-2.5 text-white shadow-inner">
+                                                {event.additional_info && (
+                                                    <div className="space-y-1">
+                                                        <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Informasi :</p>
+                                                        <p className="text-xs text-white/90 whitespace-pre-line leading-relaxed font-normal bg-black/20 p-2.5 rounded-xl border border-white/10">
+                                                            {event.additional_info}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {eventLinks.length > 0 && (
+                                                    <div className="space-y-1.5">
+                                                        <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Link :</p>
+                                                        <div className="space-y-1.5">
+                                                            {eventLinks.map((item, idx) => (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center justify-between gap-2 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-sm group"
+                                                                >
+                                                                    <div className="flex items-center gap-2 truncate">
+                                                                        <span className="material-icons text-xs flex-shrink-0">open_in_new</span>
+                                                                        <div className="flex flex-col text-left truncate">
+                                                                            {item.title ? (
+                                                                                <>
+                                                                                    <span className="truncate font-bold">{item.title}</span>
+                                                                                    <span className="text-[10px] text-emerald-100 font-normal truncate opacity-90">{item.url}</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <span className="truncate">{item.url}</span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="material-icons text-xs flex-shrink-0 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : isCompleted ? (
                                     <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-white/10 text-center">
@@ -1957,7 +2069,7 @@ const EventDetailPage = () => {
             {/* Registration Success Overlay */}
             {success && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/95 backdrop-blur-md animate-fade-in overflow-y-auto">
-                    <div className="max-w-sm w-full bg-white p-8 rounded-[3rem] shadow-2xl text-center border border-gray-100 animate-scale-up my-4">
+                    <div className="max-w-md w-full bg-white p-7 sm:p-8 rounded-[3rem] shadow-2xl text-center border border-gray-100 animate-scale-up my-4">
                         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                             <span className="material-icons text-4xl">check_circle</span>
                         </div>
@@ -1965,7 +2077,7 @@ const EventDetailPage = () => {
                         <p className="text-gray-500 mb-6 text-sm leading-relaxed">Kode tiket dan QR Code telah dikirimkan ke <b>Email</b> dan <b>WhatsApp</b> Anda.</p>
 
                         {registeredCode && (
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 mb-6">
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 mb-5">
                                 <p className="text-[10px] text-green-700 font-bold uppercase tracking-widest mb-4">QR Code Tiket Anda</p>
                                 <div className="flex justify-center mb-4 bg-white p-3 rounded-2xl shadow-inner">
                                     <QRCodeSVG
@@ -1985,6 +2097,52 @@ const EventDetailPage = () => {
                                         🎫 Silakan cek email masuk (atau folder spam) dan pesan WhatsApp Anda untuk tiket resmi. Simpan tiket tersebut untuk ditunjukkan saat acara.
                                     </p>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Informasi & Link Pasca Pendaftaran */}
+                        {(event?.additional_info || eventLinks.length > 0) && (
+                            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-blue-50/40 border-2 border-emerald-200 rounded-3xl p-5 mb-6 text-left shadow-sm space-y-3">
+                                {event.additional_info && (
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-bold text-emerald-950 uppercase tracking-wider">Informasi :</p>
+                                        <div className="bg-white/95 p-3.5 rounded-2xl border border-emerald-100 text-xs text-gray-700 whitespace-pre-line leading-relaxed font-medium">
+                                            {event.additional_info}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {eventLinks.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <p className="text-[11px] font-bold text-emerald-950 uppercase tracking-wider">Link :</p>
+                                        <div className="space-y-2">
+                                            {eventLinks.map((item, idx) => (
+                                                <a
+                                                    key={idx}
+                                                    href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-between gap-2 w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition group active:scale-[0.98]"
+                                                >
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <span className="material-icons text-sm flex-shrink-0">open_in_new</span>
+                                                        <div className="flex flex-col text-left truncate">
+                                                            {item.title ? (
+                                                                <>
+                                                                    <span className="truncate font-bold">{item.title}</span>
+                                                                    <span className="text-[10px] text-emerald-100 font-normal truncate opacity-90">{item.url}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="truncate">{item.url}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <span className="material-icons text-sm flex-shrink-0 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
