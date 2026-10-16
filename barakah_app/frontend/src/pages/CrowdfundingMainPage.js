@@ -216,41 +216,19 @@ const CrowdfundingMainPage = () => {
       <Header />
 
       {/* HERO / TOP BANNER SECTION */}
-      <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white relative overflow-hidden py-6 sm:py-8 px-4">
+      <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white relative overflow-hidden py-8 sm:py-10 px-4">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.18),transparent_50%)] pointer-events-none"></div>
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div className="max-w-xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[11px] font-bold tracking-wide uppercase mb-3">
-              <span className="material-icons text-sm text-amber-400">volunteer_activism</span>
-              <span>Barakah Social & Charity</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Bantu Sesama, Raih <span className="text-amber-400">Keberkahan</span> Abadi
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 mt-2 leading-relaxed">
-              Jembatan kebaikan antara para dermawan, komunitas, dan saudara kita yang membutuhkan. Amanah, transparan, dan terverifikasi.
-            </p>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[11px] font-bold tracking-wide uppercase mb-3">
+            <span className="material-icons text-sm text-amber-400">volunteer_activism</span>
+            <span>Barakah Social & Charity</span>
           </div>
-
-          {/* AJUKAN CHARITY CTA BOX (Komunitas / Pengguna bisa posting) */}
-          <div className="w-full md:w-auto bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-5 flex flex-col items-center md:items-start gap-3 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md">
-                <span className="material-icons text-2xl">campaign</span>
-              </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-bold text-white">Punya Program Kebaikan?</h4>
-                <p className="text-[11px] text-emerald-200">Komunitas & lembaga dapat mengajukan charity</p>
-              </div>
-            </div>
-            <Link
-              to="/dashboard/my-campaigns"
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md text-center transition transform active:scale-95 flex items-center justify-center gap-1.5"
-            >
-              <span className="material-icons text-sm">add_circle</span>
-              <span>Ajukan Charity Baru</span>
-            </Link>
-          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            Bantu Sesama, Raih <span className="text-amber-400">Keberkahan</span> Abadi
+          </h1>
+          <p className="text-xs sm:text-sm text-emerald-100/90 mt-2 max-w-2xl mx-auto leading-relaxed">
+            Jembatan kebaikan antara para dermawan, komunitas, dan saudara kita yang membutuhkan. Amanah, transparan, dan terverifikasi.
+          </p>
         </div>
       </div>
 
