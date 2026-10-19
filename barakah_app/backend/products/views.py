@@ -6,11 +6,11 @@ from rest_framework import status
 from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
 from .models import (
-    Product, ShopVoucher, ServiceItem,
+    Product, ShopVoucher, ServiceItem, ServicePaymentOrder,
     LandingPage, LandingPageSlotSetting, LandingPageQuota, LandingPageSlotOrder
 )
 from .serializers import (
-    ProductSerializer, ShopVoucherSerializer, ServiceItemSerializer,
+    ProductSerializer, ShopVoucherSerializer, ServiceItemSerializer, ServicePaymentOrderSerializer,
     LandingPageSerializer, LandingPageSlotSettingSerializer, LandingPageQuotaSerializer, LandingPageSlotOrderSerializer
 )
 from rest_framework.decorators import action
@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny, I
 from rest_framework.exceptions import PermissionDenied, ValidationError
 import random
 import datetime
+from decimal import Decimal
 from django.utils import timezone
 
 class ShopVoucherViewSet(viewsets.ModelViewSet):
@@ -1038,7 +1039,14 @@ class ServiceItemViewSet(viewsets.ModelViewSet):
 
         if not is_admin:
             if self.action in ['list', 'retrieve']:
-                queryset = queryset.filter(status='approved', is_active=True)
+                now = timezone.now()
+                queryset = queryset.filter(
+                    status='approved',
+                    is_active=True,
+                    publish_payment_status='paid'
+                ).filter(
+                    Q(expires_at__isnull=True) | Q(expires_at__gt=now)
+                )
 
         search = self.request.query_params.get('search')
         if search:
@@ -1091,6 +1099,72 @@ class ServiceItemViewSet(viewsets.ModelViewSet):
             obj.views_count += 1
 
         return obj
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        is_admin = user.is_staff or getattr(user, 'role', '') == 'admin'
+        status_val = 'approved' if is_admin else 'pending'
+
+        # Parse voluntary payment / publish fee (default 0 / gratis)
+        try:
+            raw_fee = request.data.get('voluntary_payment', request.data.get('publish_fee', 0))
+            publish_fee = Decimal(str(raw_fee or 0))
+        except Exception:
+            publish_fee = Decimal('0')
+
+        if publish_fee <= Decimal('0'):
+            # Gratis (Rp 0): Langsung aktif 30 hari ke depan
+            expires_at = timezone.now() + datetime.timedelta(days=30)
+            service = serializer.save(
+                seller=user,
+                status=status_val,
+                expires_at=expires_at,
+                publish_payment_status='paid',
+                is_active=True
+            )
+            res_data = self.get_serializer(service).data
+            res_data['payment_order'] = None
+            res_data['is_paid'] = True
+            return Response(res_data, status=status.HTTP_201_CREATED)
+        else:
+            # Berbayar seikhlasnya (> 0): Dibuatkan ServicePaymentOrder dengan kode unik
+            service = serializer.save(
+                seller=user,
+                status=status_val,
+                expires_at=None,
+                publish_payment_status='pending',
+                is_active=False
+            )
+            unique_code = random.randint(100, 499)
+            total_amount = publish_fee + unique_code
+            order_number = f"SPO-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+            payment_order = ServicePaymentOrder.objects.create(
+                order_number=order_number,
+                user=user,
+                service=service,
+                order_type='create',
+                duration_days=30,
+                base_amount=publish_fee,
+                unique_code=unique_code,
+                amount=total_amount,
+                payment_method=request.data.get('payment_method', 'dynaqris'),
+                payment_status='pending'
+            )
+            res_data = self.get_serializer(service).data
+            res_data['payment_order'] = {
+                'id': payment_order.id,
+                'order_number': payment_order.order_number,
+                'amount': float(payment_order.amount),
+                'base_amount': float(payment_order.base_amount),
+                'unique_code': payment_order.unique_code,
+                'payment_status': payment_order.payment_status,
+                'payment_method': payment_order.payment_method,
+            }
+            res_data['is_paid'] = False
+            return Response(res_data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -1145,6 +1219,90 @@ class ServiceItemViewSet(viewsets.ModelViewSet):
         service.rejection_reason = reason
         service.save(update_fields=['status', 'rejection_reason'])
         return Response({'message': 'Jasa telah ditolak.', 'status': service.status})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def renew(self, request, slug=None):
+        """Perpanjang masa aktif publikasi jasa selama 30 hari (gratis Rp 0 atau bayar seikhlasnya)."""
+        service = self.get_object()
+        if service.seller != request.user and not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+            raise PermissionDenied("Anda tidak memiliki akses ke jasa ini.")
+
+        try:
+            raw_fee = request.data.get('voluntary_payment', request.data.get('publish_fee', 0))
+            publish_fee = Decimal(str(raw_fee or 0))
+        except Exception:
+            publish_fee = Decimal('0')
+
+        if publish_fee <= Decimal('0'):
+            # Gratis: Langsung tambah 30 hari dari masa aktif sekarang (atau dari now jika sudah expired)
+            base_time = service.expires_at if (service.expires_at and service.expires_at > timezone.now()) else timezone.now()
+            service.expires_at = base_time + datetime.timedelta(days=30)
+            service.publish_payment_status = 'paid'
+            service.is_active = True
+            service.save()
+            return Response({
+                'success': True,
+                'is_paid': True,
+                'message': 'Masa aktif jasa berhasil diperpanjang 30 hari secara gratis!',
+                'expires_at': service.expires_at.isoformat(),
+                'remaining_days': service.remaining_days,
+                'payment_order': None
+            })
+        else:
+            unique_code = random.randint(100, 499)
+            total_amount = publish_fee + unique_code
+            order_number = f"SPO-{timezone.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+            payment_order = ServicePaymentOrder.objects.create(
+                order_number=order_number,
+                user=request.user,
+                service=service,
+                order_type='renewal',
+                duration_days=30,
+                base_amount=publish_fee,
+                unique_code=unique_code,
+                amount=total_amount,
+                payment_method=request.data.get('payment_method', 'dynaqris'),
+                payment_status='pending'
+            )
+            return Response({
+                'success': True,
+                'is_paid': False,
+                'message': f'Order perpanjangan jasa #{order_number} berhasil dibuat. Silakan lakukan pembayaran.',
+                'payment_order': {
+                    'id': payment_order.id,
+                    'order_number': payment_order.order_number,
+                    'amount': float(payment_order.amount),
+                    'base_amount': float(payment_order.base_amount),
+                    'unique_code': payment_order.unique_code,
+                    'payment_status': payment_order.payment_status,
+                    'payment_method': payment_order.payment_method,
+                }
+            })
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def check_payment_status(self, request, slug=None):
+        """Cek apakah pembayaran publikasi jasa sudah lunas."""
+        service = self.get_object()
+        latest_order = service.payment_orders.order_by('-created_at').first()
+        if not latest_order:
+            return Response({
+                'is_paid': service.publish_payment_status == 'paid',
+                'publish_payment_status': service.publish_payment_status,
+                'expires_at': service.expires_at.isoformat() if service.expires_at else None,
+                'remaining_days': service.remaining_days,
+                'is_expired': service.is_expired,
+            })
+
+        return Response({
+            'is_paid': latest_order.payment_status == 'paid' or service.publish_payment_status == 'paid',
+            'order_number': latest_order.order_number,
+            'order_status': latest_order.payment_status,
+            'amount': float(latest_order.amount),
+            'publish_payment_status': service.publish_payment_status,
+            'expires_at': service.expires_at.isoformat() if service.expires_at else None,
+            'remaining_days': service.remaining_days,
+            'is_expired': service.is_expired,
+        })
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, slug=None):

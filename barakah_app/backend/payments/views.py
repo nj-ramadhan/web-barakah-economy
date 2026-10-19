@@ -198,12 +198,19 @@ class GenerateDynaQRISView(APIView):
                         crs_obj.admin_fee = max(Decimal('0'), diff)
                         crs_obj.amount = final_amount
                         crs_obj.save(update_fields=['admin_fee', 'amount'])
-                    elif transaction_type in ['landing_page', 'lp_slot', 'lp_order']:
-                        from products.models import LandingPageSlotOrder
-                        lpo = LandingPageSlotOrder.objects.filter(Q(id=int(clean_ref) if clean_ref.isdigit() else 0) | Q(order_number=clean_ref)).first()
-                        if lpo:
-                            lpo.amount = final_amount
-                            lpo.save(update_fields=['amount'])
+                elif transaction_type in ['landing_page', 'lp_slot', 'lp_order']:
+                    from products.models import LandingPageSlotOrder
+                    lpo = LandingPageSlotOrder.objects.filter(Q(id=int(clean_ref) if clean_ref.isdigit() else 0) | Q(order_number=clean_ref)).first()
+                    if lpo:
+                        lpo.amount = final_amount
+                        lpo.save(update_fields=['amount'])
+                elif transaction_type in ['service', 'jasa', 'service_order']:
+                    from products.models import ServicePaymentOrder
+                    spo = ServicePaymentOrder.objects.filter(Q(id=int(clean_ref) if clean_ref.isdigit() else 0) | Q(order_number=clean_ref)).first()
+                    if spo:
+                        spo.amount = final_amount
+                        spo.payment_method = 'dynaqris'
+                        spo.save(update_fields=['amount', 'payment_method'])
             except Exception as sync_err:
                 logger.error(f"Failed to synchronize {transaction_type} record with generated amount {final_amount}: {sync_err}")
                 logger.error(f"Error syncing final DynaQRIS amount {final_amount} for {transaction_type} #{reference_id}: {sync_err}")
@@ -400,6 +407,21 @@ class CheckDynaQRISStatusView(APIView):
                     'verified': lp_order.payment_status == 'paid',
                     'order_number': lp_order.order_number
                 }
+        elif transaction_type in ['service', 'jasa', 'service_order']:
+            from products.models import ServicePaymentOrder
+            svc_order = None
+            if str(reference_id).isdigit():
+                svc_order = ServicePaymentOrder.objects.filter(id=int(reference_id)).first()
+            if not svc_order:
+                svc_order = ServicePaymentOrder.objects.filter(order_number=reference_id).first()
+            if svc_order:
+                status_result = {
+                    'status': svc_order.payment_status,
+                    'verified': svc_order.payment_status == 'paid',
+                    'order_number': svc_order.order_number,
+                    'service_id': svc_order.service.id,
+                    'service_slug': svc_order.service.slug
+                }
 
         return Response(status_result)
 
@@ -501,6 +523,30 @@ class CheckDynaQRISStatusView(APIView):
                 return Response({'success': True, 'message': 'Pembayaran Slot Landing Page berhasil diverifikasi! Kuota aktif.'})
             else:
                 return Response({'error': 'Pesanan slot LP tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+        elif transaction_type in ['service', 'jasa', 'service_order']:
+            from products.models import ServicePaymentOrder
+            import datetime
+            svc_order = None
+            if str(reference_id).isdigit():
+                svc_order = ServicePaymentOrder.objects.filter(id=int(reference_id)).first()
+            if not svc_order:
+                svc_order = ServicePaymentOrder.objects.filter(order_number=reference_id).first()
+            if svc_order:
+                svc_order.payment_status = 'paid'
+                svc_order.paid_at = timezone.now()
+                svc_order.save()
+
+                svc = svc_order.service
+                days_to_add = svc_order.duration_days or 30
+                base_time = svc.expires_at if (svc.expires_at and svc.expires_at > timezone.now()) else timezone.now()
+                svc.expires_at = base_time + datetime.timedelta(days=days_to_add)
+                svc.publish_payment_status = 'paid'
+                svc.is_active = True
+                svc.save()
+
+                return Response({'success': True, 'message': f"Pembayaran Publikasi Jasa '{svc.title}' berhasil diverifikasi! Masa aktif +{days_to_add} hari."})
+            else:
+                return Response({'error': 'Pesanan pembayaran jasa tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'error': 'Transaksi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -1095,6 +1141,43 @@ class AndroidNotificationWebhookView(APIView):
                     "order_type": lp_order.order_type,
                     "reference_id": lp_order.id,
                     "order_number": lp_order.order_number,
+                    "amount": float(amt),
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": msg
+                })
+
+            # 7. Match active pending Service Payment Order (Publikasi / Perpanjangan Jasa 30 Hari)
+            from products.models import ServicePaymentOrder, ServiceItem
+            import datetime
+            svc_order = ServicePaymentOrder.objects.filter(
+                payment_status__in=['pending', 'unpaid', ''],
+                amount=amt
+            ).order_by('-created_at').first()
+            if svc_order:
+                svc_order.payment_status = 'paid'
+                svc_order.paid_at = timezone.now()
+                svc_order.payment_method = 'dynaqris'
+                svc_order.save()
+
+                svc = svc_order.service
+                days_to_add = svc_order.duration_days or 30
+                base_time = svc.expires_at if (svc.expires_at and svc.expires_at > timezone.now()) else timezone.now()
+                svc.expires_at = base_time + datetime.timedelta(days=days_to_add)
+                svc.publish_payment_status = 'paid'
+                svc.is_active = True
+                svc.save()
+
+                msg = f"Pembayaran Publikasi Jasa '{svc.title}' #{svc_order.order_number} ({svc_order.user.username}) sebesar Rp {float(amt):,.0f} berhasil diverifikasi otomatis via Webhook Notifikasi HP! Masa aktif tayang bertambah +{days_to_add} hari."
+                logger.info(msg)
+
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "service",
+                    "order_type": svc_order.order_type,
+                    "reference_id": svc_order.id,
+                    "order_number": svc_order.order_number,
+                    "service_title": svc.title,
                     "amount": float(amt),
                     "extracted_amounts": [float(a) for a in extracted_amounts],
                     "message": msg

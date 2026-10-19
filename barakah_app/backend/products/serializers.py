@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import (
-    Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion, ServiceItem,
+    Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion, ServiceItem, ServicePaymentOrder,
     LandingPage, LandingPageSlotSetting, LandingPageQuota, LandingPageSlotOrder
 )
 
@@ -261,6 +261,20 @@ class ShopVoucherSerializer(serializers.ModelSerializer):
         read_only_fields = ['seller']
 
 
+class ServicePaymentOrderSerializer(serializers.ModelSerializer):
+    service_title = serializers.CharField(source='service.title', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = ServicePaymentOrder
+        fields = [
+            'id', 'order_number', 'user', 'username', 'service', 'service_title',
+            'order_type', 'duration_days', 'base_amount', 'unique_code', 'amount',
+            'payment_method', 'payment_status', 'paid_at', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['order_number', 'user', 'unique_code', 'amount', 'payment_status', 'paid_at', 'created_at', 'updated_at']
+
+
 class ServiceItemSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     seller_full_name = serializers.SerializerMethodField()
@@ -273,6 +287,10 @@ class ServiceItemSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     effective_whatsapp = serializers.SerializerMethodField()
 
+    is_expired = serializers.BooleanField(read_only=True)
+    remaining_days = serializers.IntegerField(read_only=True)
+    pending_payment_order = serializers.SerializerMethodField()
+
     class Meta:
         model = ServiceItem
         fields = [
@@ -280,9 +298,12 @@ class ServiceItemSerializer(serializers.ModelSerializer):
             'title', 'slug', 'category', 'category_display', 'description', 'thumbnail',
             'price', 'price_rate', 'whatsapp_number', 'effective_whatsapp', 'whatsapp_message',
             'location_city', 'status', 'status_display', 'rejection_reason',
-            'is_active', 'views_count', 'likes_count', 'is_liked', 'created_at', 'updated_at'
+            'is_active', 'views_count', 'likes_count', 'is_liked',
+            'expires_at', 'publish_payment_status', 'is_expired', 'remaining_days',
+            'pending_payment_order',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['seller', 'slug', 'status', 'rejection_reason', 'views_count', 'created_at', 'updated_at']
+        read_only_fields = ['seller', 'slug', 'status', 'rejection_reason', 'views_count', 'expires_at', 'publish_payment_status', 'created_at', 'updated_at']
 
     def get_seller_full_name(self, obj):
         profile = getattr(obj.seller, 'profile', None)
@@ -320,6 +341,12 @@ class ServiceItemSerializer(serializers.ModelSerializer):
             return obj.whatsapp_number
         profile = getattr(obj.seller, 'profile', None)
         return getattr(profile, 'phone', None) or getattr(obj.seller, 'phone_number', '')
+
+    def get_pending_payment_order(self, obj):
+        order = obj.payment_orders.filter(payment_status='pending').order_by('-created_at').first()
+        if order:
+            return ServicePaymentOrderSerializer(order).data
+        return None
 
 
 # ==============================================================================

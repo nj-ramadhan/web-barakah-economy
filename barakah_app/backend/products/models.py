@@ -353,11 +353,28 @@ class ServiceItem(models.Model):
     views_count = models.PositiveIntegerField(default=0)
     likes = models.ManyToManyField('accounts.User', related_name='liked_services', blank=True)
     
+    # Masa aktif & pembayaran publikasi jasa (30 hari)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Masa aktif publikasi jasa (30 hari)")
+    publish_payment_status = models.CharField(max_length=20, default='paid', choices=[('paid', 'Lunas / Gratis'), ('pending', 'Menunggu Pembayaran')], help_text="Status pembayaran publikasi jasa")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        return self.expires_at < timezone.now()
+
+    @property
+    def remaining_days(self):
+        if not self.expires_at:
+            return None
+        delta = self.expires_at - timezone.now()
+        return max(0, delta.days)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -366,6 +383,41 @@ class ServiceItem(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.seller.username} ({self.status})"
+
+
+class ServicePaymentOrder(models.Model):
+    """Transaksi pembayaran sukarela / infak publikasi jasa (30 hari) dengan auto-sync QRIS & Notif Listener."""
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu Pembayaran'),
+        ('paid', 'Lunas / Berhasil'),
+        ('cancelled', 'Dibatalkan'),
+        ('expired', 'Kadaluarsa'),
+    ]
+    ORDER_TYPE_CHOICES = [
+        ('create', 'Publikasi Jasa Baru'),
+        ('renewal', 'Perpanjang Masa Aktif Jasa (30 Hari)'),
+    ]
+
+    order_number = models.CharField(max_length=50, unique=True)
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='service_orders')
+    service = models.ForeignKey(ServiceItem, on_delete=models.CASCADE, related_name='payment_orders')
+    order_type = models.CharField(max_length=20, choices=ORDER_TYPE_CHOICES, default='create')
+    duration_days = models.PositiveIntegerField(default=30, help_text="Masa aktif publikasi (30 hari)")
+    
+    base_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal sukarela")
+    unique_code = models.PositiveIntegerField(default=0, help_text="Kode unik pembayaran")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Total tagihan (base_amount + unique_code)")
+    payment_method = models.CharField(max_length=30, default='dynaqris')
+    payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.order_number} ({self.order_type}) - {self.service.title} (Rp {self.amount:,.0f} - {self.payment_status})"
 
 
 # ==============================================================================

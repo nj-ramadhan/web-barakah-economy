@@ -76,3 +76,16 @@ export const rejectService = (slug, reason = '') => {
     headers: getAuthHeaders()
   });
 };
+
+// Publishing & Renewal (30 Days)
+export const renewService = (slug, data = {}) => {
+  return axios.post(`${API_BASE}/${slug}/renew/`, data, {
+    headers: getAuthHeaders()
+  });
+};
+
+export const checkServicePaymentStatus = (slug) => {
+  return axios.get(`${API_BASE}/${slug}/check_payment_status/`, {
+    headers: getAuthHeaders()
+  });
+};
