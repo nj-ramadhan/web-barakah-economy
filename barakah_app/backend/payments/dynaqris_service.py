@@ -4,11 +4,29 @@ import random
 from datetime import timedelta
 from django.utils import timezone
 from django.core.cache import cache
-from .models import PaymentSetting
+from .models import PaymentSetting, ModulePaymentSetting
 
 logger = logging.getLogger(__name__)
 
 DYNAQRIS_CONVERT_URL = "https://dynaqris.web.id/api/v1/convert"
+
+MODULE_CODE_MAP = {
+    'ecommerce': 'store',
+    'store': 'store',
+    'product': 'store',
+    'event': 'event',
+    'charity': 'charity',
+    'donation': 'charity',
+    'donasi': 'charity',
+    'digital': 'digital',
+    'digital_product': 'digital',
+    'ecourse': 'ecourse',
+    'course': 'ecourse',
+    'landing_page': 'landing_page',
+    'landing-page': 'landing_page',
+    'service': 'service',
+    'jasa': 'service',
+}
 
 class DynaQRISService:
     @staticmethod
@@ -85,6 +103,7 @@ class DynaQRISService:
     def generate_dynamic_qris(cls, amount, user_id=None, reference_id=None, add_unique_code=True, transaction_type=None):
         """
         Convert Static QRIS to Dynamic QRIS via DynaQRIS API.
+        Supports per-module plotted credentials (charity, event, store, ecourse, digital, landing_page, service).
         Includes anti-spam rate limiting per user/IP and random unique nominal code:
         - For 'event': 1-100 range, 2-hour rotation reset for verified payments, payment timeout for pending (hangus if cancelled/expired).
         - For other types: 1-500 range, admin configured timeout duration.
@@ -93,6 +112,13 @@ class DynaQRISService:
         timeout_minutes = max(1, int(settings_obj.payment_timeout_minutes or 5))
         timeout_seconds = timeout_minutes * 60
         
+        # Check module-specific plotted credentials
+        mapped_module = MODULE_CODE_MAP.get(str(transaction_type).lower()) if transaction_type else None
+        effective_cfg = ModulePaymentSetting.get_effective_config(mapped_module) if mapped_module else None
+
+        api_key = (effective_cfg.get('dynaqris_api_key') if effective_cfg else '') or settings_obj.dynaqris_api_key
+        qris_id = (effective_cfg.get('dynaqris_qris_id') if effective_cfg else '') or settings_obj.dynaqris_qris_id
+
         if transaction_type == 'event':
             min_code = 1
             max_code = 100
@@ -110,9 +136,6 @@ class DynaQRISService:
                 }
             # Set a 10 second cooldown
             cache.set(cache_key, True, timeout=10)
-
-        api_key = settings_obj.dynaqris_api_key
-        qris_id = settings_obj.dynaqris_qris_id
 
         if not api_key or not qris_id:
             return {"error": "Pengaturan DynaQRIS belum lengkap (API Key atau QRIS ID kosong)."}

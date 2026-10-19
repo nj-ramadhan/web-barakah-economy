@@ -77,4 +77,44 @@ export const testAndroidWebhook = async (payload) => {
     return response.data;
 };
 
+export const getModulePaymentSettings = async () => {
+    const response = await axios.get(`${API_BASE_URL}/api/payments/admin-settings/modules/`, {
+        headers: getAuthHeaders()
+    });
+    return response.data;
+};
+
+export const updateModulePaymentSetting = async (formDataOrData) => {
+    const isFormData = formDataOrData instanceof FormData;
+    const response = await axios.post(`${API_BASE_URL}/api/payments/admin-settings/modules/`, formDataOrData, {
+        headers: {
+            ...getAuthHeaders(),
+            ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {})
+        }
+    });
+    return response.data;
+};
+
+export const getListenerDevices = async () => {
+    const response = await axios.get(`${API_BASE_URL}/api/payments/admin-settings/listener-devices/`, {
+        headers: getAuthHeaders()
+    });
+    return response.data;
+};
+
+export const deleteListenerDevice = async (deviceId) => {
+    const response = await axios.delete(`${API_BASE_URL}/api/payments/admin-settings/listener-devices/`, {
+        headers: getAuthHeaders(),
+        data: { device_id: deviceId }
+    });
+    return response.data;
+};
+
+export const patchListenerDevice = async (data) => {
+    const response = await axios.patch(`${API_BASE_URL}/api/payments/admin-settings/listener-devices/`, data, {
+        headers: getAuthHeaders()
+    });
+    return response.data;
+};
+
 

@@ -15,9 +15,9 @@ from midtransclient import Snap
 from donations.models import Donation
 from campaigns.models import Campaign
 from orders.models import Order
-from .models import PaymentSetting
-from .serializers import PaymentSettingSerializer
-from .dynaqris_service import DynaQRISService
+from .models import PaymentSetting, ModulePaymentSetting, ListenerDevice
+from .serializers import PaymentSettingSerializer, ModulePaymentSettingSerializer, ListenerDeviceSerializer
+from .dynaqris_service import DynaQRISService, MODULE_CODE_MAP
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,11 +29,25 @@ snap = Snap(
     client_key=settings.MIDTRANS_CLIENT_KEY
 )
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
 class PaymentPublicConfigView(APIView):
     """Public endpoint for retrieving active payment configuration."""
     permission_classes = [AllowAny]
 
     def get(self, request):
+        module_param = request.GET.get('module') or request.GET.get('type')
+        if module_param:
+            mapped = MODULE_CODE_MAP.get(str(module_param).lower(), str(module_param).lower())
+            effective = ModulePaymentSetting.get_effective_config(mapped)
+            # Mask sensitive API Key
+            effective.pop('dynaqris_api_key', None)
+            return Response(effective)
+
         settings_obj = PaymentSetting.get_settings()
         serializer = PaymentSettingSerializer(settings_obj, context={'request': request})
         # Mask sensitive api key for public view
@@ -61,6 +75,40 @@ class PaymentAdminSettingsView(APIView):
             return Response({'detail': 'Akses ditolak. Membutuhkan hak akses admin.'}, status=status.HTTP_403_FORBIDDEN)
         settings_obj = PaymentSetting.get_settings()
         serializer = PaymentSettingSerializer(settings_obj, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ModulePaymentSettingsAdminView(APIView):
+    """Admin endpoint for viewing and managing per-module plotted payment settings."""
+    permission_classes = [IsAuthenticated]
+
+    def check_admin_permission(self, request):
+        user = request.user
+        return user.is_staff or getattr(user, 'role', '') == 'admin' or getattr(user, 'username', '') == 'admin'
+
+    def get(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+        modules = ModulePaymentSetting.get_or_create_all_defaults()
+        serializer = ModulePaymentSettingSerializer(modules, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Update or toggle a single module's payment plotting."""
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        module_code = request.data.get('module_code')
+        if not module_code:
+            return Response({'error': 'module_code wajib disertakan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj = ModulePaymentSetting.objects.filter(module_code=module_code).first()
+        if not obj:
+            return Response({'error': f'Modul {module_code} tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ModulePaymentSettingSerializer(obj, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -771,8 +819,8 @@ class CheckOrderPaymentStatusView(APIView):
 
 class AndroidListenerHeartbeatView(APIView):
     """
-    Heartbeat and Single Device Lock endpoint for BAE Android Notification Listener.
-    Ensures only 1 primary Android phone is actively processing notifications.
+    Heartbeat and Multi-Device Active Registration endpoint for BAE Android Notification Listener.
+    Allows multiple Android phones to run simultaneously without session hijacking or 1-device lock.
     """
     permission_classes = [AllowAny]
 
@@ -791,45 +839,117 @@ class AndroidListenerHeartbeatView(APIView):
                 "error": "Secret token tidak valid."
             }, status=status.HTTP_401_UNAUTHORIZED)
 
-        device_id = request.data.get('device_id') or 'default_device'
-        device_name = request.data.get('device_name') or 'Android Device'
-        force_claim = request.data.get('force_claim', True)
-
+        device_id = str(request.data.get('device_id') or 'default_device').strip()
+        device_name = str(request.data.get('device_name') or 'Android Device').strip()
+        client_ip = get_client_ip(request)
         now = timezone.now()
 
-        # If current device matches or no device registered or claiming primary lock:
-        if not setting.listener_device_id or setting.listener_device_id == device_id or force_claim:
-            setting.listener_device_id = device_id
-            setting.listener_device_name = device_name
-            setting.listener_last_heartbeat = now
-            setting.save(update_fields=['listener_device_id', 'listener_device_name', 'listener_last_heartbeat'])
+        # Update or register the individual Android device in ListenerDevice table
+        try:
+            device_obj, _ = ListenerDevice.objects.update_or_create(
+                device_id=device_id,
+                defaults={
+                    'device_name': device_name,
+                    'is_active': True,
+                    'last_heartbeat': now,
+                    'last_ip': client_ip
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error registering ListenerDevice {device_id}: {e}")
 
-            return Response({
-                "success": True,
-                "status": "active",
-                "is_primary": True,
-                "active_device_id": device_id,
-                "active_device_name": device_name,
-                "last_heartbeat": now.isoformat(),
-                "message": "🟢 Terhubung 24/7 ke Server Barakah (Perangkat Utama Aktif)"
-            }, status=status.HTTP_200_OK)
-        else:
-            # Device mismatch and not claiming
-            return Response({
-                "success": False,
-                "status": "disconnected",
-                "is_primary": False,
-                "active_device_id": setting.listener_device_id,
-                "active_device_name": setting.listener_device_name,
-                "message": f"🔴 Sesi dialihkan ke HP lain ({setting.listener_device_name or 'Perangkat Lain'})."
-            }, status=status.HTTP_200_OK)
+        # Update legacy single-device fields on PaymentSetting for backward compatibility
+        setting.listener_device_id = device_id
+        setting.listener_device_name = device_name
+        setting.listener_last_heartbeat = now
+        setting.save(update_fields=['listener_device_id', 'listener_device_name', 'listener_last_heartbeat'])
+
+        cutoff = now - timedelta(minutes=15)
+        active_count = ListenerDevice.objects.filter(is_active=True, last_heartbeat__gte=cutoff).count()
+
+        return Response({
+            "success": True,
+            "status": "active",
+            "is_primary": True,
+            "multi_device": True,
+            "active_devices_count": active_count,
+            "active_device_id": device_id,
+            "active_device_name": device_name,
+            "last_heartbeat": now.isoformat(),
+            "message": f"🟢 Terhubung 24/7 ke Server Barakah (Multi-Device Aktif: {active_count} HP)"
+        }, status=status.HTTP_200_OK)
+
+
+class ListenerDevicesAdminView(APIView):
+    """
+    Admin endpoint to view, manage, and monitor all Android Listener devices (Multi-device hub).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def check_admin_permission(self, request):
+        user = request.user
+        return user.is_staff or getattr(user, 'role', '') == 'admin' or getattr(user, 'username', '') == 'admin'
+
+    def get(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+        devices = ListenerDevice.objects.all().order_by('-last_heartbeat')
+        serializer = ListenerDeviceSerializer(devices, many=True)
+        
+        now = timezone.now()
+        cutoff = now - timedelta(minutes=15)
+        online_count = ListenerDevice.objects.filter(is_active=True, last_heartbeat__gte=cutoff).count()
+
+        return Response({
+            'devices': serializer.data,
+            'total_devices': len(serializer.data),
+            'online_count': online_count,
+            'webhook_enabled': PaymentSetting.get_settings().android_webhook_enabled,
+        })
+
+    def delete(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+        device_id = request.data.get('device_id') or request.GET.get('device_id')
+        if not device_id:
+            return Response({'error': 'device_id wajib disertakan.'}, status=status.HTTP_400_BAD_REQUEST)
+        ListenerDevice.objects.filter(device_id=device_id).delete()
+        return Response({'success': True, 'message': f'Perangkat {device_id} berhasil dihapus.'})
+
+    def patch(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+        device_id = request.data.get('device_id')
+        if not device_id:
+            return Response({'error': 'device_id wajib disertakan.'}, status=status.HTTP_400_BAD_REQUEST)
+        dev = ListenerDevice.objects.filter(device_id=device_id).first()
+        if not dev:
+            return Response({'error': 'Perangkat tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'device_name' in request.data:
+            dev.device_name = request.data['device_name']
+        if 'is_active' in request.data:
+            dev.is_active = bool(request.data['is_active'])
+        if 'assigned_modules' in request.data:
+            dev.assigned_modules = request.data['assigned_modules']
+        dev.save()
+
+        serializer = ListenerDeviceSerializer(dev)
+        return Response(serializer.data)
 
 
 class AndroidNotificationWebhookView(APIView):
     """
     Webhook listener for Android Notification Forwarder apps (MacroDroid, Tasker, Notification Forwarder, etc.)
     and Barakah Android Notif Listener.
-    Parses bank / e-wallet transaction push notifications and auto-verifies matching pending payments.
+    Parses bank / e-wallet transaction push notifications and auto-verifies matching pending payments across all 7 modules:
+    1. store (E-Commerce)
+    2. digital (Produk Digital)
+    3. ecourse (E-Course)
+    4. event (Event & Tiket)
+    5. charity (Donasi & ZISWAF)
+    6. landing_page (Landing Page Slot & Renewal)
+    7. service (Publikasi & Perpanjangan Jasa)
     """
     permission_classes = [AllowAny]
 
@@ -838,13 +958,21 @@ class AndroidNotificationWebhookView(APIView):
         GET endpoint to verify webhook availability, check status, and retrieve test instructions.
         """
         setting = PaymentSetting.get_settings()
+        now = timezone.now()
+        cutoff = now - timedelta(minutes=15)
+        active_devices = ListenerDevice.objects.filter(is_active=True, last_heartbeat__gte=cutoff)
+        active_devices_count = active_devices.count()
+        device_names = [d.device_name for d in active_devices]
+
         return Response({
             "status": "active" if setting.android_webhook_enabled else "disabled",
             "webhook_enabled": setting.android_webhook_enabled,
-            "service": "Barakah Android Notification Listener Webhook",
-            "active_device": setting.listener_device_name or "Belum Terhubung",
+            "service": "Barakah Android Notification Listener Webhook (Multi-Device)",
+            "multi_device_supported": True,
+            "active_devices_count": active_devices_count,
+            "active_devices": device_names or ([setting.listener_device_name] if setting.listener_device_name else []),
             "last_heartbeat": setting.listener_last_heartbeat.isoformat() if setting.listener_last_heartbeat else None,
-            "message": "Endpoint aktif dan siap menerima push notifikasi m-Banking & E-Wallet.",
+            "message": "Endpoint aktif dan siap menerima push notifikasi m-Banking & E-Wallet dari multi-perangkat.",
             "supported_apps": [
                 "BSI Mobile", "BCA Mobile", "Mandiri Livin", "BRImo", "BNI Mobile",
                 "DANA", "GoPay", "OVO", "ShopeePay", "SeaBank", "Blu by BCA", "Jenius", "Lainnya"
@@ -885,12 +1013,10 @@ class AndroidNotificationWebhookView(APIView):
                 }, status=status.HTTP_401_UNAUTHORIZED)
 
         # Update last heartbeat on webhook reception
+        now = timezone.now()
         device_id = request.data.get('device_id') if isinstance(getattr(request, 'data', None), dict) else None
-        if device_id:
-            setting.listener_device_id = device_id
-        setting.listener_last_heartbeat = timezone.now()
-        setting.save(update_fields=['listener_device_id', 'listener_last_heartbeat'])
-
+        device_name = request.data.get('device_name') if isinstance(getattr(request, 'data', None), dict) else None
+        
         # Extract text / message from payload (exclude secret fields from text content)
         if isinstance(request.data, dict):
             text_parts = [
@@ -900,6 +1026,22 @@ class AndroidNotificationWebhookView(APIView):
             payload_text = " ".join(text_parts)
         else:
             payload_text = str(request.data)
+
+        if device_id:
+            setting.listener_device_id = device_id
+            if device_name:
+                setting.listener_device_name = device_name
+            try:
+                ListenerDevice.objects.filter(device_id=device_id).update(
+                    last_heartbeat=now,
+                    last_notification_at=now,
+                    last_notification_preview=payload_text[:200]
+                )
+            except Exception as e:
+                logger.error(f"Error updating ListenerDevice notification: {e}")
+
+        setting.listener_last_heartbeat = now
+        setting.save(update_fields=['listener_device_id', 'listener_device_name', 'listener_last_heartbeat'])
 
         logger.info(f"Received Android Notification Webhook payload: {payload_text}")
 

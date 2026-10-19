@@ -14,12 +14,16 @@ from .views import (
     CheckDynaQRISStatusView,
     AndroidNotificationWebhookView,
     AndroidListenerHeartbeatView,
+    ModulePaymentSettingsAdminView,
+    ListenerDevicesAdminView,
 )
 
 urlpatterns = [
     # Global Payment Configuration & Settings
     path('config/', PaymentPublicConfigView.as_view(), name='payment-public-config'),
     path('admin-settings/', PaymentAdminSettingsView.as_view(), name='payment-admin-settings'),
+    path('admin-settings/modules/', ModulePaymentSettingsAdminView.as_view(), name='module-payment-settings'),
+    path('admin-settings/listener-devices/', ListenerDevicesAdminView.as_view(), name='listener-devices-admin'),
     path('dynaqris/test-connection/', TestDynaQRISConnectionView.as_view(), name='test-dynaqris-connection'),
     path('dynaqris/generate/', GenerateDynaQRISView.as_view(), name='generate-dynaqris'),
     path('dynaqris/check-status/', CheckDynaQRISStatusView.as_view(), name='check-dynaqris-status'),
