@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q
 from decimal import Decimal
-from datetime import datetime
-from .models import UserWallet, WalletTransaction
+from django.utils import timezone
+from .models import UserWallet, WalletTransaction, OutgoingFund
 from .serializers import UserWalletSerializer, WalletTransactionSerializer
 
 logger = logging.getLogger(__name__)
@@ -59,6 +59,7 @@ class AdminIncomingFundsView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        account_filter = request.query_params.get('account', 'all').lower()
         category_filter = request.query_params.get('category', 'all').lower()
         status_filter = request.query_params.get('status', 'all').lower()
         payment_method_filter = request.query_params.get('payment_method', 'all').lower()
@@ -502,8 +503,86 @@ class AdminIncomingFundsView(APIView):
                 if st == 'verified':
                     overall_summary['by_payment_method']['other']['amount'] += amt
 
+        # Compute Outgoing Funds & Account Balances (Commercial vs Charity)
+        comm_expense_completed = 0.0
+        comm_expense_pending = 0.0
+        charity_expense_completed = 0.0
+        charity_expense_pending = 0.0
+
+        try:
+            from digital_products.models import WithdrawalRequest
+
+            expenses = OutgoingFund.objects.all()
+            withdrawals = WithdrawalRequest.objects.all()
+
+            linked_withdrawal_ids = set(
+                OutgoingFund.objects.filter(withdrawal_request__isnull=False).values_list('withdrawal_request_id', flat=True)
+            )
+
+            for exp in expenses:
+                amt = float(exp.amount or 0)
+                if exp.fund_account == 'charity':
+                    if exp.status == 'completed':
+                        charity_expense_completed += amt
+                    elif exp.status == 'pending':
+                        charity_expense_pending += amt
+                else:
+                    if exp.status == 'completed':
+                        comm_expense_completed += amt
+                    elif exp.status == 'pending':
+                        comm_expense_pending += amt
+
+            for w in withdrawals:
+                if w.id not in linked_withdrawal_ids:
+                    w_amt = float(w.total_deduction or w.amount or 0)
+                    if w.status == 'approved':
+                        comm_expense_completed += w_amt
+                    elif w.status == 'pending':
+                        comm_expense_pending += w_amt
+
+        except Exception as err:
+            logger.error(f"Error calculating outgoing funds for summary: {err}")
+
+        commercial_verified = sum(overall_summary['by_category'][c]['verified_amount'] for c in ['store', 'digital', 'course', 'event'])
+        commercial_pending = sum(overall_summary['by_category'][c]['pending_amount'] for c in ['store', 'digital', 'course', 'event'])
+        charity_verified = sum(overall_summary['by_category'][c]['verified_amount'] for c in ['charity', 'zis'])
+        charity_pending = sum(overall_summary['by_category'][c]['pending_amount'] for c in ['charity', 'zis'])
+
+        overall_summary['accounts'] = {
+            'commercial': {
+                'account_name': 'Rekening Komersial (Store, Event, Digital, E-Course)',
+                'qris_label': 'QRIS 1 (Komersial & Bisnis)',
+                'income_verified': commercial_verified,
+                'income_pending': commercial_pending,
+                'expense_completed': comm_expense_completed,
+                'expense_pending': comm_expense_pending,
+                'balance': commercial_verified - comm_expense_completed,
+            },
+            'charity': {
+                'account_name': 'Rekening Sosial / Charity (ZIS & Donasi)',
+                'qris_label': 'QRIS 2 (Sosial / ZISWAF)',
+                'income_verified': charity_verified,
+                'income_pending': charity_pending,
+                'expense_completed': charity_expense_completed,
+                'expense_pending': charity_expense_pending,
+                'balance': charity_verified - charity_expense_completed,
+            },
+            'consolidated': {
+                'income_verified': overall_summary['total_income_all'],
+                'income_pending': overall_summary['total_income_pending'],
+                'expense_completed': comm_expense_completed + charity_expense_completed,
+                'expense_pending': comm_expense_pending + charity_expense_pending,
+                'balance': overall_summary['total_income_all'] - (comm_expense_completed + charity_expense_completed),
+            }
+        }
+
         # Filter in-memory for requested query params
         filtered_transactions = transactions
+
+        if account_filter == 'commercial':
+            filtered_transactions = [t for t in filtered_transactions if t['category'] in ['store', 'digital', 'course', 'event']]
+        elif account_filter == 'charity':
+            filtered_transactions = [t for t in filtered_transactions if t['category'] in ['charity', 'zis']]
 
         if category_filter != 'all':
             if category_filter in ['store', 'sinergy']:
@@ -675,3 +754,386 @@ class AdminIncomingFundsView(APIView):
                 {'error': f'Gagal menghapus transaksi: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class AdminOutgoingFundsView(APIView):
+    """
+    Unified Outgoing Funds & Expense Management (Manajemen Uang Keluar & Penarikan Dana)
+    Supports:
+    - Manual operational expenses, charity distributions, supplier costs, etc.
+    - Seller/User withdrawal requests (auto-pending, admin can approve/complete or reject).
+    - Filters by account ('commercial', 'charity', 'all'), category, status, search, and date.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _is_admin(self, user):
+        return (
+            user.is_superuser or 
+            user.is_staff or 
+            getattr(user, 'role', '') in ['admin', 'staff'] or 
+            getattr(getattr(user, 'profile', None), 'role', '') in ['admin', 'staff'] or
+            (hasattr(user, 'custom_roles') and user.custom_roles.filter(Q(name__icontains='admin') | Q(code__icontains='admin')).exists())
+        )
+
+    def get(self, request):
+        if not self._is_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        account_filter = request.query_params.get('account', 'all').lower()
+        status_filter = request.query_params.get('status', 'all').lower()
+        category_filter = request.query_params.get('category', 'all').lower()
+        search_query = request.query_params.get('search', '').strip().lower()
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        from digital_products.models import WithdrawalRequest
+
+        outgoing_list = []
+
+        # 1. Manual Outgoing Funds
+        try:
+            manual_expenses = OutgoingFund.objects.all().select_related('created_by', 'withdrawal_request')
+            cat_label_map = {
+                'operational': 'Operasional & Utilitas',
+                'charity_distribution': 'Penyaluran Donasi / Mustahik',
+                'withdrawal': 'Penarikan Dana User / Seller',
+                'vendor_supplier': 'Vendor / Supplier / Pengadaan',
+                'event_cost': 'Biaya Operasional Event',
+                'tax_admin': 'Pajak & Biaya Admin',
+                'other': 'Pengeluaran Lainnya'
+            }
+            for exp in manual_expenses:
+                outgoing_list.append({
+                    'id': f"manual_{exp.id}",
+                    'raw_id': exp.id,
+                    'source_type': 'manual',
+                    'fund_account': exp.fund_account,
+                    'fund_account_label': 'Rekening Komersial' if exp.fund_account == 'commercial' else 'Rekening Charity / Sosial',
+                    'category': exp.category,
+                    'category_label': cat_label_map.get(exp.category, exp.category),
+                    'title': exp.title,
+                    'amount': float(exp.amount or 0),
+                    'description': exp.description or '',
+                    'recipient_name': exp.recipient_name or '',
+                    'recipient_account': exp.recipient_account or '',
+                    'status': exp.status,
+                    'status_label': 'Selesai' if exp.status == 'completed' else ('Pending' if exp.status == 'pending' else 'Dibatalkan'),
+                    'proof_url': exp.proof_file.url if exp.proof_file else '',
+                    'transaction_date': str(exp.transaction_date) if exp.transaction_date else '',
+                    'created_at': exp.created_at.isoformat() if exp.created_at else None,
+                    'created_by': exp.created_by.username if exp.created_by else 'Admin',
+                    'withdrawal_id': exp.withdrawal_request_id,
+                })
+        except Exception as e:
+            logger.error(f"Error loading manual outgoing funds: {e}")
+
+        # 2. Seller & User Withdrawal Requests
+        try:
+            linked_ids = set(OutgoingFund.objects.filter(withdrawal_request__isnull=False).values_list('withdrawal_request_id', flat=True))
+            withdrawals = WithdrawalRequest.objects.all().select_related('user', 'user__profile')
+
+            for w in withdrawals:
+                if w.id in linked_ids:
+                    continue
+
+                if w.status == 'approved':
+                    norm_status = 'completed'
+                    status_lbl = 'Selesai'
+                elif w.status == 'rejected':
+                    norm_status = 'cancelled'
+                    status_lbl = 'Ditolak'
+                else:
+                    norm_status = 'pending'
+                    status_lbl = 'Pending'
+
+                tot_amt = float(w.total_deduction or w.amount or 0)
+                source_label = 'Hasil Jualan' if w.withdrawal_source == 'seller_revenue' else 'Saldo BAE'
+                
+                desc_parts = [
+                    f"Penarikan ke {w.bank_name} {w.account_number} a.n {w.account_name}",
+                    f"Sumber: {source_label}",
+                    f"Nominal: Rp {float(w.amount):,.0f}"
+                ]
+                if float(w.admin_fee or 0) > 0:
+                    desc_parts.append(f"Admin Fee: Rp {float(w.admin_fee):,.0f}")
+                if float(w.donation_amount or 0) > 0:
+                    desc_parts.append(f"Infaq: Rp {float(w.donation_amount):,.0f}")
+                if w.rejection_reason:
+                    desc_parts.append(f"Alasan Tolak: {w.rejection_reason}")
+
+                cust_name = getattr(getattr(w.user, 'profile', None), 'name_full', None) or w.user.username
+
+                outgoing_list.append({
+                    'id': f"withdrawal_{w.id}",
+                    'raw_id': w.id,
+                    'source_type': 'withdrawal',
+                    'fund_account': 'commercial',
+                    'fund_account_label': 'Rekening Komersial',
+                    'category': 'withdrawal',
+                    'category_label': 'Penarikan Dana User / Seller',
+                    'title': f"Penarikan Dana @{w.user.username} ({cust_name})",
+                    'amount': tot_amt,
+                    'net_amount': float(w.amount),
+                    'admin_fee': float(w.admin_fee or 0),
+                    'donation_amount': float(w.donation_amount or 0),
+                    'description': " • ".join(desc_parts),
+                    'recipient_name': w.account_name,
+                    'recipient_account': f"{w.bank_name} - {w.account_number}",
+                    'bank_name': w.bank_name,
+                    'account_number': w.account_number,
+                    'status': norm_status,
+                    'status_label': status_lbl,
+                    'raw_status': w.status,
+                    'proof_url': w.transfer_proof.url if (w.transfer_proof and hasattr(w.transfer_proof, 'url')) else '',
+                    'rejection_reason': w.rejection_reason or '',
+                    'transaction_date': w.created_at.strftime('%Y-%m-%d') if w.created_at else '',
+                    'created_at': w.created_at.isoformat() if w.created_at else None,
+                    'created_by': w.user.username,
+                    'user_id': w.user.id,
+                    'user_username': w.user.username,
+                    'user_name': cust_name,
+                    'withdrawal_id': w.id,
+                })
+        except Exception as e:
+            logger.error(f"Error loading withdrawals in outgoing funds: {e}")
+
+        # Sort descending by date
+        outgoing_list.sort(key=lambda x: x['created_at'] or '', reverse=True)
+
+        # Global Summary of Outgoing Funds
+        summary = {
+            'total_expense_completed': sum(x['amount'] for x in outgoing_list if x['status'] == 'completed'),
+            'total_expense_pending': sum(x['amount'] for x in outgoing_list if x['status'] == 'pending'),
+            'total_expense_cancelled': sum(x['amount'] for x in outgoing_list if x['status'] == 'cancelled'),
+            'total_count': len(outgoing_list),
+            'commercial': {
+                'completed': sum(x['amount'] for x in outgoing_list if x['fund_account'] == 'commercial' and x['status'] == 'completed'),
+                'pending': sum(x['amount'] for x in outgoing_list if x['fund_account'] == 'commercial' and x['status'] == 'pending'),
+                'count': sum(1 for x in outgoing_list if x['fund_account'] == 'commercial'),
+            },
+            'charity': {
+                'completed': sum(x['amount'] for x in outgoing_list if x['fund_account'] == 'charity' and x['status'] == 'completed'),
+                'pending': sum(x['amount'] for x in outgoing_list if x['fund_account'] == 'charity' and x['status'] == 'pending'),
+                'count': sum(1 for x in outgoing_list if x['fund_account'] == 'charity'),
+            }
+        }
+
+        # Apply Filters
+        filtered = outgoing_list
+
+        if account_filter != 'all':
+            filtered = [x for x in filtered if x['fund_account'] == account_filter]
+
+        if status_filter != 'all':
+            filtered = [x for x in filtered if x['status'] == status_filter]
+
+        if category_filter != 'all':
+            filtered = [x for x in filtered if x['category'] == category_filter]
+
+        if start_date_str:
+            filtered = [x for x in filtered if x['transaction_date'] and x['transaction_date'] >= start_date_str]
+
+        if end_date_str:
+            filtered = [x for x in filtered if x['transaction_date'] and x['transaction_date'] <= end_date_str]
+
+        if search_query:
+            filtered = [
+                x for x in filtered
+                if (
+                    search_query in x['title'].lower() or
+                    search_query in x['description'].lower() or
+                    search_query in x['recipient_name'].lower() or
+                    search_query in x['recipient_account'].lower() or
+                    search_query in (x.get('created_by') or '').lower() or
+                    search_query in (x.get('user_username') or '').lower()
+                )
+            ]
+
+        filtered_stats = {
+            'total_count': len(filtered),
+            'total_completed_amount': sum(x['amount'] for x in filtered if x['status'] == 'completed'),
+            'total_pending_amount': sum(x['amount'] for x in filtered if x['status'] == 'pending'),
+        }
+
+        return Response({
+            'summary': summary,
+            'filtered_stats': filtered_stats,
+            'expenses': filtered
+        })
+
+    def post(self, request):
+        if not self._is_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+
+        title = data.get('title', '').strip()
+        amount = data.get('amount')
+        description = data.get('description', '').strip()
+        fund_account = data.get('fund_account', 'commercial')
+        category = data.get('category', 'operational')
+        recipient_name = data.get('recipient_name', '').strip()
+        recipient_account = data.get('recipient_account', '').strip()
+        req_status = data.get('status', 'completed')
+        transaction_date = data.get('transaction_date')
+        proof_file = request.FILES.get('proof_file')
+
+        if not title:
+            return Response({'error': 'Judul pengeluaran wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            amount_val = Decimal(str(amount))
+            if amount_val <= 0:
+                raise ValueError
+        except Exception:
+            return Response({'error': 'Nominal pengeluaran harus berupa angka lebih dari 0.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not description:
+            description = f"Pengeluaran {category} ({title})"
+
+        expense = OutgoingFund.objects.create(
+            title=title,
+            amount=amount_val,
+            description=description,
+            fund_account=fund_account,
+            category=category,
+            recipient_name=recipient_name,
+            recipient_account=recipient_account,
+            status=req_status,
+            transaction_date=transaction_date or timezone.now().date(),
+            proof_file=proof_file,
+            created_by=request.user
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Data pengeluaran kas berhasil dicatat.',
+            'expense_id': expense.id
+        }, status=status.HTTP_201_CREATED)
+
+    def patch(self, request):
+        """
+        Process / change status of an expense or withdrawal (e.g. pending -> completed / approved)
+        """
+        if not self._is_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        from digital_products.models import WithdrawalRequest
+
+        data = request.data
+        source_type = data.get('source_type', 'manual')
+        raw_id = data.get('raw_id')
+        new_status = data.get('status') # 'completed', 'approved', 'rejected', 'cancelled'
+        rejection_reason = data.get('rejection_reason', '').strip()
+        notes = data.get('description', '').strip()
+        proof_file = request.FILES.get('proof_file') or request.FILES.get('transfer_proof')
+
+        if not raw_id or not new_status:
+            return Response({'error': 'Parameter raw_id dan status wajib disertakan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if source_type == 'withdrawal':
+            withdrawal = WithdrawalRequest.objects.filter(id=raw_id).first()
+            if not withdrawal:
+                return Response({'error': 'Pengajuan penarikan tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+            if new_status in ['completed', 'approved']:
+                withdrawal.status = 'approved'
+                if proof_file:
+                    withdrawal.transfer_proof = proof_file
+                withdrawal.save()
+
+                try:
+                    from barakah_app.utils import send_status_update_email
+                    send_status_update_email(
+                        withdrawal.user,
+                        f"Penarikan Saldo Rp {withdrawal.amount:,.0f}",
+                        'approved'
+                    )
+                except Exception as mail_err:
+                    logger.error(f"Error sending withdrawal approval email: {mail_err}")
+
+                return Response({
+                    'success': True,
+                    'message': f"Penarikan dana #{withdrawal.id} atas nama @{withdrawal.user.username} berhasil disetujui & diselesaikan."
+                })
+
+            elif new_status in ['rejected', 'cancelled']:
+                withdrawal.status = 'rejected'
+                withdrawal.rejection_reason = rejection_reason or 'Ditolak oleh Admin'
+                if proof_file:
+                    withdrawal.transfer_proof = proof_file
+                withdrawal.save()
+
+                # Refund wallet balance if withdrawal source was user_wallet
+                if withdrawal.withdrawal_source == 'user_wallet':
+                    try:
+                        u_wallet = UserWallet.get_or_create_wallet(withdrawal.user)
+                        u_wallet.credit(
+                            amount=withdrawal.total_deduction or withdrawal.amount,
+                            transaction_type='ADJUSTMENT',
+                            description=f"Pengembalian saldo: Penarikan #{withdrawal.id} ditolak: {withdrawal.rejection_reason}",
+                            reference_withdrawal=withdrawal
+                        )
+                    except Exception as refund_err:
+                        logger.error(f"Error refunding wallet for rejected withdrawal: {refund_err}")
+
+                try:
+                    from barakah_app.utils import send_status_update_email
+                    send_status_update_email(
+                        withdrawal.user,
+                        f"Penarikan Saldo Rp {withdrawal.amount:,.0f}",
+                        'rejected',
+                        withdrawal.rejection_reason
+                    )
+                except Exception:
+                    pass
+
+                return Response({
+                    'success': True,
+                    'message': f"Penarikan dana #{withdrawal.id} ditolak."
+                })
+
+        else: # Manual OutgoingFund
+            expense = OutgoingFund.objects.filter(id=raw_id).first()
+            if not expense:
+                return Response({'error': 'Data pengeluaran tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+            if new_status in ['completed', 'approved']:
+                expense.status = 'completed'
+            elif new_status in ['pending']:
+                expense.status = 'pending'
+            elif new_status in ['rejected', 'cancelled']:
+                expense.status = 'cancelled'
+
+            if notes:
+                expense.description = notes
+            if proof_file:
+                expense.proof_file = proof_file
+            expense.save()
+
+            return Response({
+                'success': True,
+                'message': f"Status pengeluaran #{expense.id} berhasil diubah menjadi {expense.get_status_display()}."
+            })
+
+    def delete(self, request):
+        if not self._is_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        from digital_products.models import WithdrawalRequest
+
+        source_type = request.data.get('source_type', 'manual')
+        raw_id = request.data.get('raw_id')
+
+        if not raw_id:
+            return Response({'error': 'raw_id wajib disertakan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if source_type == 'withdrawal':
+            w = WithdrawalRequest.objects.filter(id=raw_id).first()
+            if w:
+                w.delete()
+        else:
+            OutgoingFund.objects.filter(id=raw_id).delete()
+
+        return Response({'success': True, 'message': 'Data pengeluaran berhasil dihapus.'})
+

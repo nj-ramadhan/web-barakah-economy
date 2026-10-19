@@ -44,13 +44,6 @@ const RATE_OPTIONS = [
   'Negosiasi / Sesuai Kesepakatan',
 ];
 
-const QUICK_PAY_OPTIONS = [
-  { label: 'Gratis (Rp 0)', val: '0' },
-  { label: 'Rp 10.000', val: '10000' },
-  { label: 'Rp 25.000', val: '25000' },
-  { label: 'Rp 50.000', val: '50000' },
-  { label: 'Rp 100.000', val: '100000' },
-];
 
 const getMediaUrl = (url) => {
   if (!url) return '';
@@ -810,23 +803,6 @@ const DashboardMyServicesPage = () => {
                       />
                     </div>
 
-                    {/* Tombol Cepat Nominal */}
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {QUICK_PAY_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.val}
-                          type="button"
-                          onClick={() => setVoluntaryPayment(opt.val)}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition border ${
-                            String(voluntaryPayment) === String(opt.val)
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
 
                     <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1">
                       <span className="material-icons text-xs text-emerald-600">qr_code_scanner</span>
@@ -921,22 +897,6 @@ const DashboardMyServicesPage = () => {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {QUICK_PAY_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.val}
-                      type="button"
-                      onClick={() => setRenewalPayment(opt.val)}
-                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition border ${
-                        String(renewalPayment) === String(opt.val)
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">

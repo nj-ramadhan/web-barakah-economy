@@ -4,6 +4,8 @@ from decimal import Decimal
 from accounts.models import User
 import logging
 
+from django.utils import timezone
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,4 +113,56 @@ class WalletTransaction(models.Model):
     def __str__(self):
         sign = "+" if self.amount >= 0 else ""
         return f"[{self.created_at.strftime('%Y-%m-%d %H:%M')}] {self.wallet.user.username} {self.transaction_type}: {sign}Rp {self.amount:,.0f}"
+
+
+class OutgoingFund(models.Model):
+    ACCOUNT_CHOICES = [
+        ('commercial', 'Rekening Komersial (Store, Event, Digital, E-Course)'),
+        ('charity', 'Rekening Charity / Sosial (Donasi & ZIS)'),
+    ]
+    CATEGORY_CHOICES = [
+        ('operational', 'Operasional & Utilitas'),
+        ('charity_distribution', 'Penyaluran Donasi / Mustahik'),
+        ('withdrawal', 'Penarikan Dana User / Seller'),
+        ('vendor_supplier', 'Vendor / Supplier / Pengadaan'),
+        ('event_cost', 'Biaya Operasional Event'),
+        ('tax_admin', 'Pajak & Biaya Admin'),
+        ('other', 'Pengeluaran Lainnya'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending (Menunggu Proses)'),
+        ('completed', 'Selesai (Sudah Dicairkan / Ditransfer)'),
+        ('cancelled', 'Dibatalkan'),
+    ]
+
+    fund_account = models.CharField(max_length=20, choices=ACCOUNT_CHOICES, default='commercial')
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default='operational')
+    title = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    description = models.TextField(blank=True, default='')
+    recipient_name = models.CharField(max_length=150, blank=True, default='')
+    recipient_account = models.CharField(max_length=150, blank=True, default='') # Misal: Bank BSI 123456 a.n Fulana
+    proof_file = models.ImageField(upload_to='expense_proofs/', blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
+
+    # Link to user withdrawal request if applicable
+    withdrawal_request = models.ForeignKey(
+        'digital_products.WithdrawalRequest',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='outgoing_fund_entries'
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='recorded_expenses')
+    transaction_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-transaction_date', '-created_at']
+        verbose_name = "Pengeluaran / Uang Keluar"
+        verbose_name_plural = "Pengeluaran / Uang Keluar"
+
+    def __str__(self):
+        return f"[{self.fund_account.upper()}] {self.title} - Rp {self.amount:,.0f} ({self.status})"
 
