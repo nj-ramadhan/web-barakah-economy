@@ -227,11 +227,17 @@ class EventSerializer(serializers.ModelSerializer):
             if not request or not request.user or not request.user.is_authenticated:
                 return None
             
+            # Prioritize approved registration, then pending
             reg = obj.registrations.filter(user=request.user, status='approved').first()
+            if not reg:
+                reg = obj.registrations.filter(user=request.user, status='pending').order_by('-created_at').first()
             if reg:
                 return {
                     "id": reg.id,
                     "status": reg.status,
+                    "payment_status": reg.payment_status,
+                    "payment_amount": float(reg.payment_amount or 0),
+                    "payment_method": reg.payment_method,
                     "unique_code": reg.unique_code,
                     "qr_image": request.build_absolute_uri(reg.qr_image.url) if reg.qr_image and hasattr(reg.qr_image, 'url') else None,
                     "is_attended": reg.is_attended,

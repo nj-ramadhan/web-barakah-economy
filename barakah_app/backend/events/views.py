@@ -383,13 +383,27 @@ class EventViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Check if already registered & approved
-        if EventRegistration.objects.filter(event=event, user=user, status='approved').exists():
+        if user and user.is_authenticated and EventRegistration.objects.filter(event=event, user=user, status='approved').exists():
             return Response({"error": "Anda telah terdaftar & terverifikasi di event ini."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Clean up any unpaid/stale pending registration for this user & event, plus any stale pending > 10 mins
-        from datetime import timedelta
-        EventRegistration.objects.filter(event=event, user=user, status='pending').delete()
-        EventRegistration.objects.filter(event=event, status='pending', created_at__lt=now - timedelta(minutes=10)).delete()
+        # Check if user already has a pending registration with payment proof submitted (waiting for verification)
+        if user and user.is_authenticated and EventRegistration.objects.filter(
+            event=event, 
+            user=user, 
+            status='pending'
+        ).exclude(payment_proof__isnull=True).exclude(payment_proof='').exists():
+            return Response({
+                "error": "Pendaftaran Anda sudah tercatat dan sedang menunggu verifikasi pembayaran oleh panitia."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Only clean up this specific user's previous UNPAID pending draft registration (without payment proof) if they are re-submitting
+        if user and user.is_authenticated:
+            EventRegistration.objects.filter(
+                event=event, 
+                user=user, 
+                status='pending', 
+                payment_proof__in=['', None]
+            ).delete()
 
         # Extract responses (JSON string if from FormData)
         responses_raw = request.data.get('responses', '{}')
