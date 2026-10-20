@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ModulePaymentSetting',
             fields=[
-                ('id', models.BigAutoField(auto_now_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('module_code', models.CharField(choices=[('charity', 'Charity & ZISWAF (Donasi)'), ('event', 'Event & Tiket'), ('digital', 'Produk Digital'), ('ecourse', 'E-Course & Kelas Online'), ('store', 'Produk Toko / Store (E-Commerce)'), ('landing_page', 'Landing Page Builder'), ('service', 'Jasa & Layanan')], max_length=30, unique=True)),
                 ('module_title', models.CharField(max_length=100)),
                 ('is_custom', models.BooleanField(default=False, help_text='Aktifkan plot pengaturan khusus untuk modul ini')),
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ListenerDevice',
             fields=[
-                ('id', models.BigAutoField(auto_now_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('device_id', models.CharField(max_length=255, unique=True)),
                 ('device_name', models.CharField(default='HP Android', max_length=255)),
                 ('is_active', models.BooleanField(default=True)),
